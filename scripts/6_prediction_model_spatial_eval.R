@@ -55,36 +55,50 @@ for (month in months){
   
   print(">>Predict")
   
-  cal_SP_ELEV_LC = readRDS(paste0('output/calibration/calibration_mod_interp_selected_', month, '_', alb_prod, '.RDS'))
+  print('>>>>Model: (x,y) + elevation + tp(OL, ET, ST)')
+  cal_SP_ELEV_LC = readRDS(paste0('output/calibration/calibration_mod_interp_selected_', month, '_bluesky.RDS'))
   paleo_predict_SP_ELEV_LC = predict.gam(cal_SP_ELEV_LC, 
                                          newdata = lct_interp_paleo , 
                                          type    = 'response')
   
-  
-  cal_SP = readRDS(paste0('output/calibration/calibration_mod_spatial_', month, '_', alb_prod, '.RDS'))
+  print('>>>>Model: (x,y)')
+  cal_SP = readRDS(paste0('output/calibration/calibration_mod_spatial_', month, '.RDS'))
   paleo_predict_SP = predict.gam(cal_SP, 
                                  newdata = lct_interp_paleo , 
                                  type    = 'response')
   
   # print('Fitting model: (x,y) + elevation')
-  # 
-  cal_SP_ELEV = readRDS(paste0('output/calibration/calibration_mod_spatial_elev_', month, '_', alb_prod, '.RDS'))
+  print('>>>>Model: (x,y) + elevation')
+  cal_SP_ELEV = readRDS(paste0('output/calibration/calibration_mod_spatial_elev_', month, '.RDS'))
   paleo_predict_SP_ELEV = predict.gam(cal_SP_ELEV, 
+                                      newdata = lct_interp_paleo , 
+                                      type    = 'response')
+  
+  # print('Fitting model: (x,y) + elevation')
+  print('>>>>Model: (x,y) + tp(OL, ET, ST)')
+  cal_SP_LC = readRDS(paste0('output/calibration/calibration_mod_spatial_cover_', month, '.RDS'))
+  paleo_predict_SP_LC = predict.gam(cal_SP_LC, 
                                       newdata = lct_interp_paleo , 
                                       type    = 'response')
   
   # 
   # print('Fitting model: tp(OL, ET, ST)')
-  #
-  cal_LC = readRDS(paste0('output/calibration/calibration_mod_cover_', month, '_', alb_prod, '.RDS'))
+  print('>>>>Model: tp(OL, ET, ST)')
+  cal_LC = readRDS(paste0('output/calibration/calibration_mod_cover_', month, '.RDS'))
   paleo_predict_LC = predict.gam(cal_LC, 
                                  newdata = lct_interp_paleo , 
                                  type    = 'response')
   # 
   # print('Fitting model: tp(OL, ET, ST) + elev')
-  #
-  cal_ELEV_LC = readRDS(paste0('output/calibration/calibration_mod_cover_elev_', month, '_', alb_prod, '.RDS'))
+  print('>>>>Model: tp(OL, ET, ST) + elev')
+  cal_ELEV_LC = readRDS(paste0('output/calibration/calibration_mod_cover_elev_', month, '.RDS'))
   paleo_predict_ELEV_LC = predict.gam(cal_ELEV_LC, 
+                                      newdata = lct_interp_paleo , 
+                                      type    = 'response')
+  
+  print('>>>>Model: elev')
+  cal_ELEV = readRDS(paste0('output/calibration/calibration_mod_elev_', month, '.RDS'))
+  paleo_predict_ELEV = predict.gam(cal_ELEV, 
                                       newdata = lct_interp_paleo , 
                                       type    = 'response')
   
@@ -92,32 +106,50 @@ for (month in months){
                              SP_ELEV_LC = paleo_predict_SP_ELEV_LC,
                              SP = paleo_predict_SP,
                              SP_ELEV = paleo_predict_SP_ELEV,
+                             SP_LC = paleo_predict_SP_LC,
                              LC = paleo_predict_LC,
-                             ELEV_LC = paleo_predict_ELEV_LC)
+                             ELEV_LC = paleo_predict_ELEV_LC,
+                             ELEV = paleo_predict_ELEV)
   
   # paleo_interp_predict_gam = data.frame(lct_interp_paleo)
   # paleo_interp_predict_gam$get(month) = paleo_interp_predict_gam_vec
   
-  saveRDS(paleo_predict, paste0('output/prediction/paleo_predict_spatial_eval_', month, '_', alb_prod, '.RDS'))
+  saveRDS(paleo_predict, paste0('output/prediction/paleo_predict_spatial_eval_', month, '.RDS'))
   
   print(">>Simulate")
+
+  print('>>>>Model: (x,y) + elevation + tp(OL, ET, ST)')
   paleo_sim_SP_ELEV_LC = simulate(cal_SP_ELEV_LC,
                                   nsim = N_iter,
                                   data = lct_interp_paleo)
   
+  print('>>>>Model: (x,y)')
   paleo_sim_SP = simulate(cal_SP,
                           nsim = N_iter,
                           data = lct_interp_paleo)
   
+  print('>>>>Model: (x,y) + elevation')
   paleo_sim_SP_ELEV = simulate(cal_SP_ELEV,
                                nsim = N_iter,
                                data = lct_interp_paleo)
   
+  print('>>>>Model: (x,y) + tp(OL, ET, ST)')
+  paleo_sim_SP_LC = simulate(cal_SP_LC,
+                          nsim = N_iter,
+                          data = lct_interp_paleo)
+  
+  print('>>>>Model: tp(OL, ET, ST)')
   paleo_sim_LC = simulate(cal_LC,
                           nsim = N_iter,
                           data = lct_interp_paleo)
   
+  print('>>>>Model: tp(OL, ET, ST) + elev')
   paleo_sim_ELEV_LC = simulate(cal_ELEV_LC,
+                               nsim = N_iter,
+                               data = lct_interp_paleo)
+  
+  print('>>>>Model: elev')
+  paleo_sim_ELEV = simulate(cal_ELEV,
                                nsim = N_iter,
                                data = lct_interp_paleo)
   # colnames(paleo_sim_ELEV_LC) = paste0(seq(1, 100)
@@ -130,8 +162,10 @@ for (month in months){
   paleo_sim = bind_rows(data.frame(lct_interp_paleo, paleo_sim_SP_ELEV_LC, type = 'SP_ELEV_LC'),
             data.frame(lct_interp_paleo, paleo_sim_SP, type = 'SP'),
             data.frame(lct_interp_paleo, paleo_sim_SP_ELEV, type = 'SP_ELEV'),
+            data.frame(lct_interp_paleo, paleo_sim_SP_LC, type = 'SP_LC'),
             data.frame(lct_interp_paleo, paleo_sim_LC, type = 'LC'),
-            data.frame(lct_interp_paleo, paleo_sim_ELEV_LC, type = 'ELEV_LC'))
+            data.frame(lct_interp_paleo, paleo_sim_ELEV_LC, type = 'ELEV_LC'),
+            data.frame(lct_interp_paleo, paleo_sim_ELEV, type = 'ELEV'))
   
   paleo_sim_melt = melt(paleo_sim, id.vars = c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'type'))
   colnames(paleo_sim_melt) = c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'type', 'iter', 'value')#c('cell_idx', 'iter', 'value')
@@ -196,7 +230,7 @@ alb_preds_summary_months_wide = alb_preds_summary_months[,c('year', 'x', 'y', 'e
               names_from = 'type', 
               values_from = 'alb_mean')
 
-alb_preds_diff_month = alb_preds_summary_months_wide[which(alb_preds_summary_months_wide$month == 'mar'),]
+# alb_preds_diff_month = alb_preds_summary_months_wide[which(alb_preds_summary_months_wide$month == 'mar'),]
 
 alb_preds_diff_month = alb_preds_summary_months_wide
 
@@ -204,6 +238,8 @@ alb_preds_diff_month$diff_ELEV_LC = alb_preds_diff_month$SP_ELEV_LC - alb_preds_
 alb_preds_diff_month$diff_SP_ELEV = alb_preds_diff_month$SP_ELEV_LC - alb_preds_diff_month$SP_ELEV
 alb_preds_diff_month$diff_SP = alb_preds_diff_month$SP_ELEV_LC - alb_preds_diff_month$SP
 alb_preds_diff_month$diff_LC = alb_preds_diff_month$SP_ELEV_LC - alb_preds_diff_month$LC
+alb_preds_diff_month$diff_ELEV = alb_preds_diff_month$SP_ELEV_LC - alb_preds_diff_month$ELEV
+alb_preds_diff_month$diff_SP_LC = alb_preds_diff_month$SP_ELEV_LC - alb_preds_diff_month$SP_LC
 
 
 foo = alb_preds_diff_month[,c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'month', 
@@ -212,11 +248,11 @@ foo = alb_preds_diff_month[,c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'month
 
 
 
+library(GGally)
+ggpairs(alb_preds_diff_month, columns = 9:15)
 
-ggpairs(alb_preds_diff_month, columns = 9:13)
 
-
-
+ggsave('figures/ALB_paleo_predict_spatial_eval_pairs.pdf')
 
 
 

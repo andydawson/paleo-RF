@@ -139,6 +139,8 @@ for (i in 1:length(alb_preds_ages)){
 # not sure about this, leave for now
 alb_interp_preds = alb_interp_preds[which(alb_interp_preds$x > -170),]
 
+alb_interp_preds = alb_interp_preds[which(!is.na(alb_interp_preds$ice_frac)),]
+
 # alb_interp_preds = alb_interp_preds[which(!is.na(alb_interp_preds$ice)), ]
 
 # foo = alb_interp_preds[which(is.na(alb_interp_preds$ice)), ]
@@ -227,45 +229,90 @@ alb_grid_full = alb_grid
 
 
 
+# 
+# alb_glacier = read.csv('data/albedo_glacier_monthly.csv', header=TRUE)
+# 
+# # assign monthly glacier albedo
+# alb_grid_full$ice_albedo = alb_glacier[match(alb_grid_full$month, alb_glacier$month), 'ice_albedo']
+# 
+# # assigned monthly glacier albedo multiplied by the fraction of ice
+# alb_grid_full$alb_ice_part = alb_grid_full$ice_albedo * alb_grid_full$ice_frac 
+# 
+# # inferred monthly veg albedo mutiplied by the fraction of veg (1 - fraction of ice)
+# alb_grid_full$alb_veg_part = alb_grid_full$alb_mean * (1 - alb_grid_full$ice_frac)
+# 
+# # weighted albedo based on ice and land albedo parts
+# alb_grid_full$alb_veg_ice_parts = alb_grid_full$alb_ice_part + alb_grid_full$alb_veg_part 
+# 
+# # ggplot(data=subset(alb_grid_full, month=='jan')) +
+# #   geom_point(aes(x=alb_mean, y=alb_veg_ice_parts, colour=ice))
+# 
+# 
+# idx_ice = which(alb_grid_full$ice > 0.5)
+# idx_veg = which(alb_grid_full$ice <= 0.5)
+# 
+# alb_grid_full$alb_veg_thresh = alb_grid_full$alb_mean
+# alb_grid_full$alb_veg_thresh[idx_ice] = NA
+# 
+# alb_grid_full$alb_veg_ice_thresh = alb_grid_full$alb_mean
+# alb_grid_full$alb_veg_ice_thresh[idx_ice] = alb_grid_full$ice_albedo[idx_ice]
+# 
+# alb_grid_full$alb_ice_thresh = alb_grid_full$ice_albedo
+# alb_grid_full$alb_ice_thresh[idx_veg] = NA
+
 
 alb_glacier = read.csv('data/albedo_glacier_monthly.csv', header=TRUE)
 
-# alb_grid_full$ice[which(alb_grid_full$ice == 1)] = 'ICE'
-
-# alb_grid_full$alb_mean_ice = NA
-# alb_grid_full$alb_mean_parts = NA
-# alb_grid_full$alb_mean_ice[which(is.na(alb_grid_full$ice))] = alb_grid_full$alb_mean[which(is.na(alb_grid_full$ice))]
-
-# weighted average based on fraction of grid cell ice cover
-# idx_part_ice = which(alb_grid_full$ice > 0)
-
 # assign monthly glacier albedo
-alb_grid_full$ice_albedo = alb_glacier[match(alb_grid_full$month, alb_glacier$month), 'ice_albedo']
+alb_grid_full$ice_albedo_fixed = alb_glacier[match(alb_grid_full$month, alb_glacier$month), 'ice_albedo_fixed']
+alb_grid_full$ice_albedo_sc = alb_glacier[match(alb_grid_full$month, alb_glacier$month), 'ice_albedo_sc']
+
+alb_grid_full$alb_veg = alb_grid_full$alb_mean
 
 # assigned monthly glacier albedo multiplied by the fraction of ice
-alb_grid_full$alb_ice_part = alb_grid_full$ice_albedo * alb_grid_full$ice_frac 
+alb_grid_full$alb_ice_part = alb_grid_full$ice_albedo_fixed * alb_grid_full$ice_frac
+alb_grid_full$alb_icesc_part = alb_grid_full$ice_albedo_sc * alb_grid_full$ice_frac 
 
 # inferred monthly veg albedo mutiplied by the fraction of veg (1 - fraction of ice)
-alb_grid_full$alb_land_part = alb_grid_full$alb_mean * (1 - alb_grid_full$ice_frac)
+alb_grid_full$alb_veg_part = alb_grid_full$alb_veg * (1 - alb_grid_full$ice_frac)
 
 # weighted albedo based on ice and land albedo parts
-alb_grid_full$alb_veg_ice_parts = alb_grid_full$alb_ice_part + alb_grid_full$alb_land_part 
+alb_grid_full$alb_veg_ice_parts = alb_grid_full$alb_ice_part + alb_grid_full$alb_veg_part 
+alb_grid_full$alb_veg_icesc_parts = alb_grid_full$alb_icesc_part + alb_grid_full$alb_veg_part 
+
 
 # ggplot(data=subset(alb_grid_full, month=='jan')) +
 #   geom_point(aes(x=alb_mean, y=alb_veg_ice_parts, colour=ice))
 
 
-idx_ice = which(alb_grid_full$ice > 0.5)
-idx_veg = which(alb_grid_full$ice <= 0.5)
+idx_ice = which(alb_grid_full$ice_frac > 0.5)
+idx_veg = which(alb_grid_full$ice_frac <= 0.5)
 
-alb_grid_full$alb_veg_thresh = alb_grid_full$alb_mean
+alb_grid_full$alb_veg_thresh = alb_grid_full$alb_veg
 alb_grid_full$alb_veg_thresh[idx_ice] = NA
 
-alb_grid_full$alb_veg_ice_thresh = alb_grid_full$alb_mean
-alb_grid_full$alb_veg_ice_thresh[idx_ice] = alb_grid_full$ice_albedo[idx_ice]
-
-alb_grid_full$alb_ice_thresh = alb_grid_full$ice_albedo
+alb_grid_full$alb_ice_thresh = alb_grid_full$ice_albedo_fixed
 alb_grid_full$alb_ice_thresh[idx_veg] = NA
+
+alb_grid_full$alb_icesc_thresh = alb_grid_full$ice_albedo_sc
+alb_grid_full$alb_icesc_thresh[idx_veg] = NA
+
+
+alb_grid_full$alb_veg_ice_thresh = rowSums(cbind(alb_grid_full$alb_veg_thresh, alb_grid_full$alb_ice_thresh), na.rm=TRUE)
+alb_grid_full$alb_veg_icesc_thresh = rowSums(cbind(alb_grid_full$alb_veg_thresh, alb_grid_full$alb_icesc_thresh), na.rm=TRUE)
+
+
+# alb_grid_full$alb_veg_ice_thresh = alb_grid_full$alb_mean
+# alb_grid_full$alb_veg_ice_thresh[idx_ice] = alb_grid_full$ice_albedo_fixed[idx_ice]
+# 
+# alb_grid_full$alb_veg_icesc_thresh = alb_grid_full$alb_mean
+# alb_grid_full$alb_veg_icesc_thresh[idx_ice] = alb_grid_full$ice_albedo_sc[idx_ice]
+
+
+##
+
+
+
 
 alb_grid_full_cells = alb_grid_full %>%
   group_by(year) %>%
@@ -279,7 +326,7 @@ cell_count_summary = alb_grid_full[,c('cell_id', 'month', 'year')] %>%
   group_by(cell_id, month) %>%
   #mutate(cell_count = n()) #%>%
   dplyr::summarize(cell_count = n()) #%>%
-  # pivot_wider(id_cols = cell_id, names_from = month, values_from = cell_count)
+# pivot_wider(id_cols = cell_id, names_from = month, values_from = cell_count)
 
 
 cell_id_missing = unique(cell_count_summary[which(cell_count_summary$cell_count < 25), 'cell_id'])
@@ -304,16 +351,16 @@ breaks_sd = c(0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07)
 labels_sd = c("0 - 0.01", "0.01 - 0.02", "0.02 - 0.03", "0.03 - 0.04", "0.04 - 0.05", "0.05 - 0.06", "0.06 - 0.07")
 alb_grid_full$alb_sd_bin = cut(alb_grid_full$alb_sd, breaks_sd, labels=FALSE, include.lowest=TRUE)
 alb_grid_full$alb_sd_bin = factor(alb_grid_full$alb_sd_bin, 
-                                 levels=seq(1, length(labels_sd)),
-                                 labels = labels_sd)
+                                  levels=seq(1, length(labels_sd)),
+                                  labels = labels_sd)
 
 alb_grid_full$alb_cv = alb_grid_full$alb_sd / alb_grid_full$alb_mean
 breaks_cv = c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 10)
 labels_cv = c("0 - 0.05", "0.05 - 0.1", "0.1 - 0.15", "0.15 - 0.2", "0.2 - 0.25", "0.25 - 0.3", "0.3 - 10")
 alb_grid_full$alb_cv_bin = cut(alb_grid_full$alb_cv, breaks_cv, labels=FALSE, include.lowest=TRUE)
 alb_grid_full$alb_cv_bin = factor(alb_grid_full$alb_cv_bin, 
-                                 levels=seq(1, length(labels_cv)),
-                                 labels = labels_cv)
+                                  levels=seq(1, length(labels_cv)),
+                                  labels = labels_cv)
 # alb_grid_full = subset(alb_grid, year %in% years) 
 
 labels_year = c('0.05 ka', '0.5 ka', '2 ka', '4 ka', '6 ka', '8 ka', '10 ka', '12 ka')
@@ -331,8 +378,10 @@ alb_grid_full$month = factor(alb_grid_full$month, levels = months)
 
 years_df = data.frame(year = ages)
 
-alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=ncol(alb_grid_full)+8))
-alb_diff_colnames = colnames(alb_grid_full)[which(!(colnames(alb_grid_full) %in% 'ice'))]
+alb_diff_colnames = c('cell_id', 'lat', 'long', 'x', 'y', 'year', 'month', 'area', 'area_km2')
+
+alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=length(alb_diff_colnames)+12))
+# alb_diff_colnames = colnames(alb_grid_full)[which(!(colnames(alb_grid_full) %in% 'ice'))]
 
 colnames(alb_diff_df) = c(alb_diff_colnames, 
                           # 'ice_albedo',
@@ -341,15 +390,47 @@ colnames(alb_diff_df) = c(alb_diff_colnames,
                           'alb_diff_veg_thresh',
                           'alb_diff_ice_thresh',
                           'alb_diff_veg_ice_thresh',
-                          'alb_diff_veg_ice_parts',
+                          'alb_diff_icesc_thresh',
+                          'alb_diff_veg_icesc_thresh',
                           'alb_diff_veg_part',
-                          'alb_diff_ice_part')
+                          'alb_diff_ice_part',
+                          'alb_diff_veg_ice_parts',
+                          'alb_diff_icesc_part',
+                          'alb_diff_veg_icesc_parts')
+
+
+# alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=length(alb_diff_colnames)+17))
+# 
+# colnames(alb_diff_df) = c(alb_diff_colnames, 
+#                           # 'ice_albedo',
+#                           'ice_frac_young', 
+#                           'ice_frac_old', 
+#                           'alb_diff_veg_thresh',
+#                           'alb_diff_ice_thresh',
+#                           'alb_diff_veg_ice_thresh',
+#                           'alb_diff_icesc_thresh',
+#                           'alb_diff_veg_icesc_thresh',
+#                           'alb_diff_veg_part',
+#                           'alb_diff_ice_part',
+#                           'alb_diff_veg_ice_parts',
+#                           'alb_diff_icesc_part',
+#                           'alb_diff_veg_icesc_parts',   
+#                           'alb_diff_veg_adj_parts',
+#                           'alb_diff_ice_adj_part',
+#                           'alb_diff_veg_ice_adj_parts',
+#                           'alb_diff_icesc_adj_part',
+#                           'alb_diff_veg_icesc_adj_parts')
 
 # alb_grid_full$alb_mean_ice = alb_grid_full$alb_mean
 # alb_grid_full$alb_mean_ice[which(!is.na(alb_grid_full$ice))] = 0.5
 
 cell_ids = unique(alb_grid_full$cell_id)
 N_cells  = length(cell_ids)
+
+tally_both = 0
+tally_increase = 0
+tally_increase_mult = 0
+
 for (i in 1:N_cells){
   
   print(paste0('Cell ', i, ' of ', N_cells))
@@ -368,29 +449,154 @@ for (i in 1:N_cells){
     
     alb_cell_filled = merge(years_df, alb_cell, all.x=TRUE)
     
+    idx_ice_increase = which(diff(alb_cell_filled$ice_frac)<0)
+    if(length(idx_ice_increase)>1){
+      tally_increase_mult = tally_increase_mult + 1
+      print('Ice increase over multiple time periods')
+    }
+    
+    alb_cell_filled$ice_frac_adj = alb_cell_filled$ice_frac
+    alb_cell_filled$ice_frac_adj[idx_ice_increase] = (alb_cell_filled$ice_frac_adj[idx_ice_increase + 1] +  alb_cell_filled$ice_frac_adj[idx_ice_increase - 1])/2
+    
+    # ice_frac_young = alb_cell_filled$ice_frac[1:(nrow(alb_cell_filled)-1)]
+    # ice_frac_old = alb_cell_filled$ice_frac[2:nrow(alb_cell_filled)]
+    
+    ice_frac_young = alb_cell_filled$ice_frac_adj[1:(nrow(alb_cell_filled)-1)]
+    ice_frac_old = alb_cell_filled$ice_frac_adj[2:nrow(alb_cell_filled)]
+    
+    # 
+    # thresh
+    is_ice_young =  ice_frac_young > 0.5
+    is_ice_old =  ice_frac_old > 0.5
+    is_ice_both = is_ice_young & is_ice_old
+    
+    
+    is_ice_increase = ice_frac_old < ice_frac_young
+    
+    is_ice_missing = is.na(ice_frac_young) | is.na(ice_frac_old)
+    
+    if (sum(is_ice_both[!is_ice_missing], na.rm=TRUE)>0){
+      
+      tally_both = tally_both + sum(is_ice_both[!is_ice_missing], na.rm=TRUE)
+      print(paste0('Still ice, forcing 0: ', sum(is_ice_both[!is_ice_missing], na.rm=TRUE)))
+    }
+
+
+    if (any(is_ice_increase[!is_ice_missing])) {
+      tally_increase = tally_increase + sum(is_ice_increase[!is_ice_missing], na.rm=TRUE)
+      print(paste0('Increasing ice fraction: ', sum(is_ice_increase[!is_ice_missing], na.rm=TRUE)))
+
+
+      # ice_frac_old_adj[which(is_ice_increase)] =
+      # ice_frac_young_adj =
+
+    }
+    
+    alb_diff_veg_part = -diff(alb_cell_filled$alb_veg) * (1-ice_frac_old)
+    
+    alb_diff_ice_part = (alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - alb_cell_filled$ice_albedo_fixed[2:nrow(alb_cell_filled)]) * (ice_frac_old-ice_frac_young)
+    alb_diff_icesc_part = (alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - alb_cell_filled$ice_albedo_sc[2:nrow(alb_cell_filled)]) * (ice_frac_old-ice_frac_young)
+    
+    alb_diff_veg_ice_parts = rowSums(cbind(alb_diff_veg_part, alb_diff_ice_part))
+    alb_diff_veg_icesc_parts =  rowSums(cbind(alb_diff_veg_part, alb_diff_icesc_part))
+    
+    # alb_diff_ice_adj_part = (alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - alb_cell_filled$ice_albedo_fixed[2:nrow(alb_cell_filled)]) * (ice_frac_old-ice_frac_young)
+    # alb_diff_icesc_part = (alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - alb_cell_filled$ice_albedo_sc[2:nrow(alb_cell_filled)]) * (ice_frac_old-ice_frac_young)
+    
+    alb_diff_veg_ice_parts = rowSums(cbind(alb_diff_veg_part, alb_diff_ice_part))
+    alb_diff_veg_icesc_parts =  rowSums(cbind(alb_diff_veg_part, alb_diff_icesc_part))
+
+    
+    # here
+    
+    alb_diff_veg_thresh = -diff(alb_cell_filled$alb_veg) 
+    alb_diff_veg_thresh[is_ice_old | is_ice_young] = NA
+    
+    alb_diff_ice_thresh = alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - 
+      alb_cell_filled$alb_ice_thresh[2:nrow(alb_cell_filled)]
+    
+    alb_diff_icesc_thresh =  alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - 
+      alb_cell_filled$alb_icesc_thresh[2:nrow(alb_cell_filled)]
+    
+    alb_diff_ice_thresh[is_ice_both] = 0
+    alb_diff_icesc_thresh[is_ice_both] = 0
+    alb_diff_ice_thresh[is_ice_missing] = NA
+    alb_diff_icesc_thresh[is_ice_missing] = NA
+    
+    alb_diff_veg_ice_thresh = rowSums(cbind(alb_diff_veg_thresh, alb_diff_ice_thresh), na.rm=TRUE)
+    alb_diff_veg_icesc_thresh =  rowSums(cbind(alb_diff_veg_thresh, alb_diff_icesc_thresh), na.rm=TRUE)
+    
+    alb_diff_veg_ice_thresh[is_ice_missing] = NA
+    alb_diff_veg_icesc_thresh[is_ice_missing] = NA
+    
+    
+    # data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
+    #                   select=alb_diff_colnames), 
+    #            ice_frac_young = alb_cell_filled$ice_frac[1:(nrow(alb_cell_filled)-1)],
+    #            ice_frac_old = alb_cell_filled$ice_frac[2:nrow(alb_cell_filled)],
+    #            alb_diff_veg_thresh = -diff(alb_cell_filled$alb_veg_thresh),
+    #            alb_diff_ice_thresh = -diff(alb_cell_filled$alb_ice_thresh),
+    #            alb_diff_veg_ice_thresh = -diff(alb_cell_filled$alb_veg_ice_thresh),
+    #            alb_diff_icesc_thresh = -diff(alb_cell_filled$alb_icesc_thresh),
+    #            alb_diff_veg_icesc_thresh = -diff(alb_cell_filled$alb_veg_icesc_thresh),
+    #            alb_diff_veg_part = -diff(alb_cell_filled$alb_veg_part),
+    #            alb_diff_ice_part = -diff(alb_cell_filled$alb_ice_part),
+    #            alb_diff_veg_ice_parts = -diff(alb_cell_filled$alb_veg_ice_parts),
+    #            alb_diff_icesc_part = -diff(alb_cell_filled$alb_icesc_part),
+    #            alb_diff_veg_icesc_parts = -diff(alb_cell_filled$alb_veg_icesc_parts))
+    
+    
     # colnames(alb_diff_df) = c(alb_diff_colnames, 
-                              # 'ice_albedo',
+    #                           # 'ice_albedo',
     #                           'ice_frac_young', 
     #                           'ice_frac_old', 
     #                           'alb_diff_veg_thresh',
     #                           'alb_diff_ice_thresh',
     #                           'alb_diff_veg_ice_thresh',
-    #                           'alb_diff_veg_ice_parts',
+    #                           'alb_diff_icesc_thresh',
+    #                           'alb_diff_veg_icesc_thresh',
     #                           'alb_diff_veg_part',
-    #                           'alb_diff_ice_part')
+    #                           'alb_diff_ice_part',
+    #                           'alb_diff_veg_ice_parts',
+    #                           'alb_diff_icesc_part',
+    #                           'alb_diff_veg_icesc_parts')
+    
+    
+    # alb_diff_df = rbind(alb_diff_df, 
+    #                     data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
+    #                                       select=alb_diff_colnames), 
+    #                                ice_frac_young = ice_frac_young,
+    #                                ice_frac_old = ice_frac_old,
+    #                                alb_diff_veg_thresh = alb_diff_veg_thresh,
+    #                                alb_diff_ice_thresh = alb_diff_ice_thresh,
+    #                                alb_diff_veg_ice_thresh = alb_diff_veg_ice_thresh,
+    #                                alb_diff_icesc_thresh = alb_diff_icesc_thresh,
+    #                                alb_diff_veg_icesc_thresh = alb_diff_veg_icesc_thresh,
+    #                                alb_diff_veg_part = alb_diff_veg_part,
+    #                                alb_diff_ice_part = alb_diff_ice_part,
+    #                                alb_diff_veg_ice_parts = alb_diff_veg_ice_parts,
+    #                                alb_diff_icesc_part = alb_diff_icesc_part,
+    #                                alb_diff_veg_icesc_parts = alb_diff_veg_icesc_parts,
+    #                                alb_diff_ice_adj_part = alb_diff_ice_adj_part,
+    #                                alb_diff_veg_ice_adj_parts = alb_diff_veg_ice_adj_parts,
+    #                                alb_diff_icesc_adj_part = alb_diff_icesc_adj_part,
+    #                                alb_diff_veg_icesc_adj_parts = alb_diff_veg_icesc_adj_parts))
     
     alb_diff_df = rbind(alb_diff_df, 
                         data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
-                                          select=-c(ice)), 
-                                   alb_ice = alb_cell_filled[2:nrow(alb_cell_filled), 'alb_ice'],
-                                   # alb_mean_ice_young = alb_cell_filled[1:(nrow(alb_cell_filled)-1), 'alb_mean_ice'],
-                                   ice_frac_young = alb_cell_filled$ice[1:(nrow(alb_cell_filled)-1)],
-                                   ice_frac_old = alb_cell_filled$ice[2:nrow(alb_cell_filled)],
-                                   alb_diff_veg_thresh = -diff(alb_cell_filled$alb_mean),
-                                   alb_diff_ice_thresh = -diff(alb_cell_filled$alb_ice_thresh),
-                                   alb_diff_veg_ice_thresh = -diff(alb_cell_filled$alb_veg_ice_thresh),
-                                   alb_diff_veg_ice_parts = -diff(alb_cell_filled$alb_veg_ice_parts),
-                                   alb_diff_veg_ice = -diff(alb_cell_filled$alb_veg_ice)))
+                                          select=alb_diff_colnames), 
+                                   ice_frac_young = ice_frac_young,
+                                   ice_frac_old = ice_frac_old,
+                                   alb_diff_veg_thresh = alb_diff_veg_thresh,
+                                   alb_diff_ice_thresh = alb_diff_ice_thresh,
+                                   alb_diff_veg_ice_thresh = alb_diff_veg_ice_thresh,
+                                   alb_diff_icesc_thresh = alb_diff_icesc_thresh,
+                                   alb_diff_veg_icesc_thresh = alb_diff_veg_icesc_thresh,
+                                   alb_diff_veg_part = alb_diff_veg_part,
+                                   alb_diff_ice_part = alb_diff_ice_part,
+                                   alb_diff_veg_ice_parts = alb_diff_veg_ice_parts,
+                                   alb_diff_icesc_part = alb_diff_icesc_part,
+                                   alb_diff_veg_icesc_parts = alb_diff_veg_icesc_parts))
     
     # alb_diff_df = rbind(alb_diff_df, 
     #                     data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
@@ -407,63 +613,178 @@ for (i in 1:N_cells){
 
 alb_diff_df =  alb_diff_df[which(!is.na(alb_diff_df$lat)),]
 
-saveRDS(alb_diff_df, paste0('data/alb_interp_preds_full_diffs_', alb_prod, '.RDS'))
 
-###############################################################################################################
-## plot albedo prediction differences
-###############################################################################################################
+saveRDS(alb_diff_df, paste0('data/ALB_diffs_', alb_prod, '.RDS'))
 
-years_df = data.frame(year = ages)
-
-alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=ncol(alb_grid_full)+6))
-alb_diff_colnames = colnames(alb_grid_full)[which(!(colnames(alb_grid_full) %in% 'ice'))]
-
-colnames(alb_diff_df) = c(alb_diff_colnames, 
-                          'ice_frac_young', 
-                          'ice_frac_old', 
-                          'alb_diff_veg',
-                          'alb_diff_veg_ice_parts',
-                          'alb_diff_veg_ice')
+foo2 = alb_diff_df[which(alb_diff_df$ice_frac_young > alb_diff_df$ice_frac_old),]
 
 
-cell_ids = unique(alb_grid_full$cell_id)
-N_cells  = length(cell_ids)
-for (i in 1:N_cells){
-  
-  print(paste0('Cell ', i, ' of ', N_cells))
-  
-  for (month in months){
-    
-    # print(paste0('>> ', month))
-    
-    alb_cell = alb_grid_full[which((alb_grid_full$cell_id == cell_ids[i])&(alb_grid_full$month == month)),] 
-    alb_cell = alb_cell[order(alb_cell$year),]
-    # alb_cell = alb_cell[which(is.na(alb_cell$ice)),]
-    
-    if (nrow(alb_cell) == 1){
-      next
-    } 
-    
-    alb_cell_filled = merge(years_df, alb_cell, all.x=TRUE)
-    
-    alb_diff_df = rbind(alb_diff_df, 
-                        data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
-                                          select=-c(ice)), 
-                                   # alb_ice = alb_cell_filled[2:nrow(alb_cell_filled), 'alb_ice'],
-                                   # alb_mean_ice_young = alb_cell_filled[1:(nrow(alb_cell_filled)-1), 'alb_mean_ice'],
-                                   ice_frac_young = alb_cell_filled$ice[1:(nrow(alb_cell_filled)-1)],
-                                   ice_frac_old = alb_cell_filled$ice[2:nrow(alb_cell_filled)],
-                                   alb_diff_veg = -diff(alb_cell_filled$alb_mean),
-                                   alb_diff_veg_ice_parts = -diff(alb_cell_filled$alb_veg_ice_parts),
-                                   alb_diff_veg_ice = -diff(alb_cell_filled$alb_veg_ice)))
-  }
-}
+ggplot(data=foo2) +
+  geom_point(aes(x=ice_frac_old, y=ice_frac_young, size=year, colour=y))
 
-alb_diff_df =  alb_diff_df[which(!is.na(alb_diff_df$lat)),]
+ggplot(data=foo2) +
+  geom_point(aes(x=ice_frac_old-ice_frac_young, y=year))
 
-saveRDS(alb_diff_df, paste0('data/alb_interp_preds_full_diffs_', alb_prod, '.RDS'))
+# 
+# saveRDS(alb_diff_df, paste0('data/alb_interp_preds_full_diffs_', alb_prod, '.RDS'))
 
 
+
+# years_df = data.frame(year = ages)
+# 
+# alb_diff_colnames = c('cell_id', 'lat', 'long', 'x', 'y', 'year', 'month', 'area', 'area_km2')
+# 
+# alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=length(alb_diff_colnames)+12))
+# # alb_diff_colnames = colnames(alb_grid_full)[which(!(colnames(alb_grid_full) %in% 'ice'))]
+# 
+# colnames(alb_diff_df) = c(alb_diff_colnames, 
+#                           # 'ice_albedo',
+#                           'ice_frac_young', 
+#                           'ice_frac_old', 
+#                           'alb_diff_veg_thresh',
+#                           'alb_diff_ice_thresh',
+#                           'alb_diff_veg_ice_thresh',
+#                           'alb_diff_icesc_thresh',
+#                           'alb_diff_veg_icesc_thresh',
+#                           'alb_diff_veg_part',
+#                           'alb_diff_ice_part',
+#                           'alb_diff_veg_ice_parts',
+#                           'alb_diff_icesc_part',
+#                           'alb_diff_veg_icesc_parts')
+# 
+# # alb_grid_full$alb_mean_ice = alb_grid_full$alb_mean
+# # alb_grid_full$alb_mean_ice[which(!is.na(alb_grid_full$ice))] = 0.5
+# 
+# cell_ids = unique(alb_grid_full$cell_id)
+# N_cells  = length(cell_ids)
+# for (i in 1:N_cells){
+#   
+#   print(paste0('Cell ', i, ' of ', N_cells))
+#   
+#   for (month in months){
+#     
+#     # print(paste0('>> ', month))
+#     
+#     alb_cell = alb_grid_full[which((alb_grid_full$cell_id == cell_ids[i])&(alb_grid_full$month == month)),] 
+#     alb_cell = alb_cell[order(alb_cell$year),]
+#     # alb_cell = alb_cell[which(is.na(alb_cell$ice)),]
+#     
+#     if (nrow(alb_cell) == 1){
+#       next
+#     } 
+#     
+#     alb_cell_filled = merge(years_df, alb_cell, all.x=TRUE)
+#     
+#     
+#     
+#     # colnames(alb_diff_df) = c(alb_diff_colnames, 
+#     #                           # 'ice_albedo',
+#     #                           'ice_frac_young', 
+#     #                           'ice_frac_old', 
+#     #                           'alb_diff_veg_thresh',
+#     #                           'alb_diff_ice_thresh',
+#     #                           'alb_diff_veg_ice_thresh',
+#     #                           'alb_diff_icesc_thresh',
+#     #                           'alb_diff_veg_icesc_thresh',
+#     #                           'alb_diff_veg_part',
+#     #                           'alb_diff_ice_part',
+#     #                           'alb_diff_veg_ice_parts',
+#     #                           'alb_diff_icesc_part',
+#     #                           'alb_diff_veg_icesc_parts')
+#     
+#     
+#     alb_diff_df = rbind(alb_diff_df, 
+#                         data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
+#                                           select=alb_diff_colnames), 
+#                                    ice_frac_young = alb_cell_filled$ice_frac[1:(nrow(alb_cell_filled)-1)],
+#                                    ice_frac_old = alb_cell_filled$ice_frac[2:nrow(alb_cell_filled)],
+#                                    alb_diff_veg_thresh = -diff(alb_cell_filled$alb_veg_thresh),
+#                                    alb_diff_ice_thresh = -diff(alb_cell_filled$alb_ice_thresh),
+#                                    alb_diff_veg_ice_thresh = -diff(alb_cell_filled$alb_veg_ice_thresh),
+#                                    alb_diff_icesc_thresh = -diff(alb_cell_filled$alb_icesc_thresh),
+#                                    alb_diff_veg_icesc_thresh = -diff(alb_cell_filled$alb_veg_icesc_thresh),
+#                                    alb_diff_veg_part = -diff(alb_cell_filled$alb_veg_part),
+#                                    alb_diff_ice_part = -diff(alb_cell_filled$alb_ice_part),
+#                                    alb_diff_veg_ice_parts = -diff(alb_cell_filled$alb_veg_ice_parts),
+#                                    alb_diff_icesc_part = -diff(alb_cell_filled$alb_icesc_part),
+#                                    alb_diff_veg_icesc_parts = -diff(alb_cell_filled$alb_veg_icesc_parts)))
+#     
+#     # alb_diff_df = rbind(alb_diff_df, 
+#     #                     data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
+#     #                                       select=-c(ice)), 
+#     #                                alb_ice = alb_cell_filled[2:nrow(alb_cell_filled), 'alb_ice'],
+#     #                                # alb_mean_ice_young = alb_cell_filled[1:(nrow(alb_cell_filled)-1), 'alb_mean_ice'],
+#     #                                ice_frac_young = alb_cell_filled$ice[1:(nrow(alb_cell_filled)-1)],
+#     #                                ice_frac_old = alb_cell_filled$ice[2:nrow(alb_cell_filled)],
+#     #                                alb_diff_veg = -diff(alb_cell_filled$alb_mean),
+#     #                                alb_diff_veg_ice_parts = -diff(alb_cell_filled$alb_veg_ice_parts),
+#     #                                alb_diff_veg_ice = -diff(alb_cell_filled$alb_veg_ice)))
+#   }
+# }
+# 
+# alb_diff_df =  alb_diff_df[which(!is.na(alb_diff_df$lat)),]
+# 
+# 
+# saveRDS(alb_diff_df, paste0('data/ALB_diffs_', alb_prod, '.RDS'))
+# 
+# # 
+# # saveRDS(alb_diff_df, paste0('data/alb_interp_preds_full_diffs_', alb_prod, '.RDS'))
+
+# ###############################################################################################################
+# ## plot albedo prediction differences
+# ###############################################################################################################
+# 
+# years_df = data.frame(year = ages)
+# 
+# alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=ncol(alb_grid_full)+6))
+# alb_diff_colnames = colnames(alb_grid_full)[which(!(colnames(alb_grid_full) %in% 'ice'))]
+# 
+# colnames(alb_diff_df) = c(alb_diff_colnames, 
+#                           'ice_frac_young', 
+#                           'ice_frac_old', 
+#                           'alb_diff_veg',
+#                           'alb_diff_veg_ice_parts',
+#                           'alb_diff_veg_ice')
+# 
+# 
+# cell_ids = unique(alb_grid_full$cell_id)
+# N_cells  = length(cell_ids)
+# for (i in 1:N_cells){
+#   
+#   print(paste0('Cell ', i, ' of ', N_cells))
+#   
+#   for (month in months){
+#     
+#     # print(paste0('>> ', month))
+#     
+#     alb_cell = alb_grid_full[which((alb_grid_full$cell_id == cell_ids[i])&(alb_grid_full$month == month)),] 
+#     alb_cell = alb_cell[order(alb_cell$year),]
+#     # alb_cell = alb_cell[which(is.na(alb_cell$ice)),]
+#     
+#     if (nrow(alb_cell) == 1){
+#       next
+#     } 
+#     
+#     alb_cell_filled = merge(years_df, alb_cell, all.x=TRUE)
+#     
+#     alb_diff_df = rbind(alb_diff_df, 
+#                         data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
+#                                           select=-c(ice)), 
+#                                    # alb_ice = alb_cell_filled[2:nrow(alb_cell_filled), 'alb_ice'],
+#                                    # alb_mean_ice_young = alb_cell_filled[1:(nrow(alb_cell_filled)-1), 'alb_mean_ice'],
+#                                    ice_frac_young = alb_cell_filled$ice[1:(nrow(alb_cell_filled)-1)],
+#                                    ice_frac_old = alb_cell_filled$ice[2:nrow(alb_cell_filled)],
+#                                    alb_diff_veg = -diff(alb_cell_filled$alb_mean),
+#                                    alb_diff_veg_ice_parts = -diff(alb_cell_filled$alb_veg_ice_parts),
+#                                    alb_diff_veg_ice = -diff(alb_cell_filled$alb_veg_ice)))
+#   }
+# }
+# 
+# alb_diff_df =  alb_diff_df[which(!is.na(alb_diff_df$lat)),]
+# 
+# saveRDS(alb_diff_df, paste0('data/alb_interp_preds_full_diffs_', alb_prod, '.RDS'))
+# 
+#
 # ###############################################################################################################
 # ## albedo differences for subset of times
 # ###############################################################################################################

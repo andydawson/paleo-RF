@@ -71,8 +71,10 @@ rk_hadgem = brick('data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc', leve
 # 
 # alb_diff = alb_interp_diff
 
-alb_interp_diff_full = readRDS(paste0('data/alb_interp_preds_full_diffs_', alb_prod, '.RDS'))
+# alb_interp_diff_full = readRDS(paste0('data/alb_interp_preds_full_diffs_', alb_prod, '.RDS'))
 # alb_interp_diff_full[which(alb_interp_diff_full$year == 11500)] = 12000
+alb_interp_diff_full = readRDS(paste0('data/ALB_diffs_', alb_prod, '.RDS'))
+
 
 alb_diff = alb_interp_diff_full
 
@@ -149,10 +151,10 @@ for (month in months){
   rk_hadgem_df = as.data.frame(rk_hadgem[[month_number]], xy=TRUE)
   colnames(rk_hadgem_df) = c('x', 'y', 'kernel')
   
-  # ggplot() +
-  #   geom_raster(data=rk_hadgem_df, aes(x=x, y=y, fill=kernel)) +
-  #   geom_point(data=data.frame(alb_diff_spatial), aes(x=long360, y=lat), shape=1, alpha=0.1) +
-  #   scale_fill_gradientn(colours = terrain.colors(10))
+  ggplot() +
+    geom_raster(data=rk_hadgem_df, aes(x=x, y=y, fill=kernel)) +
+    geom_point(data=data.frame(alb_diff_spatial), aes(x=long360, y=lat), shape=1, alpha=0.1) +
+    scale_fill_gradientn(colours = terrain.colors(10))
   
   ##
   ## CAM5
@@ -251,20 +253,95 @@ for (month in months){
 alb_diff = alb_diff[which(alb_diff$lat>27),]
 alb_diff = alb_diff[which(alb_diff$lat<74),]
 
-alb_diff$rf_hadgem_veg = alb_diff$alb_diff_veg*100 * alb_diff$rk_hadgem
-alb_diff$rf_hadgem_veg_ice = alb_diff$alb_diff_veg_ice*100 * alb_diff$rk_hadgem
+alb_diff$rf_hadgem_veg_thresh = alb_diff$alb_diff_veg_thresh*100 * alb_diff$rk_hadgem
+alb_diff$rf_hadgem_ice_thresh = alb_diff$alb_diff_ice_thresh*100 * alb_diff$rk_hadgem
+alb_diff$rf_hadgem_icesc_thresh = alb_diff$alb_diff_icesc_thresh*100 * alb_diff$rk_hadgem
+alb_diff$rf_hadgem_veg_ice_thresh = alb_diff$alb_diff_veg_ice_thresh*100 * alb_diff$rk_hadgem
+alb_diff$rf_hadgem_veg_icesc_thresh = alb_diff$alb_diff_veg_icesc_thresh*100 * alb_diff$rk_hadgem
+
+alb_diff$rf_hadgem_veg_part = alb_diff$alb_diff_veg_part*100 * alb_diff$rk_hadgem
+alb_diff$rf_hadgem_ice_part = alb_diff$alb_diff_ice_part*100 * alb_diff$rk_hadgem
+alb_diff$rf_hadgem_icesc_part = alb_diff$alb_diff_icesc_part*100 * alb_diff$rk_hadgem
 alb_diff$rf_hadgem_veg_ice_parts = alb_diff$alb_diff_veg_ice_parts*100 * alb_diff$rk_hadgem
+alb_diff$rf_hadgem_veg_icesc_parts = alb_diff$alb_diff_veg_icesc_parts*100 * alb_diff$rk_hadgem
 
-# calculate radiative forcing
-alb_diff$rf_cam5_veg = alb_diff$alb_diff_veg*100 * alb_diff$rk_cam5
-alb_diff$rf_cam5_veg_ice = alb_diff$alb_diff_veg_ice*100 * alb_diff$rk_cam5
+
+alb_diff$rf_cam5_veg_thresh = alb_diff$alb_diff_veg_thresh*100 * alb_diff$rk_cam5
+alb_diff$rf_cam5_ice_thresh = alb_diff$alb_diff_ice_thresh*100 * alb_diff$rk_cam5
+alb_diff$rf_cam5_icesc_thresh = alb_diff$alb_diff_icesc_thresh*100 * alb_diff$rk_cam5
+alb_diff$rf_cam5_veg_ice_thresh = alb_diff$alb_diff_veg_ice_thresh*100 * alb_diff$rk_cam5
+alb_diff$rf_cam5_veg_icesc_thresh = alb_diff$alb_diff_veg_icesc_thresh*100 * alb_diff$rk_cam5
+
+alb_diff$rf_cam5_veg_part = alb_diff$alb_diff_veg_part*100 * alb_diff$rk_cam5
+alb_diff$rf_cam5_ice_part = alb_diff$alb_diff_ice_part*100 * alb_diff$rk_cam5
+alb_diff$rf_cam5_icesc_part = alb_diff$alb_diff_icesc_part*100 * alb_diff$rk_cam5
 alb_diff$rf_cam5_veg_ice_parts = alb_diff$alb_diff_veg_ice_parts*100 * alb_diff$rk_cam5
+alb_diff$rf_cam5_veg_icesc_parts = alb_diff$alb_diff_veg_icesc_parts*100 * alb_diff$rk_cam5
 
-# calculate radiative forcing
-alb_diff$rf_cack_veg = alb_diff$alb_diff_veg * (-alb_diff$rk_cack)
-alb_diff$rf_cack_veg_ice = alb_diff$alb_diff_veg_ice * (-alb_diff$rk_cack)
-alb_diff$rf_cack_veg_ice_parts = alb_diff$alb_diff_veg_ice_parts * (-alb_diff$rk_cack)
+# # calculate radiative forcing
+# alb_diff$rf_cam5_veg = alb_diff$alb_diff_veg*100 * alb_diff$rk_cam5
+# alb_diff$rf_cam5_veg_ice = alb_diff$alb_diff_veg_ice*100 * alb_diff$rk_cam5
+# alb_diff$rf_cam5_veg_ice_parts = alb_diff$alb_diff_veg_ice_parts*100 * alb_diff$rk_cam5
+
+# # calculate radiative forcing
+# alb_diff$rf_cack_veg = alb_diff$alb_diff_veg * (-alb_diff$rk_cack)
+# alb_diff$rf_cack_veg_ice = alb_diff$alb_diff_veg_ice * (-alb_diff$rk_cack)
+# alb_diff$rf_cack_veg_ice_parts = alb_diff$alb_diff_veg_ice_parts * (-alb_diff$rk_cack)
+
+alb_diff$rf_cack_veg_thresh = alb_diff$alb_diff_veg_thresh* (-alb_diff$rk_cack)
+alb_diff$rf_cack_ice_thresh = alb_diff$alb_diff_ice_thresh* (-alb_diff$rk_cack)
+alb_diff$rf_cack_icesc_thresh = alb_diff$alb_diff_icesc_thresh* (-alb_diff$rk_cack)
+alb_diff$rf_cack_veg_ice_thresh = alb_diff$alb_diff_veg_ice_thresh* (-alb_diff$rk_cack)
+alb_diff$rf_cack_veg_icesc_thresh = alb_diff$alb_diff_veg_icesc_thresh* (-alb_diff$rk_cack)
+
+alb_diff$rf_cack_veg_part = alb_diff$alb_diff_veg_part* (-alb_diff$rk_cack)
+alb_diff$rf_cack_ice_part = alb_diff$alb_diff_ice_part* (-alb_diff$rk_cack)
+alb_diff$rf_cack_icesc_part = alb_diff$alb_diff_icesc_part* (-alb_diff$rk_cack)
+alb_diff$rf_cack_veg_ice_parts = alb_diff$alb_diff_veg_ice_parts* (-alb_diff$rk_cack)
+alb_diff$rf_cack_veg_icesc_parts = alb_diff$alb_diff_veg_icesc_parts* (-alb_diff$rk_cack)
 
 
-saveRDS(alb_diff, paste0('output/forcing/RF_holocene_full.RDS'))
+bar = alb_diff[which((alb_diff$rf_hadgem_ice_thresh>100)&(alb_diff$month=='jun')),]
+
+# foo = which((alb_diff$r
+
+bar[,c('cell_id', 'lat', 'long', 'ice_frac_old', 'ice_frac_young', 
+       'alb_diff_ice_thresh', 'rk_hadgem', 'rf_hadgem_ice_thresh',  
+       'rk_cam5', 'rf_cam5_ice_thresh')]
+
+head(bar[,c('cell_id', 'lat', 'long', 'ice_frac_old', 'ice_frac_young', 
+                   'alb_diff_ice_thresh', 'rk_hadgem', 'rf_hadgem_ice_thresh', 'rf_hadgem_ice_part')])
+
+# -0.3326444 -3.297408
+
+-0.3326444*-3.297408
+
+ggplot(data=bar) +
+  geom_point(aes(x=alb_diff_ice_thresh, y=alb_diff_ice_part)) +
+  coord_fixed()
+
+ggplot(data=bar) +
+  geom_point(aes(x=ice_frac_old, y=alb_diff_ice_thresh)) +
+  geom_point(aes(x=ice_frac_old, y=alb_diff_ice_part), colour='dodgerblue', alpha=0.5)
+
+ggplot(data=bar) +
+  geom_histogram(aes(x=alb_diff_ice_thresh - alb_diff_ice_part)) 
+
+ggplot(data=bar) +
+  geom_point(aes(x=ice_frac_old, y=-rk_hadgem*100)) +
+  geom_point(aes(x=ice_frac_old, y=rk_cack), colour='dodgerblue', alpha=0.5) +
+  geom_point(aes(x=ice_frac_old, y=-rk_cam5*100), colour='pink', alpha=0.5)
+
+
+ggplot(data=bar) +
+  geom_point(aes(x=ice_frac_old, y=-rk_hadgem*100*alb_diff_ice_thresh)) +
+  geom_point(aes(x=ice_frac_old, y=rk_cack*alb_diff_ice_thresh), colour='dodgerblue', alpha=0.5) +
+  geom_point(aes(x=ice_frac_old, y=-rk_cam5*100*alb_diff_ice_thresh), colour='pink', alpha=0.5)
+
+
+bar$alb_diff_ice_thresh
+
+#alb_diff_ice_part > alb_diff_ice_thresh
+
+saveRDS(alb_diff, paste0('output/forcing/RF_holocene_all_cases.RDS'))
 

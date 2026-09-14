@@ -169,23 +169,79 @@ cal_interp_sim_gam_quants = cal_interp_sim_gam_all %>%
             alb_hi = quantile(alb_model, c(0.975), na.rm=TRUE),
             .groups = "keep")
 
+annotation_data = data.frame(month=months, label=round(cor_all,2), x=-Inf, y=Inf)
+
 p = ggplot(data=cal_interp_sim_gam_quants) +
-  geom_point(aes(x=alb_data, y=alb_mean), size=2, alpha=0.3) +
-  geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.3) +
-  geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2, alpha=0.4) +
+  geom_point(aes(x=alb_data, y=alb_mean), size=0.8, alpha=0.3) +
+  geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.2) +
+  geom_abline(slope=1, intercept=0, colour="red", lwd=0.5, lty=2, alpha=0.5) +
   xlim(c(0,1)) +
   ylim(c(0,1)) +
   coord_fixed() +
-  theme_bw(18) +
+  theme_light(15) +
   # theme(axis.title = element_text(size=12),
   #       axis.text = element_text(size=12)) +
   xlab('albedo (data)') +
   ylab('albedo (model)') +
   # labs(title = paste0(month, '; cor ', round(cor_month, 2))) +
-  facet_wrap(~month)
+  facet_wrap(~factor(month, levels = months), ncol=4)
+p = p + geom_text(
+  data = annotation_data,
+  aes(x = x, y = y, label = label),
+  hjust = -0.2,    # 0 for left justification
+  vjust = 1.3,    # 1 for top justification
+  inherit.aes = FALSE, # Do not inherit aesthetics from the main plot
+  color = "grey30",
+  size = 4
+)
 print(p)
 ggsave('figures/cal_model_vs_data_gam_error_facet.pdf', width=12, height=10)
 ggsave('figures/cal_model_vs_data_gam_error_facet.png', width=12, height=10)
+
+###############################################################################################################
+## calibration model: fraction of data falling within credible intervals
+## 
+###############################################################################################################
+
+cal_interp_sim_gam_quants = cal_interp_sim_gam_quants %>% 
+  mutate(in_credible=((alb_data>alb_lo)&(alb_data<alb_hi)))
+
+cal_interp_sim_gam_quants$alb_diff = cal_interp_sim_gam_quants$alb_mid - cal_interp_sim_gam_quants$alb_data
+
+p = ggplot(data=cal_interp_sim_gam_quants) +
+  geom_histogram(aes(x=alb_diff, y=..density..)) +
+  # geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.2) +
+  # geom_abline(slope=1, intercept=0, colour="red", lwd=0.5, lty=2, alpha=0.5) +
+  theme_light(15) +
+  # theme(axis.title = element_text(size=12),
+  #       axis.text = element_text(size=12)) +
+  # xlab('albedo (data)') +
+  # ylab('albedo (model)') +
+  # labs(title = paste0(month, '; cor ', round(cor_month, 2))) +
+  facet_wrap(~factor(month, levels = months), ncol=4)
+print(p)
+ggsave('figures/cal_model_data_diff_histogram_facet.pdf', width=12, height=10)
+ggsave('figures/cal_model_data_diff_histogram_facet.png', width=12, height=10)
+
+cal_interp_sim_gam_quants %>% 
+  group_by(month) %>%
+  summarize(frac_in=sum(in_credible, na.rm=TRUE)/n())
+
+
+cal_diff = cal_interp_sim_gam_quants %>% 
+  group_by(month) %>%
+  summarize(alb_corr = round(cor(alb_mid, alb_data,, use = "pairwise.complete.obs"),2),
+            frac_in=round(sum(in_credible, na.rm=TRUE)/n(),2),   
+            diff_lo = round(quantile(alb_diff, c(0.025), na.rm=TRUE),2),
+            # diff_mid = round(quantile(alb_diff, c(0.5), na.rm=TRUE),2),
+            diff_hi = round(quantile(alb_diff, c(0.975), na.rm=TRUE),2),
+            .groups = "keep")
+
+cal_diff 
+
+colnames(cal_diff) = c('month', 'correlation', 'data in credible interval', 'diff lower (model - data; 2.5%)', 'diff upper (model - data; 97.5%)')
+
+write.csv(cal_diff, 'output/calibration/calibration_model_stats.csv', row.names = FALSE)
 
 ###############################################################################################################
 ## calibration model: spatial effects experiment
@@ -265,7 +321,7 @@ cal_sim_SPE = data.frame(x = numeric(0),
 # model_SP_ELEV = readRDS(paste0('output/calibration/calibration_mod_spatial_elev_', month, '.RDS'))
 # model_ELEV = readRDS(paste0('output/calibration/calibration_mod_elev_', month, '.RDS'))
 
-models = c('SP_ELEV_LC', 'ELEV_LC', 'SP_LC', 'SP', 'SP_ELEV', 'ELEV')
+models = c('SP_ELEV_LC', 'ELEV_LC', 'LC', 'SP_LC', 'SP', 'SP_ELEV', 'ELEV')
 
 cal_sims = data.frame(matrix(nrow=0, ncol=7))
 colnames(cal_sims) = c('x', 'y', 'alb_data', 'variable', 'alb_pred', 'month', 'model')
@@ -283,28 +339,15 @@ for (n in 1:length(months)){
   # 
   # cal_interp_model = mod8_interp
   
-  model_SP_ELEV_LC = readRDS(paste0('output/calibration/calibration_mod_interp_selected_', month, '_', alb_prod, '.RDS'))
+  model_SP_ELEV_LC = readRDS(paste0('output/calibration/spatial_experiment/calibration_mod_interp_selected_', month, '_', alb_prod, '.RDS'))
   
-  model_ELEV_LC = readRDS(paste0('output/calibration/calibration_mod_cover_elev_', month, '.RDS'))
-  model_LC = readRDS(paste0('output/calibration/calibration_mod_cover_', month, '.RDS'))
-  model_SP_LC = readRDS(paste0('output/calibration/calibration_mod_spatial_cover_', month, '.RDS'))
-  model_SP = readRDS(paste0('output/calibration/calibration_mod_spatial_', month, '.RDS'))
-  model_SP_ELEV = readRDS(paste0('output/calibration/calibration_mod_spatial_elev_', month, '.RDS'))
-  model_ELEV = readRDS(paste0('output/calibration/calibration_mod_elev_', month, '.RDS'))
-  
-  # cal_interp_predict_gam = predict(cal_interp_model,
-  #                                  newdata = cal_interp_data,
-  #                                  type = 'response')
-  # 
-  # cal_interp_eval_gam = data.frame(cal_interp_data[, c('x', 'y', 'elev', 'ET', 'OL', 'ST', month)],
-  #                                  alb_pred = cal_interp_predict_gam)
-  # 
-  # cor_month = cor(cal_interp_eval_gam[,month], cal_interp_eval_gam$alb_mean, use='complete')
-  # cor_month
-  # cor_all[n] = cor_month
-  
-  cal_sims_month
-  
+  model_ELEV_LC = readRDS(paste0('output/calibration/spatial_experiment/calibration_mod_cover_elev_', month, '.RDS'))
+  model_LC = readRDS(paste0('output/calibration/spatial_experiment/calibration_mod_cover_', month, '.RDS'))
+  model_SP_LC = readRDS(paste0('output/calibration/spatial_experiment/calibration_mod_spatial_cover_', month, '.RDS'))
+  model_SP = readRDS(paste0('output/calibration/spatial_experiment/calibration_mod_spatial_', month, '.RDS'))
+  model_SP_ELEV = readRDS(paste0('output/calibration/spatial_experiment/calibration_mod_spatial_elev_', month, '.RDS'))
+  model_ELEV = readRDS(paste0('output/calibration/spatial_experiment/calibration_mod_elev_', month, '.RDS'))
+
   for (model in models){
     
     model_name = eval(as.name(paste0('model_', model)))
@@ -325,42 +368,19 @@ for (n in 1:length(months)){
     
   }
   
-  # sim_SP_ELEV_LC = simulate(model_SP_ELEV_LC,
-  #                           nsim = 100,
-  #                           data = cal_interp_data[,c('x', 'y', 'elev', 'ET', 'OL', 'ST', month)])
-  # sim_SP_ELEV_LC_df = data.frame(cal_interp_data[,c('x', 'y', month)],
-  #                                 sim_SP_ELEV_LC)
-  # sim_SP_ELEV_LC_melt = melt(sim_SP_ELEV_LC_df,
-  #                                id.vars = c('x', 'y', month))
-  # colnames(sim_SP_ELEV_LC_melt) = c('x', 'y', 'alb_data', 'variable', 'alb_pred')
-  # sim_SP_ELEV_LC_melt$month = rep(month)
-  # sim_SP_ELEV_LC_melt$model = rep('SP_ELEV_LC')
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  cal_interp_sim_gam_all = rbind(cal_interp_sim_gam_all, 
-                                 cal_interp_sim_gam_melt)
-  
 }
 
-cal_interp_sim_gam_all$month = factor(cal_interp_sim_gam_all$month, levels = months)
+cal_sims$month = factor(cal_sims$month, levels = months)
 
-cal_interp_sim_gam_quants = cal_interp_sim_gam_all %>%
-  group_by(x, y, alb_data, month) %>%
-  summarize(alb_mean = mean(alb_model),
-            alb_lo = quantile(alb_model, c(0.025), na.rm=TRUE),
-            alb_mid = quantile(alb_model, c(0.5), na.rm=TRUE),
-            alb_hi = quantile(alb_model, c(0.975), na.rm=TRUE),
+cal_sims_quants = cal_sims %>%
+  group_by(x, y, alb_data, month, model) %>%
+  summarize(alb_mean = mean(alb_pred),
+            alb_lo = quantile(alb_pred, c(0.025), na.rm=TRUE),
+            alb_mid = quantile(alb_pred, c(0.5), na.rm=TRUE),
+            alb_hi = quantile(alb_pred, c(0.975), na.rm=TRUE),
             .groups = "keep")
 
-p = ggplot(data=cal_interp_sim_gam_quants) +
+p = ggplot(data=cal_sims_quants) +
   geom_point(aes(x=alb_data, y=alb_mean), size=2, alpha=0.3) +
   geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.3) +
   geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2, alpha=0.4) +
@@ -375,8 +395,59 @@ p = ggplot(data=cal_interp_sim_gam_quants) +
   # labs(title = paste0(month, '; cor ', round(cor_month, 2))) +
   facet_wrap(~month)
 print(p)
-ggsave('figures/cal_model_vs_data_gam_error_facet.pdf', width=12, height=10)
-ggsave('figures/cal_model_vs_data_gam_error_facet.png', width=12, height=10)
+# ggsave('figures/cal_model_vs_data_gam_error_facet.pdf', width=12, height=10)
+# ggsave('figures/cal_model_vs_data_gam_error_facet.png', width=12, height=10)
+
+p = ggplot(data=cal_sims_quants) +
+  geom_point(aes(x=alb_data, y=alb_mean), size=2, alpha=0.3) +
+  geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.3) +
+  geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2, alpha=0.4) +
+  xlim(c(0,1)) +
+  ylim(c(0,1)) +
+  coord_fixed() +
+  theme_bw(18) +
+  # theme(axis.title = element_text(size=12),
+  #       axis.text = element_text(size=12)) +
+  xlab('albedo (data)') +
+  ylab('albedo (model)') +
+  # labs(title = paste0(month, '; cor ', round(cor_month, 2))) +
+  facet_wrap(~model)
+print(p)
+
+p = ggplot(data=cal_sims_quants) +
+  geom_point(aes(x=alb_data, y=alb_mean), size=2, alpha=0.3) +
+  geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.3) +
+  geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2, alpha=0.4) +
+  xlim(c(0,1)) +
+  ylim(c(0,1)) +
+  coord_fixed() +
+  theme_bw(18) +
+  # theme(axis.title = element_text(size=12),
+  #       axis.text = element_text(size=12)) +
+  xlab('albedo (data)') +
+  ylab('albedo (model)') +
+  # labs(title = paste0(month, '; cor ', round(cor_month, 2))) +
+  facet_grid(month~model)
+print(p)
+
+cal_sims$alb_error = cal_sims$alb_pred - cal_sims$alb_data
+
+p = ggplot(data=cal_sims) +
+  geom_histogram(aes(x=alb_error, y=..density..), size=2, alpha=0.3) +
+  # geom_point(aes(x=alb_data, y=alb_mean), size=2, alpha=0.3) +
+  # geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.3) +
+  # geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2, alpha=0.4) +
+  # xlim(c(0,1)) +
+  # ylim(c(0,1)) +
+  # coord_fixed() +
+  theme_bw(18) +
+  # theme(axis.title = element_text(size=12),
+  #       axis.text = element_text(size=12)) +
+  # xlab('albedo (data)') +
+  # ylab('albedo (model)') +
+  # labs(title = paste0(month, '; cor ', round(cor_month, 2))) +
+  facet_wrap(~model)
+print(p)
 
 
 # ###############################################################################################################

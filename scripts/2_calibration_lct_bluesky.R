@@ -86,11 +86,14 @@ names(blue_all_months_coarse) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul
 
 blue_all_months_coarse = crop(blue_all_months_coarse, ext(pbs_ll))
 
+library(scico)
+
 ggplot() +
   geom_path(data=pbs_ll, aes(long,lat, group = group), color="grey50") +
   geom_spatraster(data=blue_all_months, alpha=0.8) +
-  scale_fill_gradientn(colours=terrain.colors(10), na.value='transparent', name = "Albedo") + 
-  theme_bw() + 
+  # scale_fill_gradientn(colours=terrain.colors(10), na.value='transparent', name = "Albedo") + 
+  scale_fill_scico(palette='batlow', na.value='transparent', name = "Albedo") +
+  theme_light() + 
   theme(axis.text.x= element_blank(), axis.ticks = element_blank(), axis.title = element_blank())+
   facet_wrap(~lyr)
 ggsave('figures/albedo_maps_monthly_bluesky_native.pdf')
@@ -281,7 +284,7 @@ ggplot() +
   geom_path(data=pbs_ll, aes(long,lat, group = group), color="grey50") +
   geom_spatraster(data=blue_all_months, alpha=0.8) +
   scale_fill_gradientn(colours=terrain.colors(10), na.value='transparent', name = "Albedo") + 
-  theme_bw() + 
+  theme_light() + 
   theme(axis.text.x= element_blank(), axis.ticks = element_blank(), axis.title = element_blank())+
   facet_wrap(~lyr)
 ggsave('figures/albedo_maps_monthly_bluesky_native.pdf')

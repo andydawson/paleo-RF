@@ -491,3 +491,132 @@ ggplot() +
   facet_grid(variable~.)
 ggsave('figures/LCT_gridded_maps_calibration_interp.pdf')
 ggsave('figures/LCT_gridded_maps_calibration_interp.png')
+
+###############################################################################################################
+## albedo versus other vars
+###############################################################################################################
+
+cal_long = cal_lct_melt
+
+ggplot(data=cal_long, aes(x=lat, y=albedo)) +
+  geom_point(alpha=0.2) +
+  facet_wrap(~month)
+
+ggplot(data=cal_long, aes(x=elev, y=albedo)) +
+  geom_point(alpha=0.2) +
+  facet_wrap(~month)
+
+ggplot(data=cal_long, aes(x=value, y=albedo, colour=variable)) +
+  geom_point(alpha=0.2) +
+  facet_wrap(~month)
+
+ggplot(data=subset(cal_long, variable == 'ETS'), aes(x=value, y=albedo)) +
+  geom_point(alpha=0.2) +
+  facet_wrap(~month)
+
+ggplot(data=subset(cal_long, variable == 'STS'), aes(x=value, y=albedo)) +
+  geom_point(alpha=0.2) +
+  facet_wrap(~month)
+
+ggplot(data=subset(cal_long, variable == 'OVL'), aes(x=value, y=albedo)) +
+  geom_point(alpha=0.2) +
+  facet_wrap(~month)
+
+# # coarse
+# ggplot(data=cal_long_coarse, aes(x=lat, y=albedo)) +
+#   geom_point() +
+#   # geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
+# 
+# ggplot(data=cal_long_coarse, aes(x=long, y=albedo)) +
+#   geom_point() +
+#   geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
+# 
+# ggplot(data=cal_long_coarse, aes(x=elev, y=albedo)) +
+#   geom_point() +
+#   geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
+
+
+# ggplot(data=cal_long_point, aes(x=lat, y=albedo)) +
+#   geom_point() +
+#   # geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
+# 
+# ggplot(data=cal_long_point, aes(x=long, y=albedo)) +
+#   geom_point() +
+#   geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
+# 
+# ggplot(data=cal_long_point, aes(x=elev, y=albedo)) +
+#   geom_point() +
+#   geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
+
+
+# albedo versus land cover & snow
+
+
+
+cal_lct_melt = melt(cal_long, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
+
+ggplot() +
+  geom_point(data=cal_long, aes(x=OL, y=albedo)) +
+  facet_wrap(~month)
+
+ggplot() +
+  geom_point(data=cal_long, aes(x=ST, y=albedo)) +
+  facet_wrap(~month)
+
+ggplot() +
+  geom_point(data=cal_long, aes(x=ET, y=albedo)) +
+  facet_wrap(~month)
+
+# relationship between land cover type and albedo in month 5; weak but there
+ggplot(data=cal_lct_melt, aes(x=value, y=albedo, colour=variable)) +
+  geom_point(alpha=0.6) +
+  geom_smooth(se = TRUE, method = lm, fullrange=TRUE)+
+  facet_wrap(~month)
+
+
+# relationship between land cover type and albedo in month 5; weak but there
+ggplot(data=cal_lct_melt, aes(x=lat, y=value, colour=variable)) +
+  geom_point(alpha=0.6) +
+  geom_smooth(se = TRUE, method = lm, fullrange=TRUE)
+
+
+corr_lct = cal_lct_melt %>% 
+  filter((!(is.na(albedo)))&(!(is.na(value)))) %>%
+  group_by(variable, month) %>% 
+  summarize(cor = cor(albedo, value))
+
+
+# ggplot(data=corr_lct) + 
+#   geom_tile(aes(x=variable, y=factor(month), fill=cor)) +
+#   scale_fill_gradient2(low = muted("red"),
+#                        mid = "white",
+#                        high = muted("blue"),
+#                        midpoint = 0,
+#                        limits = c(-0.6, 0.6), 
+#                        space = "Lab",
+#                        na.value = "grey50")
+
+ggplot(data=corr_lct) + 
+  geom_point(aes(y=variable, x=factor(month), size=abs(cor), colour=cor)) +
+  scale_colour_gradient2(low = muted("red"),
+                         mid = "white",
+                         high = muted("blue"),
+                         midpoint = 0,
+                         limits = c(-0.6, 0.6), 
+                         space = "Lab",
+                         na.value = "grey50") +
+  theme_bw() +
+  theme(axis.text = element_text(size=14),
+        axis.ticks = element_line(size=1),
+        axis.title = element_text(size=16),
+        legend.text = element_text(size=14),
+        legend.title = element_text(size=16))
+
+
+
