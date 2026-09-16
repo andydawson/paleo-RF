@@ -255,3 +255,43 @@ earlier):
 - `beta_veg_lct_modern.R` line 13 is an incomplete assignment (`lct_modern =`)
   that swallows the next statement.
 - `4_calibration_model.R` hardcodes `nthreads = 8`.
+
+## Running the non-interp path (branch `run-nointerp`, 2026-09-16)
+
+The non-interp workflow is a **single-month (March) calibration**: the
+committed model files, the calibration table and the paleo predictions all
+carry March albedo only. With the edits on this branch (all marked
+`# [run-nointerp]`), scripts 2 to 7 run end to end from the data in the repo:
+
+| Script | Runtime | Result |
+|---|---|---|
+| 2 | ~3 min | regenerates `calibration_modern_lct_bluesky.RDS` identical to the committed file, plus `_coarse` and 26 albedo maps |
+| 3 | ~1 min | LCT pie, tricolore and gridded calibration maps |
+| 4 | ~90 min | March mod1-mod8 (+ mod7_free); mod8 is `calibration_model_selected` via script 5 |
+| 5 | seconds | AIC/ANOVA table, model-vs-data figures (corr 0.95) |
+| 6 | seconds | `paleo_predict_gam[_summary|_samps]_bluesky.RDS`; matches the committed predictions (corr 0.999, mean abs diff 0.007) |
+| 7 | ~6 min | 13 `alb_preds_*` figures, no ice-sheet overlay |
+
+Scripts 7a and 8 still cannot run: they need the Dalton ice raster, the
+glacier albedo CSV and the radiative-kernel NetCDFs, none of which are in the
+repo, and 7a reads only the interp predictions.
+
+What had to change (see the commit messages on the branch for detail):
+- A `run_interp` flag in each script, set from `file.exists()` on its interp
+  input, wraps the interp sections in `if (run_interp) { ... }`; the interp
+  code is otherwise untouched.
+- The commented-out March model ladder in script 4 is live again; the
+  `mod7_free` save bug is fixed; an unused, unsaved `mod9` at the end is
+  commented out (it cost 45 min for nothing).
+- `scripts/make_grid.R` is reconstructed for script 3; `rgeos`/`rgdal`
+  (retired) and `SemiPar` (archived, unused) are no longer loaded.
+- Script 7 builds an empty ice overlay when the shapefiles are missing.
+- **Data inconsistency found:** `data/lct_modern_reveals.RDS` is stale (1029
+  sites, cover in percent). Everything else non-interp uses 505 sites with
+  cover as proportions, and the age-50 slice of `lct_paleo_reveals.RDS` is
+  exactly the committed calibration site set. Script 2 now falls back to that
+  slice when the modern table is on the percent scale. Fitting on the stale
+  table gives a model that predicts albedo ~0 for all paleo cells.
+
+Regenerated data files are left uncommitted in the working tree (10 tracked
+files modified, 6 new). `git checkout data/` restores the committed versions.

@@ -781,14 +781,15 @@ anova_gam
 
 summary(mod7)
 
-mod9 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=30),
-                 data=cal_data, 
-                 family=betar(link="logit"), 
-                 method="REML", 
-                 na.action=na.omit, 
-                 control=ctrl,
-                 select = TRUE)
-gam.check(mod9)
+# [run-nointerp] mod9 (select = TRUE variant) is never saved or used downstream and costs ~45 min; left commented out
+# mod9 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=30),
+#                  data=cal_data, 
+#                  family=betar(link="logit"), 
+#                  method="REML", 
+#                  na.action=na.omit, 
+#                  control=ctrl,
+#                  select = TRUE)
+# gam.check(mod9)
 
 # ###############################################################################################################
 # ## compare models
