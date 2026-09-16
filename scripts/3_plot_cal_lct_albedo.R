@@ -1,13 +1,17 @@
 library(ggplot2)
 library(ggtern)
 library(scales)
-library(rgeos)
-library(rgdal)
+# library(rgeos)  # [run-nointerp] retired from CRAN (2023); not called directly in this script
+# library(rgdal)  # [run-nointerp] retired from CRAN (2023); not called directly in this script
+library(dplyr)   # [run-nointerp] %>% / group_by used below but dplyr was never loaded
 library(raster)
 library(reshape2)
 library(tricolore)
 
 alb_prod = 'bluesky'
+# [run-nointerp] see comment in 2_calibration_lct_bluesky.R
+run_interp = file.exists('data/calibration_modern_lct_interp_bluesky.RDS')
+dir.create('figures', showWarnings = FALSE)
 
 # cal_data = readRDS('data/lct_albedo_snow_modern_glob.RDS')
 # cal_data = readRDS('data/lct_albedo_snow_modern_albclim.RDS')
@@ -22,10 +26,10 @@ cal_long_coarse = melt(cal_data_coarse[,1:20], id.vars=c('long', 'lat', 'x', 'y'
 colnames(cal_long_coarse) = c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'month', 'albedo')
 cal_long_coarse$month = as.numeric(substr(cal_long_coarse$month, 4, 5))
 
-cal_data_point = readRDS(paste0('data/calibration_modern_lct_', alb_prod, '_point.RDS'))
-cal_long_point = melt(cal_data_point[,1:20], id.vars=c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
-colnames(cal_long_point) = c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'month', 'albedo')
-cal_long_point$month = as.numeric(substr(cal_long_point$month, 4, 5))
+# cal_data_point = readRDS(paste0('data/calibration_modern_lct_', alb_prod, '_point.RDS'))  # [run-nointerp] input not in repo
+# cal_long_point = melt(cal_data_point[,1:20], id.vars=c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))  # [run-nointerp] input not in repo
+# colnames(cal_long_point) = c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'month', 'albedo')  # [run-nointerp] input not in repo
+# cal_long_point$month = as.numeric(substr(cal_long_point$month, 4, 5))  # [run-nointerp] input not in repo
 
 
 
@@ -165,7 +169,7 @@ ggsave('figures/LCT_tricolore_map.pdf')
 
 cal_lct_melt = melt(cal_long, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
 cal_lct_coarse_melt = melt(cal_long_coarse, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
-cal_lct_point_melt = melt(cal_long_point, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
+# cal_lct_point_melt = melt(cal_long_point, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))  # [run-nointerp] input not in repo
 
 
 ggplot() +
@@ -229,20 +233,20 @@ ggplot(data=cal_long_coarse, aes(x=elev, y=albedo)) +
   facet_wrap(~month)
 
 
-ggplot(data=cal_long_point, aes(x=lat, y=albedo)) +
-  geom_point() +
-  # geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
+# ggplot(data=cal_long_point, aes(x=lat, y=albedo)) +  # [run-nointerp] point data not in repo
+#   geom_point() +
+#   # geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
 
-ggplot(data=cal_long_point, aes(x=long, y=albedo)) +
-  geom_point() +
-  geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
+# ggplot(data=cal_long_point, aes(x=long, y=albedo)) +  # [run-nointerp] point data not in repo
+#   geom_point() +
+#   geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
 
-ggplot(data=cal_long_point, aes(x=elev, y=albedo)) +
-  geom_point() +
-  geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
+# ggplot(data=cal_long_point, aes(x=elev, y=albedo)) +  # [run-nointerp] point data not in repo
+#   geom_point() +
+#   geom_smooth(se = TRUE, method = lm)+
+#   facet_wrap(~month)
 
 
 # albedo versus land cover & snow
@@ -310,6 +314,7 @@ ggplot(data=corr_lct) +
 
 
 
+if (run_interp) { # [run-nointerp] interp inputs are not in the repo
 ###############################################################################################################
 ## interp
 ###############################################################################################################
@@ -620,3 +625,5 @@ ggplot(data=corr_lct) +
 
 
 
+
+} # [run-nointerp] end of interp block
