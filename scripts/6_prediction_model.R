@@ -5,11 +5,15 @@ library(dplyr)
 library(sp)
 library(ggplot2)
 library(mgcv)
-library(SemiPar)
+# library(SemiPar)  # [run-nointerp] archived on CRAN; never used in this script
 library(gratia)
 library(reshape2)
 
 alb_prod = "bluesky"
+
+# [run-nointerp] see comment in 4_calibration_model.R
+run_interp = file.exists('data/lct_paleo_reveals_interp.RDS')
+dir.create('output/prediction', recursive = TRUE, showWarnings = FALSE)
 
 # months = c('feb', 'may', 'aug', 'nov')
 
@@ -20,6 +24,7 @@ months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct',
 alb_proj = '+proj=aea +lat_1=50 +lat_2=70 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0
 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
 
+if (run_interp) { # [run-nointerp] interp inputs are not in the repo
 lct_interp_paleo = readRDS('data/lct_paleo_reveals_interp.RDS')
 colnames(lct_interp_paleo)[1] = 'year'
 
@@ -105,6 +110,7 @@ for (month in months) {
 
 saveRDS(alb_preds_months, paste0('output/prediction/paleo_interp_predict_gam_', alb_prod, '.RDS'))
 saveRDS(alb_preds_summary_months, paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
+} # [run-nointerp] end of interp block
 
 ###############################################################################################################
 ## XXX OLD

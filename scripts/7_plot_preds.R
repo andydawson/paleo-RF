@@ -7,6 +7,10 @@ library(raster)
 
 alb_prod = "bluesky"
 
+# [run-nointerp] see comment in 4_calibration_model.R
+run_interp = file.exists(paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
+dir.create('figures', showWarnings = FALSE)
+
 ###############################################################################################################
 ## read in prediction and map data
 ###############################################################################################################
@@ -45,6 +49,7 @@ proj_WGS84 <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
 ## read in prediction and map data
 ###############################################################################################################
 
+if (file.exists('data/map-data/ice/glacier_shapefiles_21-1k.RDS')) { # [run-nointerp]
 ice = readRDS('data/map-data/ice/glacier_shapefiles_21-1k.RDS')
 ice_years = seq(1, 21)*1000
 
@@ -85,6 +90,9 @@ ice_sub$facets = factor(ice_sub$facets,
                         labels = c('0.05 ka', '0.5 ka', '2 ka', '4 ka', '6 ka', '8 ka', '10 ka', '12 ka'))
 
 saveRDS(ice_fort, 'data/ice_fort.RDS')
+} else { # [run-nointerp] ice-sheet shapefiles are not in the repo; draw no ice overlay
+  ice_sub = data.frame(long = numeric(0), lat = numeric(0), group = character(0))
+}
 
 ice_fill = 'gainsboro'
 ice_colour = 'gray60'
@@ -96,8 +104,10 @@ ice_colour_dark = 'gray40'
 ## interp
 ###############################################################################################################
 
+if (run_interp) { # [run-nointerp]
 alb_interp_preds = readRDS(paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
 alb_interp_preds$year[which(alb_interp_preds$year == 11500)] = 12000
+}
 
 pbs_ll = readRDS('data/map-data/geographic/pbs_ll.RDS')
 pbs = readRDS('data/map-data/geographic/pbs.RDS')
@@ -183,6 +193,7 @@ sc_colour_seq <- scale_colour_brewer(type = "seq",
 
 
 
+if (run_interp) { # [run-nointerp] interp predictions are not in the repo
 ###############################################################################################################
 ## summary plots of values
 ###############################################################################################################
@@ -1342,6 +1353,7 @@ dev.off()
 # dev.off()
 # 
 
+} # [run-nointerp] end of interp block
 ###############################################################################################################
 ## summary plots of values
 ###############################################################################################################
