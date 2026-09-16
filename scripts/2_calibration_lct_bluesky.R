@@ -49,6 +49,18 @@ dir.create('figures', showWarnings = FALSE)
 # lct_modern = readRDS('data/lct_modern.RDS')
 lct_modern = readRDS('data/lct_modern_reveals.RDS')
 
+# [run-nointerp] the lct_modern_reveals.RDS in the repo is stale: 1029 sites with ET/OL/ST in
+# percent (0-100), whereas lct_paleo_reveals.RDS and every committed calibration file use 505
+# sites with proportions (0-1). A model fitted on the percent-scale table predicts albedo ~0 for
+# the paleo data. The age-50 slice of lct_paleo_reveals.RDS is identical to the committed
+# calibration sites, so fall back to it when the modern table is on the percent scale.
+if (max(lct_modern$ET, na.rm = TRUE) > 1) {
+  lct_modern = readRDS('data/lct_paleo_reveals.RDS')
+  lct_modern = lct_modern[which(lct_modern$ages == 50), ]
+  lct_modern = lct_modern[, which(!(colnames(lct_modern) %in% c('ages')))]
+  rownames(lct_modern) = NULL
+}
+
 longitude = lct_modern[,c('long')]
 latitude = lct_modern[,c('lat')]
 lonlat = cbind(longitude, latitude)
