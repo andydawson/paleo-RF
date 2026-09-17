@@ -38,12 +38,28 @@ pbs = readRDS('data/map-data/geographic/pbs.RDS')
 
 grid <- rast(readRDS("data/grid.RDS"))
 
+# [run-nointerp] the interpolated ('_interp') vegetation files are not in the repo; only run those blocks if present
+run_interp = file.exists('data/lct_modern_reveals_interp.RDS')
+dir.create('figures', showWarnings = FALSE)
+
 ############################################################################################
 # lct REVEALS
 ############################################################################################
 
 # lct_modern = readRDS('data/lct_modern.RDS')
 lct_modern = readRDS('data/lct_modern_reveals.RDS')
+
+# [run-nointerp] the lct_modern_reveals.RDS in the repo is stale: 1029 sites with ET/OL/ST in
+# percent (0-100), whereas lct_paleo_reveals.RDS and every committed calibration file use 505
+# sites with proportions (0-1). A model fitted on the percent-scale table predicts albedo ~0 for
+# the paleo data. The age-50 slice of lct_paleo_reveals.RDS is identical to the committed
+# calibration sites, so fall back to it when the modern table is on the percent scale.
+if (max(lct_modern$ET, na.rm = TRUE) > 1) {
+  lct_modern = readRDS('data/lct_paleo_reveals.RDS')
+  lct_modern = lct_modern[which(lct_modern$ages == 50), ]
+  lct_modern = lct_modern[, which(!(colnames(lct_modern) %in% c('ages')))]
+  rownames(lct_modern) = NULL
+}
 
 longitude = lct_modern[,c('long')]
 latitude = lct_modern[,c('lat')]
@@ -55,15 +71,15 @@ lct_spat = vect(lonlat,
 
 # do we need to do this?
 # lct_modern = readRDS('data/lct_modern.RDS')
-lct_modern_point = readRDS('data/lct_modern_reveals_point.RDS')
+# lct_modern_point = readRDS('data/lct_modern_reveals_point.RDS')  # [run-nointerp] input not in repo
 
-longitude_point = lct_modern_point[,c('long')]
-latitude_point = lct_modern_point[,c('lat')]
-lonlat_point = cbind(longitude_point, latitude_point)
+# longitude_point = lct_modern_point[,c('long')]  # [run-nointerp] input not in repo
+# latitude_point = lct_modern_point[,c('lat')]  # [run-nointerp] input not in repo
+# lonlat_point = cbind(longitude_point, latitude_point)  # [run-nointerp] input not in repo
 
-lct_spat_point = vect(lonlat_point,
-                crs  ="+init=epsg:4326",
-                atts = lct_modern_point[,5:ncol(lct_modern_point)])
+# lct_spat_point = vect(lonlat_point,  # [run-nointerp] input not in repo
+#                 crs  ="+init=epsg:4326",  # [run-nointerp] input not in repo
+#                 atts = lct_modern_point[,5:ncol(lct_modern_point)])  # [run-nointerp] input not in repo
 
 bs_df = data.frame(matrix(NA, nrow=nrow(lct_spat), ncol=12))
 colnames(bs_df) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
@@ -73,8 +89,8 @@ colnames(bs_df_coarse) = paste0('bs', c(paste0('0', seq(1, 9)), seq(10,12)))
 colnames(bs_df_coarse) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 
 
-bs_df_point = data.frame(matrix(NA, nrow=nrow(lct_spat_point), ncol=12))
-colnames(bs_df_point) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+# bs_df_point = data.frame(matrix(NA, nrow=nrow(lct_spat_point), ncol=12))  # [run-nointerp] input not in repo
+# colnames(bs_df_point) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')  # [run-nointerp] input not in repo
 
 blue_all_months = rast('data/blue_sky_monthly_2000-2009.tif')
 # blue_coarse_interp = resample(blue_all_months, grid)
@@ -189,7 +205,7 @@ for(i in 1:length(months)) {
   # # foo = terra::extract(blue_month, lct_spat)
   bs_df_coarse[,month] <- terra::extract(blue_month_coarse, lct_spat)[,month]
   
-  bs_df_point[,month] <- terra::extract(blue_month, lct_spat_point)[,month]
+#   bs_df_point[,month] <- terra::extract(blue_month, lct_spat_point)[,month]  # [run-nointerp] input not in repo
   
   # foo = terra::extract(blue_month, lct_spat)
   bs_df[,month] <- terra::extract(blue_month, lct_spat)[,month]
@@ -199,16 +215,16 @@ for(i in 1:length(months)) {
 
 bs_df[bs_df==0] = 1e-4
 bs_df_coarse[bs_df_coarse==0] = 1e-4
-bs_df_point[bs_df_point==0] = 1e-4
+# bs_df_point[bs_df_point==0] = 1e-4  # [run-nointerp] input not in repo
 
 lct_bs = data.frame(lct_modern, bs_df)
 lct_bs_coarse = data.frame(lct_modern, bs_df_coarse)
-lct_bs_point = data.frame(lct_modern_point, bs_df_point)
+# lct_bs_point = data.frame(lct_modern_point, bs_df_point)  # [run-nointerp] input not in repo
 
 
 saveRDS(lct_bs, 'data/calibration_modern_lct_bluesky.RDS')
 saveRDS(lct_bs_coarse, 'data/calibration_modern_lct_bluesky_coarse.RDS')
-saveRDS(lct_bs_point, 'data/calibration_modern_lct_bluesky_point.RDS')
+# saveRDS(lct_bs_point, 'data/calibration_modern_lct_bluesky_point.RDS')  # [run-nointerp] input not in repo
 
 lct_bs_melt = melt(lct_bs, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
 lct_bs_coarse_melt = melt(lct_bs_coarse, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
@@ -230,6 +246,7 @@ ggsave('figures/albedo_native_vs_coarse_scatter.png')
 cor(lct_bs_merged$value.x, lct_bs_merged$value.y, use = 'complete.obs')
 
 
+if (run_interp) { # [run-nointerp] interp inputs are not in the repo
 ############################################################################################
 #  interp
 ############################################################################################
@@ -418,3 +435,5 @@ ggsave('figures/albedo_native_vs_coarse_scatter_interp.pdf')
 ggsave('figures/albedo_native_vs_coarse_scatter_interp.png')
 
 cor(lct_interp_bs_merged$value.x, lct_interp_bs_merged$value.y, use = 'complete.obs')
+
+} # [run-nointerp] end of interp block

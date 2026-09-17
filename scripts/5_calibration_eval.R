@@ -6,12 +6,18 @@ library(reshape2)
 library(dplyr)
 
 alb_prod = "bluesky"
+
+# [run-nointerp] see comment in 4_calibration_model.R
+run_interp = file.exists(paste0('data/calibration_modern_lct_interp_', alb_prod, '.RDS'))
+dir.create('output/calibration', recursive = TRUE, showWarnings = FALSE)
+dir.create('figures', showWarnings = FALSE)
 # alb_prod = "albclim"
 
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 
 cal_data =readRDS(paste0('data/calibration_modern_lct_', alb_prod, '.RDS'))
 
+if (run_interp) { # [run-nointerp] interp inputs are not in the repo
 cal_interp_data =readRDS(paste0('data/calibration_modern_lct_interp_', alb_prod, '.RDS'))
 
 ###############################################################################################################
@@ -886,6 +892,7 @@ ggsave(paste0('figures/cal_model_vs_data_gam_error_interp_', month, '.pdf'))
 # 
 # 
 
+} # [run-nointerp] end of interp block
 
 ###############################################################################################################
 ## GAM: compare models
@@ -898,7 +905,7 @@ mod4 = readRDS(paste0('data/calibration_mod4_', alb_prod, '.RDS'))
 mod5 = readRDS(paste0('data/calibration_mod5_', alb_prod, '.RDS'))
 mod6 = readRDS(paste0('data/calibration_mod6_', alb_prod, '.RDS'))
 mod7 = readRDS(paste0('data/calibration_mod7_', alb_prod, '.RDS'))
-# mod7_free = readRDS(paste0('data/calibration_mod7_free_', alb_prod, '.RDS'))
+mod7_free = readRDS(paste0('data/calibration_mod7_free_', alb_prod, '.RDS'))  # [run-nointerp] now written by 4_calibration_model.R
 mod8 = readRDS(paste0('data/calibration_mod8_', alb_prod, '.RDS'))
 
 AIC(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod7_free, mod8)
@@ -988,6 +995,7 @@ ggsave('figures/cal_model_vs_data_gam_error.pdf')
 ## BRMS: compare models
 ###############################################################################################################
 
+if (file.exists(paste0('data/calibration_brms_m1_', alb_prod, '.RDS'))) { # [run-nointerp] brms fits are not in the repo
 brm1 = readRDS(paste0('data/calibration_brms_m1_', alb_prod, '.RDS'))
 brm2 = readRDS(paste0('data/calibration_brms_m2_', alb_prod, '.RDS'))
 brm3 = readRDS(paste0('data/calibration_brms_m3_', alb_prod, '.RDS'))
@@ -1064,4 +1072,5 @@ ggplot() +
 ggsave('figures/cal_model_both_vs_data.png')
 ggsave('figures/cal_model_both_vs_data.pdf')
 
+} # [run-nointerp] end of brms block
 

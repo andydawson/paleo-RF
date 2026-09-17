@@ -6,10 +6,16 @@ library(tidyr)
 
 
 alb_prod = "bluesky"
+
+# [run-nointerp] the interpolated ('_interp') calibration data is not in the repo; only run those blocks if present
+run_interp = file.exists(paste0('data/calibration_modern_lct_interp_', alb_prod, '.RDS'))
+dir.create('output/calibration', recursive = TRUE, showWarnings = FALSE)
+dir.create('figures', showWarnings = FALSE)
 # alb_prod = "albclim"
 
 ctrl <- list(nthreads=8, maxit=500)
 
+if (run_interp) { # [run-nointerp] interp inputs are not in the repo
 ###############################################################################################################
 ## interp calibration model
 ###############################################################################################################
@@ -525,6 +531,7 @@ for (month in months) {
   saveRDS(mod8_interp, paste0('output/calibration/calibration_mod8_interp_', month, '_', alb_prod, '.RDS'))
   
 }
+} # [run-nointerp] end of interp block
 # ###############################################################################################################
 # ## compare models
 # ###############################################################################################################
@@ -570,210 +577,211 @@ for (month in months) {
 # ggsave('figures/march_histo_frequency.png')
 
 
-# ###############################################################################################################
-# ## point calibration model
-# ###############################################################################################################
-# 
-# cal_data =readRDS(paste0('data/calibration_modern_lct_', alb_prod, '.RDS'))
-# # cal_data =readRDS('data/lct_albedo_snow_modern_bluesky.RDS')
-# 
-# cal_data2 = data.frame(site=seq(1,nrow(cal_data)), cal_data)
-# cal_data3 = cal_data2[,c('site', 'ET', 'OL', 'ST')]
-# 
-# ###############################################################################################################
-# ## march calibration model
-# ###############################################################################################################
-# 
-# ctrl <- list(nthreads=8, maxit=500)
-# 
-# # # just x and y
-# #works better with smaller k values 
-# # # was 900
-# # mod = mgcv::bam(mar ~ s(x, y, bs="gp", k=300),
-# #           data=cal_data, 
-# #           family=betar(link="logit"), 
-# #           method="REML", 
-# #           na.action=na.omit, 
-# #           control=ctrl)
-# # gam.check(mod)
-# # #vis.gam(mod,theta=30)
-# 
-# 
-# # # just x and y
-# mod1 = mgcv::bam(mar ~ s(x, y, bs="gp", k=350),
+###############################################################################################################
+## point calibration model
+###############################################################################################################
+
+cal_data =readRDS(paste0('data/calibration_modern_lct_', alb_prod, '.RDS'))
+# cal_data =readRDS('data/lct_albedo_snow_modern_bluesky.RDS')
+
+cal_data2 = data.frame(site=seq(1,nrow(cal_data)), cal_data)
+cal_data3 = cal_data2[,c('site', 'ET', 'OL', 'ST')]
+
+###############################################################################################################
+## march calibration model
+###############################################################################################################
+
+ctrl <- list(nthreads=8, maxit=500)
+
+# # just x and y
+#works better with smaller k values 
+# # was 900
+# mod = mgcv::bam(mar ~ s(x, y, bs="gp", k=300),
 #           data=cal_data, 
 #           family=betar(link="logit"), 
 #           method="REML", 
 #           na.action=na.omit, 
 #           control=ctrl)
-# gam.check(mod1)
-# 
-# saveRDS(mod1, paste0('data/calibration_mod1_', alb_prod, '.RDS'))
-# 
-# 
-# vis.gam(mod1,theta=30)
-# 
-# # # add elevation
-# # #tp vs gp model
-# # mod2 = mgcv::bam(mar ~ s(x, y, bs='tp', k=400) + s(elev, k=30),
-# #           data=cal_data,
-# #           family=betar(link="logit"),
-# #           method="REML",
-# #           na.action=na.omit)
-# 
-# # add eleveation
-# #gp model works better than tp
-# mod2 = mgcv::bam(mar ~ s(x, y, bs="gp", k=350) + s(elev, k=50),
-#            data=cal_data, 
-#            family=betar(link="logit"), 
-#            method="REML", 
-#            na.action=na.omit, 
-#            control=ctrl)
-# gam.check(mod2)
+# gam.check(mod)
 # #vis.gam(mod,theta=30)
-# 
-# saveRDS(mod2, paste0('data/calibration_mod2_', alb_prod, '.RDS'))
-# 
-# 
-# AIC(mod1, mod2)
-# 
-# # add OL
-# mod3 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30),
+
+
+# # just x and y
+mod1 = mgcv::bam(mar ~ s(x, y, bs="gp", k=350),
+          data=cal_data, 
+          family=betar(link="logit"), 
+          method="REML", 
+          na.action=na.omit, 
+          control=ctrl)
+gam.check(mod1)
+
+saveRDS(mod1, paste0('data/calibration_mod1_', alb_prod, '.RDS'))
+
+
+vis.gam(mod1,theta=30)
+
+# # add elevation
+# #tp vs gp model
+# mod2 = mgcv::bam(mar ~ s(x, y, bs='tp', k=400) + s(elev, k=30),
+#           data=cal_data,
+#           family=betar(link="logit"),
+#           method="REML",
+#           na.action=na.omit)
+
+# add eleveation
+#gp model works better than tp
+mod2 = mgcv::bam(mar ~ s(x, y, bs="gp", k=350) + s(elev, k=50),
+           data=cal_data, 
+           family=betar(link="logit"), 
+           method="REML", 
+           na.action=na.omit, 
+           control=ctrl)
+gam.check(mod2)
+#vis.gam(mod,theta=30)
+
+saveRDS(mod2, paste0('data/calibration_mod2_', alb_prod, '.RDS'))
+
+
+AIC(mod1, mod2)
+
+# add OL
+mod3 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30),
+           data=cal_data, 
+           family=betar(link="logit"), 
+           method="REML", 
+           na.action=na.omit, 
+           control=ctrl)
+gam.check(mod3)
+
+saveRDS(mod3, paste0('data/calibration_mod3_', alb_prod, '.RDS'))
+
+
+AIC(mod1, mod2, mod3)
+
+anova_gam = anova.gam(mod1, mod2, mod3, test = "Chisq")
+anova_gam
+
+summary(mod3)
+
+# add ET
+mod4 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s(ET, k=30),
+           data=cal_data, 
+           family=betar(link="logit"), 
+           method="REML", 
+           na.action=na.omit, 
+           control=ctrl)
+gam.check(mod4)
+
+saveRDS(mod4, paste0('data/calibration_mod4_', alb_prod, '.RDS'))
+
+
+AIC(mod1, mod2, mod3, mod4)
+
+anova_gam = anova.gam(mod1, mod2, mod3, mod4, test = "Chisq")
+anova_gam
+
+summary(mod4)
+
+# add ST
+#this takes a while 
+# mod5 = mgcv::gam(mar ~ s(x, y, bs='gp', k=30) + s(elev, k=10) + s(OL, k=10) + s(ET, k=10) + s(ST, k=10),
 #            data=cal_data, 
 #            family=betar(link="logit"), 
 #            method="REML", 
 #            na.action=na.omit, 
 #            control=ctrl)
-# gam.check(mod3)
-# 
-# saveRDS(mod3, paste0('data/calibration_mod3_', alb_prod, '.RDS'))
-# 
-# 
-# AIC(mod1, mod2, mod3)
-# 
-# anova_gam = anova.gam(mod1, mod2, mod3, test = "Chisq")
-# anova_gam
-# 
-# summary(mod3)
-# 
-# # add ET
-# mod4 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s(ET, k=30),
-#            data=cal_data, 
-#            family=betar(link="logit"), 
-#            method="REML", 
-#            na.action=na.omit, 
-#            control=ctrl)
-# gam.check(mod4)
-# 
-# saveRDS(mod4, paste0('data/calibration_mod4_', alb_prod, '.RDS'))
-# 
-# 
-# AIC(mod1, mod2, mod3, mod4)
-# 
-# anova_gam = anova.gam(mod1, mod2, mod3, mod4, test = "Chisq")
-# anova_gam
-# 
-# summary(mod4)
-# 
-# # add ST
-# #this takes a while 
-# # mod5 = mgcv::gam(mar ~ s(x, y, bs='gp', k=30) + s(elev, k=10) + s(OL, k=10) + s(ET, k=10) + s(ST, k=10),
-# #            data=cal_data, 
-# #            family=betar(link="logit"), 
-# #            method="REML", 
-# #            na.action=na.omit, 
-# #            control=ctrl)
-# mod5 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s(ET, k=30) + s(ST, k=30),
-#                  data=cal_data, 
-#                  family=betar(link="logit"), 
-#                  method="REML", 
-#                  na.action=na.omit, 
-#                  control=ctrl)
-# gam.check(mod5)
-# 
-# saveRDS(mod5, paste0('data/calibration_mod5_', alb_prod, '.RDS'))
-# 
-# AIC(mod1, mod2, mod3, mod4, mod5)
-# 
-# anova_gam = anova.gam(mod1, mod2, mod3, mod4, test = "Chisq")
-# anova_gam
-# 
-# summary(mod4)
-# 
-# mod6 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, k=30),
-#                  data=cal_data, 
-#                  family=betar(link="logit"), 
-#                  method="REML", 
-#                  na.action=na.omit, 
-#                  control=ctrl)
-# gam.check(mod6)
-# 
-# saveRDS(mod6, paste0('data/calibration_mod6_', alb_prod, '.RDS'))
-# 
-# AIC(mod1, mod2, mod3, mod4, mod5, mod6)
-# 
-# anova_gam = anova.gam(mod1, mod2, mod3, mod4, mod5, mod6, test = "Chisq")
-# anova_gam
-# 
-# summary(mod6)
-# 
-# mod7 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=30),
-#                  data=cal_data, 
-#                  family=betar(link="logit"), 
-#                  method="REML", 
-#                  na.action=na.omit, 
-#                  control=ctrl)
-# gam.check(mod7)
-# 
-# saveRDS(mod7, paste0('data/calibration_mod7_', alb_prod, '.RDS'))
-# 
-# mod7_free = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=50),
-#                  data=cal_data, 
-#                  family=betar(link="logit"), 
-#                  method="REML", 
-#                  na.action=na.omit, 
-#                  control=ctrl)
-# gam.check(mod7_free)
-# 
-# saveRDS(mod7, paste0('data/calibration_mod7_free_', alb_prod, '.RDS'))
-# 
-# AIC(mod1, mod2, mod3, mod4, mod5, mod6, mod7)
-# 
-# anova_gam = anova.gam(mod1, mod2, mod3, mod4, mod5, mod6, mod7, test = "Chisq")
-# anova_gam
-# 
-# summary(mod7)
-# 
-# 
-# mod8 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=50),
-#                  data=cal_data, 
-#                  family=betar(link="logit"), 
-#                  method="REML", 
-#                  na.action=na.omit, 
-#                  control=ctrl)
-# gam.check(mod8)
-# 
-# saveRDS(mod8, paste0('data/calibration_mod8_', alb_prod, '.RDS'))
-# 
-# AIC(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8)
-# 
-# anova_gam = anova.gam(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, test = "Chisq")
-# anova_gam
-# 
-# anova_gam = anova.gam(mod5, mod7, mod8, test = "Chisq")
-# anova_gam
-# 
-# anova_gam = anova.gam(mod7, mod8, test = "Chisq")
-# anova_gam
-# 
-# anova_gam = anova.gam(mod2, mod5, test = "Chisq")
-# anova_gam
-# 
-# anova_gam = anova.gam(mod1, mod2, mod7, test = "Chisq")
-# anova_gam
-# 
-# summary(mod7)
-# 
+mod5 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s(ET, k=30) + s(ST, k=30),
+                 data=cal_data, 
+                 family=betar(link="logit"), 
+                 method="REML", 
+                 na.action=na.omit, 
+                 control=ctrl)
+gam.check(mod5)
+
+saveRDS(mod5, paste0('data/calibration_mod5_', alb_prod, '.RDS'))
+
+AIC(mod1, mod2, mod3, mod4, mod5)
+
+anova_gam = anova.gam(mod1, mod2, mod3, mod4, test = "Chisq")
+anova_gam
+
+summary(mod4)
+
+mod6 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, k=30),
+                 data=cal_data, 
+                 family=betar(link="logit"), 
+                 method="REML", 
+                 na.action=na.omit, 
+                 control=ctrl)
+gam.check(mod6)
+
+saveRDS(mod6, paste0('data/calibration_mod6_', alb_prod, '.RDS'))
+
+AIC(mod1, mod2, mod3, mod4, mod5, mod6)
+
+anova_gam = anova.gam(mod1, mod2, mod3, mod4, mod5, mod6, test = "Chisq")
+anova_gam
+
+summary(mod6)
+
+mod7 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=30),
+                 data=cal_data, 
+                 family=betar(link="logit"), 
+                 method="REML", 
+                 na.action=na.omit, 
+                 control=ctrl)
+gam.check(mod7)
+
+saveRDS(mod7, paste0('data/calibration_mod7_', alb_prod, '.RDS'))
+
+mod7_free = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=50),
+                 data=cal_data, 
+                 family=betar(link="logit"), 
+                 method="REML", 
+                 na.action=na.omit, 
+                 control=ctrl)
+gam.check(mod7_free)
+
+saveRDS(mod7_free, paste0('data/calibration_mod7_free_', alb_prod, '.RDS'))  # [run-nointerp] was saving mod7 under the mod7_free name
+
+AIC(mod1, mod2, mod3, mod4, mod5, mod6, mod7)
+
+anova_gam = anova.gam(mod1, mod2, mod3, mod4, mod5, mod6, mod7, test = "Chisq")
+anova_gam
+
+summary(mod7)
+
+
+mod8 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=50),
+                 data=cal_data, 
+                 family=betar(link="logit"), 
+                 method="REML", 
+                 na.action=na.omit, 
+                 control=ctrl)
+gam.check(mod8)
+
+saveRDS(mod8, paste0('data/calibration_mod8_', alb_prod, '.RDS'))
+
+AIC(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8)
+
+anova_gam = anova.gam(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, test = "Chisq")
+anova_gam
+
+anova_gam = anova.gam(mod5, mod7, mod8, test = "Chisq")
+anova_gam
+
+anova_gam = anova.gam(mod7, mod8, test = "Chisq")
+anova_gam
+
+anova_gam = anova.gam(mod2, mod5, test = "Chisq")
+anova_gam
+
+anova_gam = anova.gam(mod1, mod2, mod7, test = "Chisq")
+anova_gam
+
+summary(mod7)
+
+# [run-nointerp] mod9 (select = TRUE variant) is never saved or used downstream and costs ~45 min; left commented out
 # mod9 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=30),
 #                  data=cal_data, 
 #                  family=betar(link="logit"), 
@@ -782,7 +790,7 @@ for (month in months) {
 #                  control=ctrl,
 #                  select = TRUE)
 # gam.check(mod9)
-# 
+
 # ###############################################################################################################
 # ## compare models
 # ###############################################################################################################
