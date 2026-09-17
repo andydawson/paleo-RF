@@ -7,6 +7,10 @@ library(dplyr)
 
 alb_prod = "bluesky"
 
+# [run-may] month of albedo used for the non-interp (single-month) calibration; override with CAL_MONTH=mar etc.
+cal_month = Sys.getenv('CAL_MONTH', 'may')
+run_tag = paste0(cal_month, '_', alb_prod)
+
 # [run-nointerp] see comment in 4_calibration_model.R
 run_interp = file.exists(paste0('data/calibration_modern_lct_interp_', alb_prod, '.RDS'))
 dir.create('output/calibration', recursive = TRUE, showWarnings = FALSE)
@@ -898,15 +902,15 @@ ggsave(paste0('figures/cal_model_vs_data_gam_error_interp_', month, '.pdf'))
 ## GAM: compare models
 ###############################################################################################################
 
-mod1 = readRDS(paste0('data/calibration_mod1_', alb_prod, '.RDS'))
-mod2 = readRDS(paste0('data/calibration_mod2_', alb_prod, '.RDS'))
-mod3 = readRDS(paste0('data/calibration_mod3_', alb_prod, '.RDS'))
-mod4 = readRDS(paste0('data/calibration_mod4_', alb_prod, '.RDS'))
-mod5 = readRDS(paste0('data/calibration_mod5_', alb_prod, '.RDS'))
-mod6 = readRDS(paste0('data/calibration_mod6_', alb_prod, '.RDS'))
-mod7 = readRDS(paste0('data/calibration_mod7_', alb_prod, '.RDS'))
-mod7_free = readRDS(paste0('data/calibration_mod7_free_', alb_prod, '.RDS'))  # [run-nointerp] now written by 4_calibration_model.R
-mod8 = readRDS(paste0('data/calibration_mod8_', alb_prod, '.RDS'))
+mod1 = readRDS(paste0('data/calibration_mod1_', run_tag, '.RDS'))
+mod2 = readRDS(paste0('data/calibration_mod2_', run_tag, '.RDS'))
+mod3 = readRDS(paste0('data/calibration_mod3_', run_tag, '.RDS'))
+mod4 = readRDS(paste0('data/calibration_mod4_', run_tag, '.RDS'))
+mod5 = readRDS(paste0('data/calibration_mod5_', run_tag, '.RDS'))
+mod6 = readRDS(paste0('data/calibration_mod6_', run_tag, '.RDS'))
+mod7 = readRDS(paste0('data/calibration_mod7_', run_tag, '.RDS'))
+mod7_free = readRDS(paste0('data/calibration_mod7_free_', run_tag, '.RDS'))  # [run-nointerp] now written by 4_calibration_model.R
+mod8 = readRDS(paste0('data/calibration_mod8_', run_tag, '.RDS'))
 
 AIC(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod7_free, mod8)
 
@@ -935,7 +939,7 @@ plot(mod7, shade = TRUE, seWithMean = TRUE, residuals = TRUE, pch = 16, cex = 0.
 
 cal_model = mod8
 
-saveRDS(cal_model, paste0('data/calibration_model_selected_', alb_prod, '.RDS'))
+saveRDS(cal_model, paste0('data/calibration_model_selected_', run_tag, '.RDS'))
 
 cal_predict_gam = predict(cal_model, 
                           newdata = cal_data,
@@ -945,10 +949,10 @@ cal_eval_gam = data.frame(cal_data, alb_mean = cal_predict_gam)
 
 
 
-cor(cal_eval_gam$mar, cal_eval_gam$alb_mean, use='complete')
+cor(cal_eval_gam[[cal_month]], cal_eval_gam$alb_mean, use='complete')
 
 ggplot(data=cal_eval_gam) + 
-  geom_point(aes(x=mar, y=alb_mean), size=2, alpha=0.5) +
+  geom_point(aes(x=.data[[cal_month]], y=alb_mean), size=2, alpha=0.5) +
   geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2) +
   xlim(c(0,1)) + 
   ylim(c(0,1)) +
@@ -958,18 +962,18 @@ ggplot(data=cal_eval_gam) +
         axis.text = element_text(size=14)) +
   xlab('albedo (data)') +
   ylab('albedo (model)')
-ggsave('figures/cal_model_vs_data_gam.png')
-ggsave('figures/cal_model_vs_data_gam.pdf')
+ggsave(paste0('figures/cal_model_vs_data_gam_', run_tag, '.png'))
+ggsave(paste0('figures/cal_model_vs_data_gam_', run_tag, '.pdf'))
 
 cal_sim_gam = simulate(cal_model,
                        nsim = 100,
                        data = cal_data)
 
-cal_sim_gam = data.frame(cal_data[,c('long', 'lat', 'mar')], cal_sim_gam)
-cal_sim_gam_melt = melt(cal_sim_gam, id.vars = c('long', 'lat', 'mar'))
+cal_sim_gam = data.frame(cal_data[,c('long', 'lat', cal_month)], cal_sim_gam)
+cal_sim_gam_melt = melt(cal_sim_gam, id.vars = c('long', 'lat', cal_month))
 
 cal_sim_gam_sum = cal_sim_gam_melt %>% 
-  group_by(long, lat, mar) %>%
+  group_by(long, lat, .data[[cal_month]]) %>%
   summarize(alb_mean = mean(value), 
             alb_lo = quantile(value, c(0.025)), 
             alb_mid = quantile(value, c(0.5)), 
@@ -977,8 +981,8 @@ cal_sim_gam_sum = cal_sim_gam_melt %>%
             .groups = "keep")
 
 ggplot(data=cal_sim_gam_sum) + 
-  geom_point(aes(x=mar, y=alb_mean), size=2, alpha=0.5) +
-  geom_linerange(aes(x=mar, ymin=alb_lo, ymax=alb_hi), alpha=0.5) +
+  geom_point(aes(x=.data[[cal_month]], y=alb_mean), size=2, alpha=0.5) +
+  geom_linerange(aes(x=.data[[cal_month]], ymin=alb_lo, ymax=alb_hi), alpha=0.5) +
   geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2) +
   xlim(c(0,1)) + 
   ylim(c(0,1)) +
@@ -988,8 +992,8 @@ ggplot(data=cal_sim_gam_sum) +
         axis.text = element_text(size=14)) +
   xlab('albedo (data)') +
   ylab('albedo (model)')
-ggsave('figures/cal_model_vs_data_gam_error.png')
-ggsave('figures/cal_model_vs_data_gam_error.pdf')
+ggsave(paste0('figures/cal_model_vs_data_gam_error_', run_tag, '.png'))
+ggsave(paste0('figures/cal_model_vs_data_gam_error_', run_tag, '.pdf'))
 
 ###############################################################################################################
 ## BRMS: compare models

@@ -11,6 +11,10 @@ library(reshape2)
 
 alb_prod = "bluesky"
 
+# [run-may] month of albedo used for the non-interp (single-month) calibration; override with CAL_MONTH=mar etc.
+cal_month = Sys.getenv('CAL_MONTH', 'may')
+run_tag = paste0(cal_month, '_', alb_prod)
+
 # [run-nointerp] see comment in 4_calibration_model.R
 run_interp = file.exists('data/lct_paleo_reveals_interp.RDS')
 dir.create('output/prediction', recursive = TRUE, showWarnings = FALSE)
@@ -122,7 +126,7 @@ colnames(lct_paleo)[1] = 'year'
 
 # lct_paleo = lct_paleo[which(lct_paleo$month == 4),]
 
-cal_model = readRDS(paste0('data/calibration_model_selected_', alb_prod, '.RDS'))
+cal_model = readRDS(paste0('data/calibration_model_selected_', run_tag, '.RDS'))
 
 
 paleo_predict_gam = predict.gam(cal_model, 
@@ -130,7 +134,7 @@ paleo_predict_gam = predict.gam(cal_model,
                                 type    = 'response')
 paleo_predict_gam = data.frame(lct_paleo, alb_mean = paleo_predict_gam)  
 
-saveRDS(paleo_predict_gam, paste0('data/paleo_predict_gam_', alb_prod, '.RDS'))
+saveRDS(paleo_predict_gam, paste0('data/paleo_predict_gam_', run_tag, '.RDS'))
 
 
 paleo_sim_gam = simulate(cal_model,
@@ -144,7 +148,7 @@ colnames(paleo_sim_gam_melt) = c('year', 'long', 'lat', 'x', 'y', 'elev', 'ET', 
 
 paleo_sim_gam_melt$iter = as.numeric(substr(paleo_sim_gam_melt$iter, 2, 4))
 
-saveRDS(paleo_sim_gam_melt, paste0('data/paleo_predict_gam_samps_', alb_prod, '.RDS'))
+saveRDS(paleo_sim_gam_melt, paste0('data/paleo_predict_gam_samps_', run_tag, '.RDS'))
 
 paleo_sim_gam_sum = paleo_sim_gam_melt %>% 
   group_by(year, long, lat, x, y, elev, ET, OL, ST) %>%
@@ -157,7 +161,7 @@ paleo_sim_gam_sum = paleo_sim_gam_melt %>%
 
 # paleo_sim_gam_sum_df = data.frame(lct_paleo,  paleo_sim_gam_sum)  
 
-saveRDS(paleo_sim_gam_sum, paste0('data/paleo_predict_gam_summary_', alb_prod, '.RDS'))
+saveRDS(paleo_sim_gam_sum, paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
 
 # fix.family.rd(betar())$rd
 # function (mu, wt, scale) 
