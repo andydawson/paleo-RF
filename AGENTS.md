@@ -7,5 +7,5 @@ when done; never touch `legacy` (frozen snapshot of the original code) or
 `origin` at checkpoints and session end; `main` changes only via a PR that
 Andria approves.
 
-`CODE_MAP.md` gives a high-level description of every script and its data
+`docs/cc/CODE_MAP.md` gives a high-level description of every script and its data
 inputs/outputs.
