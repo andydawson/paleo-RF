@@ -111,3 +111,16 @@ reconstruction than the paper has.
 - The talk shows results for May and "across months"; the non-interp code
   in the repo is March only, so the talk and paper results come from the
   interp, all-months path.
+- **Snow is not modelled; modern snow climatology is assumed for every
+  time slice.** The calibration albedo is a 2000-2009 monthly mean that
+  contains modern snow. Location and elevation absorb its geographic
+  pattern and the cover terms capture snow masking. Applied to a Holocene
+  slice those terms are unchanged, so results mean "the albedo forcing this
+  vegetation change would produce under a modern snow climate". Not stated
+  in the draft methods or limitations. The archive scripts (ClimateNA,
+  Thornthwaite, GCM snow probability) show an abandoned attempt to model
+  snow from paleoclimate. Ice sheets, by contrast, are handled explicitly
+  in 7a with the Dalton ice fraction and a prescribed glacier albedo.
+  **To ask Andria:** was dropping the snow branch deliberate, is a fixed
+  modern snow climate the intended interpretation, and should the paper
+  say so?
