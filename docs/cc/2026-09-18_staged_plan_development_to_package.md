@@ -1,7 +1,7 @@
 # paleo-RF: staged cleanup plan while the science is still moving
 
-Companion to `CODE_REVIEW.md` (review of commit `c9d525e`). Findings are cited
-as R1-R17 (review section 3) and KI#n (`docs/cc/KNOWN_ISSUES.md`); line numbers
+Companion to `2026-09-18_code_review_original_code.md` (review of commit `c9d525e`). Findings are cited
+as R1-R17 (review section 3) and KI#n (`docs/cc/2026-09-16_known_issues_missing_data_and_code.md`); line numbers
 refer to `c9d525e` and shift by a few lines on `chris-dev`. Written 2026-09-18.
 
 ## (a) Rationale
