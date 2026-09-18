@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate docs/cc/METHODOLOGY_SCHEMATIC.html (+ .svg) for paleo-RF.
+"""Generate docs/cc/2026-09-17_methodology_schematic.html (+ .svg) for paleo-RF.
 
 A draw.io-style flowchart of the whole methodology: data sources, external
 steps, the scripted pipeline in its two flavours (interp / non-interp), side
@@ -7,7 +7,7 @@ branches and outputs, colour-coded by status and badged by where each step is
 described (draft manuscript = MS, EGU talk = Talk).
 
 Every box carries a stable id and data-stage attribute so a later version can
-attach the questions in METHODOLOGY_QUESTIONS.md as tooltips.
+attach the questions in 2026-09-17_methodology_questions_newcomer_review.md as tooltips.
 
 Run from the repo root:  python3 docs/cc/tools/methodology_schematic.py
 """
@@ -384,7 +384,7 @@ HTML = """<title>paleo-RF Methodology</title>
 Rows read top to bottom: the data that feeds the method, the steps done outside this repository, the scripted
 pipeline in its two flavours, then side branches and outputs. Green boxes run today; amber boxes are in the
 repository but wait on an input that is not; dashed grey boxes have no code here. Each box has a stable
-<code>id</code> so the open questions in <code>METHODOLOGY_QUESTIONS.md</code> can be attached later.</figcaption>
+<code>id</code> so the open questions in <code>2026-09-17_methodology_questions_newcomer_review.md</code> can be attached later.</figcaption>
 </figure>
 </main>
 """
@@ -392,7 +392,7 @@ repository but wait on an input that is not; dashed grey boxes have no code here
 if __name__ == "__main__":
     root = Path(__file__).resolve().parents[3]  # docs/cc/tools -> repo root
     svg = build_svg()
-    (root / "docs" / "cc" / "METHODOLOGY_SCHEMATIC.html").write_text(HTML.format(css=CSS, svg=svg))
+    (root / "docs" / "cc" / "2026-09-17_methodology_schematic.html").write_text(HTML.format(css=CSS, svg=svg))
     # standalone SVG: light-theme literal values, no CSS variables
     light = {}
     block = CSS.split("}", 1)[0].split("{", 1)[1]
@@ -408,5 +408,5 @@ if __name__ == "__main__":
     css_svg = css_svg.replace("svg#schematic{", "svg{")
     standalone = svg.replace(">", f'><style>{css_svg}</style>', 1)
     standalone = standalone.replace('<svg id="schematic"', '<svg id="schematic" style="font-family:\'Liberation Sans\'"')
-    (root / "docs" / "cc" / "METHODOLOGY_SCHEMATIC.svg").write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + standalone)
-    print("wrote METHODOLOGY_SCHEMATIC.html and .svg")
+    (root / "docs" / "cc" / "2026-09-17_methodology_schematic.svg").write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + standalone)
+    print("wrote 2026-09-17_methodology_schematic.html and .svg")

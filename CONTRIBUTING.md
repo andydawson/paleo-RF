@@ -26,8 +26,14 @@ repository is branched, committed, merged and backed up. Agent sessions read
 - Remote: `origin` (`andydawson/paleo-RF`). Push `chris-dev`, `legacy` and
   any open topic branches at natural checkpoints and before ending each
   session, without asking each time.
-- Keep `docs/cc/CODE_MAP.md` current when scripts are added, renamed or retired.
+- Keep `docs/cc/2026-09-16_code_map_original_scripts.md` current when scripts are added, renamed or retired.
 - Everything Claude Code generates that is not a script, a result or a data
   file with its own home (code maps, issue lists, schematics, reports,
-  generators) lives under `docs/cc/`. The repo root holds only README,
-  CONTRIBUTING, AGENTS, .gitignore, `scripts/`, `data/` and `docs/`.
+  generators) lives under `docs/cc/`, with dated, descriptive file names
+  (`YYYY-MM-DD_what_and_why.ext`); living documents carry no date. The
+  repo root holds only README, CONTRIBUTING, AGENTS, .gitignore,
+  `scripts/`, `data/` and `docs/`.
+- Questions for Andria are collected continuously in
+  `docs/cc/questions_for_andria_general.md` and
+  `docs/cc/questions_for_andria_scientific.md`; add to them as questions
+  arise, remove them when answered.

@@ -1,6 +1,8 @@
-# Open questions for Andria
+# Open questions for Andria: general
 
-Maintained by Chris with Claude Code. Updated 2026-09-18. Only questions
+Maintained by Chris with Claude Code; kept current as work proceeds (see
+AGENTS.md). Technical and scientific questions are in
+`questions_for_andria_scientific.md`. Updated 2026-09-18. Only questions
 that are still open are listed; answered or superseded items are removed
 (e.g. the REVEALS and interpolation code, now agreed to be out of scope;
 the point / non-interp path, now dropped; the interpolated posteriors and
@@ -51,9 +53,6 @@ centre or a bin edge?
 
 ## 5. Method choices to confirm for the write-up
 
-- The scripts hard-code model 8 as the selected calibration model, while
-  the manuscript says analysis of deviance chose it. Which criterion was
-  used, and did the same model win in all twelve months?
 - The manuscript says 1,000 posterior samples per cell and month; the
   scripts draw 100. Which is intended?
 - Snow is never modelled: the 2000-2009 snow climatology enters through
@@ -61,9 +60,6 @@ centre or a bin edge?
   said the snow / water-budget branch was dropped deliberately. Should the
   paper state the fixed-modern-snow assumption explicitly in methods and
   limitations?
-- Which combination does the paper report for the ice contribution in
-  7a: threshold (ice fraction > 0.5) or area-weighted, and fixed or scaled
-  glacier albedo?
 
 ## 6. Repository logistics
 
@@ -74,21 +70,3 @@ centre or a bin edge?
 - Are the archived scripts (`scripts/archive/`, the Thornthwaite,
   ClimateNA and GCM snow work) safe to remove from the working tree and
   keep only in git history?
-
-## 7. Fundamental questions, to raise when the time is right
-
-The full list is in `METHODOLOGY_QUESTIONS.md`; the five to ask first:
-
-1. Does land-cover uncertainty (the 200 draws) propagate into the albedo
-   and forcing at all? Script 1 averages the draws before anything else.
-2. Is the calibration fitted on the interpolated modern field (mostly
-   model output) rather than on pollen-bearing cells only, and is that the
-   intended design?
-3. What is held fixed by the space-for-time substitution, and which of
-   those things changed enough over the Holocene to matter?
-4. The location term cancels in every slice-to-slice difference, so the
-   whole signal comes from the cover smooth. How much of the real cover
-   effect has the very flexible spatial term absorbed?
-5. The headline comparison sets a local, land-only, clear-sky, per-interval
-   forcing against global-mean cumulative greenhouse-gas forcing. What is
-   the fair comparison?

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate docs/cc/nointerp_pipeline.svg: a simplified, linear flowchart of the
+"""Generate docs/cc/2026-09-17_nointerp_pipeline_diagram.svg: a simplified, linear flowchart of the
 non-interp (March, 505 pollen cells) pipeline run on 2026-09-16.
 
 A subset of docs/cc/tools/methodology_schematic.py: one box per script that ran, with
@@ -8,7 +8,7 @@ that did not run. Badges mark steps shown in the EGU slides. No reference to
 the manuscript by design.
 
 Run from the repo root:  python3 docs/cc/tools/nointerp_pipeline.py
-then:  uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(url='docs/cc/nointerp_pipeline.svg', write_to='docs/nointerp_pipeline.png', scale=2)"
+then:  uv run --with cairosvg python -c "import cairosvg; cairosvg.svg2png(url='docs/cc/2026-09-17_nointerp_pipeline_diagram.svg', write_to='docs/cc/2026-09-17_nointerp_pipeline_diagram.png', scale=2)"
 """
 from pathlib import Path
 
@@ -250,7 +250,7 @@ def build_svg():
 
 if __name__ == "__main__":
     root = Path(__file__).resolve().parents[3]  # docs/cc/tools -> repo root
-    out = root / "docs" / "cc" / "nointerp_pipeline.svg"
+    out = root / "docs" / "cc" / "2026-09-17_nointerp_pipeline_diagram.svg"
     out.parent.mkdir(exist_ok=True)
     out.write_text(build_svg())
     print(f"wrote {out}")

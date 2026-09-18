@@ -4,7 +4,7 @@ Written 2026-09-17 by an independent review pass over the draft manuscript,
 the EGU talk and scripts 1, 2, 4, 5, 6, 7a and 8, for Chris to take to the
 coauthors. The aim is fundamental "why this, did you consider that" questions
 from a quantitative scientist new to paleoecology, albedo and radiative
-forcing. Code-level defects are in `KNOWN_ISSUES.md` and are not repeated.
+forcing. Code-level defects are in `2026-09-16_known_issues_missing_data_and_code.md` and are not repeated.
 Line numbers refer to `main`. Questions marked **[key]** are the ten to ask
 first. Code citations were spot-checked (kernel variables, ice-readvance
 averaging, taxon table, cell areas) before this was committed.
@@ -48,7 +48,7 @@ averaging, taxon table, cell areas) before this was committed.
 12. **[key]** The model is a space-for-time substitution: a modern cross-sectional relationship between cover and albedo is assumed to hold at every time in the past. What is held fixed by construction (snow climatology, cloudiness and diffuse fraction, atmosphere, insolation, soils, water bodies, human land use, species-to-class mapping), and which of these are known to have changed over the Holocene enough to matter for albedo?
 
 13. Snow is fixed at its 2000-2009 climatology in every slice. Since the vegetation-albedo effect at these latitudes is mostly the snow-masking effect, what does an "albedo forcing" mean when the snow regime that mediates it is not allowed to change, and how should the limitation be stated?
-    *`MANUSCRIPT_OUTLINE.md` flags this; it is not in the draft methods.*
+    *`2026-09-17_manuscript_and_talk_outline.md` flags this; it is not in the draft methods.*
 
 14. In the modern data, high open-land fraction in mid-latitude cells is mostly cropland; in the mid-Holocene the same cells were prairie. Does the calibration therefore encode cropland albedo (bare soil in spring, stubble, irrigation) as the albedo of "open land", and how big is the difference between cropland and native grassland albedo in the months that matter?
     *Draft §2.1 argues land use has "negligible impact ... for non-urban areas".*
