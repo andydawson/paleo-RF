@@ -2,154 +2,248 @@
 
 Maintained by Chris with Claude Code; kept current as work proceeds (see
 AGENTS.md). Simple and logistical questions are in
-`questions_for_andria_general.md`. Each entry gives the question, a plain
-explanation of why it matters, and where it comes from. Updated 2026-09-18.
-Sources: `2026-09-17_methodology_questions_newcomer_review.md` (Q numbers)
-and `2026-09-18_code_review_original_code.md` (R numbers).
+`questions_for_andria_general.md`. Each entry says what the code does now,
+why it matters, what the options are, and what we need from you. Line
+numbers refer to the code as received (branches `main` / `legacy`).
+Updated 2026-09-18.
 
-## Uncertainty
+## A. Uncertainty
 
-### U1. Does land-cover uncertainty reach the albedo and forcing? (Q6)
-The interpolated land-cover file carries 200 posterior draws per cell,
-slice and cover type. In the meeting you described the intended approach
-as drawing many samples from the posterior and summarising their mean and
-standard deviation. Script 1 averages the 200 draws to a single value per
-cell before anything else happens, so the land-cover uncertainty never
-reaches the calibration, the hindcasts or the forcing. Is that the
-intended use of the draws, or should each draw (or a subset) be carried
-through the prediction step so that the albedo intervals include
-land-cover uncertainty?
+### A1. The 200 land-cover draws are averaged away before use
+**What the code does.** `veg_posts_interp_ice.RDS` holds 200 posterior
+draws (`iter`) of each cover fraction for every cell and time slice.
+Script 1 (`1_veg_lct_prep.R`, lines 218-222) takes the mean over the 200
+draws and passes a single cover value per cell and slice to everything
+downstream. From that point on, no land-cover uncertainty exists in the
+pipeline: the calibration is fitted to the mean modern field and the
+Holocene hindcasts use the mean paleo field.
+**Why it matters.** In the meeting you described the intended approach
+as "take multiple samples from the posterior and summarise mean and
+sd". Today that summary happens only for land cover, and only implicitly,
+because the mean is used and the spread is discarded. The albedo and
+forcing results therefore carry none of the uncertainty in the
+reconstructions.
+**Options.** (i) Keep using the mean, and say in the paper that
+land-cover uncertainty is not propagated. (ii) Carry a subset of the
+draws (for example 20 to 50 of the 200) through prediction: fit the
+calibration once on the mean modern field, then run the hindcast once per
+draw and pool the results, so the albedo intervals include land-cover
+uncertainty. (iii) Both calibration and prediction per draw, which
+multiplies the fitting time by the number of draws and is probably out of
+reach.
+**What we need from you.** Is (i) acceptable for this paper, or should we
+implement (ii)? If (ii), how many draws, and should the calibration also
+see the spread?
 
-### U2. What do the albedo "posterior samples" represent? (R1)
-Script 6 calls `simulate()` on the fitted GAM. With the gratia package
-attached, that draws new observations from the beta distribution at the
-fitted mean; the model's coefficients are never resampled. So the
-reported albedo standard deviations, intervals and CV maps describe
-residual scatter at the calibration data's dispersion, not the model's
-own uncertainty about the fitted relationship. The "fraction of data
-inside the credible interval" statistic in script 5 therefore checks the
-dispersion parameter rather than coverage. Is this what was intended? If
-model uncertainty is wanted, the standard route in mgcv is to draw
-coefficient vectors from the fitted model's posterior (gratia's
-`fitted_samples` / `posterior_samples`, or `rmvn` with `vcov`) and
-propagate those.
+### A2. What the albedo "posterior samples" actually are
+**What the code does.** Script 6 (`6_prediction_model.R`, line 49) calls
+`simulate(model, nsim = 100)` on the fitted GAM. With the gratia package
+attached, that function draws new *observations* from the fitted beta
+distribution at each cell's fitted mean. The model's coefficients are
+held fixed; the uncertainty of the fitted albedo-cover relationship is
+never sampled. Every `alb_sd`, `alb_lo`, `alb_hi` and the sd and CV maps
+in script 7 are therefore the residual scatter of the calibration data
+(its beta dispersion), reproduced at each paleo cell, not the model's
+uncertainty. The "fraction of data inside the 95% interval" statistic in
+script 5 (lines 206-244) checks that the dispersion parameter was
+estimated consistently, not that the model is calibrated.
+**Why it matters.** The two kinds of uncertainty behave differently.
+Observation noise is the same size everywhere and does not grow when the
+model extrapolates; coefficient uncertainty grows where the paleo cover
+combinations are far from the modern calibration data, which is exactly
+where the early-Holocene results live.
+**Options.** (i) Keep observation noise, and describe it as such in the
+paper. (ii) Replace it with coefficient draws: sample coefficient vectors
+from the fitted model's posterior (gratia's `fitted_samples`, or a
+multivariate normal from `vcov(model)` applied to the prediction matrix),
+which costs seconds per month. (iii) Add both.
+**What we need from you.** Which of these did you intend? The manuscript
+says "posterior samples", which readers will take to mean (ii).
 
-### U3. 100 versus 1,000 draws
+### A3. 100 or 1,000 draws
 The manuscript says 1,000 posterior samples per cell and month; the
-scripts draw 100. Which is intended? (Relevant to U1 and U2.)
+scripts draw 100. Which is intended? (This interacts with A1 and A2.)
 
-## The calibration model
+## B. The calibration model
 
-### M1. The land-cover smooth is rank-deficient (R5)
-The three cover fractions ET + ST + OL always sum to one, so they lie on
-a flat two-dimensional surface inside three-dimensional space. The model
-fits a three-dimensional smooth `s(OL, ET, ST)`, which has no data in one
-of its three directions; the fitted March model has rank 444 of 448
-coefficients. This is harmless for interpolation on the surface, but any
-paleo cell whose fractions do not sum to one (taxa with no cover class
-are dropped after renormalisation, Q4) is extrapolated off the surface
-where the smooth is unconstrained. Two options: enforce that the fractions
-sum to one before prediction, or replace the 3-D smooth with a 2-D smooth
-of two fractions (or a compositional transform). Which do you prefer?
+### B1. The land-cover smooth has one direction with no data in it
+**What the code does.** Model 8, the selected model, includes a
+three-dimensional smooth `s(OL, ET, ST, bs = "tp", k = 200)`
+(`4_calibration_model.R` line 286, and the March version at line 755).
+The three fractions always sum to one, so every calibration point lies
+on a flat two-dimensional sheet inside the three-dimensional (OL, ET, ST)
+space. The smooth has nothing to learn about the direction perpendicular
+to that sheet, and `mgcv` reports the fit as rank-deficient: the fitted
+March model has rank 444 of 448 coefficients.
+**Why it matters.** On the sheet this is harmless. Off the sheet the
+smooth is unconstrained, and some paleo rows are off it: script 1
+renormalises across all taxa and then drops taxa whose cover class is NA
+(`Ericaceae`, `Boraginaceae`, `Plantaginaceae`, `Urticaceae`, lines
+54-59), so those rows sum to less than one and are predicted by
+extrapolation in the empty direction.
+**Options.** (i) Keep the 3-D smooth but renormalise paleo rows to sum to
+one before prediction, and check how many rows were affected. (ii) Use a
+two-dimensional smooth of two fractions, `s(ET, ST)`, or a compositional
+(isometric log-ratio) transform, and refit the ladder.
+**What we need from you.** Did you know about the rank deficiency, and do
+you have a preference? (ii) changes the model and the results; (i) is a
+small correction.
 
-### M2. Calibration on the interpolated field (Q8)
-The all-months calibration is fitted to the interpolated modern field,
-so most calibration "observations" are outputs of the interpolation
-model in cells with no pollen site, and the manuscript still says only
-pollen-bearing cells are used. Is calibrating on the interpolated field
-the intended design? It raises the effective sample size and smooths the
-cover heterogeneity the albedo model is meant to learn from.
+### B2. Calibration on the interpolated field rather than pollen cells
+**What the code does.** The all-months calibration reads
+`calibration_modern_lct_interp_bluesky.RDS`, the modern slice of the
+interpolated product, so it is fitted to all ~2,900 land cells, of which
+only ~500 contain pollen sites. The rest are outputs of the interpolation
+model. The draft manuscript still says "estimates are made for grid cells
+that contain one or more pollen records".
+**Why it matters.** Fitting to interpolated cells raises the apparent
+sample size and skill of the spatial term, and smooths the cover
+heterogeneity the albedo model is meant to learn from; the model is
+partly being fitted to another model's output.
+**What we need from you.** Is this the intended design, or should the
+calibration be fitted to pollen-bearing cells only and the interpolated
+field used for prediction alone? Either way the manuscript text needs to
+match.
 
-### M3. Spatial confounding and what is held fixed (Q12, Q22, Q23)
-Location and elevation are identical in every slice, so they cancel in
-every slice-to-slice difference and the entire Holocene signal comes from
-the cover smooth. The spatial term (k = 500) was fitted alongside it on
-the same data and may have absorbed part of the true cover effect. Was
-this examined, for example by comparing the cover effect with and without
-the spatial term, or by spatially blocked cross-validation? Related: what
-is held fixed at 2000-2009 by construction (snow, clouds, atmosphere,
-soils, lakes, modern land use, taxon-to-class mapping), and which of
-those changed enough over the Holocene to matter?
+### B3. The spatial term cancels through time and may have absorbed the cover effect
+**What the code does.** Every prediction uses the same location and
+elevation values for a cell in every time slice; only the cover fractions
+change. On the link scale the location and elevation terms therefore
+cancel in every slice-to-slice difference, and the entire Holocene albedo
+signal comes from the shape of the cover smooth alone. That smooth was
+fitted alongside a very flexible spatial surface (`s(x, y, bs = "gp",
+k = 500)`) on the same modern data.
+**Why it matters.** Cover and location are strongly correlated in the
+modern data (forest in the east, prairie in the middle, tundra in the
+north). A flexible spatial term can take credit for part of the true
+cover effect, leaving the cover smooth biased towards zero and the
+Holocene forcing understated. The "spatial effects experiment" in scripts
+4 and 5 compares fits, not the size of the cover effect.
+**What we need from you.** Was this examined, for example by comparing
+the cover effect with and without the spatial term, or by spatially
+blocked cross-validation? If not, would you like us to?
 
-### M4. Model selection (Q26)
-Script 5 hard-codes model 8 as the selected model; the manuscript says
-analysis of deviance chose it. On the March point data, AIC preferred
-model 2 (no land cover), and the May AIC table increased with model
-complexity, which is not possible for correctly fitted nested models and
-suggests the beta-regression AIC is unreliable here. Which criterion was
-used, did the same model win in all twelve months, and should the paper
-say the choice was made on grounds other than AIC?
+### B4. Model selection: model 8 is fixed by hand
+**What the code does.** Script 4 prints an AIC table and analysis of
+deviance for models 1 to 8 (lines 315-335), but script 5 (line 28) loads
+model 8 as the selected model for every month unconditionally. On the
+March point data AIC preferred model 2, which has no land cover at all.
+In our May run the AIC values rose with model complexity, which cannot
+happen for correctly fitted nested models and suggests the AIC of these
+beta-regression fits is not trustworthy.
+**Why it matters.** A model without cover cannot produce any Holocene
+change, so cover must be in the model regardless of AIC, but the paper
+says analysis of deviance chose the model.
+**What we need from you.** Which criterion was actually used, did the
+same model win in all twelve months, and how should the paper describe
+the choice?
 
-### M5. Zeros replaced by 0.0001 (Q17)
-Albedo values of exactly zero are set to 0.0001 before fitting. On the
+### B5. Calibration response: centre pixel or cell mean
+**What the code does.** Script 2 computes both the native 0.25-degree
+albedo at the 1-degree cell centre and the 1-degree cell mean
+(`_coarse`), and the calibration uses the centre pixel (lines 190 and
+195; script 4 line 17). The predictors are 1-degree cell means.
+**Why it matters.** A centre pixel over a lake, a city or a clear-cut is
+attributed to the whole cell's cover.
+**What we need from you.** Was the centre pixel a deliberate choice?
+
+### B6. Albedo values of exactly zero are set to 0.0001
+Script 2 (line 388) replaces zeros with 0.0001 before fitting. On the
 logit scale that is about -9, a very influential value for a beta model.
-Where do the zeros come from (water, fill values, failed retrievals) and
-should they be dropped instead?
+Where do the zeros come from (water, fill values, failed retrievals), and
+should those cells be dropped instead?
 
-### M6. Twelve independent monthly models (Q28)
+### B7. Twelve independent monthly models
 You said in the meeting that a model with within-year structure would be
 better but is out of scope. Should the paper state that "consistent
 pattern across months" is an observation rather than a constraint of the
 model?
 
-## Differencing, ice and forcing
+## C. Differencing, ice and forcing
 
-### F1. Ice contribution: which variant does the paper report? (Q36)
-Script 7a computes both a threshold (ice fraction > 0.5) and an
-area-weighted representation, each with fixed and scaled glacier albedo,
-and script 8 computes forcing for all combinations. Which one is
-reported, and how different are the continental totals?
+### C1. Which ice representation the paper reports
+**What the code does.** Script 7a computes two representations of ice in
+each cell and slice: a threshold (cell is ice if the Dalton ice fraction
+exceeds 0.5) and an area-weighted mix of vegetation and ice albedo. Each
+is computed with a fixed glacier albedo and with a scaled one, and script
+8 computes forcing for every combination.
+**What we need from you.** Which combination do the talk and paper
+report, and how different are the continental totals between them?
 
-### F2. Ice readvances are averaged away (R8, R9, Q38)
-Where the ice fraction increases from one slice to the next, script 7a
-replaces it by the mean of its neighbours, so real readvances are erased,
-and a `na.rm = TRUE` sum turns such pairs into a confident zero albedo
-change that still receives a kernel. Is suppressing readvances deliberate?
+### C2. Ice readvances are averaged away
+**What the code does.** Script 7a (lines 452-459) looks for cells where
+the ice fraction increases from an older to a younger slice, and replaces
+that value by the mean of its neighbours in time. Real readvances are
+erased; the adjustment is applied once, not repeated, and it fails with an
+error if the increase occurs in the first pair. A later sum with
+`na.rm = TRUE` (lines 526-530) turns such pairs into a confident zero
+albedo change that still receives a kernel.
+**Why it matters.** The early-Holocene forcing is dominated by ice, so
+the rule for handling the ice chronology sets the largest numbers.
+**What we need from you.** Is suppressing readvances deliberate? If so we
+will clamp the chronology to monotone retreat cleanly; if not we will
+keep real readvances.
 
-### F3. Are the three kernels like for like? (R16, Q42, Q43)
-HadGEM3 is a clear-sky top-of-atmosphere kernel; the CAM5 variable used
-(`FSNSC`) is a clear-sky surface flux; the CACK band used is not
-documented. They also enter with different unit and sign conventions
-(HadGEM and CAM5 multiply the albedo change by 100, CACK does not and
-flips sign), and the kernel grids are aligned by arithmetic with the
-check plots commented out. Could you confirm the intended flux level,
-units and sign for each, and whether "forcing not sensitive to kernel"
-was checked after putting them on the same footing?
+### C3. The three kernels are not like for like
+**What the code does.** Script 8 reads HadGEM3 `albedo_sw_cs`, which is a
+clear-sky top-of-atmosphere kernel (line 58); the CAM5 variable `FSNSC`,
+which is clear-sky *surface* net shortwave flux (lines 163-165); and CACK
+band 3, whose meaning is not documented in the script (lines 197-202).
+HadGEM and CAM5 forcings multiply the albedo change by 100 (kernels in
+W/m² per percent); CACK multiplies the fraction directly and flips the
+sign (lines 256-301). The kernel grids are aligned to the data by
+arithmetic on longitude and latitude with the check plots commented out.
+**Why it matters.** "Forcing is not sensitive to kernel choice" is one of
+the paper's statements. If one kernel is a surface flux and another a
+top-of-atmosphere flux, agreement is a coincidence, and a units or sign
+slip would change the headline numbers.
+**What we need from you.** For each kernel: intended flux level (surface
+or top of atmosphere), sky condition, units and sign convention. Were the
+three put on the same footing before the comparison?
 
-### F4. Clear-sky, pre-industrial kernels across the Holocene (Q41)
-Clear-sky kernels are typically larger than all-sky, and early-Holocene
-summer insolation at high latitude was well above pre-industrial. What is
-the case for this kernel choice, and what would an all-sky kernel do to
-the headline numbers?
+### C4. Clear-sky, pre-industrial kernels across the Holocene
+The HadGEM kernel is clear-sky and pre-industrial. Clear-sky albedo
+kernels are typically 1.5 to 2 times larger than all-sky because clouds
+mask the surface, and early-Holocene summer insolation at high latitudes
+was tens of W/m² above pre-industrial. What is the case for this choice,
+and would an all-sky kernel change the headline numbers?
 
-### F5. The headline comparison (Q44)
-The comparison with modern greenhouse-gas forcing sets a local, land-only,
-clear-sky, per-interval forcing against a global-mean, all-sky,
-cumulative one. What is the fair comparison: the Holocene forcing
-expressed as a global mean, or the modern agents expressed locally?
+### C5. The comparison with modern forcing agents
+The talk compares the Holocene forcing with IPCC forcing from modern
+agents. The Holocene number is local to North American land, clear-sky,
+and per interval; the IPCC numbers are global means, all-sky, and
+cumulative since 1750. North American land is a few percent of Earth's
+surface. What is the fair comparison: the Holocene forcing expressed as a
+global mean, or the modern agents expressed regionally?
 
-### F6. Consecutive-slice differences and interval length (Q33, Q35)
-Forcing is defined per consecutive pair of slices, which do not
-accumulate and span different lengths (150 to 500 years). Should a fixed
-reference slice be used, or forcing expressed per unit time?
+### C6. Consecutive-slice differences and interval length
+Forcing is defined per consecutive pair of slices. The pairs span
+different lengths (150, 300, 500 years) and do not accumulate to a change
+relative to a baseline. Should a fixed reference slice be used, or forcing
+be expressed per unit time?
 
-## Land cover
+### C7. The 11.5 ka slice is labelled 12 ka
+Script 7 relabels age 11,500 as 12,000 for plotting (line 100); script 7a
+does not. Is 12 ka the intended label, and is it the same slice? (The
+broader time-slice question is in the general file.)
 
-### L1. Taxon-to-class mapping in the north (Q2, Q3)
-Betula, Alnus and Salix are mapped to summergreen trees and Ericaceae are
-dropped, so dwarf-birch tundra looks like deciduous forest to the model.
-Open land lumps prairie, tundra and cropland. Was this examined, and does
-it matter in the northern half of the domain where the largest changes
-are?
+## D. Land cover
 
-### L2. Age uncertainty and binning (Q7)
-How are samples whose age posteriors straddle a bin boundary assigned?
-Sharp events such as the hemlock decline can be smeared or sharpened by
-that choice.
+### D1. Taxon-to-class mapping in the north
+`taxon2LCT_translation_v2.0.csv` maps Betula, Alnus and Salix to
+summergreen trees and drops Ericaceae, so dwarf-birch tundra looks like
+deciduous forest to the model, and open land lumps prairie, tundra and
+cropland with very different albedo. Was this examined? It matters most
+in the north, where the largest Holocene changes are.
 
-## Validation
+### D2. Age uncertainty and binning
+How are samples whose age posteriors straddle a bin boundary assigned to
+time slices? Sharp events such as the hemlock decline can be smeared or
+sharpened by that choice.
 
-### V1. Independent check of the hindcasts (Q49, Q50)
-Is there any out-of-sample test? The last 150 years of Euro-American
-clearance, with land-survey or HYDE land cover and published deforestation
-forcing estimates, looks like the natural one.
+## E. Validation
+
+### E1. Independent check of the hindcasts
+Is there any out-of-sample test of the hindcast albedo? The last 150
+years of Euro-American clearance, with land-survey or HYDE land cover and
+published deforestation forcing estimates, looks like the natural one.

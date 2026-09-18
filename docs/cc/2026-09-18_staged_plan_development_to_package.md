@@ -254,6 +254,8 @@ test that the default reproduces the anchor and a short comparison figure.
 
 ## (d) Science decisions the plan depends on
 
+(These are written out for Andria, with the code context and options in plain language, in `questions_for_andria_scientific.md`: D1 = A1, D2 = A2, D3 = B1, D4 = C3, D5 = C2, D6 = B4, D7 = C7 and the general file, D8 = B5.)
+
 | # | Decision | Options (cost) | Where in code | Default until decided |
 |---|---|---|---|---|
 | D1 | **Land-cover posterior**: the PI's "multiple samples from the posterior, summarise mean and sd" refers to the 200 `iter` draws in `veg_posts_interp_ice.RDS`, which `1:218-222` averages away before anything else (METHODOLOGY Q6). | (i) Keep the mean (current). (ii) Carry n draws (e.g. 20-50) through calibration and prediction: calibration is fitted once on the mean modern field (or once per draw, 12 x n fits, prohibitive) and prediction is run per draw, so the 42M-row file is reduced to n x cells x ages and script 6 loops over draws; cost ~n x prediction time (seconds each), plus memory in 7a. | `1:218-222`, `6:30-79`, `7a` | (i) |
