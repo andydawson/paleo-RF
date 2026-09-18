@@ -7,6 +7,10 @@ library(raster)
 
 alb_prod = "bluesky"
 
+# [run-may] month of albedo used for the non-interp (single-month) calibration; override with CAL_MONTH=mar etc.
+cal_month = Sys.getenv('CAL_MONTH', 'may')
+run_tag = paste0(cal_month, '_', alb_prod)
+
 # [run-nointerp] see comment in 4_calibration_model.R
 run_interp = file.exists(paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
 dir.create('figures', showWarnings = FALSE)
@@ -15,7 +19,7 @@ dir.create('figures', showWarnings = FALSE)
 ## read in prediction and map data
 ###############################################################################################################
 
-alb_preds = readRDS(paste0('data/paleo_predict_gam_summary_', alb_prod, '.RDS'))
+alb_preds = readRDS(paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
 
 pbs_ll = readRDS('data/map-data/geographic/pbs_ll.RDS')
 
@@ -1371,7 +1375,7 @@ breaks_alb = c(0, 5, 10, 20, 30, 40, 60, 80, 100)/100
 labels_alb = c("0 - 5", "5 - 10", "10 - 20", "20 - 30", "30 - 40", "40 - 60", "60 - 80", "80 - 100")
 
 grid <- readRDS("data/grid.RDS")
-paleo_sim_gam = readRDS('data/paleo_predict_gam_bluesky.RDS')
+paleo_sim_gam = readRDS(paste0('data/paleo_predict_gam_', run_tag, '.RDS'))
 
 
 
@@ -1447,7 +1451,7 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_binned_tile_grid_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_binned_tile_grid_', run_tag, '.pdf'))
 
 # albedo predictions binned 
 # wrap: by year 
@@ -1473,11 +1477,11 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_binned_tile_wrap_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_binned_tile_wrap_', run_tag, '.pdf'))
 
 # albedo predictions binned 
 # pages: single year per page 
-pdf(paste0('figures/alb_preds_binned_tile_pages_', alb_prod, '.pdf'))
+pdf(paste0('figures/alb_preds_binned_tile_pages_', run_tag, '.pdf'))
 for (year in years){
   
   p<-ggplot()+
@@ -1530,7 +1534,7 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_sd_tile_wrap_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_sd_tile_wrap_', run_tag, '.pdf'))
 
 # albedo prediction standard deviation binned
 # wrap: by year
@@ -1554,7 +1558,7 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_sd_binned_tile_wrap_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_sd_binned_tile_wrap_', run_tag, '.pdf'))
 
 # albedo prediction standard deviation binned
 # grid: year as rows
@@ -1578,7 +1582,7 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', run_tag, '.pdf'))
 
 # albedo prediction standard deviation binned
 # wrap: by year
@@ -1602,7 +1606,7 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_cv_binned_tile_wrap_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_cv_binned_tile_wrap_', run_tag, '.pdf'))
 
 # albedo prediction standard deviation binned
 # grid: year as rows
@@ -1626,7 +1630,7 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_cv_binned_tile_grid_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_cv_binned_tile_grid_', run_tag, '.pdf'))
 
 ###############################################################################################################
 ## plot albedo prediction differences
@@ -1657,7 +1661,7 @@ for (i in 1:N_cells){
 
 alb_diff_df =  alb_diff_df[which(!is.na(alb_diff_df$alb_diff)),]
 
-saveRDS(alb_diff_df, paste0('data/alb_preds_diffs_', alb_prod, '.RDS'))
+saveRDS(alb_diff_df, paste0('data/alb_preds_diffs_', run_tag, '.RDS'))
 
 
 # labels = c('2 - 0.05', '4 - 2', '4 - 6', '8 - 6', '10 - 8')
@@ -1741,7 +1745,7 @@ sc_colour_diverge <- scale_colour_distiller(type = "div",
 #         legend.text = element_text(size=14),
 #         legend.title = element_text(size=14)) +
 #   coord_fixed()
-# # ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', alb_prod, '.pdf'))
+# # ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', run_tag, '.pdf'))
 # 
 # 
 # #change in albedo going back through time 
@@ -1765,10 +1769,10 @@ sc_colour_diverge <- scale_colour_distiller(type = "div",
 #         legend.title = element_text(size=14)) +
 #   coord_fixed()
 # # scale_fill_brewer(type = "div", palette = 'Rd
-# ggsave(paste0('figures/alb_preds_diff_point_wrap_', alb_prod, '.pdf'))
+# ggsave(paste0('figures/alb_preds_diff_point_wrap_', run_tag, '.pdf'))
 # 
-# ggsave(paste0('figures/alb_preds_diff_subset_point_', alb_prod, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_subset_point_', alb_prod, '.pdf'))
+# ggsave(paste0('figures/alb_preds_diff_subset_point_', run_tag, '.png'))
+# ggsave(paste0('figures/alb_preds_diff_subset_point_', run_tag, '.pdf'))
 
 #change in albedo going back in time but using tiles 
 #a bit easier to interpret than the one above 
@@ -1792,8 +1796,8 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_diff_tile_wrap_', alb_prod, '.png'))
-ggsave(paste0('figures/alb_preds_diff_tile_wrap_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_diff_tile_wrap_', run_tag, '.png'))
+ggsave(paste0('figures/alb_preds_diff_tile_wrap_', run_tag, '.pdf'))
 
 
 ggplot()+
@@ -1816,10 +1820,10 @@ ggplot()+
         legend.text = element_text(size=14),
         legend.title = element_text(size=14)) +
   coord_fixed()
-ggsave(paste0('figures/alb_preds_diff_tile_grid_', alb_prod, '.png'))
-ggsave(paste0('figures/alb_preds_diff_tile_grid_', alb_prod, '.pdf'))
+ggsave(paste0('figures/alb_preds_diff_tile_grid_', run_tag, '.png'))
+ggsave(paste0('figures/alb_preds_diff_tile_grid_', run_tag, '.pdf'))
 
-pdf(paste0('figures/alb_preds_diff_tile_pages_', alb_prod, '.pdf'))
+pdf(paste0('figures/alb_preds_diff_tile_pages_', run_tag, '.pdf'))
 for (year in diff_years){
   
   diff_sub = alb_diff_df[which(alb_diff_df$year == year),]
@@ -1992,7 +1996,7 @@ dev.off()
 # #         legend.text = element_text(size=14),
 # #         legend.title = element_text(size=14)) +
 # #   coord_fixed()
-# # # ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', alb_prod, '.pdf'))
+# # # ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', run_tag, '.pdf'))
 # # 
 # # 
 # # #change in albedo going back through time 
@@ -2016,10 +2020,10 @@ dev.off()
 # #         legend.title = element_text(size=14)) +
 # #   coord_fixed()
 # # # scale_fill_brewer(type = "div", palette = 'Rd
-# # ggsave(paste0('figures/alb_preds_diff_point_wrap_', alb_prod, '.pdf'))
+# # ggsave(paste0('figures/alb_preds_diff_point_wrap_', run_tag, '.pdf'))
 # # 
-# # ggsave(paste0('figures/alb_preds_diff_subset_point_', alb_prod, '.png'))
-# # ggsave(paste0('figures/alb_preds_diff_subset_point_', alb_prod, '.pdf'))
+# # ggsave(paste0('figures/alb_preds_diff_subset_point_', run_tag, '.png'))
+# # ggsave(paste0('figures/alb_preds_diff_subset_point_', run_tag, '.pdf'))
 # 
 # #change in albedo going back in time but using tiles 
 # #a bit easier to interpret than the one above 
@@ -2043,8 +2047,8 @@ dev.off()
 #         legend.text = element_text(size=14),
 #         legend.title = element_text(size=14)) +
 #   coord_fixed()
-# ggsave(paste0('figures/alb_preds_diff_tile_wrap_', alb_prod, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_tile_wrap_', alb_prod, '.pdf'))
+# ggsave(paste0('figures/alb_preds_diff_tile_wrap_', run_tag, '.png'))
+# ggsave(paste0('figures/alb_preds_diff_tile_wrap_', run_tag, '.pdf'))
 # 
 # 
 # ggplot()+
@@ -2067,10 +2071,10 @@ dev.off()
 #         legend.text = element_text(size=14),
 #         legend.title = element_text(size=14)) +
 #   coord_fixed()
-# ggsave(paste0('figures/alb_preds_diff_tile_grid_', alb_prod, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_tile_grid_', alb_prod, '.pdf'))
+# ggsave(paste0('figures/alb_preds_diff_tile_grid_', run_tag, '.png'))
+# ggsave(paste0('figures/alb_preds_diff_tile_grid_', run_tag, '.pdf'))
 # 
-# pdf(paste0('figures/alb_preds_diff_tile_pages_', alb_prod, '.pdf'))
+# pdf(paste0('figures/alb_preds_diff_tile_pages_', run_tag, '.pdf'))
 # for (year in diff_years){
 #   
 #   diff_sub = alb_diff_df[which(alb_diff_df$year == year),]

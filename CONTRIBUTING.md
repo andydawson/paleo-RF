@@ -26,4 +26,8 @@ repository is branched, committed, merged and backed up. Agent sessions read
 - Remote: `origin` (`andydawson/paleo-RF`). Push `chris-dev`, `legacy` and
   any open topic branches at natural checkpoints and before ending each
   session, without asking each time.
-- Keep `CODE_MAP.md` current when scripts are added, renamed or retired.
+- Keep `docs/cc/CODE_MAP.md` current when scripts are added, renamed or retired.
+- Everything Claude Code generates that is not a script, a result or a data
+  file with its own home (code maps, issue lists, schematics, reports,
+  generators) lives under `docs/cc/`. The repo root holds only README,
+  CONTRIBUTING, AGENTS, .gitignore, `scripts/`, `data/` and `docs/`.

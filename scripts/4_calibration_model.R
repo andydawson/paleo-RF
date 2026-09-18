@@ -7,6 +7,10 @@ library(tidyr)
 
 alb_prod = "bluesky"
 
+# [run-may] month of albedo used for the non-interp (single-month) calibration; override with CAL_MONTH=mar etc.
+cal_month = Sys.getenv('CAL_MONTH', 'may')
+run_tag = paste0(cal_month, '_', alb_prod)
+
 # [run-nointerp] the interpolated ('_interp') calibration data is not in the repo; only run those blocks if present
 run_interp = file.exists(paste0('data/calibration_modern_lct_interp_', alb_prod, '.RDS'))
 dir.create('output/calibration', recursive = TRUE, showWarnings = FALSE)
@@ -607,7 +611,8 @@ ctrl <- list(nthreads=8, maxit=500)
 
 
 # # just x and y
-mod1 = mgcv::bam(mar ~ s(x, y, bs="gp", k=350),
+# [run-may] response month is a parameter (same get() idiom as the interp loops)
+mod1 = mgcv::bam(get(cal_month) ~ s(x, y, bs="gp", k=350),
           data=cal_data, 
           family=betar(link="logit"), 
           method="REML", 
@@ -615,7 +620,7 @@ mod1 = mgcv::bam(mar ~ s(x, y, bs="gp", k=350),
           control=ctrl)
 gam.check(mod1)
 
-saveRDS(mod1, paste0('data/calibration_mod1_', alb_prod, '.RDS'))
+saveRDS(mod1, paste0('data/calibration_mod1_', run_tag, '.RDS'))
 
 
 vis.gam(mod1,theta=30)
@@ -630,7 +635,7 @@ vis.gam(mod1,theta=30)
 
 # add eleveation
 #gp model works better than tp
-mod2 = mgcv::bam(mar ~ s(x, y, bs="gp", k=350) + s(elev, k=50),
+mod2 = mgcv::bam(get(cal_month) ~ s(x, y, bs="gp", k=350) + s(elev, k=50),
            data=cal_data, 
            family=betar(link="logit"), 
            method="REML", 
@@ -639,13 +644,13 @@ mod2 = mgcv::bam(mar ~ s(x, y, bs="gp", k=350) + s(elev, k=50),
 gam.check(mod2)
 #vis.gam(mod,theta=30)
 
-saveRDS(mod2, paste0('data/calibration_mod2_', alb_prod, '.RDS'))
+saveRDS(mod2, paste0('data/calibration_mod2_', run_tag, '.RDS'))
 
 
 AIC(mod1, mod2)
 
 # add OL
-mod3 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30),
+mod3 = mgcv::bam(get(cal_month) ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30),
            data=cal_data, 
            family=betar(link="logit"), 
            method="REML", 
@@ -653,7 +658,7 @@ mod3 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30),
            control=ctrl)
 gam.check(mod3)
 
-saveRDS(mod3, paste0('data/calibration_mod3_', alb_prod, '.RDS'))
+saveRDS(mod3, paste0('data/calibration_mod3_', run_tag, '.RDS'))
 
 
 AIC(mod1, mod2, mod3)
@@ -664,7 +669,7 @@ anova_gam
 summary(mod3)
 
 # add ET
-mod4 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s(ET, k=30),
+mod4 = mgcv::bam(get(cal_month) ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s(ET, k=30),
            data=cal_data, 
            family=betar(link="logit"), 
            method="REML", 
@@ -672,7 +677,7 @@ mod4 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s
            control=ctrl)
 gam.check(mod4)
 
-saveRDS(mod4, paste0('data/calibration_mod4_', alb_prod, '.RDS'))
+saveRDS(mod4, paste0('data/calibration_mod4_', run_tag, '.RDS'))
 
 
 AIC(mod1, mod2, mod3, mod4)
@@ -690,7 +695,7 @@ summary(mod4)
 #            method="REML", 
 #            na.action=na.omit, 
 #            control=ctrl)
-mod5 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s(ET, k=30) + s(ST, k=30),
+mod5 = mgcv::bam(get(cal_month) ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s(ET, k=30) + s(ST, k=30),
                  data=cal_data, 
                  family=betar(link="logit"), 
                  method="REML", 
@@ -698,7 +703,7 @@ mod5 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, k=30) + s
                  control=ctrl)
 gam.check(mod5)
 
-saveRDS(mod5, paste0('data/calibration_mod5_', alb_prod, '.RDS'))
+saveRDS(mod5, paste0('data/calibration_mod5_', run_tag, '.RDS'))
 
 AIC(mod1, mod2, mod3, mod4, mod5)
 
@@ -707,7 +712,7 @@ anova_gam
 
 summary(mod4)
 
-mod6 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, k=30),
+mod6 = mgcv::bam(get(cal_month) ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, k=30),
                  data=cal_data, 
                  family=betar(link="logit"), 
                  method="REML", 
@@ -715,7 +720,7 @@ mod6 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, k
                  control=ctrl)
 gam.check(mod6)
 
-saveRDS(mod6, paste0('data/calibration_mod6_', alb_prod, '.RDS'))
+saveRDS(mod6, paste0('data/calibration_mod6_', run_tag, '.RDS'))
 
 AIC(mod1, mod2, mod3, mod4, mod5, mod6)
 
@@ -724,7 +729,7 @@ anova_gam
 
 summary(mod6)
 
-mod7 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=30),
+mod7 = mgcv::bam(get(cal_month) ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=30),
                  data=cal_data, 
                  family=betar(link="logit"), 
                  method="REML", 
@@ -732,9 +737,9 @@ mod7 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, b
                  control=ctrl)
 gam.check(mod7)
 
-saveRDS(mod7, paste0('data/calibration_mod7_', alb_prod, '.RDS'))
+saveRDS(mod7, paste0('data/calibration_mod7_', run_tag, '.RDS'))
 
-mod7_free = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=50),
+mod7_free = mgcv::bam(get(cal_month) ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=50),
                  data=cal_data, 
                  family=betar(link="logit"), 
                  method="REML", 
@@ -742,7 +747,7 @@ mod7_free = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, 
                  control=ctrl)
 gam.check(mod7_free)
 
-saveRDS(mod7_free, paste0('data/calibration_mod7_free_', alb_prod, '.RDS'))  # [run-nointerp] was saving mod7 under the mod7_free name
+saveRDS(mod7_free, paste0('data/calibration_mod7_free_', run_tag, '.RDS'))  # [run-nointerp] was saving mod7 under the mod7_free name
 
 AIC(mod1, mod2, mod3, mod4, mod5, mod6, mod7)
 
@@ -752,7 +757,7 @@ anova_gam
 summary(mod7)
 
 
-mod8 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=50),
+mod8 = mgcv::bam(get(cal_month) ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=50),
                  data=cal_data, 
                  family=betar(link="logit"), 
                  method="REML", 
@@ -760,7 +765,7 @@ mod8 = mgcv::bam(mar ~ s(x, y, bs='gp', k=350) + s(elev, k=50) + s(OL, ET, ST, b
                  control=ctrl)
 gam.check(mod8)
 
-saveRDS(mod8, paste0('data/calibration_mod8_', alb_prod, '.RDS'))
+saveRDS(mod8, paste0('data/calibration_mod8_', run_tag, '.RDS'))
 
 AIC(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8)
 

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1580 660" role="img" aria-label="Linear flowchart of the non-interp paleo-RF pipeline run on 2026-09-16, with inputs, missing inputs and outputs per script.">
+<style>
+svg{font-family:'Liberation Sans','Helvetica Neue',Arial,sans-serif;}
+.paper{fill:#fbfaf7;}
+.gridline{fill:none;stroke:#e6e3dc;stroke-width:0.6;}
+.box{stroke-width:1.2;}
+.st-runs{fill:#dcefdc;stroke:#3f8a4d;}
+.st-skipped{fill:#efefef;stroke:#a3a3a3;stroke-dasharray:2 3;}
+.st-blocked{fill:#fbe8c4;stroke:#c5851a;}
+.st-missing{fill:#fbe3e0;stroke:#b4443a;stroke-dasharray:5 3;}
+.st-none{fill:#ffffff;stroke:#5b6873;}
+.k-doc.st-runs{fill:#eef6ee;}
+.edge{fill:none;stroke:#5b6873;stroke-width:1.3;}
+.e-dash{stroke-dasharray:5 4;}
+.arrowhead{fill:#5b6873;}
+text{fill:#1f2a33;}
+.t-title{font-size:22px;font-weight:700;}
+.t-sub{font-size:12.5px;fill:#4b5a66;}
+.t-band{font-size:10.5px;font-weight:700;letter-spacing:1px;fill:#7a8791;}
+.t-h{font-size:11px;font-weight:700;}
+.t-b{font-size:10.5px;fill:#4b5a66;}
+.t-i{font-size:10px;font-style:italic;fill:#7a8791;}
+.t-foot{font-size:10px;fill:#7a8791;}
+.st-skipped ~ text{fill:#7d7d7d;}
+.badge-talk{fill:#7b4ea3;}
+.badge-t{font-size:8.5px;font-weight:700;fill:#ffffff;letter-spacing:0.3px;}
+</style>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20,0 H0 V20" class="gridline"/></pattern></defs>
+<rect class="paper" x="0" y="0" width="1580" height="660"/>
+<rect x="0" y="0" width="1580" height="660" fill="url(#grid)"/>
+<text class="t-title" x="40" y="38">paleo-RF: the non-interp pipeline as run on 2026-09-16</text>
+<text class="t-sub" x="40" y="60">March albedo, 505 pollen-bearing 1° cells, vegetation only. One column per script; rows show the inputs it used, the inputs that were missing, and what it produced.</text>
+<text class="t-band" x="40" y="84">INPUTS USED (IN REPO)</text>
+<text class="t-band" x="40" y="158">INPUTS MISSING FROM THE REPO</text>
+<text class="t-band" x="40" y="264">SCRIPTS</text>
+<text class="t-band" x="40" y="414">OUTPUTS PRODUCED</text>
+
+<path class="edge e-flow" d="M98.0,144 L98.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M178.0,218 L178.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M138.0,376 L138.0,422" marker-end="url(#arrow)"/>
+
+<path class="edge e-flow" d="M312.0,144 L312.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M392.0,218 L392.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M352.0,376 L352.0,422" marker-end="url(#arrow)"/>
+
+<path class="edge e-flow" d="M526.0,144 L526.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M606.0,218 L606.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M566.0,376 L566.0,422" marker-end="url(#arrow)"/>
+
+<path class="edge e-flow" d="M740.0,144 L740.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M820.0,218 L820.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M780.0,376 L780.0,422" marker-end="url(#arrow)"/>
+
+<path class="edge e-flow" d="M954.0,144 L954.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M1034.0,218 L1034.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M994.0,376 L994.0,422" marker-end="url(#arrow)"/>
+
+<path class="edge e-flow" d="M1168.0,144 L1168.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M1248.0,218 L1248.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M1208.0,376 L1208.0,422" marker-end="url(#arrow)"/>
+
+<path class="edge e-flow" d="M1382.0,144 L1382.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M1462.0,218 L1462.0,272" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M1422.0,376 L1422.0,422" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M236,324.0 L254,324.0" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M450,324.0 L468,324.0" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M450,360 L459.0,360 L459.0,394 L673.0,394 L673.0,336.0 L682,336.0" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M878,324.0 L896,324.0" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M1092,324.0 L1110,324.0" marker-end="url(#arrow)"/>
+<path class="edge e-flow" d="M1306,324.0 L1324,324.0" marker-end="url(#arrow)"/>
+<path class="edge e-dash" d="M1422.0,482 L1422.0,508" marker-end="url(#arrow)"/>
+<g id="in-1" data-stage="in-1" class="node"><path class="box st-runs k-doc" d="M40,92 H236 V144 C202.67999999999998,159.2 169.36,136 138.0,144 C106.64,152 73.32,153.6 40,144 Z"/><text class="t-h" x="49" y="110">grid.RDS, taxon-to-cover csv</text><text class="t-i" x="49" y="125">in repo</text></g>
+<g id="in-2" data-stage="in-2" class="node"><path class="box st-runs k-doc" d="M254,92 H450 V144 C416.67999999999995,159.2 383.36,136 352.0,144 C320.64,152 287.32,153.6 254,144 Z"/><text class="t-h" x="263" y="110">blue-sky albedo GeoTIFF</text><text class="t-b" x="263" y="125">2000–09 monthly; lct_paleo_reveals</text><text class="t-b" x="263" y="138.5">(age-50 slice); pbs map polygons</text></g>
+<g id="in-3" data-stage="in-3" class="node"><path class="box st-runs k-doc" d="M468,92 H664 V144 C630.68,159.2 597.36,136 566.0,144 C534.64,152 501.32,153.6 468,144 Z"/><text class="t-h" x="477" y="110">calibration table</text><text class="t-b" x="477" y="125">505 cells × 12 months (from 2)</text></g>
+<g id="in-4" data-stage="in-4" class="node"><path class="box st-runs k-doc" d="M682,92 H878 V144 C844.68,159.2 811.36,136 780.0,144 C748.64,152 715.32,153.6 682,144 Z"/><text class="t-h" x="691" y="110">calibration table (March)</text><text class="t-b" x="691" y="125">505 cells, 496 with albedo</text></g>
+<g id="in-5" data-stage="in-5" class="node"><path class="box st-runs k-doc" d="M896,92 H1092 V144 C1058.68,159.2 1025.3600000000001,136 994.0,144 C962.64,152 929.32,153.6 896,144 Z"/><text class="t-h" x="905" y="110">mod1–mod8 March fits</text><text class="t-b" x="905" y="125">from 4; calibration table</text></g>
+<g id="in-6" data-stage="in-6" class="node"><path class="box st-runs k-doc" d="M1110,92 H1306 V144 C1272.68,159.2 1239.3600000000001,136 1208.0,144 C1176.64,152 1143.32,153.6 1110,144 Z"/><text class="t-h" x="1119" y="110">selected model (mod8)</text><text class="t-b" x="1119" y="125">lct_paleo_reveals.RDS: 12 slices,</text><text class="t-b" x="1119" y="138.5">4,453 cell-slices</text></g>
+<g id="in-7" data-stage="in-7" class="node"><path class="box st-runs k-doc" d="M1324,92 H1520 V144 C1486.68,159.2 1453.3600000000001,136 1422.0,144 C1390.64,152 1357.32,153.6 1324,144 Z"/><text class="t-h" x="1333" y="110">March predictions (from 6)</text><text class="t-b" x="1333" y="125">grid.RDS, pbs map polygons</text></g>
+<g id="miss-1" data-stage="miss-1" class="node"><path class="box st-missing k-doc" d="M40,166 H236 V218 C202.67999999999998,233.2 169.36,210 138.0,218 C106.64,226 73.32,227.6 40,218 Z"/><text class="t-h" x="49" y="184">veg_pred_LGM_8.0.RDS</text><text class="t-i" x="49" y="199">REVEALS output: MISSING</text></g>
+<g id="miss-2" data-stage="miss-2" class="node"><path class="box st-missing k-doc" d="M254,166 H450 V218 C416.67999999999995,233.2 383.36,210 352.0,218 C320.64,226 287.32,227.6 254,218 Z"/><text class="t-h" x="263" y="184">lct_modern_reveals_point.RDS</text><text class="t-i" x="263" y="199">point-scale table: MISSING;</text><text class="t-i" x="263" y="212.5">lct_modern_reveals.RDS stale</text></g>
+<g id="miss-3" data-stage="miss-3" class="node"><path class="box st-missing k-doc" d="M468,166 H664 V218 C630.68,233.2 597.36,210 566.0,218 C534.64,226 501.32,227.6 468,218 Z"/><text class="t-h" x="477" y="184">scripts/make_grid.R</text><text class="t-i" x="477" y="199">MISSING (reconstructed);</text><text class="t-i" x="477" y="212.5">_coarse/_point tables MISSING</text></g>
+<g id="miss-4" data-stage="miss-4" class="node"><path class="box st-missing k-doc" d="M682,166 H878 V218 C844.68,233.2 811.36,210 780.0,218 C748.64,226 715.32,227.6 682,218 Z"/><text class="t-h" x="691" y="184">interp calibration table</text><text class="t-i" x="691" y="199">MISSING (interp half skipped)</text></g>
+<g id="miss-5" data-stage="miss-5" class="node"><path class="box st-missing k-doc" d="M896,166 H1092 V218 C1058.68,233.2 1025.3600000000001,210 994.0,218 C962.64,226 929.32,227.6 896,218 Z"/><text class="t-h" x="905" y="184">interp fits; brms fits</text><text class="t-i" x="905" y="199">MISSING (those blocks skipped)</text></g>
+<g id="miss-6" data-stage="miss-6" class="node"><path class="box st-missing k-doc" d="M1110,166 H1306 V218 C1272.68,233.2 1239.3600000000001,210 1208.0,218 C1176.64,226 1143.32,227.6 1110,218 Z"/><text class="t-h" x="1119" y="184">lct_paleo_reveals_interp.RDS</text><text class="t-i" x="1119" y="199">MISSING (interp half skipped)</text></g>
+<g id="miss-7" data-stage="miss-7" class="node"><path class="box st-missing k-doc" d="M1324,166 H1520 V218 C1486.68,233.2 1453.3600000000001,210 1422.0,218 C1390.64,226 1357.32,227.6 1324,218 Z"/><text class="t-h" x="1333" y="184">ice-sheet shapefiles 21–1 ka</text><text class="t-i" x="1333" y="199">MISSING: no ice overlay drawn</text></g>
+<g id="stage-1" data-stage="stage-1" class="node"><rect class="box st-skipped k-proc" x="40" y="272" width="196" height="104" rx="7"/><rect class="badge-talk" x="198" y="357" width="30" height="13" rx="3"/><text class="badge-t" x="213.0" y="366.6" text-anchor="middle">Talk</text><text class="t-h" x="49" y="290">1_veg_lct_prep.R</text><text class="t-h" x="49" y="305">DID NOT RUN</text><text class="t-b" x="49" y="320">taxa → ET / ST / OL fractions</text><text class="t-i" x="49" y="333.5">its outputs are committed, so</text><text class="t-i" x="49" y="347.0">the rest could start from them</text></g>
+<g id="stage-2" data-stage="stage-2" class="node"><rect class="box st-runs k-proc" x="254" y="272" width="196" height="104" rx="7"/><text class="t-h" x="263" y="290">2_calibration_lct_bluesky.R</text><text class="t-b" x="263" y="305">extract monthly albedo at the</text><text class="t-b" x="263" y="318.5">505 pollen-bearing cells</text><text class="t-i" x="263" y="332.0">~3 min; reproduces the</text><text class="t-i" x="263" y="345.5">committed table exactly</text></g>
+<g id="stage-3" data-stage="stage-3" class="node"><rect class="box st-runs k-proc" x="468" y="272" width="196" height="104" rx="7"/><text class="t-h" x="477" y="290">3_plot_cal_lct_albedo.R</text><text class="t-b" x="477" y="305">side branch: calibration-data</text><text class="t-b" x="477" y="318.5">diagnostics (LCT maps, albedo</text><text class="t-b" x="477" y="332.0">vs covariates)</text><text class="t-i" x="477" y="345.5">~1 min</text></g>
+<g id="stage-4" data-stage="stage-4" class="node"><rect class="box st-runs k-proc" x="682" y="272" width="196" height="104" rx="7"/><rect class="badge-talk" x="840" y="357" width="30" height="13" rx="3"/><text class="badge-t" x="855.0" y="366.6" text-anchor="middle">Talk</text><text class="t-h" x="691" y="290">4_calibration_model.R</text><text class="t-b" x="691" y="305">beta GAM ladder mod1–8 for</text><text class="t-b" x="691" y="318.5">March: space + elevation + cover</text><text class="t-i" x="691" y="332.0">~90 min on 8 threads</text></g>
+<g id="stage-5" data-stage="stage-5" class="node"><rect class="box st-runs k-proc" x="896" y="272" width="196" height="104" rx="7"/><rect class="badge-talk" x="1054" y="357" width="30" height="13" rx="3"/><text class="badge-t" x="1069.0" y="366.6" text-anchor="middle">Talk</text><text class="t-h" x="905" y="290">5_calibration_eval.R</text><text class="t-b" x="905" y="305">AIC / deviance table; model vs</text><text class="t-b" x="905" y="318.5">data (r = 0.95); mod8 selected</text><text class="t-b" x="905" y="332.0">by the script</text><text class="t-i" x="905" y="345.5">seconds</text></g>
+<g id="stage-6" data-stage="stage-6" class="node"><rect class="box st-runs k-proc" x="1110" y="272" width="196" height="104" rx="7"/><rect class="badge-talk" x="1268" y="357" width="30" height="13" rx="3"/><text class="badge-t" x="1283.0" y="366.6" text-anchor="middle">Talk</text><text class="t-h" x="1119" y="290">6_prediction_model.R</text><text class="t-b" x="1119" y="305">apply mod8 to each Holocene</text><text class="t-b" x="1119" y="318.5">slice; 100 draws per cell</text><text class="t-i" x="1119" y="332.0">seconds; matches committed</text><text class="t-i" x="1119" y="345.5">predictions (r = 0.999)</text></g>
+<g id="stage-7" data-stage="stage-7" class="node"><rect class="box st-runs k-proc" x="1324" y="272" width="196" height="104" rx="7"/><rect class="badge-talk" x="1482" y="357" width="30" height="13" rx="3"/><text class="badge-t" x="1497.0" y="366.6" text-anchor="middle">Talk</text><text class="t-h" x="1333" y="290">7_plot_preds.R</text><text class="t-b" x="1333" y="305">March albedo, sd, CV and</text><text class="t-b" x="1333" y="318.5">slice-to-slice difference maps</text><text class="t-i" x="1333" y="332.0">~6 min</text></g>
+<g id="out-1" data-stage="out-1" class="node"><path class="box st-none k-doc" d="M40,422 H236 V474 C202.67999999999998,489.2 169.36,466 138.0,474 C106.64,482 73.32,483.6 40,474 Z"/><text class="t-h" x="49" y="440">lct_modern_reveals.RDS</text><text class="t-b" x="49" y="455">lct_paleo_reveals.RDS (committed)</text></g>
+<g id="out-2" data-stage="out-2" class="node"><path class="box st-none k-doc" d="M254,422 H450 V474 C416.67999999999995,489.2 383.36,466 352.0,474 C320.64,482 287.32,483.6 254,474 Z"/><text class="t-h" x="263" y="440">calibration_modern_lct_bluesky</text><text class="t-b" x="263" y="455">+ _coarse; 26 albedo maps</text></g>
+<g id="out-3" data-stage="out-3" class="node"><path class="box st-none k-doc" d="M468,422 H664 V474 C630.68,489.2 597.36,466 566.0,474 C534.64,482 501.32,483.6 468,474 Z"/><text class="t-h" x="477" y="440">LCT pie, tricolore and</text><text class="t-b" x="477" y="455">gridded calibration maps</text></g>
+<g id="out-4" data-stage="out-4" class="node"><path class="box st-none k-doc" d="M682,422 H878 V474 C844.68,489.2 811.36,466 780.0,474 C748.64,482 715.32,483.6 682,474 Z"/><text class="t-h" x="691" y="440">calibration_mod1–8_bluesky.RDS</text><text class="t-b" x="691" y="455">(+ mod7_free); March fits</text></g>
+<g id="out-5" data-stage="out-5" class="node"><path class="box st-none k-doc" d="M896,422 H1092 V474 C1058.68,489.2 1025.3600000000001,466 994.0,474 C962.64,482 929.32,483.6 896,474 Z"/><text class="t-h" x="905" y="440">calibration_model_selected</text><text class="t-b" x="905" y="455">model-vs-data figures</text></g>
+<g id="out-6" data-stage="out-6" class="node"><path class="box st-none k-doc" d="M1110,422 H1306 V474 C1272.68,489.2 1239.3600000000001,466 1208.0,474 C1176.64,482 1143.32,483.6 1110,474 Z"/><text class="t-h" x="1119" y="440">paleo_predict_gam[_summary|</text><text class="t-b" x="1119" y="455">_samps]_bluesky.RDS</text></g>
+<g id="out-7" data-stage="out-7" class="node"><path class="box st-none k-doc" d="M1324,422 H1520 V474 C1486.68,489.2 1453.3600000000001,466 1422.0,474 C1390.64,482 1357.32,483.6 1324,474 Z"/><text class="t-h" x="1333" y="440">13 alb_preds_* figures;</text><text class="t-b" x="1333" y="455">alb_preds_diffs_bluesky.RDS</text></g>
+<g id="stage-7a8" data-stage="stage-7a8" class="node"><rect class="box st-blocked k-proc" x="1110" y="508" width="410" height="56" rx="7"/><text class="t-h" x="1119" y="526">7a_alb_diff_full.R, 8_radiative.R</text><text class="t-i" x="1119" y="541">not run: need the interp predictions,</text><text class="t-i" x="1119" y="554.5">Dalton ice raster, glacier albedo, kernels</text></g>
+<text class="t-band" x="40" y="508">LEGEND</text><rect class="box st-runs k-proc" x="40" y="520" width="26" height="16" rx="4"/><text class="t-b" x="74" y="532">ran on 2026-09-16</text><rect class="box st-skipped k-proc" x="40" y="542" width="26" height="16" rx="4"/><text class="t-b" x="74" y="554">did not run (input missing; outputs already committed)</text><rect class="box st-blocked k-proc" x="40" y="564" width="26" height="16" rx="4"/><text class="t-b" x="74" y="576">not run: blocked on missing data</text><path class="box st-runs k-doc" d="M370,520 H396 V528 C391.58,543.2 387.16,520 383.0,528 C378.84,536 374.42,537.6 370,528 Z"/><text class="t-b" x="404" y="532">input present in the repo</text><path class="box st-missing k-doc" d="M370,542 H396 V550 C391.58,565.2 387.16,542 383.0,550 C378.84,558 374.42,559.6 370,550 Z"/><text class="t-b" x="404" y="554">input missing from the repo</text><path class="box st-none k-doc" d="M370,564 H396 V572 C391.58,587.2 387.16,564 383.0,572 C378.84,580 374.42,581.6 370,572 Z"/><text class="t-b" x="404" y="576">output produced</text><rect class="badge-talk" x="720" y="522" width="30" height="13" rx="3"/><text class="badge-t" x="735" y="531.6" text-anchor="middle">Talk</text><text class="t-b" x="758" y="532">step shown in the EGU slides</text><path class="edge e-flow" d="M720,552 L750,552" marker-end="url(#arrow)"/><text class="t-b" x="758" y="556">data flow</text><path class="edge e-dash" d="M720,574 L750,574" marker-end="url(#arrow)"/><text class="t-b" x="758" y="578">missing input, or a step that did not run</text>
+<text class="t-foot" x="1560" y="648" text-anchor="end">paleo-RF · 2026-09-17 · generated by docs/cc/tools/nointerp_pipeline.py</text>
+</svg>
