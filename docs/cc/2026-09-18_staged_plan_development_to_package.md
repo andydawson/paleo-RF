@@ -100,6 +100,15 @@ test:                        # fast profile for regression checks
   uncertainty: {n_draws: 10}
 ```
 
+**Decouple flavour from months (added 2026-09-18).** As received, the
+interp code path always loops over all twelve months and the non-interp
+path fits a single month. These are independent choices: interpolation
+concerns the land-cover input, not the calendar. In the config stage the
+`flavour` and `months` keys must be honoured independently, so that either
+flavour runs for one month or for all twelve, and the scripts' duplicated
+"all months" and "single month" blocks collapse into one loop over
+`cfg$months`.
+
 **How scripts consume it without a rewrite.** Two small files sourced at the
 top of every script:
 

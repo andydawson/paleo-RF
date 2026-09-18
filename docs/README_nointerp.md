@@ -9,7 +9,8 @@ reconstruction. It ran end to end on 2026-09-16 (March) and 2026-09-17
 (May) on branch `chris-dev` with the changes listed at the end.
 
 Legend: 🟧 **missing** = required and not in the repository;
-<mark>unknown</mark> = provenance not confirmed.
+<mark>unknown</mark> = provenance not confirmed. Line numbers (`script:line`)
+refer to the scripts on `chris-dev`; commented-out loads are marked.
 
 ## Scripts
 
@@ -28,24 +29,24 @@ Legend: 🟧 **missing** = required and not in the repository;
 
 | File | Role | What | Provenance | Status |
 |---|---|---|---|---|
-| `data/veg_pred_LGM_8.0.RDS` | input to 1 | REVEALS output: taxon fractions per cell and slice with simulation draws (`mediansim`) | Andria's group, REVEALS run; <mark>unknown</mark> version | 🟧 **missing** (script 1's outputs are committed, so 2-7 can run without it) |
-| `data/taxon2LCT_translation_v2.csv` | input to 1 | pollen taxon -> ET/ST/OL/NA | <mark>unknown</mark> | 🟧 **missing** under that name; `taxon2LCT_translation_v2.0.csv` is present and is probably the same file |
-| `data/lct_modern_reveals_point.RDS` | input to 2 | modern land cover at site (point) scale | no script writes it; <mark>unknown</mark> | 🟧 **missing** |
-| `data/blue_sky_monthly_2000-2009.tif`, `data/grid.RDS`, `pbs*.RDS`, ice shapefiles | as in the main README | | | present |
-| `data/calibration_brms_m{1..8}_bluesky.RDS` | input to 5 (legacy brms comparison block) | Bayesian (brms) versions of the calibration models | no script writes them; <mark>unknown</mark> | 🟧 **missing** |
+| `data/veg_pred_LGM_8.0.RDS` | input to 1 (`1:30`) | REVEALS output: taxon fractions per cell and slice with simulation draws (`mediansim`) | Andria's group, REVEALS run; <mark>unknown</mark> version | 🟧 **missing** (script 1's outputs are committed, so 2-7 can run without it) |
+| `data/taxon2LCT_translation_v2.csv` | input to 1 (`1:32`) | pollen taxon -> ET/ST/OL/NA | <mark>unknown</mark> | 🟧 **missing** under that name; `taxon2LCT_translation_v2.0.csv` is present and is probably the same file |
+| `data/lct_modern_reveals_point.RDS` | input to 2 (`2:74`, commented out on `chris-dev`) | modern land cover at site (point) scale | no script writes it; <mark>unknown</mark> | 🟧 **missing** |
+| `data/blue_sky_monthly_2000-2009.tif`, `data/grid.RDS`, `pbs*.RDS`, ice shapefiles | as in the main README (`2:95`, `2:39`, `2:36-37`, `7:57`) | | | present |
+| `data/calibration_brms_m{1..8}_bluesky.RDS` | input to 5 (`5:1003`, guarded on `chris-dev`) | Bayesian (brms) versions of the calibration models | no script writes them; <mark>unknown</mark> | 🟧 **missing** |
 
 ## Derived files and results
 
 | File | Written by | Read by | Status in repo |
 |---|---|---|---|
-| `data/lct_modern_reveals.RDS` | 1 | 2 | present but stale: 1,029 site-level rows with cover in percent, committed 2023-03-02; inconsistent with everything below (known issue #29). On `chris-dev` script 2 falls back to the age-50 slice of the paleo file, which equals the committed calibration sites exactly |
-| `data/lct_paleo_reveals.RDS` | 1 | 6 | present (505 cells x 12 slices, committed 2023-05-16) |
-| `data/calibration_modern_lct_bluesky.RDS` | 2 | 3, 4, 5 | present (505 cells x 12 months); regenerated identically on 2026-09-16 |
-| `data/calibration_modern_lct_bluesky_coarse.RDS`, `_point.RDS` | 2 | 3 | coarse regenerated (untracked); point cannot be produced (input missing) |
-| `data/calibration_mod{1..7}_bluesky.RDS` | 4 (the saveRDS lines are commented out as received) | 5 | present; committed versions are from two generations (mod1-4 fitted to a `bs03` response on 1,028 rows, mod5-7 to `mar` on 496) |
-| `data/calibration_mod8_bluesky.RDS`, `calibration_mod7_free_bluesky.RDS` | 4 | 5 | not committed; regenerated 2026-09-16 (March) and 2026-09-17 (May, `_may_` tag) |
-| `data/calibration_model_selected_bluesky.RDS` | 5 | 6 | not committed; regenerated |
-| `data/paleo_predict_gam_bluesky.RDS`, `..._summary_bluesky.RDS` | 6 | 7 | present (4,453 cell-slices, March); regenerated version matches (corr 0.999) |
+| `data/lct_modern_reveals.RDS` | 1 | 2 (`2:50`) | present but stale: 1,029 site-level rows with cover in percent, committed 2023-03-02; inconsistent with everything below (known issue #29). On `chris-dev` script 2 falls back to the age-50 slice of the paleo file, which equals the committed calibration sites exactly |
+| `data/lct_paleo_reveals.RDS` | 1 | 6 (`6:124`), and 2 (`2:58`, the age-50 fallback on `chris-dev`) | present (505 cells x 12 slices, committed 2023-05-16) |
+| `data/calibration_modern_lct_bluesky.RDS` | 2 | 3 (`3:19`), 4 (`4:588`), 5 (`5:22`) | present (505 cells x 12 months); regenerated identically on 2026-09-16 |
+| `data/calibration_modern_lct_bluesky_coarse.RDS`, `_point.RDS` | 2 | 3 (`3:24`; point `3:29`, commented out) | coarse regenerated (untracked); point cannot be produced (input missing) |
+| `data/calibration_mod{1..7}_bluesky.RDS` | 4 (the saveRDS lines are commented out as received) | 5 (`5:905` onward) | present; committed versions are from two generations (mod1-4 fitted to a `bs03` response on 1,028 rows, mod5-7 to `mar` on 496) |
+| `data/calibration_mod8_bluesky.RDS`, `calibration_mod7_free_bluesky.RDS` | 4 | 5 (`5:905` onward) | not committed; regenerated 2026-09-16 (March) and 2026-09-17 (May, `_may_` tag) |
+| `data/calibration_model_selected_bluesky.RDS` | 5 | 6 (`6:129`) | not committed; regenerated |
+| `data/paleo_predict_gam_bluesky.RDS`, `..._summary_bluesky.RDS` | 6 | 7 (`7:22`, `7:1378`) | present (4,453 cell-slices, March); regenerated version matches (corr 0.999) |
 | `data/paleo_predict_gam_samps_bluesky.RDS` | 6 | | not committed (10 MB); regenerated |
 | `data/alb_preds_diffs_bluesky.RDS` | 7 | | not committed; regenerated |
 | `data/preds_alb_diffs_sub_bluesky.RDS` | archive/8_plot_preds.R | | present; legacy |
