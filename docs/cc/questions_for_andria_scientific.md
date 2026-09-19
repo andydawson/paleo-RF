@@ -245,22 +245,42 @@ model?
 
 ## C. Differencing, ice and forcing
 
-### C0. Three different definitions of where the ice was
-**Found 2026-09-19** while looking for the two missing ice inputs.
+### C0. One ice chronology, plus a second one only for the fraction
+**Checked 2026-09-19.** An earlier draft of this question worried that
+the pipeline held three unreconciled ice definitions. Testing showed
+that two of them are the same thing:
 
-The pipeline carries three unreconciled representations of ice extent,
-and the one script 7a depends on is the one we do not have:
+| Source | Form | Used by | In the repo? |
+|---|---|---|---|
+| `ice` flag in `veg_posts_interp_ice.RDS` | binary, per cell and slice | the vegetation interpolation, to avoid inventing vegetation under ice | yes |
+| `map-data/ice/glacier_shapefiles_21-1k.RDS` | 21 polygon sets, 1,000-year steps | `7_plot_preds.R`, for overlays and ICE status | yes |
+| `Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | continuous ice **fraction** | `7a_alb_diff_full.R`, for the vegetation/ice albedo mixing | **no** |
 
-| Source | Form | Coverage | Used by | In the repo? |
-|---|---|---|---|---|
-| `ice` column of `veg_posts_interp_ice.RDS` | binary `ICE` flag per cell and slice (7.2% of rows) | all 25 slices | the interpolation that made the file; **dropped by `1_veg_lct_prep.R`, which does not carry the column through** | yes |
-| `map-data/ice/glacier_shapefiles_21-1k.RDS` | 21 sets of polygons, lon/lat, attributes `SYMBx` and `Area_Km2` | 21 ka to 1 ka in 1,000-year steps | `7_plot_preds.R`, for map overlays and ICE / no-ICE status | yes |
-| `Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | continuous ice fraction per cell and slice | the time slices | `7a_alb_diff_full.R`, for the vegetation/ice split and hence all the forcing | **no** |
+A point-in-polygon test of every cell against the shapefiles reproduces
+the `ice` flag exactly at every age tried: 69 of 69 cells at 6 ka, 213
+of 213 at 8 ka, 596 of 596 at 10 ka, 780 of 780 at 11 ka, with no
+disagreement either way. So the flag was derived from these shapefiles,
+and the pipeline really has **one** ice chronology, used consistently
+for the vegetation mask and for the maps.
 
-**Questions.** Are these three meant to agree? Which is authoritative?
-And should script 1 be carrying the `ice` flag through to the
-predictions, rather than the pipeline picking the ice up again later
-from a different source?
+The only reason a second product appears is that script 7a needs a
+*fraction* per cell, to mix vegetation and ice albedo by area, whereas
+the shapefiles give a yes or no. Dalton supplies a fraction.
+
+**What we need from you.** Could the fraction be computed from the ice
+polygons we already have, by rasterising them onto the 1-degree grid
+with fractional coverage? That would give the whole pipeline a single
+source of truth for where the ice was, and remove the missing Dalton
+file from the critical path. The trade-off is chronology: Dalton et al.
+2020 is an update to the older reconstruction these polygons appear to
+come from, so using the polygons means using the older margins
+throughout. Which would you prefer: one consistent older chronology, or
+the newer Dalton fraction alongside the older mask and overlays?
+
+One related point either way: `1_veg_lct_prep.R` drops the `ice` column
+when it aggregates, so the flag never reaches the predictions and the
+pipeline picks ice up again later from a different file. Should it be
+carried through?
 
 ### C0a. `albedo_glacier_monthly.csv` cannot be sourced; what should the values be?
 The code needs twelve rows with the columns `month`, `ice_albedo_fixed`
@@ -287,12 +307,11 @@ open repository we could find, and the interpolation method is not
 recorded anywhere in the repository.
 
 **What we need from you.** The file, or the script that made it. If
-neither survives, the fallback is to rasterise the ice polygons we do
-have onto the 1-degree grid to get a fraction per cell and slice. That
-would unblock script 7a, but those polygons look like a different
-chronology (probably Dyke, which Dalton updates), so the results would
-not reproduce the paper. Would you accept that substitution, and should
-the paper then cite the chronology actually used?
+neither survives, see C0: the ice polygons already in the repository can
+be rasterised to a fractional coverage, which would both unblock script
+7a and give the pipeline a single ice chronology. That substitution
+would not reproduce the paper's numbers, and the paper would need to
+cite the chronology actually used.
 
 ### C1. Which ice representation the paper reports
 **What the code does.** Script 7a computes two representations of ice in
