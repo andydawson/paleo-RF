@@ -48,6 +48,30 @@ half with a note if the REVEALS source is missing.
 
 *Status.* Committed; script 1 running.
 
+### Script 1 output, checked 2026-09-19
+
+Ran in about four minutes, most of it the network elevation lookup.
+
+| | interp | non-interp, for comparison |
+|---|---|---|
+| modern cells | 2,860 | 505 |
+| paleo rows | 69,936 (2,860 cells x 24.5 slices on average, ice-masked) | 4,453 |
+| time slices | 25 | 12 |
+| ET + OL + ST | exactly 1.0000 everywhere, no NAs | sums below 1 where taxa with no cover class were dropped |
+
+Two things worth recording. The interp cover fractions sum to exactly
+one, so the "paleo rows off the simplex" half of question B1 does not
+apply to this flavour, though the rank deficiency of a three-dimensional
+smooth on three variables that sum to one still does. And the interp
+files carry **no projected coordinates**: their `x` and `y` are
+longitude and latitude in degrees, where the non-interp files' `x` and
+`y` are Albers metres. Since the calibration fits `s(x, y)` on whichever
+columns carry those names, the two flavours fit the spatial smooth in
+different geometries. That is a science question, not a bug to fix
+mid-run, and it is written up as B2a in
+`questions_for_andria_scientific.md`. This run reproduces the code as
+written.
+
 ## Prerequisites and what is still blocked
 
 | Script | Interp inputs | Status |

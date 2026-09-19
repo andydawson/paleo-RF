@@ -105,6 +105,45 @@ calibration be fitted to pollen-bearing cells only and the interpolated
 field used for prediction alone? Either way the manuscript text needs to
 match.
 
+### B2a. The two flavours fit the spatial smooth in different coordinate systems
+**Found 2026-09-19** while running the interp pipeline for the first time.
+
+**What the code does.** Scripts 4, 5 and 6 fit the spatial term as
+`s(x, y, bs = "gp", k = 500)`, taking whatever columns are named `x` and
+`y`. Those columns mean different things in the two flavours:
+
+| Flavour | `x`, `y` are | Range |
+|---|---|---|
+| non-interp (`lct_paleo_reveals.RDS`) | Albers equal-area metres, with `long`/`lat` held separately | x -3,103,504 to 3,076,936 |
+| interp (`lct_*_reveals_interp.RDS`) | **longitude and latitude in degrees**; no projected columns exist | x -171.5 to -53.5 |
+
+In the interp half of `1_veg_lct_prep.R` the `x`, `y` of
+`veg_posts_interp_ice.RDS` are passed straight to `get_elev_point(...,
+prj = ll_proj)` (line 228) and never projected, so they stay in degrees.
+
+**Why it matters.** A Gaussian-process smooth measures distance between
+points, so the units and the geometry matter. In degrees, distance is
+anisotropic and latitude-dependent: one degree of longitude is about
+105 km at 25°N but only about 38 km at 70°N. The smooth therefore treats
+the far north as horizontally compressed relative to the south, which is
+exactly the distortion the Albers projection exists to remove, and the
+study's largest Holocene changes are in the north. The fitted
+length-scale and the effective degrees of freedom of the spatial term
+are not comparable between the two flavours either, which may be part of
+why our March non-interp results and the talk's interp results differ
+over 4 to 6 ka.
+
+**Options.** (i) Leave as is, and state in the methods that the interp
+spatial term is fitted on unprojected coordinates. (ii) Project the
+interp cell centres to the same Albers grid the non-interp flavour uses,
+before calibration, so both flavours and all the published comparisons
+share one coordinate system.
+
+**What we need from you.** Was fitting the interp spatial smooth on
+degrees intended, or an oversight when the interpolated product was
+swapped in? This changes results, so we have not altered it; the first
+interp run reproduces the code as written.
+
 ### B3. The spatial term cancels through time and may have absorbed the cover effect
 **What the code does.** Every prediction uses the same location and
 elevation values for a cell in every time slice; only the cover fractions
