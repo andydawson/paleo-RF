@@ -4,3 +4,27 @@ output/
 writing/
 writing.zip
 .~lock*
+
+# Run outputs from the non-interp (March/May) runs of 2026-09-16/17, kept on
+# disk for reference but not versioned. The scientifically meaningful outputs
+# are frozen in tests/anchors/; these are the fitted model objects, raw draws
+# and intermediates. REVIEW LATER: delete once the interp pipeline is the
+# established path and these are certainly not needed (see docs/cc/
+# questions_for_andria_general.md section 6).
+data/calibration_mod1_may_bluesky.RDS
+data/calibration_mod2_may_bluesky.RDS
+data/calibration_mod3_may_bluesky.RDS
+data/calibration_mod4_may_bluesky.RDS
+data/calibration_mod5_may_bluesky.RDS
+data/calibration_mod6_may_bluesky.RDS
+data/calibration_mod7_free_bluesky.RDS
+data/calibration_mod7_free_may_bluesky.RDS
+data/calibration_mod7_may_bluesky.RDS
+data/calibration_mod8_bluesky.RDS
+data/calibration_mod8_may_bluesky.RDS
+data/calibration_model_selected_bluesky.RDS
+data/calibration_model_selected_may_bluesky.RDS
+data/calibration_modern_lct_bluesky_coarse.RDS
+data/ice_fort.RDS
+data/paleo_predict_gam_samps_bluesky.RDS
+data/paleo_predict_gam_samps_may_bluesky.RDS
