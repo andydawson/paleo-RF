@@ -35,8 +35,14 @@ centre or a bin edge?
 
 - `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif`: the Dalton et
   al. 2020 ice-fraction raster interpolated to the time slices (script 7a).
+  Checked 2026-09-19: the Dalton margins are paywalled with no open
+  repository found, and this file is a derived interpolation specific to
+  this project, so it cannot be downloaded. See C0b.
 - `data/albedo_glacier_monthly.csv`: the monthly glacier albedo assigned
-  to ice-covered cells (scripts 7 and 7a). Where do the values come from?
+  to ice-covered cells (scripts 7 and 7a). Checked 2026-09-19: this is
+  not a published dataset but a set of chosen values (columns `month`,
+  `ice_albedo`, `ice_albedo_fixed`, `ice_albedo_sc`), so we cannot
+  obtain it independently. See C0a in the scientific questions.
 - `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` (script 8): the other two
   kernels were downloaded on 2026-09-19 from Zenodo (HadGEM3
   doi:10.5281/zenodo.3594673, CAM5 doi:10.5065/D6F47MT6) and verified to
