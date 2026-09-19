@@ -306,12 +306,30 @@ to this project. The originals are behind the journal paywall with no
 open repository we could find, and the interpolation method is not
 recorded anywhere in the repository.
 
-**What we need from you.** The file, or the script that made it. If
-neither survives, see C0: the ice polygons already in the repository can
-be rasterised to a fractional coverage, which would both unblock script
-7a and give the pipeline a single ice chronology. That substitution
-would not reproduce the paper's numbers, and the paper would need to
-cite the chronology actually used.
+**What we need from you.** The file itself, or failing that the script
+that made it. Searched 2026-09-19: Dalton et al. 2020's margins are not
+deposited in any open repository we can find and the paper is
+paywalled, so we cannot rebuild the file independently. And because
+`dalton_interpolated_LC6k.tif` is not Dalton's published data but their
+margins interpolated to the LandCover6k slices by someone on the
+project, even the original shapefiles would leave us guessing at the
+resampling. **This file is the only route to reproducing the paper's
+forcing numbers**; everything below is a substitution that changes
+results.
+
+*Substitutes, in case the file is gone.* (i) Rasterise the ice polygons
+already in the repository to a fractional coverage (see C0): no new data
+needed, and it gives the pipeline a single ice chronology, but it is the
+older reconstruction. (ii) NADI-1, Dalton et al. 2023, is openly
+available on Zenodo (doi:10.5281/zenodo.8161764, CC-BY-4.0, 147
+shapefiles): a newer chronology at 500-year steps from 25 to 1 ka, which
+happens to match this project's slice spacing so it would need little
+interpolation, and it ships minimum and maximum margins alongside the
+optimal one. That last point is worth noting even if we do not switch
+now: the pipeline currently carries no ice-extent uncertainty at all,
+which your EGU speaker notes acknowledge, and NADI-1 would let that be
+quantified rather than just stated. Either substitute means the paper
+must cite the chronology actually used.
 
 ### C1. Which ice representation the paper reports
 **What the code does.** Script 7a computes two representations of ice in
