@@ -1,9 +1,6 @@
-# [run-nointerp] Reconstruction of the missing helper sourced by 3_plot_cal_lct_albedo.R.
-# The original make_grid.R is not in the repository. This version reproduces what
-# the call sites need: a RasterLayer covering the extent of the data at the given
-# resolution, whose cell values are the cell numbers, so that
-#   raster::extract(grid, coords)  returns a cell id per site, and
-#   raster::xyFromCell(grid, id)   returns the cell centre.
+# Reconstruction: the original make_grid.R sourced by 3_plot_cal_lct_albedo.R
+# is not in the repository. Written 2026-09-16 to match what the call sites
+# need: a RasterLayer over the data extent whose values are the cell numbers.
 make_grid <- function(data, coord_fun = ~ long + lat, projection = '+init=epsg:4326', resolution = 2) {
   vars <- all.vars(coord_fun)
   xy <- data[, vars]

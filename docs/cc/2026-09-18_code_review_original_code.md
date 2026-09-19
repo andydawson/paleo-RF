@@ -464,7 +464,7 @@ REVEALS outputs); pointer to `DATA.md`, `CHANGELOG.md`, `2026-09-16_known_issues
 **CHANGELOG:** generate from `git log --format='- %ad %s (%h)' --date=short`
 grouped by tag; keep the human summary at the top ("v0.1 legacy snapshot,
 v0.2 config+seed, ...") and paste the generated list under each tag. Chris will
-be asked for this by the coauthors; a `docs/cc/tools/make_changelog.sh` keeps
+be asked for this by the coauthors; a `tools/make_changelog.sh` keeps
 it honest.
 
 **Data documentation standard: `docs/DATASHEET.md`.** Modelled on Gebru et al.

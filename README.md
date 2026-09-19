@@ -57,7 +57,7 @@ for the interp input files.
 
 **This table and the data tables below describe the interp flavour only.**
 The equivalent tables for the non-interp flavour are in
-`docs/README_nointerp.md`. Files are named as the scripts write them, with
+`docs/cc/README_nointerp.md`. Files are named as the scripts write them, with
 `<month>` standing for `jan` ... `dec`. Line numbers (`script:line`) refer
 to the scripts on `chris-dev` and give the statement that loads the file. Everything the pipeline writes goes
 under `output/` except where a script still writes into `data/`.
@@ -107,9 +107,9 @@ expected outputs are known.
 | `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:57`) | 21 ice-margin polygon sets, 21 to 1 ka | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins | present |
 | `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:273`, `7a:264`) | monthly albedo assigned to ice-covered cells | <mark>unknown</mark> | 🟧 **missing** |
 | `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:84`) | ice fraction per cell and slice | Dalton et al. 2020, interpolated to the slices; <mark>unknown</mark> who did the interpolation | 🟧 **missing** |
-| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:58`) | HadGEM3 albedo kernel, clear-sky, top of atmosphere, W/m² per 1% | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 | downloaded 2026-09-19 (git-ignored; see `data/radiative-kernels/README.md`) |
-| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:163`) | CAM5 albedo kernel; the script reads `FSNSC`, a **surface** flux | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 | downloaded 2026-09-19 (git-ignored) |
-| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:197`) | CACK albedo kernel, band 3 | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8 | 🟧 **missing**: the EDI portal is behind a human-verification check, so it needs a manual download |
+| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:58`) | HadGEM3 albedo kernel, clear-sky, top of atmosphere, W/m² per 1% | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 | 157 MB; downloaded 2026-09-19, git-ignored |
+| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:163`) | CAM5 albedo kernel; the script reads `FSNSC`, a **surface** flux | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 | 21 MB; downloaded 2026-09-19, git-ignored |
+| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:197`) | CACK albedo kernel, band 3 | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8, package `edi.396.1` | 🟧 **missing**: distributed only as `CACKv1.0.zip` (126.5 MB, netCDF plus Octave scripts); the EDI portal is behind a human-verification check, so download it by hand from <https://portal.edirepository.org/nis/mapbrowse?packageid=edi.396.1> and unzip into `data/radiative-kernels/CACKv1.0/` |
 | `scripts/make_grid.R` | sourced by 3 (`3:57`, `3:345`) | helper building a 2-degree grid for the diagnostic maps | original not in repo; the copy present is a reconstruction (2026-09-16) | present (reconstructed) |
 
 ### Derived files and results (produced by the scripts)
@@ -128,7 +128,7 @@ expected outputs are known.
 ### Other files in `data/`
 
 Everything else in `data/` belongs to the non-interp flavour (see
-`docs/README_nointerp.md`) or to abandoned branches: the `_albclim`,
+`docs/cc/README_nointerp.md`) or to abandoned branches: the `_albclim`,
 `calibration_model*`, `cal_data`, `calibration-albedo-climate*`,
 `lct_albedo_snow_modern_*`, `lct_paleo.RDS`, `pollen-modern-slice`,
 `*_CRU.csv`, `*_GCM.csv` and `climate_CRU.csv` files are read by no
@@ -137,8 +137,10 @@ current script and are candidates for removal once confirmed.
 Large files: anything over 50 MB that exists nowhere else is tracked with
 Git LFS; install `git-lfs` before cloning or you will get pointer files.
 Published, citable datasets are git-ignored and fetched instead by
-`bash scripts/download_kernels.sh` (see `data/radiative-kernels/README.md`),
-which keeps the LFS quota for data that cannot be downloaded.
+`bash tools/download_kernels.sh`, which keeps the LFS quota for data that
+cannot be downloaded. Both kernels the script fetches carry their all-sky
+and clear-sky variants in the same file, so changing sky condition needs
+no new download.
 
 ## Environment
 

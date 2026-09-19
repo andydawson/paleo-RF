@@ -32,7 +32,10 @@ repository is branched, committed, merged and backed up. Agent sessions read
   generators) lives under `docs/cc/`, with dated, descriptive file names
   (`YYYY-MM-DD_what_and_why.ext`); living documents carry no date. The
   repo root holds only README, CONTRIBUTING, AGENTS, .gitignore,
-  `scripts/`, `data/` and `docs/`.
+  `scripts/`, `data/`, `docs/` and `tools/`.
+- `scripts/` is the R analysis pipeline and nothing else. Helper code that
+  is not part of the pipeline (data download, diagram generators) lives in
+  `tools/`.
 - Questions for Andria are collected continuously in
   `docs/cc/questions_for_andria_general.md` and
   `docs/cc/questions_for_andria_scientific.md`; add to them as questions

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Download the albedo radiative kernels read by scripts/8_radiative.R.
-# Provenance, licences and the variables used: data/radiative-kernels/README.md
-# Run from the repository root:  bash scripts/download_kernels.sh
+# Provenance, licences, sizes and the variables used: see the data assets
+# table in README.md. Run from the repository root:
+#   bash tools/download_kernels.sh
 set -euo pipefail
 
 DEST="data/radiative-kernels"

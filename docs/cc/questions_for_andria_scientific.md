@@ -186,8 +186,7 @@ keep real readvances.
 
 ### C3. The three kernels are not like for like
 **Verified on 2026-09-19** by downloading the HadGEM3 and CAM5 kernels
-and opening them (`data/radiative-kernels/README.md` records provenance
-and licences).
+and opening them (README.md records provenance, licences and sizes).
 
 **What the code does and what the files contain.**
 
