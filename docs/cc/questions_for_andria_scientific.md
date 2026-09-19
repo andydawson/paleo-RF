@@ -185,21 +185,41 @@ will clamp the chronology to monotone retreat cleanly; if not we will
 keep real readvances.
 
 ### C3. The three kernels are not like for like
-**What the code does.** Script 8 reads HadGEM3 `albedo_sw_cs`, which is a
-clear-sky top-of-atmosphere kernel (line 58); the CAM5 variable `FSNSC`,
-which is clear-sky *surface* net shortwave flux (lines 163-165); and CACK
-band 3, whose meaning is not documented in the script (lines 197-202).
-HadGEM and CAM5 forcings multiply the albedo change by 100 (kernels in
-W/m² per percent); CACK multiplies the fraction directly and flips the
-sign (lines 256-301). The kernel grids are aligned to the data by
-arithmetic on longitude and latitude with the check plots commented out.
-**Why it matters.** "Forcing is not sensitive to kernel choice" is one of
-the paper's statements. If one kernel is a surface flux and another a
-top-of-atmosphere flux, agreement is a coincidence, and a units or sign
-slip would change the headline numbers.
-**What we need from you.** For each kernel: intended flux level (surface
-or top of atmosphere), sky condition, units and sign convention. Were the
-three put on the same footing before the comparison?
+**Verified on 2026-09-19** by downloading the HadGEM3 and CAM5 kernels
+and opening them (`data/radiative-kernels/README.md` records provenance
+and licences).
+
+**What the code does and what the files contain.**
+
+| Script reads | Variable long name | Flux level | Sky | Units |
+|---|---|---|---|---|
+| `8:58` HadGEM3 `albedo_sw_cs` | "SW Surface albedo clear-sky kernel" | **top of atmosphere** | clear-sky | W/m² per 1% |
+| `8:163` CAM5 `FSNSC` | "Clearsky net solar flux at **surface**" | **surface** | clear-sky | W/m² per 1% |
+| `8:197` CACK band 3 | not yet checked (file not obtained) | top of atmosphere | ? | ? |
+
+**Good news on units.** Both files are per 1% albedo change: HadGEM3
+states `units = W/m2/%`, and Pendergrass et al. (2018, §2.1) define their
+albedo kernel as "the change in radiative flux for a 1 % change in
+surface albedo". So the `alb_diff * 100 * kernel` convention at
+`8:256-301` is right for both, and the talk's "W/m²/%" is correct.
+
+**The problem.** The two kernels answer different questions: HadGEM3
+gives the change in flux at the top of the atmosphere, CAM5 the change at
+the surface. They are not comparable, so "radiative forcing was not
+sensitive to kernel" is comparing unlike quantities. The like-for-like
+CAM5 variable is `FSNTC`, "Clearsky net solar flux at top of model",
+which is in the same file, so the fix is a one-word change.
+
+**Also available at no cost.** Each file contains its all-sky twin
+(HadGEM3 `albedo_sw`, CAM5 `FSNT`/`FSNS`), so the clear-sky versus
+all-sky test in C4 needs no new download.
+
+**What we need from you.** (a) Was top of atmosphere the intended flux
+level throughout? If so, may we switch CAM5 to `FSNTC` and re-run the
+comparison? (b) Which CACK band is band 3, and is it top of atmosphere,
+all-sky or clear-sky? (c) The kernel grids are aligned to the data by
+arithmetic on longitude and latitude (`8:230-250`) with the check plots
+commented out; was that verified?
 
 ### C4. Clear-sky, pre-industrial kernels across the Holocene
 The HadGEM kernel is clear-sky and pre-industrial. Clear-sky albedo

@@ -107,7 +107,9 @@ expected outputs are known.
 | `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:57`) | 21 ice-margin polygon sets, 21 to 1 ka | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins | present |
 | `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:273`, `7a:264`) | monthly albedo assigned to ice-covered cells | <mark>unknown</mark> | 🟧 **missing** |
 | `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:84`) | ice fraction per cell and slice | Dalton et al. 2020, interpolated to the slices; <mark>unknown</mark> who did the interpolation | 🟧 **missing** |
-| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc`, `CAM5/alb.kernel.nc`, `CACKv1.0/CACKv1.0.nc` | input to 8 (`8:58`, `8:163`, `8:197`) | albedo radiative kernels | public datasets; <mark>unknown</mark> whether preprocessed | 🟧 **missing** |
+| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:58`) | HadGEM3 albedo kernel, clear-sky, top of atmosphere, W/m² per 1% | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 | downloaded 2026-09-19 (git-ignored; see `data/radiative-kernels/README.md`) |
+| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:163`) | CAM5 albedo kernel; the script reads `FSNSC`, a **surface** flux | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 | downloaded 2026-09-19 (git-ignored) |
+| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:197`) | CACK albedo kernel, band 3 | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8 | 🟧 **missing**: the EDI portal is behind a human-verification check, so it needs a manual download |
 | `scripts/make_grid.R` | sourced by 3 (`3:57`, `3:345`) | helper building a 2-degree grid for the diagnostic maps | original not in repo; the copy present is a reconstruction (2026-09-16) | present (reconstructed) |
 
 ### Derived files and results (produced by the scripts)
@@ -132,8 +134,11 @@ Everything else in `data/` belongs to the non-interp flavour (see
 `*_CRU.csv`, `*_GCM.csv` and `climate_CRU.csv` files are read by no
 current script and are candidates for removal once confirmed.
 
-Large files: anything over 50 MB is tracked with Git LFS; install
-`git-lfs` before cloning or you will get pointer files.
+Large files: anything over 50 MB that exists nowhere else is tracked with
+Git LFS; install `git-lfs` before cloning or you will get pointer files.
+Published, citable datasets are git-ignored and fetched instead by
+`bash scripts/download_kernels.sh` (see `data/radiative-kernels/README.md`),
+which keeps the LFS quota for data that cannot be downloaded.
 
 ## Environment
 

@@ -37,9 +37,14 @@ centre or a bin edge?
   al. 2020 ice-fraction raster interpolated to the time slices (script 7a).
 - `data/albedo_glacier_monthly.csv`: the monthly glacier albedo assigned
   to ice-covered cells (scripts 7 and 7a). Where do the values come from?
-- `data/radiative-kernels/`: `HadGEM3-GA7.1_TOA_kernel_L19.nc`,
-  `CAM5/alb.kernel.nc`, `CACKv1.0/CACKv1.0.nc` (script 8). Were these
-  used as downloaded, or preprocessed?
+- `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` (script 8): the other two
+  kernels were downloaded on 2026-09-19 from Zenodo (HadGEM3
+  doi:10.5281/zenodo.3594673, CAM5 doi:10.5065/D6F47MT6) and verified to
+  contain the variables the script reads. CACK is published through the
+  Environmental Data Initiative (`edi.396.1`), whose portal is behind a
+  human-verification check, so it needs a manual download. Do you still
+  have the file? Also: did you preprocess any of the three, or use them
+  as downloaded? And which CACK band is band 3?
 
 ## 4. Provenance to record in the data documentation
 
