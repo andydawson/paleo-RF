@@ -144,6 +144,49 @@ degrees intended, or an oversight when the interpolated product was
 swapped in? This changes results, so we have not altered it; the first
 interp run reproduces the code as written.
 
+### B2b. Winter albedo is missing across the north: polar night
+**Found 2026-09-19** in the first interp calibration table.
+
+**What the data show.** The blue-sky albedo has no value for high-latitude
+cells in winter, because there is no incoming sunlight to reflect. In the
+interp calibration table (2,860 cells):
+
+| Month | Cells with no albedo | Latitudes affected |
+|---|---|---|
+| December | 1,109 (39%) | every cell above 60°N, 9% of 50-60°N |
+| January | 694 (24%) | above 62.5°N |
+| November | 400 (14%) | above 66.5°N |
+| February | 95 (3%) | far north only |
+| March to October | 33 (1%) | above 76.5°N |
+
+**What the code does with them.** The calibration models are fitted with
+`na.action = na.omit`, so those rows are dropped silently: the December
+model never sees a cell north of 60°N. The prediction step then applies
+that model to all 2,860 cells for every time slice, so December albedo
+across the whole north is produced by extrapolating both the spatial
+smooth and the land-cover smooth into a region and a vegetation range
+the model had no data for.
+
+**Why it matters.** This is the month and the region where the paper's
+mechanism is strongest: snow masking by vegetation, at high latitude, in
+winter. It is also where the Laurentide ice sheet sat, so the
+early-Holocene forcing draws on exactly these extrapolated cells. The
+spatial term cancels when consecutive slices are differenced (B3), but
+the land-cover smooth does not, and in December that smooth was fitted
+only on southern vegetation.
+
+**Options.** (i) Keep, and state that winter high-latitude albedo is
+extrapolated. (ii) Restrict the reported forcing to months and cells
+with calibration support, for example by masking any cell-month whose
+latitude lies outside the fitted range. (iii) Weight the annual forcing
+by available sunlight, which is near zero exactly where the data are
+missing, so the extrapolation would matter much less.
+
+**What we need from you.** Was the winter data gap known, and how do you
+want it handled in the maps and in the annual means? Option (iii) may be
+the most defensible physically, since a forcing computed where no
+sunlight falls is close to meaningless.
+
 ### B3. The spatial term cancels through time and may have absorbed the cover effect
 **What the code does.** Every prediction uses the same location and
 elevation values for a cell in every time slice; only the cover fractions
@@ -187,6 +230,8 @@ attributed to the whole cell's cover.
 **What we need from you.** Was the centre pixel a deliberate choice?
 
 ### B6. Albedo values of exactly zero are set to 0.0001
+*Checked 2026-09-19: no cell-month in the interp calibration table hits
+this replacement, so it affects the non-interp flavour only.*
 Script 2 (line 388) replaces zeros with 0.0001 before fitting. On the
 logit scale that is about -9, a very influential value for a beta model.
 Where do the zeros come from (water, fill values, failed retrievals), and
