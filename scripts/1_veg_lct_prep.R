@@ -26,7 +26,17 @@ latlimits  <- c(10, 80)
 longlimits <- c(-165, -50) 
 bounding_box = c(longlimits[1], latlimits[1], longlimits[2], latlimits[2])
 
+# [run-interp] run only the half whose inputs are present. The non-interp half needs
+# data/veg_pred_LGM_8.0.RDS (the raw REVEALS output) and data/taxon2LCT_translation_v2.csv;
+# the interp half needs data/veg_posts_interp_ice.RDS. See README.md.
+run_nointerp = file.exists('data/veg_pred_LGM_8.0.RDS')
+run_interp   = file.exists('data/veg_posts_interp_ice.RDS')
+if (!run_nointerp) message('skipping the non-interp half: data/veg_pred_LGM_8.0.RDS not found')
+if (!run_interp) stop('data/veg_posts_interp_ice.RDS not found')
+
 #veg_pred = readRDS('data/veg_pred_LC6k.RDS')
+if (run_nointerp) { # [run-interp] the REVEALS source file and the taxon table this
+# half needs are not in the repository; the interp half below is self-contained.
 veg_pred = readRDS('data/veg_pred_LGM_8.0.RDS')
 
 taxon2pft = read.csv('data/taxon2LCT_translation_v2.csv')
@@ -210,6 +220,8 @@ saveRDS(lct_paleo, 'data/lct_paleo_reveals.RDS')
 ggplot() + 
   geom_point(data=lct_paleo, aes(x=long, y=lat), colour="blue") +
   facet_wrap(~ages)
+
+} # [run-interp] end of the non-interp block
 
 ############################################################################################
 # interpolated veg
