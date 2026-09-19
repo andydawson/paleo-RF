@@ -4,6 +4,3 @@ output/
 writing/
 writing.zip
 .~lock*
-data/radiative-kernels/**/*.nc
-data/radiative-kernels/*.nc
-data/radiative-kernels/CAM5/README.txt
