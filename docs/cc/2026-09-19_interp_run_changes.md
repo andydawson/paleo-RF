@@ -72,6 +72,20 @@ mid-run, and it is written up as B2a in
 `questions_for_andria_scientific.md`. This run reproduces the code as
 written.
 
+### Script 2 output, checked 2026-09-19
+
+Ran in about 20 minutes, most of it the 98 monthly albedo maps. Wrote
+`calibration_modern_lct_interp_bluesky.RDS` and its `_coarse` twin, both
+2,860 cells x 12 months, with no change to the script. No errors.
+
+The table exposed the polar-night gap now written up as question B2b:
+December has no albedo for any cell above 60N (1,109 of 2,860 missing),
+January above 62.5N, November above 66.5N, against 33 missing in the
+summer months. The calibration drops those rows silently
+(`na.action = na.omit`) and the prediction step then covers them by
+extrapolation. Also checked: nothing in this table hits the 0.0001 zero
+replacement, so that issue is confined to the non-interp flavour.
+
 ## Prerequisites and what is still blocked
 
 | Script | Interp inputs | Status |
