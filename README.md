@@ -162,6 +162,15 @@ Run scripts from the repository root, e.g.
 BLAS threads (`OPENBLAS_NUM_THREADS=8`) or the fits will oversubscribe
 the machine. A package lockfile (`renv`) is planned.
 
+## Regression anchors
+
+`tests/anchors/` holds frozen pipeline outputs that a refactor must still
+reproduce, with a README explaining what is anchored and what is not.
+Andria's own outputs are preserved at the `v0-legacy` tag rather than
+copied; `bash tools/restore_original_outputs.sh` brings them back. There
+are no interp anchors yet, because the interp pipeline has never been run
+here.
+
 ## Working practices
 
 See `CONTRIBUTING.md` (branches, commits, merges, where generated

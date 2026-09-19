@@ -27,6 +27,14 @@ repository is branched, committed, merged and backed up. Agent sessions read
   any open topic branches at natural checkpoints and before ending each
   session, without asking each time.
 - Keep `docs/cc/2026-09-16_code_map_original_scripts.md` current when scripts are added, renamed or retired.
+- Andria's code and data as received are tagged `v0-legacy`. That tag is
+  the store of her original pipeline outputs; recover them with
+  `bash tools/restore_original_outputs.sh`. Never commit regenerated run
+  outputs over the committed versions in `data/`: a run overwrites them
+  in the working tree, so check `git status` before staging, and prefer
+  `git add <path>` to `git add -A`.
+- Frozen outputs used to prove a refactor changed nothing live in
+  `tests/anchors/`; see the README there for what is anchored and why.
 - Everything Claude Code generates that is not a script, a result or a data
   file with its own home (code maps, issue lists, schematics, reports,
   generators) lives under `docs/cc/`, with dated, descriptive file names
