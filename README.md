@@ -99,18 +99,50 @@ expected outputs are known.
 
 | File | Role | What | Provenance | Status |
 |---|---|---|---|---|
-| `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:218`) | interpolated land-cover posteriors: 2,870 cells x 25 slices x 200 draws x 3 classes, with `cell_area` and `ice` | Andria, 2026-09-17; REVEALS + Bayesian spatial interpolation with ice mask, from the Climate of the Past land-cover paper | present |
+| `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:218`) | interpolated land-cover posteriors: 2,860 cells x 25 slices x 200 draws x 3 classes, plus `cell_area` and a binary `ice` flag (7.2% of rows). Script 1 averages the draws and **drops `cell_area` and `ice`**, so neither reaches the rest of the pipeline | Andria, 2026-09-17; REVEALS + Bayesian spatial interpolation with ice mask, from the Climate of the Past land-cover paper | present |
 | `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:290`; non-interp half `2:95`) | 12-band monthly blue-sky albedo, 0.25 degree, 2000-2009 mean | MODIS MCD43A3 v061 + ERA5 as described in manuscript §2.1; <mark>unknown</mark> who built it and with what code | present |
 | `data/grid.RDS` | input to 1, 2, 7, 7a (`1:34`, `2:39`, `7:254`, `7a:201`) | 1-degree lon/lat raster with cell ids (-172 to 127 E, 17 to 79 N) | <mark>unknown</mark> (committed 2023-05-16, no generating code) | present |
 | `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2, 3, 6, 7, 7a, 8 (`2:36-37`, `3:39-40`, `6:283`, `7:24-26`, `7a:166-167`, `8:54-55`) | political boundaries, projected and lon/lat; includes ocean polygons | <mark>unknown</mark> | present |
 | elevation (not a file) | input to 1 (`1:230`; non-interp half `1:96`) | point elevation at cell centres | fetched from AWS terrain tiles by `elevatr` at run time; values can differ between runs | network |
-| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:57`) | 21 ice-margin polygon sets, 21 to 1 ka | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins | present |
+| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:57`) | 21 ice-margin polygon sets, 1,000-year steps, 21 to 1 ka, lon/lat. **The project's ice chronology**: a point-in-polygon test reproduces the `ice` flag above exactly (69/69 cells at 6 ka, 213/213 at 8 ka, 596/596 at 10 ka, 780/780 at 11 ka), so the flag was derived from these | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins, but pre-dates Dalton 2020 | present |
 | `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:273`, `7a:264`) | monthly albedo assigned to ice-covered cells | <mark>unknown</mark> | 🟧 **missing** |
-| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:84`) | ice fraction per cell and slice | Dalton et al. 2020, interpolated to the slices; <mark>unknown</mark> who did the interpolation | 🟧 **missing** |
+| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:84`) | continuous ice **fraction** per cell and slice, used to mix vegetation and ice albedo by area. Needed only because the polygons above are binary; see the note below | Dalton et al. 2020 margins interpolated to the slices; <mark>unknown</mark> who did the interpolation | 🟧 **missing**: margins are paywalled and this is a derived product, so it cannot be downloaded |
 | `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:58`) | HadGEM3 albedo kernel, clear-sky, top of atmosphere, W/m² per 1% | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 | 157 MB; downloaded 2026-09-19, git-ignored |
 | `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:163`) | CAM5 albedo kernel; the script reads `FSNSC`, a **surface** flux | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 | 21 MB; downloaded 2026-09-19, git-ignored |
 | `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:197`) | CACK albedo kernel, band 3 | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8, package `edi.396.1` | 🟧 **missing**: distributed only as `CACKv1.0.zip` (126.5 MB, netCDF plus Octave scripts); the EDI portal is behind a human-verification check, so download it by hand from <https://portal.edirepository.org/nis/mapbrowse?packageid=edi.396.1> and unzip into `data/radiative-kernels/CACKv1.0/` |
 | `scripts/make_grid.R` | sourced by 3 (`3:57`, `3:345`) | helper building a 2-degree grid for the diagnostic maps | original not in repo; the copy present is a reconstruction (2026-09-16) | present (reconstructed) |
+
+### A note on ice
+
+The pipeline needs to know where the ice was at each time slice, and it
+answers that question from two files rather than one.
+
+`glacier_shapefiles_21-1k.RDS` is the chronology. It supplies the mask
+that stopped the vegetation interpolation inventing plants under ice
+(the `ice` flag inside `veg_posts_interp_ice.RDS`, verified identical to
+a point-in-polygon test of the polygons), and it supplies the ice
+outlines that `7_plot_preds.R` draws on the maps. That part is
+self-consistent.
+
+The missing Dalton raster is reached for by `7a_alb_diff_full.R` for one
+narrow reason: to split a cell's albedo change into a vegetation part
+and an ice part, that script needs a *fraction* of the cell covered by
+ice, and the polygons give only yes or no. Dalton supplies a fraction.
+
+So the gap is narrower than it looks. Rasterising the polygons already
+in the repository onto the 1-degree grid with fractional coverage would
+produce the same quantity, remove the missing file from the critical
+path, and leave the pipeline with a single source of truth for ice. The
+trade-off is chronology rather than method: Dalton et al. 2020 updates
+the older reconstruction the polygons appear to come from, so deriving
+the fraction ourselves means using the older margins consistently
+instead of newer margins for the fraction and older ones for everything
+else. That choice is with Andria, as question C0 in
+`docs/cc/questions_for_andria_scientific.md`.
+
+A second, separate point: `1_veg_lct_prep.R` discards the `ice` and
+`cell_area` columns when it averages the posterior draws, which is why
+the later scripts have to go looking for ice again at all.
 
 ### Derived files and results (produced by the scripts)
 
