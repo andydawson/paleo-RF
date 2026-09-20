@@ -205,20 +205,72 @@ Holocene forcing understated. The "spatial effects experiment" in scripts
 the cover effect with and without the spatial term, or by spatially
 blocked cross-validation? If not, would you like us to?
 
-### B4. Model selection: model 8 is fixed by hand
+### B4. Model selection: model 8 is fixed by hand, but the data support it
+**Updated 2026-09-20 with the interp AIC table**, which script 4 produced
+overnight for all twelve months (`output/calibration/AIC_table.csv`).
+
 **What the code does.** Script 4 prints an AIC table and analysis of
 deviance for models 1 to 8 (lines 315-335), but script 5 (line 28) loads
-model 8 as the selected model for every month unconditionally. On the
-March point data AIC preferred model 2, which has no land cover at all.
-In our May run the AIC values rose with model complexity, which cannot
-happen for correctly fitted nested models and suggests the AIC of these
-beta-regression fits is not trustworthy.
-**Why it matters.** A model without cover cannot produce any Holocene
-change, so cover must be in the model regardless of AIC, but the paper
-says analysis of deviance chose the model.
-**What we need from you.** Which criterion was actually used, did the
-same model win in all twelve months, and how should the paper describe
-the choice?
+model 8 as the selected model for every month unconditionally.
+
+**What the interp data show.** The hard-coding turns out to encode the
+right answer. Model 8 has the lowest AIC in 11 of 12 months, losing
+narrowly to model 7 in May, and is never the worst. AIC decreases
+monotonically with model complexity in every month:
+
+| | jan | apr | jul | oct | dec |
+|---|---|---|---|---|---|
+| model 1 | -6583 | -8904 | -12642 | -9449 | -6027 |
+| model 8 | -6669 | -9503 | -13032 | -10405 | -6127 |
+
+This supersedes the worry raised from the non-interp May run, where AIC
+rose with complexity in a way correctly fitted nested models cannot. On
+the interp data the behaviour is orderly.
+
+**What is left of the question.** A formal one: the models are fitted by
+REML and compared across differing mean structures, which is not a valid
+likelihood comparison (mgcv's own guidance is to use `method = "ML"`
+when comparing models that differ in their terms), and models 6 to 8 are
+rank deficient because the cover fractions sum to one, so the penalty
+term is ambiguous. A referee could object. Given how consistent and
+monotone the ordering is, refitting by ML would very likely confirm
+model 8 rather than overturn it, so this is tidying rather than a
+threat. **Would you like the ladder refitted with `method = "ML"` so the
+selection can be defended as stated?**
+
+### B4a. Land cover matters most in autumn, least in midwinter
+**Found 2026-09-20 in the interp AIC table.**
+
+The improvement from adding land cover to the model varies strongly by
+season. Taking the AIC spread across the ladder within each month as a
+measure of how much the cover terms buy:
+
+| jan | feb | mar | apr | may | jun | jul | aug | sep | oct | nov | dec |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 86 | 167 | 331 | 599 | 798 | 486 | 390 | 461 | 891 | 956 | 370 | 100 |
+
+Land cover explains most in September and October, and least in December
+and January, by roughly a factor of ten.
+
+**Why it matters.** The paper's mechanism is snow masking: vegetation
+changes albedo most where it hides or exposes snow, which should make
+winter the season where cover matters most. The data say the opposite.
+Two candidate explanations, which point in different directions:
+
+- *Physical.* In midwinter at these latitudes there is little sunlight
+  and deep snow cover everywhere, so albedo is high and uniform whatever
+  the vegetation; the shoulder seasons, with partial snow and active
+  canopy, are when cover discriminates.
+- *Artefactual.* Midwinter is exactly when the polar-night gap removes
+  the northern cells (B2b): the December model is fitted only south of
+  60°N, so the cells where snow masking is strongest are absent from the
+  fit. The weak winter signal may be a sampling artefact rather than a
+  physical result.
+
+**What we need from you.** Which do you think it is, and is this
+seasonality something the paper should report? If it is the second, it
+strengthens the case for handling the winter gap explicitly rather than
+extrapolating into it.
 
 ### B5. Calibration response: centre pixel or cell mean
 **What the code does.** Script 2 computes both the native 0.25-degree
