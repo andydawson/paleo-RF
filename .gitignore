@@ -28,3 +28,4 @@ data/calibration_modern_lct_bluesky_coarse.RDS
 data/ice_fort.RDS
 data/paleo_predict_gam_samps_bluesky.RDS
 data/paleo_predict_gam_samps_may_bluesky.RDS
+output/
