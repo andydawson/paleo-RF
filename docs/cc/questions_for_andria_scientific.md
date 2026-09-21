@@ -552,6 +552,43 @@ averaged; (c) months averaged with equal weight; (d) cells area-weighted
 by the `area` column. A sensitivity plot over (a) is at
 `figures/forcing_barplot_variant_sensitivity.pdf`.
 
+**The layout now matches slide 18, but the numbers do not.** Reading the
+bars off `ppt/media/image37.png` in `writing/dawson_EGU.pptx` and
+comparing with our global-equivalent values (HadGEM3, `veg_ice_thresh`):
+
+| period (ka) | slide 18 | ours | ratio |
+|---|---|---|---|
+| 0.05 - 0.5 | -0.38 | -0.044 | 8.6 |
+| 0.5 - 2 | -0.17 | -0.047 | 3.6 |
+| 2 - 4 | 0.22 | 0.063 | 3.5 |
+| 4 - 6 | ~0.00 | -0.066 | - |
+| 6 - 8 | 0.36 | 0.109 | 3.3 |
+| 8 - 10 | 0.37 | 0.303 | 1.2 |
+| 10 - 12 | 0.72 | 0.270 | 2.7 |
+
+The ratio is not constant, so this is **not** a normalisation or unit
+difference that we could simply correct. We checked all six forcing
+variants and none is closer: the best has essentially the same error as
+the worst. The shape differs too. On the slide the forcing grows
+monotonically into the past and peaks at 10-12 ka; ours peaks at 8-10 ka
+and dips negative at 4-6 ka where the slide is flat. The slide's
+late-Holocene cooling is also far deeper than ours.
+
+Given that the point (non-interp) maps were only replaced by the
+interpolated ones shortly before EGU, the most likely explanation is
+that slide 18 was made from the earlier point pipeline, or from a
+different ice or land-cover product, rather than from the interp inputs
+we hold. **Which run produced slide 18, and is the underlying table
+still available?** Comparing against it directly would settle the
+aggregation questions above far faster than us guessing.
+
+The IPCC panel does match: CO2 2.16, methane 0.54, water vapour 0.05,
+albedo (land use) -0.20 and aerosols -1.06 are AR6 values and reproduce
+the slide's bottom panel exactly, which confirms the AR6 source and that
+the slide's x axis really is a global-mean W/m² scale shared by both
+panels. That is strong evidence for the global-equivalent reading of
+assumption A8.
+
 ### C6. Consecutive-slice differences and interval length
 Forcing is defined per consecutive pair of slices. The pairs span
 different lengths (150, 300, 500 years) and do not accumulate to a change

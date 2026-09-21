@@ -64,6 +64,7 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(patchwork)
 
 source('R/run_manifest.R')
 
@@ -151,8 +152,12 @@ erf    = read_erf('data/ipcc-ar6/AR6_ERF_1750-2019.csv')
 erf_lo = read_erf('data/ipcc-ar6/AR6_ERF_1750-2019_pc05.csv')
 erf_hi = read_erf('data/ipcc-ar6/AR6_ERF_1750-2019_pc95.csv')
 
-agents = c(co2 = 'CO2', ch4 = 'CH4', n2o = 'N2O', aerosol = 'Aerosol',
-           land_use = 'Land use (albedo)', total_anthropogenic = 'Total anthropogenic')
+# Agents and labels exactly as on slide 18: CO2, methane, water vapour,
+# albedo (land use), aerosols. 'water vapour' on the slide is ~0.05 W/m2, which
+# matches AR6 h2o_stratospheric. n2o and the anthropogenic total are not on the
+# slide, so they are dropped from the matching figure.
+agents = c(co2 = 'carbon dioxide', ch4 = 'methane', h2o_stratospheric = 'water vapour',
+           land_use = 'albedo (land use)', aerosol = 'aerosols')
 modern = data.frame(
   agent = unname(agents[names(agents)]),
   erf   = as.numeric(erf[names(agents)]),
@@ -162,37 +167,87 @@ modern$agent = factor(modern$agent, levels = modern$agent)
 cat('\nIPCC AR6 ERF 1750-2019 (W/m2, global mean):\n'); print(modern, digits = 3)
 
 # --- figures -----------------------------------------------------------------
-pal = c(hadgem = '#1b6ca8', cam5 = '#5fa8d3', cack = '#f2a65a')
+# Layout matched to slide 18 of dawson_EGU.pptx (ppt/media/image37.png):
+# horizontal bars, two stacked panels sharing one x axis, panel labels in strips
+# on the right, bars coloured by sign with no legend, ggplot's default two-colour
+# hue palette. The slide shows a single kernel, so the matching figure uses
+# HadGEM3; the kernel spread is kept as a separate figure.
 
-p_hol = ggplot(main, aes(x = period, y = global_equiv, fill = kernel)) +
-  geom_col(position = position_dodge(0.8), width = 0.75) +
+POS = '#F8766D'; NEG = '#00BFC4'   # ggplot default hue palette for two levels
+
+hol = main %>%
+  filter(kernel == 'hadgem') %>%
+  transmute(panel = 'Holocene',
+            label = sub(' ka$', '', as.character(period)),
+            value = global_equiv)
+hol$label = factor(hol$label, levels = rev(sub(' ka$', '', labels_period)))
+
+ipcc = modern %>%
+  transmute(panel = 'IPCC', label = as.character(agent), value = erf)
+ipcc$label = factor(ipcc$label, levels = rev(as.character(modern$agent)))
+
+both = bind_rows(hol, ipcc)
+both$panel = factor(both$panel, levels = c('Holocene', 'IPCC'))
+both$sign  = ifelse(both$value >= 0, 'pos', 'neg')
+
+# One panel per block so each can carry its own y-axis title, as on the slide.
+# Heights are set to the row counts (7 Holocene periods, 5 IPCC agents) so the
+# bars are the same thickness in both, which is what facet_grid(space='free_y')
+# would have given.
+panel_plot <- function(dat, ytitle, striplab, keep_x) {
+  ggplot(dat, aes(x = label, y = value, fill = sign)) +
+    geom_col(width = 0.75) +
+    geom_hline(yintercept = 0, linewidth = 0.3, colour = 'grey20') +
+    coord_flip() +
+    facet_grid(striplab ~ .) +
+    scale_fill_manual(values = c(pos = POS, neg = NEG), guide = 'none') +
+    scale_y_continuous(limits = rng, expand = expansion(mult = c(0.02, 0.02))) +
+    labs(x = ytitle, y = if (keep_x) expression('radiative forcing ('*W/m^2*')') else NULL) +
+    theme_bw(base_size = 13) +
+    theme(panel.grid.minor = element_blank(),
+          strip.background = element_rect(fill = 'grey85', colour = 'grey20'),
+          strip.text.y     = element_text(size = 12),
+          axis.text        = element_text(colour = 'grey20'),
+          axis.text.x      = if (keep_x) element_text() else element_blank(),
+          axis.ticks.x     = if (keep_x) element_line() else element_blank())
+}
+
+rng = range(c(both$value, 0)) + c(-0.12, 0.12)
+hol$striplab  = 'Holocene'
+ipcc$striplab = 'IPCC'
+hol$sign  = ifelse(hol$value  >= 0, 'pos', 'neg')
+ipcc$sign = ifelse(ipcc$value >= 0, 'pos', 'neg')
+
+p_slide_lab = panel_plot(hol,  'time period (k years)', 'Holocene', FALSE) /
+              panel_plot(ipcc, 'forcing agent',         'IPCC',     TRUE) +
+              plot_layout(heights = c(nrow(hol), nrow(ipcc)))
+
+ggsave('figures/forcing_barplot_slide18.pdf', p_slide_lab, width = 8, height = 6)
+ggsave('figures/forcing_barplot_slide18.png', p_slide_lab, width = 8, height = 6, dpi = 150)
+
+# kernel spread, same layout, Holocene panel only
+hol3 = main %>%
+  transmute(kernel, label = sub(' ka$', '', as.character(period)), value = global_equiv)
+hol3$label = factor(hol3$label, levels = rev(sub(' ka$', '', labels_period)))
+p_kern = ggplot(hol3, aes(x = label, y = value, fill = kernel)) +
+  geom_col(position = position_dodge(0.8), width = 0.7) +
   geom_hline(yintercept = 0, linewidth = 0.3) +
-  scale_fill_manual(values = pal, name = 'kernel',
+  coord_flip() +
+  scale_fill_manual(values = c(hadgem='#1b6ca8', cam5='#5fa8d3', cack='#f2a65a'),
                     labels = c(cack='CACK (all-sky)', cam5='CAM5 (clear, surface)',
-                               hadgem='HadGEM3 (clear, TOA)')) +
-  labs(title = 'Holocene land-cover albedo forcing, North America',
-       subtitle = 'Global-equivalent: domain flux anomaly spread over Earth (assumption A8)',
-       x = NULL, y = expression('radiative forcing ('*W~m^-2*')')) +
-  theme_minimal(base_size = 11) +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+                               hadgem='HadGEM3 (clear, TOA)'), name = NULL) +
+  labs(title = 'Kernel choice moves the answer by about a factor of two',
+       subtitle = 'see C3 and C4; CACK is the only all-sky kernel of the three',
+       x = 'time period (k years)', y = expression('radiative forcing ('*W/m^2*')')) +
+  theme_bw(base_size = 12) + theme(panel.grid.minor = element_blank())
+ggsave('figures/forcing_barplot_kernel_spread.pdf', p_kern, width = 8, height = 5)
 
-p_mod = ggplot(modern, aes(x = agent, y = erf)) +
-  geom_col(fill = 'grey55', width = 0.7) +
-  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2, linewidth = 0.3) +
-  geom_hline(yintercept = 0, linewidth = 0.3) +
-  labs(title = 'Modern forcing agents for comparison',
-       subtitle = 'IPCC AR6 WG1 Chapter 7, effective radiative forcing 1750-2019, 5-95%',
-       x = NULL, y = expression('ERF ('*W~m^-2*')')) +
-  theme_minimal(base_size = 11) +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1))
-
-ggsave('figures/forcing_barplot_holocene_vs_modern.pdf',
-       gridExtra::arrangeGrob(p_hol, p_mod, ncol = 1), width = 9, height = 9)
-ggsave('figures/forcing_barplot_holocene_vs_modern.png',
-       gridExtra::arrangeGrob(p_hol, p_mod, ncol = 1), width = 9, height = 9, dpi = 150)
-
-p_dom = p_hol + aes(y = domain_mean) +
-  labs(subtitle = 'Domain mean over the study area: NOT comparable with global-mean IPCC ERF (A8)')
+p_dom = ggplot(main %>% filter(kernel=='hadgem'), aes(x = period, y = domain_mean)) +
+  geom_col(fill = 'grey55') + geom_hline(yintercept = 0, linewidth = 0.3) +
+  labs(title = 'Domain mean over the study area',
+       subtitle = 'NOT comparable with global-mean IPCC ERF; see assumption A8',
+       x = NULL, y = expression('W'~m^-2)) +
+  theme_bw(base_size = 11) + theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ggsave('figures/forcing_barplot_domain_mean.pdf', p_dom, width = 9, height = 5)
 
 p_sens = ggplot(sens, aes(x = period, y = global_equiv, fill = variant)) +
@@ -201,8 +256,7 @@ p_sens = ggplot(sens, aes(x = period, y = global_equiv, fill = variant)) +
   labs(title = 'Sensitivity to the forcing variant (HadGEM3 kernel)',
        subtitle = 'Assumption A1 picks veg_ice_thresh; these are the alternatives',
        x = NULL, y = expression('global-equivalent forcing ('*W~m^-2*')')) +
-  theme_minimal(base_size = 11) +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+  theme_bw(base_size = 11) + theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ggsave('figures/forcing_barplot_variant_sensitivity.pdf', p_sens, width = 10, height = 5)
 
 # --- numbers out -------------------------------------------------------------
@@ -211,8 +265,9 @@ write.csv(sens, 'output/forcing/forcing_by_period_variant_sensitivity.csv', row.
 write.csv(modern, 'output/forcing/modern_ipcc_ar6_erf.csv', row.names = FALSE)
 
 run_end(outputs = Filter(file.exists, c(
-  'figures/forcing_barplot_holocene_vs_modern.pdf',
-  'figures/forcing_barplot_holocene_vs_modern.png',
+  'figures/forcing_barplot_slide18.pdf',
+  'figures/forcing_barplot_slide18.png',
+  'figures/forcing_barplot_kernel_spread.pdf',
   'figures/forcing_barplot_domain_mean.pdf',
   'figures/forcing_barplot_variant_sensitivity.pdf',
   'output/forcing/forcing_by_period.csv',
