@@ -479,6 +479,38 @@ mask the surface, and early-Holocene summer insolation at high latitudes
 was tens of W/m² above pre-industrial. What is the case for this choice,
 and would an all-sky kernel change the headline numbers?
 
+**Now measured, 2026-09-21.** The first complete interp run of script 8
+answers the second half of the question: yes, substantially. Mean
+forcing per slice-pair over all cells and months, `rf_*_veg_ice_thresh`:
+
+| slice-pair (BP) | HadGEM3 (clear) | CAM5 (clear) | CACK (all-sky) | CACK / HadGEM3 |
+|---|---|---|---|---|
+| 11,000 | 2.270 | 2.377 | 1.205 | 0.53 |
+| 10,500 | 2.945 | 3.076 | 1.618 | 0.55 |
+| 10,000 | 2.428 | 2.553 | 1.447 | 0.60 |
+| 8,500 | 3.383 | 3.556 | 1.810 | 0.54 |
+| 8,000 | 2.594 | 2.741 | 1.386 | 0.53 |
+
+HadGEM3 and CAM5 agree to within about 5%, which is the basis for the
+talk's claim that the result is not sensitive to the choice of kernel.
+But both are read as clear-sky, so that agreement is between two
+like-for-like quantities and does not test the choice. CACK, the only
+all-sky kernel of the three, gives consistently **just over half** the
+forcing, a ratio of 0.53 to 0.60. That sits squarely in the 1.5 to 2
+times range quoted above for clear-sky over all-sky.
+
+So the kernel choice moves the headline number by roughly a factor of
+two, and the claim of insensitivity does not survive including CACK.
+This needs resolving before the numbers are quoted. It is also separable
+from the top-of-atmosphere versus surface mismatch in C3: switching CAM5
+to `FSNTC` and comparing all-sky against all-sky would isolate the two
+effects, and both variables are already in the files we hold.
+
+**Caveat on these figures.** They are unweighted means over cells and
+months, taken directly from `output/forcing/RF_holocene_all_cases.RDS`;
+the talk's bar plots are per-period and area-weighted, so the ratio is
+the meaningful quantity here rather than the absolute values.
+
 ### C5. The comparison with modern forcing agents
 The talk compares the Holocene forcing with IPCC forcing from modern
 agents. The Holocene number is local to North American land, clear-sky,
