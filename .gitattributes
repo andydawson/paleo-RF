@@ -1,3 +1,4 @@
 data/veg_posts_interp_ice.RDS filter=lfs diff=lfs merge=lfs -text
 data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc filter=lfs diff=lfs merge=lfs -text
 data/radiative-kernels/CACKv1.0/CACKv1.0.nc filter=lfs diff=lfs merge=lfs -text
+tests/anchors/interp-tail-2026-09-21/RF_holocene_all_cases.RDS filter=lfs diff=lfs merge=lfs -text

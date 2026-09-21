@@ -69,3 +69,32 @@ complexity, which cannot happen for correctly fitted nested models. That
 is an open question with Andria (B4 in
 `docs/cc/questions_for_andria_scientific.md`), not a property to
 reproduce.
+
+- `interp-tail-2026-09-21`: the first complete run of the tail of the
+  interp pipeline, scripts 7, 7a and 8, and the first time the pipeline
+  has produced a radiative-forcing table at all. Made possible by the
+  three inputs Chris supplied on 20 and 21 September (the Dalton ice
+  raster, the monthly glacier albedo table and the CACK kernel), which
+  were the last missing pieces. Six files with `MD5SUMS.txt`, 187 MB;
+  `RF_holocene_all_cases.RDS` is in LFS.
+
+  Provenance: `runs/2026-09-21_1412_7_plot_preds.md` (62 min) and
+  `runs/2026-09-21_1504_8_radiative.md`. Both ran on commit 84e89f6 and
+  735d212 respectively, with a clean working tree.
+
+  Two bugs in the original code had to be fixed to get here, both
+  latent because this half of the pipeline had never been run: script 7
+  never defined `months`, so it silently picked up `base::months` and
+  died in `factor()`; 7a called `ggplot()` without loading ggplot2 and
+  died immediately after writing its output.
+
+  What to check when re-running: the six md5s in `MD5SUMS.txt`. The
+  loops in 7 and 7a are deterministic, so these should reproduce exactly
+  unless the method changes. This is the anchor that protects the Stage 4
+  consolidation of the two per-cell difference loops.
+
+  Note for whoever uses these: the three kernels do **not** agree. CACK
+  gives 0.53 to 0.60 of the HadGEM3 forcing across the early-Holocene
+  slice-pairs, because it is the only all-sky kernel of the three.
+  Reproduce the numbers, but do not treat the kernel spread as settled;
+  it is C3 and C4 in `docs/cc/questions_for_andria_scientific.md`.
