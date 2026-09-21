@@ -3,6 +3,12 @@ library(raster)
 library(dplyr)
 library(terra)
 library(sf)
+# [run-interp] 7a calls ggplot() at 7a:635 and 7a:638 but never loaded ggplot2, so the
+# script died with 'could not find function "ggplot"' immediately after saving its
+# output. The two plots are unassigned, unsaved diagnostics; Stage 5 of the staged plan
+# deletes them, but until then the script has to be able to reach its own end so that
+# run_end() writes a manifest.
+library(ggplot2)
 
 alb_prod = "bluesky"
 
