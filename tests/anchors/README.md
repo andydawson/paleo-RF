@@ -90,7 +90,10 @@ reproduce.
 
   What to check when re-running: the six md5s in `MD5SUMS.txt`. The
   loops in 7 and 7a are deterministic, so these should reproduce exactly
-  unless the method changes. This is the anchor that protects the Stage 4
+  unless the method changes. **This has been demonstrated, not assumed**:
+  7a was run a second time on 2026-09-21 (51.7 min, manifest
+  `runs/2026-09-21_1514_7a_alb_diff_full.md`) and reproduced
+  `ALB_diffs_bluesky.RDS` byte for byte, md5 8039899288aaf84877b904c51e941448. This is the anchor that protects the Stage 4
   consolidation of the two per-cell difference loops.
 
   Note for whoever uses these: the three kernels do **not** agree. CACK
