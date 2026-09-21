@@ -63,6 +63,13 @@ ages = c(50, 200, seq(500, 11500, by=500))
 N_times = length(ages)
 ages_sub = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)
 
+# [run-interp] `months` was never defined in this script, so `levels = months` at 7:344
+# and `for (month in months)` at 7:750 silently picked up base::months, the date
+# function, and factor() died with "'match' requires vector arguments". Both uses are
+# in the interp block, which is why the May (single-month) runs never hit it.
+# Same definition as 7a_alb_diff_full.R and 8_radiative.R.
+months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+
 
 ylim = c(12, 82) 
 xlim = c(-166, -50) 
