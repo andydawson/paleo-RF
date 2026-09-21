@@ -26,6 +26,21 @@ xlim = c(-166, -50)
 # would otherwise land after all the kernel work is done.
 dir.create('output/forcing', recursive = TRUE, showWarnings = FALSE)
 
+# [run-interp] provenance logging; see R/run_manifest.R
+source('R/run_manifest.R')
+run_start('8_radiative',
+          note   = Sys.getenv('RUN_NOTE'),
+          inputs = Filter(file.exists, c(
+            paste0('data/ALB_diffs_', alb_prod, '.RDS'),
+            'data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc',
+            'data/radiative-kernels/CAM5/alb.kernel.nc',
+            'data/radiative-kernels/CACKv1.0/CACKv1.0.nc',
+            'data/ice_fort.RDS', 'data/ice_fort_diff_young.RDS', 'data/ice_fort_diff_old.RDS',
+            'data/map-data/geographic/pbs_ll.RDS',
+            'data/map-data/geographic/pbs.RDS')),
+          config = list(alb_prod = alb_prod, months = months,
+                        cack_band = 3, cack_band_meaning = 'year 2002, see question C3'))
+
 ice_fort = readRDS('data/ice_fort.RDS')
 ice_fort_diff_young = readRDS('data/ice_fort_diff_young.RDS')
 ice_fort_diff_old = readRDS('data/ice_fort_diff_old.RDS')
@@ -349,3 +364,5 @@ bar$alb_diff_ice_thresh
 
 saveRDS(alb_diff, paste0('output/forcing/RF_holocene_all_cases.RDS'))
 
+# [run-interp] provenance logging
+run_end(outputs = Filter(file.exists, 'output/forcing/RF_holocene_all_cases.RDS'))

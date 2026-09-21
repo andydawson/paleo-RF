@@ -6,6 +6,19 @@ library(sf)
 
 alb_prod = "bluesky"
 
+# [run-interp] provenance logging; see R/run_manifest.R
+source('R/run_manifest.R')
+run_start('7a_alb_diff_full',
+          note   = Sys.getenv('RUN_NOTE'),
+          inputs = Filter(file.exists, c(
+            paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'),
+            'data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif',
+            'data/albedo_glacier_monthly.csv',
+            'data/grid.RDS',
+            'data/map-data/geographic/pbs_ll.RDS',
+            'data/map-data/geographic/pbs.RDS')),
+          config = list(alb_prod = alb_prod))
+
 ages = c(50, 200, seq(500, 11500, by=500))
 N_times = length(ages)
 ages_sub = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)
@@ -851,3 +864,6 @@ ggplot(data=foo2) +
 # alb_diff_df$facets = labels_period_ice$facets[match(alb_diff_df$year/1000, labels_period_ice$end_young)]
 # 
 # saveRDS(alb_diff_df, paste0('data/alb_interp_preds_ice_res_diffs_', alb_prod, '.RDS'))
+
+# [run-interp] provenance logging
+run_end(outputs = Filter(file.exists, paste0('data/ALB_diffs_', alb_prod, '.RDS')))

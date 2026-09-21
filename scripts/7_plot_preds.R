@@ -20,6 +20,21 @@ run_nointerp = (Sys.getenv('RUN_NOINTERP', '0') == '1') &&
                file.exists(paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
 dir.create('figures', showWarnings = FALSE)
 
+# [run-interp] provenance logging; see R/run_manifest.R
+source('R/run_manifest.R')
+run_start('7_plot_preds',
+          note   = Sys.getenv('RUN_NOTE'),
+          inputs = Filter(file.exists, c(
+            paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'),
+            paste0('output/prediction/paleo_interp_predict_gam_', alb_prod, '.RDS'),
+            'data/grid.RDS',
+            'data/map-data/ice/glacier_shapefiles_21-1k.RDS',
+            'data/albedo_glacier_monthly.csv',
+            'data/map-data/geographic/pbs_ll.RDS',
+            'data/map-data/geographic/pbs.RDS')),
+          config = list(alb_prod = alb_prod, cal_month = cal_month,
+                        run_interp = run_interp, run_nointerp = run_nointerp))
+
 ###############################################################################################################
 ## read in prediction and map data
 ###############################################################################################################
@@ -2110,3 +2125,9 @@ dev.off()
 
 
 } # [run-interp] end of non-interp block
+
+# [run-interp] provenance logging
+run_end(outputs = Filter(file.exists, c(
+  list.files('figures', pattern = 'alb_interp', full.names = TRUE),
+  'data/ice_fort.RDS', 'data/ice_fort_diff_young.RDS', 'data/ice_fort_diff_old.RDS',
+  paste0('data/alb_interp_preds_diffs_', alb_prod, '.RDS'))))
