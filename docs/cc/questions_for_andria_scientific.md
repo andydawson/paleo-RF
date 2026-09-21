@@ -519,6 +519,39 @@ cumulative since 1750. North American land is a few percent of Earth's
 surface. What is the fair comparison: the Holocene forcing expressed as a
 global mean, or the modern agents expressed regionally?
 
+**Attempted 2026-09-21, and the choice decides the headline claim.**
+`scripts/9_forcing_barplot.R` now builds the slide 18 chart from
+`output/forcing/RF_holocene_all_cases.RDS`. No code for it existed in
+the repository, so every aggregation choice is ours and is listed in
+that script's header. The study area works out at **3.8% of Earth's
+surface**, and the two normalisations differ by a factor of about 27:
+
+| period | domain mean (W/m², HadGEM3) | global equivalent (W/m²) |
+|---|---|---|
+| 8 - 10 ka | 8.04 | 0.303 |
+| 10 - 12 ka | 7.17 | 0.270 |
+| 6 - 8 ka | 2.89 | 0.109 |
+| 4 - 6 ka | -1.74 | -0.066 |
+| 0.05 - 0.5 ka | -1.17 | -0.044 |
+
+IPCC AR6 gives methane 0.544 W/m² (1750-2019, global mean). On the
+**global-equivalent** basis the early-Holocene peak is 0.30 W/m², about
+56% of methane, which matches the talk's "comparable to modern methane
+forcing" well. On the **domain-mean** basis it is 8.0 W/m², roughly
+fifteen times methane, which would not be described that way. So the
+talk's own wording implies the global-equivalent normalisation was used.
+
+**Please confirm** that is what you did, because it is the single
+biggest lever on the headline number, and the script currently assumes
+it. Related assumptions in the same script that we would like checked:
+(a) forcing variant `veg_ice_thresh` rather than one of the nine others,
+notably the `_parts` family that mixes vegetation and ice albedo by area
+fraction instead of by threshold; (b) slice-pairs **summed** within each
+period, which telescopes to the endpoint difference, rather than
+averaged; (c) months averaged with equal weight; (d) cells area-weighted
+by the `area` column. A sensitivity plot over (a) is at
+`figures/forcing_barplot_variant_sensitivity.pdf`.
+
 ### C6. Consecutive-slice differences and interval length
 Forcing is defined per consecutive pair of slices. The pairs span
 different lengths (150, 300, 500 years) and do not accumulate to a change

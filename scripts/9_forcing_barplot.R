@@ -1,0 +1,220 @@
+# 9_forcing_barplot.R
+#
+# Continental Holocene radiative forcing by period, beside the modern IPCC AR6
+# forcing agents. This is an attempt to reproduce the bar chart on slide 18 of
+# the EGU talk from output/forcing/RF_holocene_all_cases.RDS.
+#
+# WRITTEN 2026-09-21. No code for this plot existed in the repository: script 8
+# computes per-cell forcing, saves the table and stops. Every aggregation choice
+# below is therefore an assumption by Chris/Claude, not something recovered from
+# Andria's code. They are listed here so they can be checked and corrected.
+#
+# ASSUMPTIONS
+#
+# A1. Forcing variant. Uses rf_<kernel>_veg_ice_thresh: the vegetation plus ice
+#     albedo change, threshold method. Chosen because it is the only family with
+#     no missing values over the whole domain and it includes both the
+#     vegetation and the ice contribution. The table holds nine other variants
+#     (_veg_thresh, _ice_thresh, _icesc_thresh, and the _part / _parts family
+#     that mixes vegetation and ice albedo by area fraction rather than by
+#     threshold). A2 below reports all of them, because the choice matters.
+#
+# A3. Kernel. HadGEM3 is the headline, matching the talk. CAM5 and CACK are
+#     carried through as a spread. They are NOT interchangeable: see C3/C4 in
+#     docs/cc/questions_for_andria_scientific.md. CACK is all-sky and gives
+#     roughly half the HadGEM3 answer.
+#
+# A4. Periods. The seven periods are script 8's own labels_period, bounded by
+#     ages_sub = 50, 500, 2000, 4000, 6000, 8000, 10000, 12000 yr BP.
+#     CAVEAT: the oldest age in the data is 11,500 BP, so the bar labelled
+#     "10 - 12 ka" actually covers 10 to 11.5 ka.
+#
+# A5. Combining slices within a period. Each row of the table is the forcing of
+#     one consecutive slice-pair. Within a period these are SUMMED, not averaged,
+#     because forcing increments are additive: the sum telescopes to the albedo
+#     difference between the period's two endpoints. A mean would answer a
+#     different question ("typical step") and would not be comparable with a
+#     modern 1750-to-2019 forcing.
+#
+# A6. Months. Averaged with equal weight to an annual mean, after the period sum.
+#     Equal weighting ignores that months differ in length and in insolation.
+#
+# A7. Space. Cells are area-weighted using the `area` column (m^2).
+#
+# A8. Normalisation, and the one that matters most. Two numbers are produced:
+#       - domain mean: W/m^2 averaged over the North American study area. This
+#         is what the pipeline naturally produces.
+#       - global equivalent: the same flux anomaly spread over the whole Earth,
+#         sum(rf * area) / 5.101e14 m^2.
+#     IPCC ERF values are global means. Comparing a domain-mean regional forcing
+#     with a global-mean ERF overstates the Holocene signal by roughly the ratio
+#     of Earth's area to the study area (about 34x). The global-equivalent column
+#     is the like-for-like comparison and is what the headline figure plots.
+#
+# A9. Sign. Positive = warming (albedo fell). Inherited from script 8.
+#
+# A10. Missing cells. Cells absent from any slice within a period are dropped for
+#      that period, so every period is a complete telescoping sum. The number
+#      dropped is reported.
+#
+# IPCC data: AR6 WG1 Chapter 7, data_output/AR6_ERF_1750-2019.csv from
+# github.com/IPCC-WG1/Chapter-7, 1750-2019 effective radiative forcing with
+# 5-95% bounds. Downloaded 2026-09-21.
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+source('R/run_manifest.R')
+
+alb_prod   = "bluesky"
+EARTH_AREA = 5.101e14          # m^2
+KERNELS    = c(hadgem = "rf_hadgem_veg_ice_thresh",
+               cam5   = "rf_cam5_veg_ice_thresh",
+               cack   = "rf_cack_veg_ice_thresh")
+VARIANTS   = c("veg_thresh", "ice_thresh", "veg_ice_thresh",
+               "veg_icesc_thresh", "veg_ice_parts", "veg_icesc_parts")
+
+ages_sub      = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)
+labels_period = c('0.05 - 0.5 ka', '0.5 - 2 ka', '2 - 4 ka', '4 - 6 ka',
+                  '6 - 8 ka', '8 - 10 ka', '10 - 12 ka')
+
+dir.create('figures',       showWarnings = FALSE)
+dir.create('output/forcing', recursive = TRUE, showWarnings = FALSE)
+
+run_start('9_forcing_barplot',
+          note   = Sys.getenv('RUN_NOTE'),
+          inputs = Filter(file.exists, c(
+            'output/forcing/RF_holocene_all_cases.RDS',
+            'data/ipcc-ar6/AR6_ERF_1750-2019.csv',
+            'data/ipcc-ar6/AR6_ERF_1750-2019_pc05.csv',
+            'data/ipcc-ar6/AR6_ERF_1750-2019_pc95.csv')),
+          config = list(variant = 'veg_ice_thresh', kernels = names(KERNELS),
+                        periods = labels_period, earth_area_m2 = EARTH_AREA))
+
+d = readRDS('output/forcing/RF_holocene_all_cases.RDS')
+
+# --- A4/A5: assign each slice-pair to a period -------------------------------
+# A row's `year` is the YOUNGER end of the pair; the pair spans year -> next age.
+ages      = sort(unique(c(d$year, 11500)))
+d$age_old = ages[match(d$year, ages) + 1]
+d$period  = cut(d$year, breaks = ages_sub, right = FALSE, labels = labels_period)
+d         = d[!is.na(d$period), ]
+
+cat('slice-pairs per period:\n'); print(table(unique(d[, c('year','period')])$period))
+
+# --- A10: keep only cells complete within a period ---------------------------
+n_pairs = d %>% group_by(period) %>% summarise(np = n_distinct(year), .groups='drop')
+keep = d %>%
+  group_by(period, cell_id, month) %>%
+  summarise(np = n_distinct(year), .groups = 'drop') %>%
+  left_join(n_pairs, by = 'period', suffix = c('', '_full')) %>%
+  filter(np == np_full) %>%
+  select(period, cell_id, month)
+cat('cell-month-period combinations dropped as incomplete:',
+    nrow(distinct(d[, c('period','cell_id','month')])) - nrow(keep), '\n')
+d = inner_join(d, keep, by = c('period','cell_id','month'))
+
+# --- aggregate ---------------------------------------------------------------
+# A5 sum over slice-pairs -> A6 mean over months -> A7 area-weighted over cells
+aggregate_forcing <- function(col) {
+  d %>%
+    group_by(period, cell_id, month, area) %>%
+    summarise(rf = sum(.data[[col]], na.rm = FALSE), .groups = 'drop') %>%   # A5
+    group_by(period, cell_id, area) %>%
+    summarise(rf = mean(rf, na.rm = TRUE), .groups = 'drop') %>%             # A6
+    group_by(period) %>%
+    summarise(domain_mean  = weighted.mean(rf, area, na.rm = TRUE),          # A7
+              global_equiv = sum(rf * area, na.rm = TRUE) / EARTH_AREA,      # A8
+              area_m2      = sum(area), .groups = 'drop')
+}
+
+main = bind_rows(lapply(names(KERNELS), function(k)
+  aggregate_forcing(KERNELS[[k]]) %>% mutate(kernel = k)))
+main$period = factor(main$period, levels = labels_period)
+
+cat('\nstudy area as a fraction of Earth:',
+    signif(unique(main$area_m2)[1] / EARTH_AREA, 3), '\n\n')
+print(as.data.frame(main %>% select(kernel, period, domain_mean, global_equiv)), digits = 3)
+
+# --- A2: sensitivity to the forcing variant, HadGEM3 only --------------------
+sens = bind_rows(lapply(VARIANTS, function(v) {
+  col = paste0('rf_hadgem_', v)
+  if (!col %in% names(d)) return(NULL)
+  aggregate_forcing(col) %>% mutate(variant = v)
+}))
+sens$period = factor(sens$period, levels = labels_period)
+
+# --- modern IPCC agents ------------------------------------------------------
+read_erf <- function(p) { x = read.csv(p); x[x$year == 2019, ] }
+erf    = read_erf('data/ipcc-ar6/AR6_ERF_1750-2019.csv')
+erf_lo = read_erf('data/ipcc-ar6/AR6_ERF_1750-2019_pc05.csv')
+erf_hi = read_erf('data/ipcc-ar6/AR6_ERF_1750-2019_pc95.csv')
+
+agents = c(co2 = 'CO2', ch4 = 'CH4', n2o = 'N2O', aerosol = 'Aerosol',
+           land_use = 'Land use (albedo)', total_anthropogenic = 'Total anthropogenic')
+modern = data.frame(
+  agent = unname(agents[names(agents)]),
+  erf   = as.numeric(erf[names(agents)]),
+  lo    = as.numeric(erf_lo[names(agents)]),
+  hi    = as.numeric(erf_hi[names(agents)]))
+modern$agent = factor(modern$agent, levels = modern$agent)
+cat('\nIPCC AR6 ERF 1750-2019 (W/m2, global mean):\n'); print(modern, digits = 3)
+
+# --- figures -----------------------------------------------------------------
+pal = c(hadgem = '#1b6ca8', cam5 = '#5fa8d3', cack = '#f2a65a')
+
+p_hol = ggplot(main, aes(x = period, y = global_equiv, fill = kernel)) +
+  geom_col(position = position_dodge(0.8), width = 0.75) +
+  geom_hline(yintercept = 0, linewidth = 0.3) +
+  scale_fill_manual(values = pal, name = 'kernel',
+                    labels = c(cack='CACK (all-sky)', cam5='CAM5 (clear, surface)',
+                               hadgem='HadGEM3 (clear, TOA)')) +
+  labs(title = 'Holocene land-cover albedo forcing, North America',
+       subtitle = 'Global-equivalent: domain flux anomaly spread over Earth (assumption A8)',
+       x = NULL, y = expression('radiative forcing ('*W~m^-2*')')) +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+p_mod = ggplot(modern, aes(x = agent, y = erf)) +
+  geom_col(fill = 'grey55', width = 0.7) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2, linewidth = 0.3) +
+  geom_hline(yintercept = 0, linewidth = 0.3) +
+  labs(title = 'Modern forcing agents for comparison',
+       subtitle = 'IPCC AR6 WG1 Chapter 7, effective radiative forcing 1750-2019, 5-95%',
+       x = NULL, y = expression('ERF ('*W~m^-2*')')) +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+ggsave('figures/forcing_barplot_holocene_vs_modern.pdf',
+       gridExtra::arrangeGrob(p_hol, p_mod, ncol = 1), width = 9, height = 9)
+ggsave('figures/forcing_barplot_holocene_vs_modern.png',
+       gridExtra::arrangeGrob(p_hol, p_mod, ncol = 1), width = 9, height = 9, dpi = 150)
+
+p_dom = p_hol + aes(y = domain_mean) +
+  labs(subtitle = 'Domain mean over the study area: NOT comparable with global-mean IPCC ERF (A8)')
+ggsave('figures/forcing_barplot_domain_mean.pdf', p_dom, width = 9, height = 5)
+
+p_sens = ggplot(sens, aes(x = period, y = global_equiv, fill = variant)) +
+  geom_col(position = position_dodge(0.85), width = 0.8) +
+  geom_hline(yintercept = 0, linewidth = 0.3) +
+  labs(title = 'Sensitivity to the forcing variant (HadGEM3 kernel)',
+       subtitle = 'Assumption A1 picks veg_ice_thresh; these are the alternatives',
+       x = NULL, y = expression('global-equivalent forcing ('*W~m^-2*')')) +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+ggsave('figures/forcing_barplot_variant_sensitivity.pdf', p_sens, width = 10, height = 5)
+
+# --- numbers out -------------------------------------------------------------
+write.csv(main, 'output/forcing/forcing_by_period.csv', row.names = FALSE)
+write.csv(sens, 'output/forcing/forcing_by_period_variant_sensitivity.csv', row.names = FALSE)
+write.csv(modern, 'output/forcing/modern_ipcc_ar6_erf.csv', row.names = FALSE)
+
+run_end(outputs = Filter(file.exists, c(
+  'figures/forcing_barplot_holocene_vs_modern.pdf',
+  'figures/forcing_barplot_holocene_vs_modern.png',
+  'figures/forcing_barplot_domain_mean.pdf',
+  'figures/forcing_barplot_variant_sensitivity.pdf',
+  'output/forcing/forcing_by_period.csv',
+  'output/forcing/forcing_by_period_variant_sensitivity.csv',
+  'output/forcing/modern_ipcc_ar6_erf.csv')))

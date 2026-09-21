@@ -45,3 +45,8 @@ data/ALB_diffs_bluesky.RDS
 data/alb_interp_preds_diffs_bluesky.RDS
 data/ice_fort_diff_old.RDS
 data/ice_fort_diff_young.RDS
+
+# [run-interp] 2026-09-21: keep the small summary tables from script 9, which are
+# the numbers behind the slide 18 figure. The rest of output/ stays ignored.
+!output/forcing/
+!output/forcing/*.csv
