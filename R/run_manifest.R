@@ -34,6 +34,8 @@ run_start <- function(script, note = NULL, inputs = character(), config = list()
   .run$inputs <- inputs
   .run$config <- config
   .run$hash   <- hash_inputs
+  .run$commit <- .sh("git rev-parse --short HEAD")
+  .run$branch <- .sh("git branch --show-current")
   .run$dirty  <- nzchar(.sh("git status --porcelain -- scripts R 2>/dev/null"))
   if (isTRUE(.run$dirty))
     warning("run_manifest: scripts/ or R/ have uncommitted changes; ",
@@ -60,8 +62,10 @@ run_end <- function(outputs = character(), status = "completed") {
     sprintf("- when: %s to %s (%.1f min)", format(.run$t0, "%Y-%m-%d %H:%M:%S"),
             format(t1, "%H:%M:%S"), as.numeric(difftime(t1, .run$t0, units = "mins"))),
     sprintf("- status: %s", status),
-    sprintf("- commit: %s (%s)", .sh("git rev-parse --short HEAD"),
-            .sh("git branch --show-current")),
+    sprintf("- commit: %s (%s)%s", .run$commit, .run$branch,
+            if (!identical(.run$commit, .sh("git rev-parse --short HEAD")))
+              sprintf(" [HEAD moved to %s during the run; the commit above is the one that ran]",
+                      .sh("git rev-parse --short HEAD")) else ""),
     sprintf("- working tree: %s", if (isTRUE(.run$dirty))
             "**DIRTY** - scripts/ or R/ had uncommitted changes" else "clean"),
     sprintf("- host: %s | cores used: %s", .sh("hostname"),
