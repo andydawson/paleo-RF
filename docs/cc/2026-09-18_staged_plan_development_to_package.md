@@ -222,6 +222,24 @@ replacing `8:135-301`. Functions live in `R/` and are `source()`d by
 `cell_id/year/month` keys (R13). Check: `all.equal` per script against the
 stage-3 anchors; `7a` is also timed (hours -> seconds).
 
+**Measured evidence, 2026-09-21 interp run.** Both loops ran for real for
+the first time and confirmed the duplication is the dominant cost of the
+two scripts. Current line numbers, which have shifted since this plan was
+written: the 7a loop is `7a:447-630`, the script 7 loop is `7:753-785`.
+Each walks every grid cell x month, and each grows its result with
+`rbind` inside the loop, so both are quadratic in output rows. Observed
+on 24 cores (12 per script, one R thread each, both pinned at 100% CPU):
+roughly 68 cells/min over the first 2,181 of 2,866 cells in 7a. That is
+tolerable at this grid size but it is the reason the two scripts dominate
+the tail of the pipeline, and it scales badly if the grid is ever
+refined. The fix is the one already described above plus preallocation
+(collect rows in a list, one `do.call(rbind, ...)` at the end), which
+changes no numbers.
+
+Chris confirmed on 2026-09-21 that consolidating and optimising these two
+is wanted, but only after the current run has produced the interp
+anchors, so that the refactor has something to be checked against.
+
 ### Stage 5 - dead code, naming, files (1.5 days; no PI decision)
 Goal: a reader sees only the live method. Tasks: delete every commented-out
 block (script 4 `:27-189,573-830`; 5 `:453-716,807-888`; 6 `:168-304`; 7 the
