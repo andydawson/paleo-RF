@@ -35,3 +35,13 @@ output/
 # archive as well would double the LFS cost for no benefit. Delete it once you
 # are happy the unpacked copy is intact.
 data/CACKv1.0.zip
+
+# [run-interp] 2026-09-21: products of the interp tail run (scripts 7, 7a, 8) that
+# the scripts write into data/ rather than output/. All four are frozen in
+# tests/anchors/interp-tail-2026-09-21/ with checksums, so the copies here are
+# regenerable scratch. Ignored to keep `git add -A` from committing run output
+# over Andria's files; review when the config stage moves these into output/.
+data/ALB_diffs_bluesky.RDS
+data/alb_interp_preds_diffs_bluesky.RDS
+data/ice_fort_diff_old.RDS
+data/ice_fort_diff_young.RDS
