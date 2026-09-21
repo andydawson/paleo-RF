@@ -22,6 +22,10 @@ ll_proj = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 ylim = c(12, 82) 
 xlim = c(-166, -50) 
 
+# [run-interp] script 8's only write target; absent on a fresh clone, and the failure
+# would otherwise land after all the kernel work is done.
+dir.create('output/forcing', recursive = TRUE, showWarnings = FALSE)
+
 ice_fort = readRDS('data/ice_fort.RDS')
 ice_fort_diff_young = readRDS('data/ice_fort_diff_young.RDS')
 ice_fort_diff_old = readRDS('data/ice_fort_diff_old.RDS')

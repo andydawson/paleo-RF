@@ -13,13 +13,20 @@ run_tag = paste0(cal_month, '_', alb_prod)
 
 # [run-nointerp] see comment in 4_calibration_model.R
 run_interp = file.exists(paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
+# [run-interp] the non-interp (point / single-month) blocks are a dead end after the
+# 2026-09-17 meeting, but their inputs are still on disk from the May run, so file.exists
+# is not enough to switch them off. Default to interp only; RUN_NOINTERP=1 re-enables them.
+run_nointerp = (Sys.getenv('RUN_NOINTERP', '0') == '1') &&
+               file.exists(paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
 dir.create('figures', showWarnings = FALSE)
 
 ###############################################################################################################
 ## read in prediction and map data
 ###############################################################################################################
 
-alb_preds = readRDS(paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
+if (run_nointerp) { # [run-interp] non-interp predictions
+  alb_preds = readRDS(paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
+}
 
 pbs_ll = readRDS('data/map-data/geographic/pbs_ll.RDS')
 
@@ -1358,6 +1365,8 @@ dev.off()
 # 
 
 } # [run-nointerp] end of interp block
+
+if (run_nointerp) { # [run-interp] start of non-interp block
 ###############################################################################################################
 ## summary plots of values
 ###############################################################################################################
@@ -2099,3 +2108,5 @@ dev.off()
 # 
 
 
+
+} # [run-interp] end of non-interp block

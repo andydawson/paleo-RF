@@ -29,3 +29,9 @@ data/ice_fort.RDS
 data/paleo_predict_gam_samps_bluesky.RDS
 data/paleo_predict_gam_samps_may_bluesky.RDS
 output/
+
+# [run-interp] 2026-09-21: the CACK distribution zip. Its contents are unpacked
+# and tracked under data/radiative-kernels/CACKv1.0/, so keeping the 126 MB
+# archive as well would double the LFS cost for no benefit. Delete it once you
+# are happy the unpacked copy is intact.
+data/CACKv1.0.zip

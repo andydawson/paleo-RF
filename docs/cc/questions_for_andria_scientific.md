@@ -407,8 +407,9 @@ will clamp the chronology to monotone retreat cleanly; if not we will
 keep real readvances.
 
 ### C3. The three kernels are not like for like
-**Verified on 2026-09-19** by downloading the HadGEM3 and CAM5 kernels
-and opening them (README.md records provenance, licences and sizes).
+**Verified on 2026-09-19** for HadGEM3 and CAM5, and **on 2026-09-21**
+for CACK, by downloading the kernels and opening them (README.md records
+provenance, licences and sizes).
 
 **What the code does and what the files contain.**
 
@@ -416,9 +417,32 @@ and opening them (README.md records provenance, licences and sizes).
 |---|---|---|---|---|
 | `8:58` HadGEM3 `albedo_sw_cs` | "SW Surface albedo clear-sky kernel" | **top of atmosphere** | clear-sky | W/m² per 1% |
 | `8:163` CAM5 `FSNSC` | "Clearsky net solar flux at **surface**" | **surface** | clear-sky | W/m² per 1% |
-| `8:197` CACK band 3 | not yet checked (file not obtained) | top of atmosphere | ? | ? |
+| `8:197` CACK `CACK`, `level=month`, `band=3` | "Temporally-explicit kernels" | top of atmosphere | all-sky | W/m² per unit albedo |
 
-**Good news on units.** Both files are per 1% albedo change: HadGEM3
+**CACK's units are different, and the code already handles it.** CACK
+declares `Units = W/m^2` for a unit (0 to 1) albedo change, not per 1%.
+That is why `8:295-301` uses `alb_diff * (-rk_cack)` with no factor of
+100, while HadGEM3 and CAM5 get `alb_diff * 100 * kernel`. The sign flip
+is also right: CACK is stored positive (13 to 258 W/m² over our cells),
+whereas HadGEM3 and CAM5 are stored negative. So all three conversions
+are dimensionally consistent as written.
+
+**But `band = 3` is a year, not a sky condition.** The CACK file's
+fourth dimension is documented as `Year: Years after 2000 AD`, with 16
+entries. `raster(..., level = month, band = 3)` therefore pulls the
+kernel for **2002 alone** — one arbitrary satellite year — rather than a
+climatology. The file also contains `CACK CM`, described as
+"Climatological mean kernel", which is almost certainly what a Holocene
+study wants, and which would remove a source of interannual noise that
+differs between the three kernels.
+
+**CACK also ships uncertainty layers.** `Sigma_total`, `Sigma_me` (model
+error) and `Sigma_du` (data uncertainty) are in the same file at the same
+resolution, with climatological-mean twins. These would let the kernel
+contribute a genuine uncertainty band to the forcing (see section A)
+rather than being treated as exact.
+
+**Good news on units for the other two.** Both files are per 1% albedo change: HadGEM3
 states `units = W/m2/%`, and Pendergrass et al. (2018, §2.1) define their
 albedo kernel as "the change in radiative flux for a 1 % change in
 surface albedo". So the `alb_diff * 100 * kernel` convention at
@@ -437,10 +461,16 @@ all-sky test in C4 needs no new download.
 
 **What we need from you.** (a) Was top of atmosphere the intended flux
 level throughout? If so, may we switch CAM5 to `FSNTC` and re-run the
-comparison? (b) Which CACK band is band 3, and is it top of atmosphere,
-all-sky or clear-sky? (c) The kernel grids are aligned to the data by
-arithmetic on longitude and latitude (`8:230-250`) with the check plots
-commented out; was that verified?
+comparison? (b) Was `band = 3` meant to select the year 2002, or was the
+climatological mean `CACK CM` intended? (c) CACK is all-sky while HadGEM3
+and CAM5 are read as clear-sky, which is a second way the three are not
+like for like, on top of the flux-level mismatch; was that deliberate?
+(d) The kernel grids are aligned to the data by arithmetic on longitude
+and latitude (`8:230-250`) with the check plots commented out; was that
+verified? We have now re-run that arithmetic against the 2,870 interp
+cells and all three kernels return values with no missing cells, which is
+consistent with correct alignment but does not prove the grids are not
+transposed.
 
 ### C4. Clear-sky, pre-industrial kernels across the Holocene
 The HadGEM kernel is clear-sky and pre-industrial. Clear-sky albedo
