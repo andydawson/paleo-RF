@@ -50,3 +50,13 @@ data/ice_fort_diff_young.RDS
 # the numbers behind the slide 18 figure. The rest of output/ stays ignored.
 !output/forcing/
 !output/forcing/*.csv
+
+# 2026-09-23: remaining intermediates left on disk from the interp and May runs.
+# Five are duplicated in tests/anchors/; *_coarse.RDS is a script 2 intermediate
+# that is not. Ignored so `git add -A` cannot commit them; review at the config stage.
+data/calibration_modern_lct_interp_bluesky.RDS
+data/calibration_modern_lct_interp_bluesky_coarse.RDS
+data/lct_modern_reveals_interp.RDS
+data/lct_paleo_reveals_interp.RDS
+data/paleo_predict_gam_may_bluesky.RDS
+data/paleo_predict_gam_summary_may_bluesky.RDS
