@@ -297,6 +297,11 @@ Branches: `main` (upstream, merged only by pull request), `legacy`
 `chris-dev` (working trunk), topic branches off it that are deleted when
 merged.
 
+Branch `annotated-interp` carries a teaching copy of the pipeline: the same
+code with the point flavour removed and a comment on every line, verified
+line for line against `chris-dev` and against the anchors. Read that branch
+to learn the method; work on `chris-dev`.
+
 ## Documents (`docs/cc/`)
 
 - `2026-09-16_code_map_original_scripts.md`: what every script does, in detail.
@@ -307,4 +312,6 @@ merged.
 - `2026-09-18_code_review_original_code.md`: findings R1-R17; `2026-09-18_staged_plan_development_to_package.md`: the cleanup plan, stages 0-6.
 - `2026-09-19_interp_run_changes.md`: log of the first interp run and every change it needed; `2026-09-19_writeup_vs_code_comparison.md`: paper and talk against the code.
 - `README_nointerp.md`: the point flavour's scripts and data.
+- `2026-09-23_glossary_columns_and_variables.md`: every column of every saved table, the naming patterns, and the conventions (units, signs, `year` meaning the younger slice).
+- `2026-09-23_walkthrough_one_cell.md`: one grid cell followed through all nine scripts with its actual numbers.
 - `questions_for_andria_general.md`, `questions_for_andria_scientific.md`: living lists of open questions.
