@@ -295,6 +295,22 @@ better but is out of scope. Should the paper state that "consistent
 pattern across months" is an observation rather than a constraint of the
 model?
 
+### B8. The calibration response is a centre-pixel sample, not a cell average
+Script 2 builds the calibration table by sampling the 0.25-degree albedo
+raster at each 1-degree cell's centre point (`terra::extract` at a
+point returns the pixel under it). So every row of the table pairs a
+land-cover fraction that describes the whole 1-degree cell with the
+albedo of one quarter-degree pixel, a sixteenth of the cell. The
+cell-average albedo is computed in the same script (`resample(method =
+"average")`, saved as `..._coarse.RDS`) but is only used for a
+diagnostic scatter; script 4 fits to the centre-pixel table. The code
+review of 2026-09-18 noted this; recording it here so it reaches you.
+
+Was the centre-pixel choice deliberate, for instance to avoid averaging
+in water or ice pixels at coasts and lake margins, and have you tried
+fitting to the cell average instead? If the two calibrations differ, the
+cell average is the like-for-like match to the 1-degree predictors.
+
 ## C. Differencing, ice and forcing
 
 ### C0. One ice chronology, plus a second one only for the fraction
