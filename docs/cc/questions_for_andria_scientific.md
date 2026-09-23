@@ -574,18 +574,49 @@ monotonically into the past and peaks at 10-12 ka; ours peaks at 8-10 ka
 and dips negative at 4-6 ka where the slide is flat. The slide's
 late-Holocene cooling is also far deeper than ours.
 
-**Andria confirmed on the call that slide 18 is the interp version**, so
-the difference is not the point-versus-interp switch. Our figure uses
-the HadGEM3 kernel, as slide 14 says the talk did, so it is not the
-kernel either. What remains is some combination of: (i) a forcing
-variant we have not tried, such as the `_ice_res` family that is
-commented out in scripts 7a and 8; (ii) a different way of combining
-slices within a period, since summing is our assumption A5; (iii) a
-subset of months, noting that script 8 carries a commented-out
-`months = c('feb','may','aug','nov')`; (iv) an earlier version of the
-land-cover posterior or ice product; or (v) the 11.5 ka relabelling in
-C7. **Which script, or which saved table, produced the slide?** With
-that in hand this becomes a diff rather than a search.
+**Andria confirmed on the call that slide 18 is the interp version**, and
+the code that made it has now been recovered from git history: commit
+`383002d` (2 April 2024, twelve days before EGU 2024), `8_radiative.R`
+lines 584-628. It was marked "incorrect now" and commented out in that
+commit, then deleted in `aba7e1a` (Feb 2025), so it was absent from the
+code we received. Its recipe differs from our first attempt on nearly
+every assumption:
+
+| choice | slide 18 code (Apr 2024) | our first attempt |
+|---|---|---|
+| input | script 7's `alb_interp_preds_diffs`: 7 coarse pairs, one per period | 7a's 24 consecutive pairs, summed |
+| months | **feb, may, aug, nov only** | all twelve |
+| ice | binary-flagged cells masked out | ice fraction via `veg_ice_thresh` |
+| aggregation | **plain unweighted mean** over cells x months (`mean_forcing`) | area-weighted, global-equivalent |
+| kernel | HadGEM3 | HadGEM3 |
+
+So the slide is a **domain mean over the study area, not a global
+equivalent**, and the "comparable to modern methane" comparison on the
+slide sets a regional mean beside a global one. That is the C5 question
+answered, in the direction that needs discussing.
+
+**Rerunning her exact recipe on today's data** (`scripts/9_forcing_barplot.R`,
+`figures/forcing_barplot_slide18_egu2024recipe.pdf`) reproduces the
+late-Holocene shape but not the numbers:
+
+| period (ka) | slide 18 | her recipe, today's data |
+|---|---|---|
+| 0.05 - 0.5 | -0.38 | -1.27 |
+| 0.5 - 2 | -0.17 | -0.94 |
+| 2 - 4 | 0.22 | 0.76 |
+| 4 - 6 | ~0.00 | -2.14 |
+| 6 - 8 | 0.36 | 0.05 |
+| 8 - 10 | 0.37 | **-2.38** |
+| 10 - 12 | 0.72 | 3.97 |
+
+Magnitudes are 3 to 5 times larger and 8-10 ka changes sign. Since the
+recipe is now hers, the residual is in the **data**: the April 2024
+versions of `veg_posts_interp_ice.RDS` and the calibration tables are not
+in git (the only committed copy is the one you sent on 2026-09-18), and
+no intermediate table or figure was ever committed. **Could you send the
+land-cover posterior and calibration data as they were in April 2024, or
+the saved forcing table / figure file behind the slide?** Either would
+turn this into a direct diff.
 
 The IPCC panel does match: CO2 2.16, methane 0.54, water vapour 0.05,
 albedo (land use) -0.20 and aerosols -1.06 are AR6 values and reproduce

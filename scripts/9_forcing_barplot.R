@@ -87,6 +87,7 @@ run_start('9_forcing_barplot',
           note   = Sys.getenv('RUN_NOTE'),
           inputs = Filter(file.exists, c(
             'output/forcing/RF_holocene_all_cases.RDS',
+            paste0('data/alb_interp_preds_diffs_', alb_prod, '.RDS'),
             'data/ipcc-ar6/AR6_ERF_1750-2019.csv',
             'data/ipcc-ar6/AR6_ERF_1750-2019_pc05.csv',
             'data/ipcc-ar6/AR6_ERF_1750-2019_pc95.csv')),
@@ -259,6 +260,36 @@ p_sens = ggplot(sens, aes(x = period, y = global_equiv, fill = variant)) +
   theme_bw(base_size = 11) + theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ggsave('figures/forcing_barplot_variant_sensitivity.pdf', p_sens, width = 10, height = 5)
 
+# --- the recovered EGU 2024 recipe --------------------------------------------
+# Andria's own slide 18 code, git 383002d:scripts/8_radiative.R lines 584-628
+# (2 April 2024), rerun on today's data. It differs from A1-A8 above: input is
+# script 7's 7 coarse slice-pairs (one per period, so nothing to sum); months
+# are feb/may/aug/nov only; binary-flagged ice cells are masked; and the bar is
+# the PLAIN UNWEIGHTED MEAN over cells x months, i.e. a domain mean. See C5.
+d7 = readRDS(paste0('data/alb_interp_preds_diffs_', alb_prod, '.RDS'))
+d7 = inner_join(d7, distinct(d, cell_id, month, rk_hadgem, area), by = c('cell_id','month'))
+d7$facets = sub(' ka$', '', labels_period)[match(d7$year, sort(unique(d7$year)))]
+d7$rf = d7$alb_diff * 100 * d7$rk_hadgem
+d7$rf[!is.na(d7$ice_young) | !is.na(d7$ice_old)] = NA
+egu = d7 %>% filter(month %in% c('feb','may','aug','nov')) %>%
+  group_by(facets) %>%
+  summarise(mean_forcing  = mean(rf, na.rm = TRUE),
+            mean_weighted = sum(rf * area, na.rm = TRUE) / sum(area[!is.na(rf)]),
+            n_rows = sum(!is.na(rf)), .groups = 'drop')
+egu$slide18 = c(-0.38, -0.17, 0.22, 0.00, 0.36, 0.37, 0.72)[match(egu$facets, sub(' ka$','',labels_period))]
+hol_egu = egu %>% transmute(panel = 'Holocene', label = facets, value = mean_forcing,
+                            striplab = 'Holocene', sign = ifelse(mean_forcing >= 0, 'pos', 'neg'))
+hol_egu$label = factor(hol_egu$label, levels = rev(sub(' ka$', '', labels_period)))
+rng = range(c(hol_egu$value, ipcc$value, 0)) + c(-0.3, 0.3)
+p_egu = panel_plot(hol_egu, 'time period (k years)', 'Holocene', FALSE) /
+        panel_plot(ipcc,    'forcing agent',         'IPCC',     TRUE) +
+        plot_layout(heights = c(nrow(hol_egu), nrow(ipcc))) +
+        plot_annotation(title = "Slide 18 recipe recovered from git 383002d, on today's data",
+                        subtitle = 'domain mean, feb/may/aug/nov, ice masked, HadGEM3; NOT global-equivalent')
+ggsave('figures/forcing_barplot_slide18_egu2024recipe.pdf', p_egu, width = 8, height = 6.5)
+ggsave('figures/forcing_barplot_slide18_egu2024recipe.png', p_egu, width = 8, height = 6.5, dpi = 150)
+write.csv(egu, 'output/forcing/forcing_by_period_egu2024recipe_vs_slide.csv', row.names = FALSE)
+
 # --- numbers out -------------------------------------------------------------
 write.csv(main, 'output/forcing/forcing_by_period.csv', row.names = FALSE)
 write.csv(sens, 'output/forcing/forcing_by_period_variant_sensitivity.csv', row.names = FALSE)
@@ -272,4 +303,6 @@ run_end(outputs = Filter(file.exists, c(
   'figures/forcing_barplot_variant_sensitivity.pdf',
   'output/forcing/forcing_by_period.csv',
   'output/forcing/forcing_by_period_variant_sensitivity.csv',
-  'output/forcing/modern_ipcc_ar6_erf.csv')))
+  'output/forcing/modern_ipcc_ar6_erf.csv',
+  'figures/forcing_barplot_slide18_egu2024recipe.pdf',
+  'output/forcing/forcing_by_period_egu2024recipe_vs_slide.csv')))
