@@ -1,26 +1,70 @@
+############################################################################################
+# 7_plot_preds.R  --  maps of the hindcast albedo, and the coarse slice-to-slice differences
+#
+# WHERE THIS SITS IN THE PIPELINE
+#   Step 7 of 9, independent of 7a (both read script 6's output). Mostly a plotting
+#   script: maps of modelled albedo, its uncertainty and its change through time, for a
+#   coarse set of eight slices, with the ice sheet drawn on top. Two of its by-products
+#   are inputs to later scripts: the ice outlines (script 8 loads them; its map code is commented out on this path) and the coarse
+#   albedo differences (script 9 uses them to reproduce the talk's bar chart).
+#
+# WHAT COMES IN
+#   output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS   839,232 x 13
+#     Script 6: per cell, slice and month, mean/sd/quantiles of modelled albedo.
+#   output/prediction/paleo_interp_predict_gam_bluesky.RDS   loaded, unused (27 MB)
+#   data/map-data/ice/glacier_shapefiles_21-1k.RDS
+#     A list of 21 polygon sets, the ice-sheet margin at 21, 20, ..., 1 ka. Binary: a
+#     point is inside the ice or not. The chronology the land-cover interpolation was
+#     masked with.
+#   data/albedo_glacier_monthly.csv    monthly ice albedo; this script uses `ice_albedo`
+#   data/grid.RDS                      the 1-degree grid, for cell ids and centres
+#   data/map-data/geographic/pbs*.RDS  political boundaries for the maps
+#
+# WHAT GOES OUT
+#   figures/alb_interp_preds_*                       about 16 map files (see the sections)
+#   data/ice_fort.RDS                                ice outlines at the eight coarse slices,
+#                                                    as a plotting table (long, lat, group ...)
+#   data/ice_fort_diff_young.RDS, ice_fort_diff_old.RDS   the same outlines paired up per
+#                                                    period, for the difference maps; script 8
+#   data/alb_interp_preds_diffs_bluesky.RDS          ~233,880 x 21: albedo differences between
+#                                                    consecutive COARSE slices (7 pairs), per
+#                                                    cell and month; script 9 (anchored)
+#
+# COARSE VERSUS FINE SLICES
+#   The predictions have 25 slices. Everything here uses eight of them: 50, 500, 2000,
+#   4000, 6000, 8000, 10000 and 12000 BP. The last does not exist in the data; the 11,500
+#   BP slice is RELABELLED 12,000 near the top of the script so that it can stand in for
+#   it. (Open question C7.) The differences produced here are therefore between slices
+#   450 to 2,000 years apart (nominally: the last pair is really 1,500 years, since 12,000
+#   stands for 11,500), unlike script 7a's consecutive 150-to-500-year pairs.
+#
+# ICE, THIS SCRIPT'S WAY
+#   Ice here is binary, from the polygons: a cell is ICE at a slice if its centre falls
+#   inside the nearest-in-time margin. Ice cells get the fixed monthly `ice_albedo`
+#   instead of the modelled vegetation albedo. Script 7a does the job with a fractional
+#   ice raster instead; the two are not reconciled.
+#
+# A NOTE ON REPETITION
+#   Seven map blocks below are almost identical: the same boundary polygons, tile layer,
+#   ice overlay, colour scale, theme and fixed coordinates. The first is commented layer
+#   by layer; the others say only what differs. fields::tim.colors is why `fields` is
+#   loaded; sp's functions (SpatialPoints, over, spTransform ...) are available because
+#   raster attaches sp.
+#
+# RUN TIME  About an hour (61.7 min in the manifest), almost all in the per-cell
+#   difference loop (rbind in a double loop; Stage 4 of the staged plan). Memory is not
+#   recorded in the manifest; observed around 12 GB.
+############################################################################################
+
 library(ggplot2)
 library(fields)
-# library(dplyr)
-library(reshape2)
 library(raster)
-
 
 alb_prod = "bluesky"
 
-# [run-may] month of albedo used for the non-interp (single-month) calibration; override with CAL_MONTH=mar etc.
-cal_month = Sys.getenv('CAL_MONTH', 'may')
-run_tag = paste0(cal_month, '_', alb_prod)
-
-# [run-nointerp] see comment in 4_calibration_model.R
-run_interp = file.exists(paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
-# [run-interp] the non-interp (point / single-month) blocks are a dead end after the
-# 2026-09-17 meeting, but their inputs are still on disk from the May run, so file.exists
-# is not enough to switch them off. Default to interp only; RUN_NOINTERP=1 re-enables them.
-run_nointerp = (Sys.getenv('RUN_NOINTERP', '0') == '1') &&
-               file.exists(paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
 dir.create('figures', showWarnings = FALSE)
 
-# [run-interp] provenance logging; see R/run_manifest.R
+# Provenance manifest; see script 8's header.
 source('R/run_manifest.R')
 run_start('7_plot_preds',
           note   = Sys.getenv('RUN_NOTE'),
@@ -32,89 +76,72 @@ run_start('7_plot_preds',
             'data/albedo_glacier_monthly.csv',
             'data/map-data/geographic/pbs_ll.RDS',
             'data/map-data/geographic/pbs.RDS')),
-          config = list(alb_prod = alb_prod, cal_month = cal_month,
-                        run_interp = run_interp, run_nointerp = run_nointerp))
+          config = list(alb_prod = alb_prod))
 
-###############################################################################################################
-## read in prediction and map data
-###############################################################################################################
+############################################################################################
+# Constants and map data
+############################################################################################
 
-if (run_nointerp) { # [run-interp] non-interp predictions
-  alb_preds = readRDS(paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
-}
-
+# Political boundaries, lon/lat and projected.
 pbs_ll = readRDS('data/map-data/geographic/pbs_ll.RDS')
 
 pbs = readRDS('data/map-data/geographic/pbs.RDS')
 
-
+# Albedo bin edges as fractions, and bin numbers 1..9.
 breaks = c(0, 4, 8, 12, 16, 20, 40, 60, 80, 100)/100
-# breaks = c(0, 10, 20, 30, 40, 50, 60, 80, 90, 100)/100
-# breaks = c(0, 4, 8, 12, 16, 20, 30, 40, 60, 100)/100
-# breaks = c(0, 0.001, 5, 10, 20, 40, 50, 60, 80, 100)/100
-# cover_melt2$alb_binned = factor(cut(cover_melt2$value, breaks, include.lowest=TRUE, labels=FALSE), levels=seq(1, 11))
-# labels = c("0 - 20", "20 - 30", "30 - 40", "40 - 50", "50 - 60", "60 - 70", "70 - 80",  "80 - 90", "90 - 100")
-# labels = c("0 - 0.1", "0.1 - 0.2", "0.2 - 0.3", "0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", "0.7 - 0.8",  "0.8 - 0.9", "0.9 - 1")
 
 labels = seq(1, length(breaks)-1)
 
-
+# All 25 slice ages, their count, and the eight coarse ages used for the maps.
 ages = c(50, 200, seq(500, 11500, by=500))
 N_times = length(ages)
 ages_sub = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)
 
-# [run-interp] `months` was never defined in this script, so `levels = months` at 7:344
-# and `for (month in months)` at 7:750 silently picked up base::months, the date
-# function, and factor() died with "'match' requires vector arguments". Both uses are
-# in the interp block, which is why the May (single-month) runs never hit it.
-# Same definition as 7a_alb_diff_full.R and 8_radiative.R.
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 
-
+# Map extent in degrees.
 ylim = c(12, 82) 
 xlim = c(-166, -50) 
 
+# Lon/lat CRS as a proj string.
 proj_WGS84 <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
 
+############################################################################################
+# Ice outlines at the eight coarse slices, as a table ggplot can draw
+############################################################################################
 
-
-###############################################################################################################
-## read in prediction and map data
-###############################################################################################################
-
-if (file.exists('data/map-data/ice/glacier_shapefiles_21-1k.RDS')) { # [run-nointerp]
+# The 21 polygon sets and the ages they represent (21,000 ... 1,000 BP).
 ice = readRDS('data/map-data/ice/glacier_shapefiles_21-1k.RDS')
 ice_years = seq(1, 21)*1000
 
+# Empty table to collect the outlines.
 ice_fort = data.frame(matrix(NA, nrow=0, ncol=9))
-# alb_preds$ice = NA
 
 for (i in 1:length(ages_sub)){
   
   print(i)
-  # idx_age = which(alb_preds$year == ages_sub[i])
   
-  # coords_veg  = SpatialPoints(alb_preds[idx_age,c('long', 'lat')], 
-  #                             proj4string=CRS(proj_WGS84))
-  
+  # The polygon set nearest in time to this coarse age (50 -> 1,000; 12,000 -> 12,000).
   idx_ice_match = which.min(abs(ages_sub[i] - ice_years)) 
   
+  # Declare the polygons' CRS as lon/lat, then "transform" to the same CRS (a no-op that
+  # normalises the object). The original emits a warning here about reassigning a CRS.
   proj4string(ice[[idx_ice_match]]) = proj_WGS84
   ice[[idx_ice_match]] = spTransform(ice[[idx_ice_match]], CRS(proj_WGS84))
   
-  # ice_status_veg = over(coords_veg, ice[[idx_ice_match]])
-  
+  # fortify() flattens a polygon object into a data.frame of vertices (long, lat, order,
+  # hole, piece, id, group) that geom_polygon can draw. Deprecated in ggplot2 but works.
   ice_fort_age = fortify(ice[[idx_ice_match]])
   
+  # Tag with the polygon set's year and the coarse age it stands for, and append.
   ice_fort = rbind(ice_fort, 
                    data.frame(ice_fort_age, 
                               ice_year = rep(ice_years[idx_ice_match], nrow(ice_fort_age)), 
                               ages = rep(ages_sub[i], nrow(ice_fort_age))))
   
-  # alb_preds[idx_age, 'ice'] = ice_status_veg[,which(substr(colnames(ice_status_veg), 1,4)=='SYMB')]
-  
 }
 
+# The outlines for the coarse ages (all of them, in fact), with a facet label per age.
 ice_sub = ice_fort[which(ice_fort$ages %in% ages_sub),]
 
 ice_sub$facets = as.character(ice_sub$ages/1000)
@@ -122,62 +149,41 @@ ice_sub$facets = factor(ice_sub$facets,
                         levels = c('0.05', '0.5', '2', '4', '6', '8', '10', '12'),
                         labels = c('0.05 ka', '0.5 ka', '2 ka', '4 ka', '6 ka', '8 ka', '10 ka', '12 ka'))
 
+# Saved for script 8, which loads it; its map code is commented out on this path.
 saveRDS(ice_fort, 'data/ice_fort.RDS')
-} else { # [run-nointerp] ice-sheet shapefiles are not in the repo; draw no ice overlay
-  ice_sub = data.frame(long = numeric(0), lat = numeric(0), group = character(0))
-}
 
+# Colours for the ice overlays: a light pair and a darker pair (used for the "old" and
+# "young" margins on the difference maps).
 ice_fill = 'gainsboro'
 ice_colour = 'gray60'
 
 ice_fill_dark = 'ivory3'
 ice_colour_dark = 'gray40'
 
-###############################################################################################################
-## interp
-###############################################################################################################
+############################################################################################
+# The predictions, with 11,500 BP relabelled as 12,000
+############################################################################################
 
-if (run_interp) { # [run-nointerp]
 alb_interp_preds = readRDS(paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
+# See the header: the oldest slice is made to stand in for 12 ka.
 alb_interp_preds$year[which(alb_interp_preds$year == 11500)] = 12000
-}
 
+# Boundaries loaded a second time; bins and labels defined a second time. As original.
 pbs_ll = readRDS('data/map-data/geographic/pbs_ll.RDS')
 pbs = readRDS('data/map-data/geographic/pbs.RDS')
 
-
 breaks = c(0, 4, 8, 12, 16, 20, 40, 60, 80, 100)/100
-# breaks = c(0, 10, 20, 30, 40, 50, 60, 80, 90, 100)/100
-# breaks = c(0, 4, 8, 12, 16, 20, 30, 40, 60, 100)/100
-# breaks = c(0, 0.001, 5, 10, 20, 40, 50, 60, 80, 100)/100
-# cover_melt2$alb_binned = factor(cut(cover_melt2$value, breaks, include.lowest=TRUE, labels=FALSE), levels=seq(1, 11))
-# labels = c("0 - 20", "20 - 30", "30 - 40", "40 - 50", "50 - 60", "60 - 70", "70 - 80",  "80 - 90", "90 - 100")
-# labels = c("0 - 0.1", "0.1 - 0.2", "0.2 - 0.3", "0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6", "0.6 - 0.7", "0.7 - 0.8",  "0.8 - 0.9", "0.9 - 1")
 
 labels = seq(1, length(breaks)-1)
 
-
-# plot_cuts = c(0, 1e-5, 0.02, 0.04, 0.06, 0.08, 0.1, 0.2, 0.4, 0.6, 0.8, 1)
-# n_plot_cuts = length(plot_cuts) - 1
-
-
-
-
-###############################################################################################################
-## COLOUR PALETTES
-###############################################################################################################
-
-# sc <- scale_fill_manual(values = c(tim.colors(length(breaks)), "grey"), 
-# labels=labels, na.value="white", name="Percent", drop=FALSE)  
+# Four colour scales for binned values. Only sc_fill_seq's palette family is echoed by
+# the maps below, which spell out their own scale_fill_brewer(); none of these four
+# objects is used. tim.colors() is fields' rainbow-like palette.
 sc_colour <- scale_colour_manual(values = c(tim.colors(length(breaks)), "grey"), labels = labels,
                                  na.value="white", name="Percent", drop=FALSE)
 
-
-# sc <- scale_fill_manual(values = c(tim.colors(length(breaks)), "grey"), 
-# labels=labels, na.value="white", name="Percent", drop=FALSE)  
 sc_fill <- scale_fill_manual(values = c(tim.colors(length(breaks)), "grey"), labels = labels,
                              na.value="white", name="Percent", drop=FALSE)
-
 
 sc_fill_seq <- scale_fill_brewer(type = "seq",
                                  palette = "Greens",#"BrBG",#"YlGnBu",#
@@ -193,99 +199,67 @@ sc_colour_seq <- scale_colour_brewer(type = "seq",
                                      na.value="grey", 
                                      name="Albedo")
 
-# sc_fill_diverge <- scale_fill_distiller(type = "div",
-#                                         palette = "RdYlBu",#"BrBG",
-#                                         # labels = labels,
-#                                         na.value="grey", 
-#                                         name="Percent",
-#                                         limits = c(-thresh,thresh))
-# 
-# sc_colour_diverge <- scale_colour_distiller(type = "div",
-#                                             palette = "RdYlBu",#"BrBG",
-#                                             # labels = labels,
-#                                             na.value="grey", 
-#                                             name="Percent",
-#                                             limits = c(-thresh,thresh))
-# sc_fill_diverge <- scale_fill_distiller(type = "div",
-#                                         palette = "RdYlBu",#"BrBG",
-#                                         # labels = labels,
-#                                         direction=1,
-#                                         na.value="grey", 
-#                                         name="Albedo change",
-#                                         limits = c(-thresh,thresh),
-#                                         values = values)
-# 
-# 
-# sc_fill_diverge <- scale_fill_distiller(type = "div",
-#                                         palette = "BrBG",
-#                                         # labels = labels,
-#                                         na.value="grey",
-#                                         name="Albedo change",
-#                                         limits = c(-thresh,thresh),
-#                                         values = values)
+############################################################################################
+# Which cells are under ice at each slice (binary, from the polygons)
+############################################################################################
 
-
-
-if (run_interp) { # [run-nointerp] interp predictions are not in the repo
-###############################################################################################################
-## summary plots of values
-###############################################################################################################
-
+# Binned mean albedo (unused later; the maps re-bin with breaks_alb).
 alb_interp_preds$alb_bin = cut(alb_interp_preds$alb_mean, breaks, labels=FALSE)
 
-# ice_fort = data.frame(matrix(NA, nrow=0, ncol=9))
+# New column for the ice flag.
 alb_interp_preds$ice = NA
 
-# ages_cat_12 = c(ages, 12000)
-# ages_cat_12[which(ages == 11500)] = 12000
+# The same 11,500 -> 12,000 relabel applied to the age vector, so the two agree.
 ages[which(ages == 11500)] = 12000
 
+# The slices present (25 values, with 12,000 in place of 11,500).
 alb_preds_ages = unique(alb_interp_preds$year)
 
 for (i in 1:length(alb_preds_ages)){
   
   print(i)
+  # Rows for this slice, and their coordinates as lon/lat points.
   idx_age = which(alb_interp_preds$year == alb_preds_ages[i])
   
   coords_veg  = SpatialPoints(alb_interp_preds[idx_age,c('x', 'y')], 
                               proj4string=CRS(proj_WGS84))
   
+  # Nearest polygon set in time (as above), normalised to lon/lat.
   idx_ice_match = which.min(abs(alb_preds_ages[i] - ice_years)) 
   
   proj4string(ice[[idx_ice_match]]) = proj_WGS84
   ice[[idx_ice_match]] = spTransform(ice[[idx_ice_match]], CRS(proj_WGS84))
   
+  # ---- Point-in-polygon ----------------------------------------------------------------
+  # over(points, polygons) returns, for each point, the attributes of the polygon it falls
+  # in (NA if none). The polygons carry a column whose name starts with "SYMB" holding the
+  # value "ICE"; that is what is kept. So `ice` is "ICE" under the sheet and NA elsewhere.
   ice_status_veg = over(coords_veg, ice[[idx_ice_match]])
   
   alb_interp_preds[idx_age, 'ice'] = ice_status_veg[,which(substr(colnames(ice_status_veg), 1,4)=='SYMB')]
   
 }
 
-# # drop cells that are not included for all time periods
-# cell_id_drop = as.numeric(names(which(table(alb_interp_preds$cell_id)<7)))
-# alb_diff_merge = alb_diff_merge[which(!(alb_diff_merge$cell_id %in% cell_id_drop)),]
-
-###############################################################################################################
-## aggregate to 1 degree by 1 degree tiles
-###############################################################################################################
+# Another lon/lat proj string (unused here) and the coarse ages under a second name.
 ll_proj = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"
 
 years = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)
-#years = c(50, 1000, 3000, 5000, 7000, 9000, 11000)
-# years = c(50, 6000, 11000)
 
-# breaks = c(0, 4, 8, 12, 16, 20, 40, 60, 80, 100)/100
-# labels = c("0 - 4", "4 - 8", "8 - 12", "12 - 16", "16 - 20", "20 - 40", "40 - 60",  "60 - 80", "80 - 100")
-
+# Bin edges and labels for the albedo maps.
 breaks_alb = c(0, 5, 10, 20, 30, 40, 60, 80, 100)/100
 labels_alb = c("0 - 5", "5 - 10", "10 - 20", "20 - 30", "30 - 40", "40 - 60", "60 - 80", "80 - 100")
 
-grid_NA <- readRDS("data/grid.RDS")
-# crs(grid_NA) = CRS(SRS_string = "EPSG:4326")
+############################################################################################
+# Grid cells, the coarse subset, and ice albedo
+############################################################################################
 
-# grid <- rast(readRDS("data/grid.RDS"))
+# The 1-degree grid.
+grid_NA <- readRDS("data/grid.RDS")
+
+# The stacked mean-prediction file; read, never used.
 paleo_interp_sim_gam = readRDS('output/prediction/paleo_interp_predict_gam_bluesky.RDS')
 
+# Cell id for each row, then the cell CENTRE coordinates from the grid, as long/lat.
 cell_id <- raster::extract(grid_NA, alb_interp_preds[,c('x', 'y')])
 
 alb_grid <- data.frame(cell_id, alb_interp_preds)
@@ -295,33 +269,32 @@ colnames(coords) = c('long', 'lat')
 alb_grid = cbind(coords, 
                  alb_grid[,c('x', 'y', 'cell_id', 'year', 'ice', 'alb_mean', 'alb_sd', 'month')])
 
-
-
+# Keep only the eight coarse slices: 839,232 -> about 274,000 rows.
 alb_grid_sub = subset(alb_grid, year %in% years) 
 
+# Monthly ice albedo (the `ice_albedo` column: 0.6 to 0.8 by season).
 alb_glacier = read.csv('data/albedo_glacier_monthly.csv', header=TRUE)
 
-# alb_grid_sub$alb_mean_ice = NA
-
+# ---- Albedo with ice ---------------------------------------------------------------------
+# alb_mean_ice starts as the month's ice albedo for every row, is overwritten with the
+# modelled albedo wherever the cell is NOT ice, and finally alb_mean itself is blanked
+# where the cell IS ice. So: alb_mean = vegetation only (NA under ice); alb_mean_ice =
+# vegetation or ice, whichever applies.
 alb_grid_sub$alb_mean_ice = alb_glacier[match(alb_grid_sub$month, alb_glacier$month), 'ice_albedo']
-# alb_grid_sub$alb_mean_ice[which(is.na(alb_grid_sub$ice))] = NA
+
 alb_grid_sub$alb_mean_ice[which(is.na(alb_grid_sub$ice))] = alb_grid_sub$alb_mean[which(is.na(alb_grid_sub$ice))]
 
 alb_grid_sub$alb_mean[which(alb_grid_sub$ice == 'ICE')] = NA
 
-# drop cells that are not included for all time periods
+# Meant to drop cells missing from some slices, but the threshold is 8 rows against 96
+# for a complete cell (8 slices x 12 months), so it removes only near-empty cells. As
+# original.
 cell_id_drop = as.numeric(names(which(table(alb_grid_sub$cell_id)<8)))
 alb_grid_sub = alb_grid_sub[which(!(alb_grid_sub$cell_id %in% cell_id_drop)),]
 
-# IF USE LCT AT POINT SCALE
-# take sd as well, mean of other vars too 
-# alb_grid = aggregate(alb_pred ~ cell_id + long + lat + x + y + year, alb_grid, median)
-# alb_grid = aggregate(alb_mean ~ cell_id + long + lat + year, alb_grid, median)
-
+# Binned albedo, sd and coefficient of variation, with labels, for the maps.
 alb_grid_sub$alb_bin = cut(alb_grid_sub$alb_mean, breaks_alb, labels=FALSE)
 
-# breaks_sd = c(0, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09)
-# labels_sd = c("0 - 0.04", "0.04 - 0.05", "0.05 - 0.06", "0.06 - 0.07", "0.07 - 0.08", "0.08 - 0.09")
 breaks_sd = c(0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07)
 labels_sd = c("0 - 0.01", "0.01 - 0.02", "0.02 - 0.03", "0.03 - 0.04", "0.04 - 0.05", "0.05 - 0.06", "0.06 - 0.07")
 alb_grid_sub$alb_sd_bin = cut(alb_grid_sub$alb_sd, breaks_sd, labels=FALSE, include.lowest=TRUE)
@@ -336,71 +309,65 @@ alb_grid_sub$alb_cv_bin = cut(alb_grid_sub$alb_cv, breaks_cv, labels=FALSE, incl
 alb_grid_sub$alb_cv_bin = factor(alb_grid_sub$alb_cv_bin, 
                                  levels=seq(1, length(labels_cv)),
                                  labels = labels_cv)
-# alb_grid_sub = subset(alb_grid, year %in% years) 
 
+# Facet label per row (the coarse age in ka), as an ordered factor.
 labels_year = c('0.05 ka', '0.5 ka', '2 ka', '4 ka', '6 ka', '8 ka', '10 ka', '12 ka')
-#labels = c('0.05', '1', '3', '5', '7', '9', '11')
 
-
-#renaming labels to create facets column in alb_grid_sub 
 alb_grid_sub$facets = labels_year[match(alb_grid_sub$year, years)]
 alb_grid_sub$facets = factor(alb_grid_sub$facets, levels = labels_year)
 
+# Drop everything east of 60 W (Greenland and the Atlantic).
 alb_grid_sub = alb_grid_sub[which(alb_grid_sub$long < (-60)),]
 
+# Months in calendar order for facets.
 alb_grid_sub$month = factor(alb_grid_sub$month, levels = months)
 
-###############################################################################################################
-## Plot albedo predictions and uncertainty
-###############################################################################################################
+############################################################################################
+# MAP 1: February albedo at the eight slices, stacked vertically
+############################################################################################
 
-# albedo predictions binned 
-# grid: year as rows
+# ---- Anatomy of these maps -------------------------------------------------------------
+#   geom_polygon(pbs_ll ...)         land filled grey, as the background
+#   geom_tile(alb_grid_sub ...)      one square per cell at its centre, coloured by the
+#                                    binned albedo (factor() makes the bins discrete)
+#   geom_polygon(ice_sub ...)        the ice sheet drawn on top, light grey
+#   scale_fill_brewer(YlOrBr)        yellow-to-brown palette; NA (ice cells) drawn white
+#   facet_grid(facets~.)             one row of panels per slice
+#   theme_bw + theme(...)            white background, no axes, no grid
+#   coord_fixed(xlim, ylim)          1:1 aspect and the map extent
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=subset(alb_grid_sub, month=='feb'), aes(x=long,y=lat, fill=factor(alb_bin))) +
   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_manual(values=terrain.colors(10), na.value='transparent', name = "Albedo", labels=breaks[-1]) + 
-  # sc_fill_seq + 
-  # scale_fill_brewer(type='seq', palette='YlOrBr', 
-  #                   na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
   scale_fill_brewer(type='seq', 
                     palette='YlOrBr', 
                     name = "Albedo", 
                     direction=1, 
                     na.value = "white",
                     labels = labels_alb) +
-  # facet_grid(facets~month)+
   facet_grid(facets~.)+
-  # facet_wrap(year~.)+
   theme_bw(12)+
   theme(axis.line = element_line(colour = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        # strip.text = element_text(size=14),
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
         legend.text = element_text(size=12),
         legend.title = element_text(size=12)) +
-  # coord_fixed()
   coord_fixed(xlim = xlim, ylim = ylim)
 ggsave(paste0('figures/alb_interp_preds_binned_tile_grid_', alb_prod, '.pdf'))#, width=12, height=14)
 ggsave(paste0('figures/alb_interp_preds_binned_tile_grid_', alb_prod, '.png'))#, width=12, height=14)
 
-# albedo predictions binned 
-# grid: year as rows
+############################################################################################
+# MAP 2: all months x all eight slices (12 columns x 8 rows of panels)
+############################################################################################
+
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=factor(alb_bin))) +
   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_manual(values=terrain.colors(10), na.value='transparent', name = "Albedo", labels=breaks[-1]) + 
-  # sc_fill_seq + 
-  # scale_fill_brewer(type='seq', palette='YlOrBr', 
-  #                   na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
   scale_fill_brewer(type='seq', 
                     palette='YlOrBr', 
                     name = "Albedo", 
@@ -408,26 +375,23 @@ ggplot()+
                     na.value = "white",
                     labels = labels_alb) +
   facet_grid(facets~month)+
-  # facet_grid(facets~.)+
-  # facet_wrap(year~.)+
   theme_bw(12)+
   theme(axis.line = element_line(colour = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        # strip.text = element_text(size=14),
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
         legend.text = element_text(size=12),
         legend.title = element_text(size=12)) +
-  # coord_fixed()
   coord_fixed(xlim = xlim, ylim = ylim)
 ggsave(paste0('figures/alb_interp_preds_month_binned_tile_grid_', alb_prod, '.pdf'), width=14, height=12)
 ggsave(paste0('figures/alb_interp_preds_month_binned_tile_grid_', alb_prod, '.png'), width=14, height=12)
 
-# albedo predictions binned 
-# grid: year as rows
+############################################################################################
+# MAP 3: four representative months (the talk's choice) x eight slices
+############################################################################################
 
 months_sub = c('feb', 'may', 'aug', 'nov')
 
@@ -435,11 +399,6 @@ ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=subset(alb_grid_sub, month %in% months_sub), aes(x=long,y=lat, fill=factor(alb_bin))) +
   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_manual(values=terrain.colors(10), na.value='transparent', name = "Albedo", labels=breaks[-1]) + 
-  # sc_fill_seq + 
-  # scale_fill_brewer(type='seq', palette='YlOrBr', 
-  #                   na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
   scale_fill_brewer(type='seq', 
                     palette='YlOrBr', 
                     name = "Albedo", 
@@ -447,43 +406,36 @@ ggplot()+
                     na.value = "white",
                     labels = labels_alb) +
   facet_grid(facets~month)+
-  # facet_grid(facets~.)+
-  # facet_wrap(year~.)+
   theme_bw(20)+
   theme(axis.line = element_line(colour = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        # strip.text = element_text(size=14),
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
         legend.text = element_text(size=12),
         legend.title = element_text(size=12)) +
-  # coord_fixed()
   coord_fixed(xlim = xlim, ylim = ylim)
 ggsave(paste0('figures/alb_interp_preds_month_sub_binned_tile_grid_', alb_prod, '.pdf'), width=14, height=12)
 ggsave(paste0('figures/alb_interp_preds_month_sub_binned_tile_grid_', alb_prod, '.png'), width=14, height=12)
 
-# albedo predictions binned 
-# wrap: by year 
+############################################################################################
+# MAP 4: February again, panels wrapped into a grid instead of a column
+############################################################################################
+
 ggplot() +
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=subset(alb_grid_sub, month=='feb'), aes(x=long,y=lat, fill=factor(alb_bin))) +
   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_manual(values=terrain.colors(10), na.value='transparent', name = "Albedo", labels=breaks[-1]) + 
   scale_fill_brewer(type='seq', palette='YlOrBr', 
                     na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
-  # sc_fill_seq + 
-  # facet_grid(facets~variable)+
   facet_wrap(facets~.) +
   theme_bw(12)+
   theme(axis.line = element_line(colour = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        # strip.text = element_text(size=14),
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
@@ -493,27 +445,30 @@ ggplot() +
 ggsave(paste0('figures/alb_interp_preds_binned_tile_wrap_', alb_prod, '.pdf'), width=14, height=12)
 ggsave(paste0('figures/alb_interp_preds_binned_tile_wrap_', alb_prod, '.png'), width=14, height=12)
 
-# albedo predictions binned 
-# pages: single year per page 
+############################################################################################
+# MAP 5: one PDF page per slice, twelve months per page
+############################################################################################
+
 pdf(paste0('figures/alb_interp_preds_month_binned_tile_pages_', alb_prod, '.pdf'))
 for (year in ages_sub){
   
+  # NB `subset(alb_grid_sub, year==year)` compares the column with itself: inside
+  # subset() the data frame's columns take precedence over variables outside it, so the
+  # loop variable never gets a look-in and every row passes. Each page therefore
+  # over-plots ALL eight slices; only the ice overlay changes (ice_sub has no `year`
+  # column, so there the loop variable IS used). A bug in the original, preserved here.
   p = ggplot()+
     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
     geom_tile(data=subset(alb_grid_sub, year==year), aes(x=long,y=lat, fill=factor(alb_bin))) +
     geom_polygon(data=subset(ice_sub, ages == year), aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-    # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-    # sc_fill_seq + 
     scale_fill_brewer(type='seq', palette='YlOrBr', 
                       na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
-    #facet_grid(month~.)+
     facet_wrap(~month, nrow=4, ncol=4)+
     theme_bw(12)+
     theme(axis.line = element_line(colour = "black"),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
-          # strip.text = element_text(size=14),
           axis.title = element_blank(),
           axis.ticks = element_blank(),
           axis.text = element_blank(),
@@ -524,108 +479,17 @@ for (year in ages_sub){
 }
 dev.off()
 
+# Range of the sd, for a scale that is commented out.
 lims = c(0, round(max(alb_grid_sub$alb_sd),2))
 
-# # albedo prediction standard deviation 
-# # wrap: by year
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_sd)) +
-#   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-#   # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-#   # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-#   scale_fill_distiller(type='seq', 
-#                        palette='YlOrBr', 
-#                        na.value='transparent', 
-#                        name = "Standard \ndeviation", 
-#                        direction=1, limits = lims) +
-#   # sc_fill_seq +
-#   # facet_grid(facets~variable)+
-#   facet_wrap(facets~.)+
-#   theme_bw(12)+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         # strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=12),
-#         legend.title = element_text(size=12)) +
-#   coord_fixed(xlim = xlim, ylim = ylim)
-# ggsave(paste0('figures/alb_interp_preds_sd_tile_wrap_', alb_prod, '.pdf'))
-# ggsave(paste0('figures/alb_interp_preds_sd_tile_wrap_', alb_prod, '.png'))
-# 
-# 
-# # albedo prediction standard deviation binned
-# # wrap: by year
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_sd_bin)) +
-#   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-#   # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-#   # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-#   scale_fill_brewer(type='seq', 
-#                     palette='YlOrBr', 
-#                     na.value='transparent', 
-#                     name = "Standard \ndeviation", 
-#                     direction=1, 
-#                     labels = labels_sd,
-#                     drop = FALSE) +
-#   facet_wrap(facets~.)+
-#   theme_bw(12)+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         # strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=12),
-#         legend.title = element_text(size=12)) +
-#   coord_fixed(xlim = xlim, ylim = ylim)
-# ggsave(paste0('figures/alb_interp_preds_sd_binned_tile_wrap_', alb_prod, '.pdf'))
-# 
-# # albedo prediction standard deviation binned
-# # grid: year as rows
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_sd_bin)) +
-#   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-#   # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-#   # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-#   scale_fill_brewer(type='seq', 
-#                     palette='YlOrBr', 
-#                     na.value='transparent', 
-#                     name = "Standard \ndeviation", 
-#                     direction=1, 
-#                     labels = labels_sd) +
-#   facet_grid(facets~.)+
-#   theme_bw(12)+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         # strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=12),
-#         legend.title = element_text(size=12)) +
-#   coord_fixed(xlim = xlim, ylim = ylim)
-# ggsave(paste0('figures/alb_interp_preds_sd_binned_tile_grid_', alb_prod, '.pdf'))
-# ggsave(paste0('figures/alb_interp_preds_sd_binned_tile_grid_', alb_prod, '.png'))
+############################################################################################
+# MAP 6: standard deviation of the 100 draws, months x slices
+############################################################################################
 
-# albedo prediction standard deviation binned
-# grid: year as rows
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_sd_bin)) +
   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
   scale_fill_brewer(type='seq', 
                     palette='YlOrBr', 
                     na.value='transparent', 
@@ -638,7 +502,6 @@ ggplot()+
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        # strip.text = element_text(size=14),
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
@@ -648,70 +511,15 @@ ggplot()+
 ggsave(paste0('figures/alb_interp_preds_month_sd_binned_tile_grid_', alb_prod, '.pdf'), width=14, height=12)
 ggsave(paste0('figures/alb_interp_preds_month_sd_binned_tile_grid_', alb_prod, '.png'), width=14, height=12)
 
-# # albedo prediction standard deviation binned
-# # wrap: by year
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_cv_bin)) +
-#   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-#   # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-#   # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-#   scale_fill_brewer(type='seq', 
-#                     palette='YlOrBr', 
-#                     na.value='transparent', 
-#                     name = "Coefficient of \nvariation", 
-#                     direction=1, 
-#                     labels = labels_cv) +
-#   facet_wrap(facets~.)+
-#   theme_bw(12)+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         # strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=12),
-#         legend.title = element_text(size=12)) +
-#   coord_fixed(xlim = xlim, ylim = ylim)
-# ggsave(paste0('figures/alb_interp_preds_cv_binned_tile_wrap_', alb_prod, '.pdf'))
-# ggsave(paste0('figures/alb_interp_preds_cv_binned_tile_wrap_', alb_prod, '.png'))
+############################################################################################
+# MAP 7: coefficient of variation (sd / mean), months x slices
+############################################################################################
 
-# # albedo prediction standard deviation binned
-# # grid: year as rows
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_cv_bin)) +
-#   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-#   # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-#   # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-#   scale_fill_brewer(type='seq', palette='YlOrBr', 
-#                     na.value='transparent', name = "CV", direction=1, labels = labels_sd) +
-#   facet_grid(facets~.)+
-#   theme_bw(12)+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         # strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=12),
-#         legend.title = element_text(size=12)) +
-#   coord_fixed(xlim = xlim, ylim = ylim)
-# ggsave(paste0('figures/alb_interp_preds_cv_binned_tile_grid_', alb_prod, '.pdf'))
-# ggsave(paste0('figures/alb_interp_preds_cv_binned_tile_grid_', alb_prod, '.png'))
-
-# albedo prediction standard deviation binned
-# grid: year as rows
+# Note the legend labels are the sd labels, not the cv ones. As original.
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_cv_bin)) +
   geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
   scale_fill_brewer(type='seq', palette='YlOrBr', 
                     na.value='transparent', name = "CV", direction=1, labels = labels_sd) +
   facet_grid(facets~month)+
@@ -720,7 +528,6 @@ ggplot()+
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        # strip.text = element_text(size=14),
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
@@ -730,13 +537,14 @@ ggplot()+
 ggsave(paste0('figures/alb_interp_preds_month_cv_binned_tile_grid_', alb_prod, '.pdf'), width=14, height=12)
 ggsave(paste0('figures/alb_interp_preds_month_cv_binned_tile_grid_', alb_prod, '.png'), width=14, height=12)
 
+############################################################################################
+# Differences between consecutive COARSE slices, per cell and month
+############################################################################################
 
-###############################################################################################################
-## plot albedo prediction differences
-###############################################################################################################
-
+# The eight coarse ages, for padding each cell's series.
 years_df = data.frame(year = ages_sub)
 
+# Empty output table: the columns of alb_grid_sub minus `ice`, plus six new ones.
 alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=ncol(alb_grid_sub)+5))
 
 alb_diff_colnames = colnames(alb_grid_sub)[which(!(colnames(alb_grid_sub) %in% 'ice'))]
@@ -745,9 +553,7 @@ colnames(alb_diff_df) = c(alb_diff_colnames, 'alb_mean_ice_old', 'alb_mean_ice_y
                           'ice_young', 'ice_old', 
                           'alb_diff', 'alb_diff_ice')#c('cell_id', 'long', 'lat', 'x', 'y', 'year', 'alb_pred', 'alb_bin', 'alb_diff')
 
-# alb_grid_sub$alb_mean_ice = alb_grid_sub$alb_mean
-# alb_grid_sub$alb_mean_ice[which(!is.na(alb_grid_sub$ice))] = 0.5
-
+# Loop over cells (2,834 in the anchored run) and months; same shape as script 7a's loop.
 cell_ids = unique(alb_grid_sub$cell_id)
 N_cells  = length(cell_ids)
 for (i in 1:N_cells){
@@ -756,18 +562,23 @@ for (i in 1:N_cells){
   
   for (month in months){
     
-    # print(paste0('>> ', month))
-    
+    # This cell-month's rows, young to old.
     alb_cell = alb_grid_sub[which((alb_grid_sub$cell_id == cell_ids[i])&(alb_grid_sub$month == month)),] 
     alb_cell = alb_cell[order(alb_cell$year),]
-    # alb_cell = alb_cell[which(is.na(alb_cell$ice)),]
     
+    # No pairs possible from one row.
     if (nrow(alb_cell) == 1){
       next
     } 
     
+    # Pad to all eight ages so pairs are always consecutive coarse slices.
     alb_cell_filled = merge(years_df, alb_cell, all.x=TRUE)
     
+    # ---- The seven differences ---------------------------------------------------------
+    # For each pair (rows 1..7 young, 2..8 old): the identifiers from the young row; the
+    # with-ice albedo at each end; the ice flags at each end; and two differences, both
+    # young minus old: alb_diff on the vegetation-only albedo (NA if either end is ice)
+    # and alb_diff_ice on the vegetation-or-ice albedo.
     alb_diff_df = rbind(alb_diff_df, 
                         data.frame(subset(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
                                           select=-c(ice)), 
@@ -780,105 +591,62 @@ for (i in 1:N_cells){
   }
 }
 
+# Drop padded rows with no data.
 alb_diff_df =  alb_diff_df[which(!is.na(alb_diff_df$lat)),]
 
+# Saved: script 9 reads this to rerun the talk's recipe. Anchored.
 saveRDS(alb_diff_df, paste0('data/alb_interp_preds_diffs_', alb_prod, '.RDS'))
 
+############################################################################################
+# Ice outlines paired per period, for the difference maps and for script 8
+############################################################################################
 
-# early, middle, late
-
-# alb_diff_coarse_df = data.frame(matrix(NA, nrow=0, ncol=ncol(alb_grid_sub)+1))
-# colnames(alb_diff_coarse_df) = c(colnames(alb_grid_sub), 'alb_diff')#c('cell_id', 'long', 'lat', 'x', 'y', 'year', 'alb_pred', 'alb_bin', 'alb_diff')
-# years_coarse_df = data.frame(years = c(50, 2000, 6000, 12000))
-# 
-# cell_ids = unique(alb_grid_sub$cell_id)
-# N_cells  = length(cell_ids)
-# for (i in 1:N_cells){
-#   
-#   alb_cell = alb_grid_sub[which(alb_grid_sub$cell_id == cell_ids[i]),] 
-#   alb_cell = alb_cell[order(alb_cell$year),]
-#   alb_cell = alb_cell[which(is.na(alb_cell$ice)),]
-#   alb_cell = alb_cell[which(alb_cell$year %in% years_coarse_df$year)]
-#   
-#   if (nrow(alb_cell) == 1){
-#     next
-#   } 
-#   
-#   alb_cell_filled = merge(years_coarse_df, alb_cell, all.x=TRUE)
-#   
-#   alb_diff_coarse_df = rbind(alb_diff_coarse_df, data.frame(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
-#                                               alb_diff = -diff(alb_cell_filled$alb_mean)))
-#   
-# }
-# 
-# alb_diff_coarse_df =  alb_diff_coarse_df[which(!is.na(alb_diff_coarse_df$alb_diff)),]
-# 
-# saveRDS(alb_diff_coarse_df, paste0('data/alb_interp_preds_diffs_coarse_', alb_prod, '.RDS'))
-
-# labels = c('2 - 0.05', '4 - 2', '4 - 6', '8 - 6', '10 - 8')
-# labels = c('0.05 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10')
-# labels = c('0.05 - 1', '1 - 3', '3 - 5', '5 - 7', '7 - 9', '9 - 11')
-# labels = c('0.05 - 0.5', '0.5 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10', '10 - 12')
+# Period labels for the seven coarse pairs.
 labels = c('0.05 - 0.5 ka', '0.5 - 2 ka', '2 - 4 ka', '4 - 6 ka', '6 - 8 ka', '8 - 10 ka', '10 - 12 ka')
 
+# Empty tables for the young-end and old-end outlines of each period.
 ice_fort_diff_young = data.frame(matrix(NA, nrow=0, ncol=10))
 ice_fort_diff_old = data.frame(matrix(NA, nrow=0, ncol=10))
 ages_sub = years
 
+# Keep the first nine columns, which is all of them: ice_fort has exactly nine, so this
+# line changes nothing.
 ice_fort = ice_fort[,1:9]
 
 for (i in 1:(length(ages_sub)-1)){
   print(ages_sub[i])
   
-  # idx_age = which(veg_lct$ages == ages_sub[i])
-  # coords  = SpatialPoints(veg_lct[idx_age,c('x', 'y')], proj4string=CRS(proj_WGS84))
-  
   age_now = ages_sub[i]
   
-  # if (age_now <= 500){
-  #   next
-  # } else {
+  # Nearest polygon set for the young and the old end of this period.
   idx_ice_match_young = which.min(abs(ages_sub[i] - ice_years))
   idx_ice_match_old = which.min(abs(ages_sub[i+1] - ice_years))
   
-  # ice_status = over(coords, ice[[idx_ice_match]])
-  
+  # NB ice_fort$ages holds the COARSE age each polygon set stands for (50, 500, 2000, ...)
+  # but is compared here with the polygon YEAR (1000, 1000, 2000, ...). The two agree only
+  # from 2,000 BP up, so the 0.05-0.5 ka period gets no outline at either end and 0.5-2 ka
+  # gets none at the young end; in the anchored run the young table has 75,065 rows and
+  # the old table 87,742. A bug in the original, preserved here; script 8 loads the files
+  # but does not use them on the current path.
   ice_fort_age_young = ice_fort[which(ice_fort$ages == ice_years[idx_ice_match_young]),]
   
   ice_fort_age_old = ice_fort[which(ice_fort$ages == ice_years[idx_ice_match_old]),]
-  
-  # ice_match = ice_fort[[idx_ice_match]]
-  # # ice_match_buffer = gBuffer(ice_match, byid=TRUE, width=0)
-  # 
-  # ice_match_sf = st_as_sf(ice_match)
-  # ice_match_sf = st_make_valid(ice_match_sf)
-  # ice_match_clipped = st_crop(ice_match_sf, box_sp)
-  # 
-  # ice_fort_age = as_Spatial(ice_match_clipped)
-  # 
-  # ice_fort_age = fortify(ice_fort_age)
   
   print(labels[i])
   
   ice_fort_diff_young = rbind(ice_fort_diff_young,
                               data.frame(ice_fort_age_young,
-                                         # ice_year = rep(ice_years[idx_ice_match], nrow(ice_fort_age)),
-                                         # ages = rep(ages_sub_diff[i], nrow(ice_fort_age)),
                                          facets = rep(labels[i],  nrow(ice_fort_age_young))
                               ))
   
   ice_fort_diff_old = rbind(ice_fort_diff_old,
                             data.frame(ice_fort_age_old,
-                                       # ice_year = rep(ice_years[idx_ice_match], nrow(ice_fort_age)),
-                                       # ages = rep(ages_sub_diff[i], nrow(ice_fort_age)),
                                        facets = rep(labels[i],  nrow(ice_fort_age_old))
                             ))
   
-  # }
-  
 }
 
-
+# Ordered period factor on both tables, then save for script 8.
 labels_period = c('0.05 - 0.5 ka', '0.5 - 2 ka', '2 - 4 ka', '4 - 6 ka', '6 - 8 ka', '8 - 10 ka', '10 - 12 ka')
 
 ice_fort_diff_old$facets = factor(ice_fort_diff_old$facets,
@@ -892,31 +660,28 @@ ice_fort_diff_young$facets = factor(ice_fort_diff_young$facets,
 saveRDS(ice_fort_diff_young, 'data/ice_fort_diff_young.RDS')
 saveRDS(ice_fort_diff_old, 'data/ice_fort_diff_old.RDS')
 
+# Period label for each difference row, from its young age.
 diff_years = years[-length(years)]
 alb_diff_df$facets = labels[match(alb_diff_df$year, diff_years)]
 alb_diff_df$facets = factor(alb_diff_df$facets, levels =  labels)
 
-# thresh = round_any(max(abs(diff$diff), na.rm=TRUE), 0.01, f=ceiling)
+############################################################################################
+# Diverging colour scales for the difference maps
+############################################################################################
+
+# Symmetric limits at the largest absolute difference, rounded up to 0.01.
 max_diff = max(abs(alb_diff_df$alb_diff), na.rm=TRUE)
 thresh = ceiling(max_diff*100)/100
 
+# Positions along the palette; the second definition wins. Pinches the colour change
+# around zero so small differences show.
 values = c(0, 0.4, 0.45, 0.5, 0.55, 0.6, 1)
 values = c(0, 0.45, 0.48, 0.5, 0.52, 0.55, 1)
 
-
-# sc_fill_diverge <- scale_fill_distiller(type = "div",
-#                                         palette = "RdYlBu",#"BrBG",
-#                                         # labels = labels,
-#                                         direction=1,
-#                                         na.value="grey", 
-#                                         name="Albedo change",
-#                                         limits = c(-thresh,thresh),
-#                                         values = values)
-
-
+# Fill and colour scales, each defined twice (BrBG then RdYlBu for fill; RdYlBu then BrBG
+# for colour); the second definition of each is what is used.
 sc_fill_diverge <- scale_fill_distiller(type = "div",
                                         palette = "BrBG",
-                                        # labels = labels,
                                         na.value="grey",
                                         name="Albedo change",
                                         limits = c(-thresh,thresh),
@@ -924,7 +689,6 @@ sc_fill_diverge <- scale_fill_distiller(type = "div",
 
 sc_fill_diverge <- scale_fill_distiller(type = "div",
                                         palette = "RdYlBu",#"BrBG",
-                                        # labels = labels,
                                         na.value="grey",
                                         name="Albedo change",
                                         limits = c(-thresh,thresh),
@@ -933,7 +697,6 @@ sc_fill_diverge <- scale_fill_distiller(type = "div",
 sc_colour_diverge <- scale_colour_distiller(type = "div",
                                             palette = "RdYlBu",#"BrBG",
                                             direction=1,
-                                            # labels = labels,
                                             na.value="transparent",#grey", 
                                             name="Albedo change",
                                             limits = c(-thresh,thresh), 
@@ -941,59 +704,14 @@ sc_colour_diverge <- scale_colour_distiller(type = "div",
 
 sc_colour_diverge <- scale_colour_distiller(type = "div",
                                             palette = "BrBG",
-                                            # labels = labels,
                                             na.value="transparent",#grey",
                                             name="Albedo change",
                                             limits = c(-thresh,thresh),
                                             values = values)
 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_point(data=subset(alb_diff_df, year==4000), aes(x=long, y=lat, colour = alb_diff), size=1, alpha=1)+
-#   sc_colour_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   facet_grid(facets~.)+
-#   # facet_wrap(year~.)+
-#   theme_bw()+
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=14)) +
-#   coord_fixed()
-# # ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', alb_prod, '.pdf'))
-# 
-# 
-# #change in albedo going back through time 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_point(data=alb_diff_df, aes(x=long, y=lat, colour = alb_diff), size=1, alpha=0.6)+
-#   sc_colour_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   #facet_grid(facets~.)+
-#   facet_wrap(~year)+
-#   theme_bw()+
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=14)) +
-#   coord_fixed()
-# # scale_fill_brewer(type = "div", palette = 'Rd
-# ggsave(paste0('figures/alb_preds_diff_point_wrap_', alb_prod, '.pdf'))
-# 
-# ggsave(paste0('figures/alb_preds_diff_subset_point_', alb_prod, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_subset_point_', alb_prod, '.pdf'))
+############################################################################################
+# MAP 8: albedo change, months x periods, with old and young ice margins
+############################################################################################
 
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
@@ -1001,17 +719,12 @@ ggplot()+
   geom_polygon(data=ice_fort_diff_old, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
   geom_polygon(data=ice_fort_diff_young, aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
   sc_fill_diverge + 
-  # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-  # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-  #facet_grid(year~.)+
-  # facet_grid(facets~month)+
   facet_grid(month~facets)+
   theme_bw(12)+
   theme(axis.line = element_line(colour = "black"),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        # strip.text = element_text(size=12),
         axis.title = element_blank(),
         axis.ticks = element_blank(),
         axis.text = element_blank(),
@@ -1021,90 +734,14 @@ ggplot()+
 ggsave(paste0('figures/alb_interp_preds_month_diff_tile_grid_', alb_prod, '.png'), width=12, height=14)
 ggsave(paste0('figures/alb_interp_preds_month_diff_tile_grid_', alb_prod, '.pdf'), width=12, height=14)
 
-# #change in albedo going back in time but using tiles 
-# #a bit easier to interpret than the one above 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-#   geom_polygon(data=ice_fort_diff_old, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-#   geom_polygon(data=ice_fort_diff_young, aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
-#   sc_fill_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   #facet_grid(year~.)+
-#   facet_wrap(~facets)+
-#   theme_bw(12)+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         # strip.text = element_text(size=12),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=12),
-#         legend.title = element_text(size=12)) +
-#   coord_fixed(xlim = xlim, ylim = ylim)
-# ggsave(paste0('figures/alb_interp_preds_diff_tile_wrap_', alb_prod, '.png'))
-# ggsave(paste0('figures/alb_interp_preds_diff_tile_wrap_', alb_prod, '.pdf'))
-# 
-# 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-#   geom_polygon(data=ice_fort_diff_old, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-#   geom_polygon(data=ice_fort_diff_young, aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
-#   sc_fill_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   #facet_grid(year~.)+
-#   facet_grid(facets~.)+
-#   theme_bw(8)+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         # strip.text = element_text(size=12),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=12),
-#         legend.title = element_text(size=12)) +
-#   coord_fixed(xlim = xlim, ylim = ylim)
-# ggsave(paste0('figures/alb_interp_preds_diff_tile_grid_', alb_prod, '.png'))
-# ggsave(paste0('figures/alb_interp_preds_diff_tile_grid_', alb_prod, '.pdf'))
-
-# pdf(paste0('figures/alb_interp_preds_diff_tile_pages_', alb_prod, '.pdf'))
-# for (year in diff_years){
-#   
-#   diff_sub = alb_diff_df[which(alb_diff_df$year == year),]
-#   p<-ggplot()+
-#     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#     geom_tile(data=diff_sub, aes(x=long, y=lat, fill = alb_diff)) +
-#     geom_polygon(data=ice_fort_diff_old, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-#     geom_polygon(data=ice_fort_diff_young, aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
-#     sc_fill_diverge + 
-#     theme_bw(12)+
-#     theme(panel.grid.major = element_blank(),
-#           panel.grid.minor = element_blank(),
-#           panel.background = element_blank(),
-#           # strip.text = element_text(size=14),
-#           axis.title = element_blank(),
-#           axis.ticks = element_blank(),
-#           axis.text = element_blank(),
-#           legend.text = element_text(size=12),
-#           legend.title = element_text(size=12)) +
-#     coord_fixed(xlim = xlim, ylim = ylim)
-#   print(p)
-# }
-# dev.off()
+############################################################################################
+# MAP 9: one PDF page per period, twelve months per page
+############################################################################################
 
 facets = as.vector(unique(alb_diff_df$facets))
 
 pdf(paste0('figures/alb_interp_preds_month_diff_tile_pages_', alb_prod, '.pdf'))
 for (i in 1:length(facets)){
-  
-  # year = diff_years[i]
   
   facet = facets[i]
   
@@ -1115,14 +752,12 @@ for (i in 1:length(facets)){
     geom_tile(data=diff_sub, aes(x=long, y=lat, fill = alb_diff)) +
     geom_polygon(data=subset(ice_fort_diff_old, facets==facet), aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
     geom_polygon(data=subset(ice_fort_diff_young, facets==facet), aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
-    # facet_grid(month~.) +
     facet_wrap(~month, nrow=3, ncol=4) +
     sc_fill_diverge + 
     theme_bw(12)+
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
-          # strip.text = element_text(size=14),
           axis.title = element_blank(),
           axis.ticks = element_blank(),
           axis.text = element_blank(),
@@ -1133,1007 +768,7 @@ for (i in 1:length(facets)){
 }
 dev.off()
 
-
-# ###############################################################################################################
-# ## plot albedo prediction differences
-# ###############################################################################################################
-# 
-# alb_post = readRDS(paste0('data/paleo_predict_gam_samps_', alb_prod, '.RDS'))
-# 
-# 
-# cell_id <- raster::extract(grid, alb_post[,c('long', 'lat')])
-# 
-# alb_post <- data.frame(cell_id, alb_post)
-# # coords   = xyFromCell(grid, alb_grid$cell_id)
-# # colnames(coords) = c('long', 'lat')
-# # 
-# # alb_grid = cbind(coords, alb_grid[,c('x', 'y', 'cell_id', 'year', 'alb_mean', 'alb_sd')])
-# 
-# N_iter = length(unique(alb_posts$iter))
-# 
-# 
-# years = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)
-# #years = c(50, 1000, 3000, 5000, 7000, 9000, 11000)
-# # years = c(50, 6000, 11000)
-# 
-# alb_post_sub = subset(alb_post, year %in% years) 
-# 
-# 
-# years_df = data.frame(year = years)
-# 
-# alb_post_diff_df = data.frame(matrix(NA, nrow=0, ncol=ncol(alb_post_sub)+1))
-# colnames(alb_post_diff_df) = c(colnames(alb_post_sub), 'alb_diff')#c('cell_id', 'long', 'lat', 'x', 'y', 'year', 'alb_pred', 'alb_bin', 'alb_diff')
-# 
-# cell_ids = unique(alb_post_sub$cell_id)
-# N_cells  = length(cell_ids)
-# 
-# for (iter in 1:N_iter){
-#   
-#   print(paste0('Iter: ', iter))
-#   
-#   alb_post_iter = alb_post_sub[which(alb_post_sub$iter == iter),] 
-#   
-#   for (i in 1:N_cells){
-#     
-#     alb_cell = alb_post_iter[which(alb_post_iter$cell_id == cell_ids[i]),] 
-#     alb_cell = alb_cell[order(alb_cell$year),]
-#     
-#     if (nrow(alb_cell) == 1){
-#       next
-#     } 
-#     
-#     alb_cell_filled = merge(years_df, alb_cell, all.x=TRUE)
-#     
-#     alb_post_diff_df = rbind(alb_post_diff_df, data.frame(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
-#                                                 alb_diff = -diff(alb_cell_filled$value)))
-#     
-#   }
-# }
-# 
-# alb_post_diff_df =  alb_post_diff_df[which(!is.na(alb_post_diff_df$alb_diff)),]
-# 
-# saveRDS(alb_post_diff_df, paste0('data/alb_preds_post_diffs_', alb_prod, '.RDS'))
-# 
-# 
-# hist(alb_post_diff_df[which((alb_post_diff_df$cell_id == cell_ids[1]) & (alb_post_diff_df$year == years[1])),'alb_diff'])
-# 
-# alb_post_diff_sig = alb_post_diff_df %>%
-#   group_by(year, cell_id, long, lat, x, y, elev, ET, OL, ST) %>%
-#   summarize(prob_pos = sum(alb_diff>0),
-#             total = length(alb_diff),
-#             .groups = 'keep')
-# 
-# # labels = c('2 - 0.05', '4 - 2', '4 - 6', '8 - 6', '10 - 8')
-# # labels = c('0.05 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10')
-# # labels = c('0.05 - 1', '1 - 3', '3 - 5', '5 - 7', '7 - 9', '9 - 11')
-# # labels = c('0.05 - 0.5', '0.5 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10', '10 - 12')
-# labels = c('0.05 - 0.5', '0.5 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10', '10 - 12')
-# 
-# 
-# diff_years = years[-length(years)]
-# alb_diff_df$facets = labels[match(alb_diff_df$year, diff_years)]
-# alb_diff_df$facets = factor(alb_diff_df$facets, levels =  labels)
-# 
-# # thresh = round_any(max(abs(diff$diff), na.rm=TRUE), 0.01, f=ceiling)
-# max_diff = max(abs(alb_diff_df$alb_diff), na.rm=TRUE)
-# thresh = ceiling(max_diff*100)/100
-# 
-# values = c(0, 0.4, 0.45, 0.5, 0.55, 0.6, 1)
-# values = c(0, 0.45, 0.48, 0.5, 0.52, 0.55, 1)
-# 
-# 
-# # sc_fill_diverge <- scale_fill_distiller(type = "div",
-# #                                         palette = "RdYlBu",#"BrBG",
-# #                                         # labels = labels,
-# #                                         direction=1,
-# #                                         na.value="grey", 
-# #                                         name="Albedo change",
-# #                                         limits = c(-thresh,thresh),
-# #                                         values = values)
-# 
-# 
-# sc_fill_diverge <- scale_fill_distiller(type = "div",
-#                                         palette = "BrBG",
-#                                         # labels = labels,
-#                                         na.value="grey",
-#                                         name="Albedo change",
-#                                         limits = c(-thresh,thresh),
-#                                         values = values)
-# 
-# # sc_fill_diverge <- scale_fill_distiller(type = "div",
-# #                                         palette = "RdYlBu",#"BrBG",
-# #                                         # labels = labels,
-# #                                         na.value="grey", 
-# #                                         name="Percent")##,
-# #                                         # limits = c(-thresh,thresh),
-# #                                         # values = values)
-# 
-# sc_colour_diverge <- scale_colour_distiller(type = "div",
-#                                             palette = "RdYlBu",#"BrBG",
-#                                             direction=1,
-#                                             # labels = labels,
-#                                             na.value="transparent",#grey", 
-#                                             name="Albedo change",
-#                                             limits = c(-thresh,thresh), 
-#                                             values = values)
-# 
-# sc_colour_diverge <- scale_colour_distiller(type = "div",
-#                                             palette = "BrBG",
-#                                             # labels = labels,
-#                                             na.value="transparent",#grey",
-#                                             name="Albedo change",
-#                                             limits = c(-thresh,thresh),
-#                                             values = values)
-# 
-# # ggplot()+
-# #   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-# #   geom_point(data=subset(alb_diff_df, year==4000), aes(x=long, y=lat, colour = alb_diff), size=1, alpha=1)+
-# #   sc_colour_diverge + 
-# #   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-# #   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-# #   facet_grid(facets~.)+
-# #   # facet_wrap(year~.)+
-# #   theme_bw()+
-# #   theme(panel.grid.major = element_blank(),
-# #         panel.grid.minor = element_blank(),
-# #         panel.background = element_blank(),
-# #         strip.text = element_text(size=14),
-# #         axis.title = element_blank(),
-# #         axis.ticks = element_blank(),
-# #         axis.text = element_blank(),
-# #         legend.text = element_text(size=14),
-# #         legend.title = element_text(size=14)) +
-# #   coord_fixed()
-# # # ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', alb_prod, '.pdf'))
-# # 
-# # 
-# # #change in albedo going back through time 
-# # ggplot()+
-# #   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-# #   geom_point(data=alb_diff_df, aes(x=long, y=lat, colour = alb_diff), size=1, alpha=0.6)+
-# #   sc_colour_diverge + 
-# #   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-# #   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-# #   #facet_grid(facets~.)+
-# #   facet_wrap(~year)+
-# #   theme_bw()+
-# #   theme(panel.grid.major = element_blank(),
-# #         panel.grid.minor = element_blank(),
-# #         panel.background = element_blank(),
-# #         strip.text = element_text(size=14),
-# #         axis.title = element_blank(),
-# #         axis.ticks = element_blank(),
-# #         axis.text = element_blank(),
-# #         legend.text = element_text(size=14),
-# #         legend.title = element_text(size=14)) +
-# #   coord_fixed()
-# # # scale_fill_brewer(type = "div", palette = 'Rd
-# # ggsave(paste0('figures/alb_preds_diff_point_wrap_', alb_prod, '.pdf'))
-# # 
-# # ggsave(paste0('figures/alb_preds_diff_subset_point_', alb_prod, '.png'))
-# # ggsave(paste0('figures/alb_preds_diff_subset_point_', alb_prod, '.pdf'))
-# 
-# #change in albedo going back in time but using tiles 
-# #a bit easier to interpret than the one above 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-#   sc_fill_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   #facet_grid(year~.)+
-#   facet_wrap(~facets)+
-#   theme_bw()+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         strip.text = element_text(size=12),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=14)) +
-#   coord_fixed()
-# ggsave(paste0('figures/alb_preds_diff_tile_wrap_', alb_prod, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_tile_wrap_', alb_prod, '.pdf'))
-# 
-# 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-#   sc_fill_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   #facet_grid(year~.)+
-#   facet_grid(facets~.)+
-#   theme_bw()+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         strip.text = element_text(size=12),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=14)) +
-#   coord_fixed()
-# ggsave(paste0('figures/alb_preds_diff_tile_grid_', alb_prod, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_tile_grid_', alb_prod, '.pdf'))
-# 
-# pdf(paste0('figures/alb_preds_diff_tile_pages_', alb_prod, '.pdf'))
-# for (year in diff_years){
-#   
-#   diff_sub = alb_diff_df[which(alb_diff_df$year == year),]
-#   p<-ggplot()+
-#     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#     geom_tile(data=diff_sub, aes(x=long, y=lat, fill = alb_diff)) +
-#     sc_fill_diverge + 
-#     theme_bw()+
-#     theme(panel.grid.major = element_blank(),
-#           panel.grid.minor = element_blank(),
-#           panel.background = element_blank(),
-#           strip.text = element_text(size=14),
-#           axis.title = element_blank(),
-#           axis.ticks = element_blank(),
-#           axis.text = element_blank(),
-#           legend.text = element_text(size=14),
-#           legend.title = element_text(size=14)) +
-#     coord_fixed()
-#   print(p)
-# }
-# dev.off()
-# 
-
-} # [run-nointerp] end of interp block
-
-if (run_nointerp) { # [run-interp] start of non-interp block
-###############################################################################################################
-## summary plots of values
-###############################################################################################################
-
-alb_preds$alb_bin = cut(alb_preds$alb_mean, breaks, labels=FALSE)
-
-###############################################################################################################
-## aggregate to 1 degree by 1 degree tiles
-###############################################################################################################
-
-# breaks = c(0, 4, 8, 12, 16, 20, 40, 60, 80, 100)/100
-# labels = c("0 - 4", "4 - 8", "8 - 12", "12 - 16", "16 - 20", "20 - 40", "40 - 60",  "60 - 80", "80 - 100")
-
-breaks_alb = c(0, 5, 10, 20, 30, 40, 60, 80, 100)/100
-labels_alb = c("0 - 5", "5 - 10", "10 - 20", "20 - 30", "30 - 40", "40 - 60", "60 - 80", "80 - 100")
-
-grid <- readRDS("data/grid.RDS")
-paleo_sim_gam = readRDS(paste0('data/paleo_predict_gam_', run_tag, '.RDS'))
-
-
-
-cell_id <- raster::extract(grid, alb_preds[,c('long', 'lat')])
-
-alb_grid <- data.frame(cell_id, alb_preds)
-coords   = xyFromCell(grid, alb_grid$cell_id)
-colnames(coords) = c('long', 'lat')
-
-alb_grid = cbind(coords, alb_grid[,c('x', 'y', 'cell_id', 'year', 'alb_mean', 'alb_sd')])
-
-# IF USE LCT AT POINT SCALE
-# take sd as well, mean of other vars too 
-# alb_grid = aggregate(alb_pred ~ cell_id + long + lat + x + y + year, alb_grid, median)
-# alb_grid = aggregate(alb_mean ~ cell_id + long + lat + year, alb_grid, median)
-
-alb_grid$alb_bin = cut(alb_grid$alb_mean, breaks, labels=FALSE)
-
-breaks_sd = c(0, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09)
-labels_sd = c("0 - 0.04", "0.04 - 0.05", "0.05 - 0.06", "0.06 - 0.07", "0.07 - 0.08", "0.08 - 0.09")
-alb_grid$alb_sd_bin = cut(alb_grid$alb_sd, breaks_sd, labels=FALSE, include.lowest=TRUE)
-
-alb_grid$alb_cv = alb_grid$alb_sd / alb_grid$alb_mean
-breaks_cv = c(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 10)
-labels_cv = c("0 - 0.05", "0.05 - 0.1", "0.1 - 0.15", "0.15 - 0.2", "0.25 - 0.3", "0.3 - 10")
-alb_grid$alb_cv_bin = cut(alb_grid$alb_cv, breaks_cv, labels=FALSE, include.lowest=TRUE)
-
-years = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)
-#years = c(50, 1000, 3000, 5000, 7000, 9000, 11000)
-# years = c(50, 6000, 11000)
-
-alb_grid_sub = subset(alb_grid, year %in% years) 
-
-# labels_year = c('0.05', '0.5', '2', '4', '6', '8', '10', '12')
-labels_year = c('0.05 ka', '0.5 ka', '2 ka', '4 ka', '6 ka', '8 ka', '10 ka', '12 ka')
-
-
-#renaming labels to create facets column in alb_grid_sub 
-alb_grid_sub$facets = labels_year[match(alb_grid_sub$year, years)]
-alb_grid_sub$facets = factor(alb_grid_sub$facets, levels = labels_year)
-
-
-###############################################################################################################
-## Plot albedo predictions and uncertainty
-###############################################################################################################
-
-# albedo predictions binned 
-# grid: year as rows
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=factor(alb_bin))) +
-  geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_manual(values=terrain.colors(10), na.value='transparent', name = "Albedo", labels=breaks[-1]) + 
-  # sc_fill_seq + 
-  scale_fill_brewer(type='seq', 
-                    palette='YlOrBr', 
-                    na.value='transparent', 
-                    name = "Albedo", 
-                    direction=1, 
-                    labels = labels_alb) +
-  facet_grid(facets~.)+
-  # facet_wrap(year~.)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=14),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_binned_tile_grid_', run_tag, '.pdf'))
-
-# albedo predictions binned 
-# wrap: by year 
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=factor(alb_bin))) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_manual(values=terrain.colors(10), na.value='transparent', name = "Albedo", labels=breaks[-1]) + 
-  scale_fill_brewer(type='seq', palette='YlOrBr', 
-                    na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
-  # sc_fill_seq + 
-  # facet_grid(facets~variable)+
-  facet_wrap(facets~.)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=14),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_binned_tile_wrap_', run_tag, '.pdf'))
-
-# albedo predictions binned 
-# pages: single year per page 
-pdf(paste0('figures/alb_preds_binned_tile_pages_', run_tag, '.pdf'))
-for (year in years){
-  
-  p<-ggplot()+
-    geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-    geom_tile(data=subset(alb_grid_sub, year==year), aes(x=long,y=lat, fill=factor(alb_bin))) +
-    # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-    # sc_fill_seq + 
-    scale_fill_brewer(type='seq', palette='YlOrBr', 
-                      na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
-    # facet_grid(facets~.)+
-    # facet_wrap(year~.)+
-    theme_bw()+
-    theme(axis.line = element_line(colour = "black"),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          strip.text = element_text(size=14),
-          axis.title = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          legend.text = element_text(size=14),
-          legend.title = element_text(size=14)) +
-    coord_fixed()
-  print(p)
-}
-dev.off()
-
-
-# albedo prediction standard deviation 
-# wrap: by year
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_sd)) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-  scale_fill_distiller(type='seq', palette='YlOrBr', 
-                       na.value='transparent', name = "SD", direction=1) +
-  # sc_fill_seq +
-  # facet_grid(facets~variable)+
-  facet_wrap(facets~.)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=14),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_sd_tile_wrap_', run_tag, '.pdf'))
-
-# albedo prediction standard deviation binned
-# wrap: by year
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=factor(alb_sd_bin))) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-  scale_fill_brewer(type='seq', palette='YlOrBr', 
-                    na.value='transparent', name = "SD", direction=1, labels = labels_sd) +
-  facet_wrap(facets~.)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=14),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_sd_binned_tile_wrap_', run_tag, '.pdf'))
-
-# albedo prediction standard deviation binned
-# grid: year as rows
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=factor(alb_sd_bin))) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-  scale_fill_brewer(type='seq', palette='YlOrBr', 
-                    na.value='transparent', name = "SD", direction=1, labels = labels_sd) +
-  facet_grid(facets~.)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=14),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', run_tag, '.pdf'))
-
-# albedo prediction standard deviation binned
-# wrap: by year
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=factor(alb_cv_bin))) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-  scale_fill_brewer(type='seq', palette='YlOrBr', 
-                    na.value='transparent', name = "CV", direction=1, labels = labels_cv) +
-  facet_wrap(facets~.)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=14),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_cv_binned_tile_wrap_', run_tag, '.pdf'))
-
-# albedo prediction standard deviation binned
-# grid: year as rows
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=factor(alb_cv_bin))) +
-  # geom_tile(data=alb_grid, aes(x=x,y=y, fill=factor(alb_bin))) +
-  # scale_fill_gradientn(colors=terrain.colors(10), na.value='transparent', name = "Albedo") +
-  scale_fill_brewer(type='seq', palette='YlOrBr', 
-                    na.value='transparent', name = "CV", direction=1, labels = labels_sd) +
-  facet_grid(facets~.)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=14),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_cv_binned_tile_grid_', run_tag, '.pdf'))
-
-###############################################################################################################
-## plot albedo prediction differences
-###############################################################################################################
-
-years_df = data.frame(year = years)
-
-alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=ncol(alb_grid_sub)+1))
-colnames(alb_diff_df) = c(colnames(alb_grid_sub), 'alb_diff')#c('cell_id', 'long', 'lat', 'x', 'y', 'year', 'alb_pred', 'alb_bin', 'alb_diff')
-
-cell_ids = unique(alb_grid_sub$cell_id)
-N_cells  = length(cell_ids)
-for (i in 1:N_cells){
-  
-  alb_cell = alb_grid_sub[which(alb_grid_sub$cell_id == cell_ids[i]),] 
-  alb_cell = alb_cell[order(alb_cell$year),]
-  
-  if (nrow(alb_cell) == 1){
-    next
-  } 
-  
-  alb_cell_filled = merge(years_df, alb_cell, all.x=TRUE)
-  
-  alb_diff_df = rbind(alb_diff_df, data.frame(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
-                                              alb_diff = -diff(alb_cell_filled$alb_mean)))
-  
-}
-
-alb_diff_df =  alb_diff_df[which(!is.na(alb_diff_df$alb_diff)),]
-
-saveRDS(alb_diff_df, paste0('data/alb_preds_diffs_', run_tag, '.RDS'))
-
-
-# labels = c('2 - 0.05', '4 - 2', '4 - 6', '8 - 6', '10 - 8')
-# labels = c('0.05 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10')
-# labels = c('0.05 - 1', '1 - 3', '3 - 5', '5 - 7', '7 - 9', '9 - 11')
-# labels = c('0.05 - 0.5', '0.5 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10', '10 - 12')
-labels = c('0.05 - 0.5', '0.5 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10', '10 - 12')
-
-
-diff_years = years[-length(years)]
-alb_diff_df$facets = labels[match(alb_diff_df$year, diff_years)]
-alb_diff_df$facets = factor(alb_diff_df$facets, levels =  labels)
-
-# thresh = round_any(max(abs(diff$diff), na.rm=TRUE), 0.01, f=ceiling)
-max_diff = max(abs(alb_diff_df$alb_diff), na.rm=TRUE)
-thresh = ceiling(max_diff*100)/100
-
-values = c(0, 0.4, 0.45, 0.5, 0.55, 0.6, 1)
-values = c(0, 0.45, 0.48, 0.5, 0.52, 0.55, 1)
-
-
-# sc_fill_diverge <- scale_fill_distiller(type = "div",
-#                                         palette = "RdYlBu",#"BrBG",
-#                                         # labels = labels,
-#                                         direction=1,
-#                                         na.value="grey", 
-#                                         name="Albedo change",
-#                                         limits = c(-thresh,thresh),
-#                                         values = values)
-
-
-sc_fill_diverge <- scale_fill_distiller(type = "div",
-                                        palette = "BrBG",
-                                        # labels = labels,
-                                        na.value="grey",
-                                        name="Albedo change",
-                                        limits = c(-thresh,thresh),
-                                        values = values)
-
-# sc_fill_diverge <- scale_fill_distiller(type = "div",
-#                                         palette = "RdYlBu",#"BrBG",
-#                                         # labels = labels,
-#                                         na.value="grey", 
-#                                         name="Percent")##,
-#                                         # limits = c(-thresh,thresh),
-#                                         # values = values)
-
-sc_colour_diverge <- scale_colour_distiller(type = "div",
-                                            palette = "RdYlBu",#"BrBG",
-                                            direction=1,
-                                            # labels = labels,
-                                            na.value="transparent",#grey", 
-                                            name="Albedo change",
-                                            limits = c(-thresh,thresh), 
-                                            values = values)
-
-sc_colour_diverge <- scale_colour_distiller(type = "div",
-                                            palette = "BrBG",
-                                            # labels = labels,
-                                            na.value="transparent",#grey",
-                                            name="Albedo change",
-                                            limits = c(-thresh,thresh),
-                                            values = values)
-
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_point(data=subset(alb_diff_df, year==4000), aes(x=long, y=lat, colour = alb_diff), size=1, alpha=1)+
-#   sc_colour_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   facet_grid(facets~.)+
-#   # facet_wrap(year~.)+
-#   theme_bw()+
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=14)) +
-#   coord_fixed()
-# # ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', run_tag, '.pdf'))
-# 
-# 
-# #change in albedo going back through time 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_point(data=alb_diff_df, aes(x=long, y=lat, colour = alb_diff), size=1, alpha=0.6)+
-#   sc_colour_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   #facet_grid(facets~.)+
-#   facet_wrap(~year)+
-#   theme_bw()+
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         strip.text = element_text(size=14),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=14)) +
-#   coord_fixed()
-# # scale_fill_brewer(type = "div", palette = 'Rd
-# ggsave(paste0('figures/alb_preds_diff_point_wrap_', run_tag, '.pdf'))
-# 
-# ggsave(paste0('figures/alb_preds_diff_subset_point_', run_tag, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_subset_point_', run_tag, '.pdf'))
-
-#change in albedo going back in time but using tiles 
-#a bit easier to interpret than the one above 
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-  sc_fill_diverge + 
-  # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-  # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-  #facet_grid(year~.)+
-  facet_wrap(~facets)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=12),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_diff_tile_wrap_', run_tag, '.png'))
-ggsave(paste0('figures/alb_preds_diff_tile_wrap_', run_tag, '.pdf'))
-
-
-ggplot()+
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-  sc_fill_diverge + 
-  # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-  # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-  #facet_grid(year~.)+
-  facet_grid(facets~.)+
-  theme_bw()+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        strip.text = element_text(size=12),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=14)) +
-  coord_fixed()
-ggsave(paste0('figures/alb_preds_diff_tile_grid_', run_tag, '.png'))
-ggsave(paste0('figures/alb_preds_diff_tile_grid_', run_tag, '.pdf'))
-
-pdf(paste0('figures/alb_preds_diff_tile_pages_', run_tag, '.pdf'))
-for (year in diff_years){
-  
-  diff_sub = alb_diff_df[which(alb_diff_df$year == year),]
-  p<-ggplot()+
-    geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-    geom_tile(data=diff_sub, aes(x=long, y=lat, fill = alb_diff)) +
-    sc_fill_diverge + 
-    theme_bw()+
-    theme(panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          strip.text = element_text(size=14),
-          axis.title = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          legend.text = element_text(size=14),
-          legend.title = element_text(size=14)) +
-    coord_fixed()
-  print(p)
-}
-dev.off()
-
-# ###############################################################################################################
-# ## plot albedo prediction differences
-# ###############################################################################################################
-# 
-# alb_post = readRDS(paste0('data/paleo_predict_gam_samps_', alb_prod, '.RDS'))
-# 
-# 
-# cell_id <- raster::extract(grid, alb_post[,c('long', 'lat')])
-# 
-# alb_post <- data.frame(cell_id, alb_post)
-# # coords   = xyFromCell(grid, alb_grid$cell_id)
-# # colnames(coords) = c('long', 'lat')
-# # 
-# # alb_grid = cbind(coords, alb_grid[,c('x', 'y', 'cell_id', 'year', 'alb_mean', 'alb_sd')])
-# 
-# N_iter = length(unique(alb_posts$iter))
-# 
-# 
-# years = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)
-# #years = c(50, 1000, 3000, 5000, 7000, 9000, 11000)
-# # years = c(50, 6000, 11000)
-# 
-# alb_post_sub = subset(alb_post, year %in% years) 
-# 
-# 
-# years_df = data.frame(year = years)
-# 
-# alb_post_diff_df = data.frame(matrix(NA, nrow=0, ncol=ncol(alb_post_sub)+1))
-# colnames(alb_post_diff_df) = c(colnames(alb_post_sub), 'alb_diff')#c('cell_id', 'long', 'lat', 'x', 'y', 'year', 'alb_pred', 'alb_bin', 'alb_diff')
-# 
-# cell_ids = unique(alb_post_sub$cell_id)
-# N_cells  = length(cell_ids)
-# 
-# for (iter in 1:N_iter){
-#   
-#   print(paste0('Iter: ', iter))
-#   
-#   alb_post_iter = alb_post_sub[which(alb_post_sub$iter == iter),] 
-#   
-#   for (i in 1:N_cells){
-#     
-#     alb_cell = alb_post_iter[which(alb_post_iter$cell_id == cell_ids[i]),] 
-#     alb_cell = alb_cell[order(alb_cell$year),]
-#     
-#     if (nrow(alb_cell) == 1){
-#       next
-#     } 
-#     
-#     alb_cell_filled = merge(years_df, alb_cell, all.x=TRUE)
-#     
-#     alb_post_diff_df = rbind(alb_post_diff_df, data.frame(alb_cell_filled[1:(nrow(alb_cell_filled)-1), ], 
-#                                                 alb_diff = -diff(alb_cell_filled$value)))
-#     
-#   }
-# }
-# 
-# alb_post_diff_df =  alb_post_diff_df[which(!is.na(alb_post_diff_df$alb_diff)),]
-# 
-# saveRDS(alb_post_diff_df, paste0('data/alb_preds_post_diffs_', alb_prod, '.RDS'))
-# 
-# 
-# hist(alb_post_diff_df[which((alb_post_diff_df$cell_id == cell_ids[1]) & (alb_post_diff_df$year == years[1])),'alb_diff'])
-# 
-# alb_post_diff_sig = alb_post_diff_df %>%
-#   group_by(year, cell_id, long, lat, x, y, elev, ET, OL, ST) %>%
-#   summarize(prob_pos = sum(alb_diff>0),
-#             total = length(alb_diff),
-#             .groups = 'keep')
-# 
-# # labels = c('2 - 0.05', '4 - 2', '4 - 6', '8 - 6', '10 - 8')
-# # labels = c('0.05 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10')
-# # labels = c('0.05 - 1', '1 - 3', '3 - 5', '5 - 7', '7 - 9', '9 - 11')
-# # labels = c('0.05 - 0.5', '0.5 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10', '10 - 12')
-# labels = c('0.05 - 0.5', '0.5 - 2', '2 - 4', '4 - 6', '6 - 8', '8 - 10', '10 - 12')
-# 
-# 
-# diff_years = years[-length(years)]
-# alb_diff_df$facets = labels[match(alb_diff_df$year, diff_years)]
-# alb_diff_df$facets = factor(alb_diff_df$facets, levels =  labels)
-# 
-# # thresh = round_any(max(abs(diff$diff), na.rm=TRUE), 0.01, f=ceiling)
-# max_diff = max(abs(alb_diff_df$alb_diff), na.rm=TRUE)
-# thresh = ceiling(max_diff*100)/100
-# 
-# values = c(0, 0.4, 0.45, 0.5, 0.55, 0.6, 1)
-# values = c(0, 0.45, 0.48, 0.5, 0.52, 0.55, 1)
-# 
-# 
-# # sc_fill_diverge <- scale_fill_distiller(type = "div",
-# #                                         palette = "RdYlBu",#"BrBG",
-# #                                         # labels = labels,
-# #                                         direction=1,
-# #                                         na.value="grey", 
-# #                                         name="Albedo change",
-# #                                         limits = c(-thresh,thresh),
-# #                                         values = values)
-# 
-# 
-# sc_fill_diverge <- scale_fill_distiller(type = "div",
-#                                         palette = "BrBG",
-#                                         # labels = labels,
-#                                         na.value="grey",
-#                                         name="Albedo change",
-#                                         limits = c(-thresh,thresh),
-#                                         values = values)
-# 
-# # sc_fill_diverge <- scale_fill_distiller(type = "div",
-# #                                         palette = "RdYlBu",#"BrBG",
-# #                                         # labels = labels,
-# #                                         na.value="grey", 
-# #                                         name="Percent")##,
-# #                                         # limits = c(-thresh,thresh),
-# #                                         # values = values)
-# 
-# sc_colour_diverge <- scale_colour_distiller(type = "div",
-#                                             palette = "RdYlBu",#"BrBG",
-#                                             direction=1,
-#                                             # labels = labels,
-#                                             na.value="transparent",#grey", 
-#                                             name="Albedo change",
-#                                             limits = c(-thresh,thresh), 
-#                                             values = values)
-# 
-# sc_colour_diverge <- scale_colour_distiller(type = "div",
-#                                             palette = "BrBG",
-#                                             # labels = labels,
-#                                             na.value="transparent",#grey",
-#                                             name="Albedo change",
-#                                             limits = c(-thresh,thresh),
-#                                             values = values)
-# 
-# # ggplot()+
-# #   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-# #   geom_point(data=subset(alb_diff_df, year==4000), aes(x=long, y=lat, colour = alb_diff), size=1, alpha=1)+
-# #   sc_colour_diverge + 
-# #   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-# #   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-# #   facet_grid(facets~.)+
-# #   # facet_wrap(year~.)+
-# #   theme_bw()+
-# #   theme(panel.grid.major = element_blank(),
-# #         panel.grid.minor = element_blank(),
-# #         panel.background = element_blank(),
-# #         strip.text = element_text(size=14),
-# #         axis.title = element_blank(),
-# #         axis.ticks = element_blank(),
-# #         axis.text = element_blank(),
-# #         legend.text = element_text(size=14),
-# #         legend.title = element_text(size=14)) +
-# #   coord_fixed()
-# # # ggsave(paste0('figures/alb_preds_sd_binned_tile_grid_', run_tag, '.pdf'))
-# # 
-# # 
-# # #change in albedo going back through time 
-# # ggplot()+
-# #   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-# #   geom_point(data=alb_diff_df, aes(x=long, y=lat, colour = alb_diff), size=1, alpha=0.6)+
-# #   sc_colour_diverge + 
-# #   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-# #   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-# #   #facet_grid(facets~.)+
-# #   facet_wrap(~year)+
-# #   theme_bw()+
-# #   theme(panel.grid.major = element_blank(),
-# #         panel.grid.minor = element_blank(),
-# #         panel.background = element_blank(),
-# #         strip.text = element_text(size=14),
-# #         axis.title = element_blank(),
-# #         axis.ticks = element_blank(),
-# #         axis.text = element_blank(),
-# #         legend.text = element_text(size=14),
-# #         legend.title = element_text(size=14)) +
-# #   coord_fixed()
-# # # scale_fill_brewer(type = "div", palette = 'Rd
-# # ggsave(paste0('figures/alb_preds_diff_point_wrap_', run_tag, '.pdf'))
-# # 
-# # ggsave(paste0('figures/alb_preds_diff_subset_point_', run_tag, '.png'))
-# # ggsave(paste0('figures/alb_preds_diff_subset_point_', run_tag, '.pdf'))
-# 
-# #change in albedo going back in time but using tiles 
-# #a bit easier to interpret than the one above 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-#   sc_fill_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   #facet_grid(year~.)+
-#   facet_wrap(~facets)+
-#   theme_bw()+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         strip.text = element_text(size=12),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=14)) +
-#   coord_fixed()
-# ggsave(paste0('figures/alb_preds_diff_tile_wrap_', run_tag, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_tile_wrap_', run_tag, '.pdf'))
-# 
-# 
-# ggplot()+
-#   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#   geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-#   sc_fill_diverge + 
-#   # scale_fill_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   # scale_colour_gradient2(low = 'blue', high = 'red', mid= 'white',  limits = c(-0.1,0.1))+
-#   #facet_grid(year~.)+
-#   facet_grid(facets~.)+
-#   theme_bw()+
-#   theme(axis.line = element_line(colour = "black"),
-#         panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         panel.background = element_blank(),
-#         strip.text = element_text(size=12),
-#         axis.title = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.text = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=14)) +
-#   coord_fixed()
-# ggsave(paste0('figures/alb_preds_diff_tile_grid_', run_tag, '.png'))
-# ggsave(paste0('figures/alb_preds_diff_tile_grid_', run_tag, '.pdf'))
-# 
-# pdf(paste0('figures/alb_preds_diff_tile_pages_', run_tag, '.pdf'))
-# for (year in diff_years){
-#   
-#   diff_sub = alb_diff_df[which(alb_diff_df$year == year),]
-#   p<-ggplot()+
-#     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-#     geom_tile(data=diff_sub, aes(x=long, y=lat, fill = alb_diff)) +
-#     sc_fill_diverge + 
-#     theme_bw()+
-#     theme(panel.grid.major = element_blank(),
-#           panel.grid.minor = element_blank(),
-#           panel.background = element_blank(),
-#           strip.text = element_text(size=14),
-#           axis.title = element_blank(),
-#           axis.ticks = element_blank(),
-#           axis.text = element_blank(),
-#           legend.text = element_text(size=14),
-#           legend.title = element_text(size=14)) +
-#     coord_fixed()
-#   print(p)
-# }
-# dev.off()
-# 
-
-
-
-} # [run-interp] end of non-interp block
-
-# [run-interp] provenance logging
+# Close the provenance manifest, listing the figures and data files written.
 run_end(outputs = Filter(file.exists, c(
   list.files('figures', pattern = 'alb_interp', full.names = TRUE),
   'data/ice_fort.RDS', 'data/ice_fort_diff_young.RDS', 'data/ice_fort_diff_old.RDS',
