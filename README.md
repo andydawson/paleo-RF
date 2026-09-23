@@ -4,9 +4,11 @@ Estimating Holocene radiative forcing from land-cover change in North
 America, using land cover inferred from fossil pollen, a modern
 satellite-albedo calibration, and radiative kernels.
 
-**Status: research code under active development.** This README is a
-first draft (2026-09-18). The authoritative descriptions of the scripts
-and data are in `docs/cc/`; see the index at the end.
+**Status: research code under active development.** The pipeline runs end
+to end as of 2026-09-21 and its outputs are frozen as regression anchors.
+This README was last brought up to date on 2026-09-23. The authoritative
+descriptions of the scripts and data are in `docs/cc/`; see the index at
+the end.
 
 ## What the pipeline does
 
@@ -24,92 +26,114 @@ and data are in `docs/cc/`; see the index at the end.
    cover fractions, with posterior draws.
 5. Albedo differences between consecutive slices are split into
    vegetation and ice-sheet contributions and multiplied by a radiative
-   kernel to give forcing in W/m².
+   kernel to give forcing in W/m² per cell and month.
+6. The per-cell forcing is aggregated to continental values by period and
+   set beside the modern IPCC forcing agents.
 
 Diagram: `docs/cc/2026-09-17_methodology_schematic.png`.
 
-## Two flavours of the pipeline, and months
+## Repository layout
 
-Two independent choices are involved, and the code as received couples
-them:
+| Path | Holds |
+|---|---|
+| `scripts/` | the R pipeline, numbered in run order |
+| `R/` | helpers sourced by the scripts (`run_manifest.R`) |
+| `tools/` | shell and Python helpers that are not part of the pipeline |
+| `data/` | inputs, plus some intermediates the scripts still write here |
+| `output/` | fitted models, predictions, forcing (git-ignored except small summary tables) |
+| `figures/` | figures (git-ignored; regenerable) |
+| `runs/` | one provenance manifest per script run |
+| `tests/anchors/` | frozen outputs a refactor must reproduce |
+| `docs/cc/` | reviews, plans, question lists and other generated documents |
+| `writing/` | the draft manuscript, the EGU talk and the reference papers |
 
-- **Flavour** of the land-cover input. **interp** (the current analysis,
-  used in the EGU talk and the draft paper): the spatially complete,
-  ice-masked maps on the full grid; files carry `_interp` in their names.
-  **non-interp** (the original point-based version): only the ~505 cells
-  that contain pollen sites. Kept for reference; not to be developed
-  further (decision of 2026-09-17).
-- **Months** to calibrate and predict for: one month or all twelve. The
-  calibration is a separate model per month; interpolation has nothing to
-  do with the calendar.
+## The point flavour
 
-In the scripts today the two are tied together: the interp code path
-loops over all twelve months, and the non-interp code path fits a single
-month (March as received; on `chris-dev` the month is chosen by the
-`CAL_MONTH` environment variable, default May). Either flavour should be
-runnable for one month or for all months; decoupling the two switches is
-on the roadmap for the config-file stage
-(`docs/cc/2026-09-18_staged_plan_development_to_package.md`). Until
-then, each script selects the flavour by a `run_interp` flag that tests
-for the interp input files.
+The pipeline originally ran on the ~505 cells that contain pollen sites
+(the point, or non-interp, flavour). Shortly before the EGU talk it was
+switched to the spatially complete, interpolated maps (the interp
+flavour, files carrying `_interp`), which is the analysis in the talk
+and the draft paper. By agreement with Andria (2026-09-17) the point
+flavour is not developed further; it is kept only so it can be revived.
+Its scripts, data and the two runs made of it are documented in
+`docs/cc/README_nointerp.md`, and its outputs are anchored. Everything
+else in this README describes the interp flavour.
+
+The point blocks are still present inside the scripts, guarded so they
+do not run unless their inputs are on disk, and in script 7 additionally
+behind `RUN_NOINTERP=1`. The code also ties the flavour to a month
+choice (the point path fits one month, the interp path all twelve), which
+has nothing to do with interpolation; separating the two switches is on
+the roadmap for the config stage
+(`docs/cc/2026-09-18_staged_plan_development_to_package.md`).
 
 ## Scripts (`scripts/`)
 
-**This table and the data tables below describe the interp flavour only.**
-The equivalent tables for the non-interp flavour are in
-`docs/cc/README_nointerp.md`. Files are named as the scripts write them, with
-`<month>` standing for `jan` ... `dec`. Line numbers (`script:line`) refer
-to the scripts on `chris-dev` and give the statement that loads the file. Everything the pipeline writes goes
-under `output/` except where a script still writes into `data/`.
+Files are named as the scripts write them, with `<month>` standing for
+`jan` ... `dec`. Line numbers (`script:line`) refer to the scripts on
+`chris-dev` and give the statement that loads the file. Everything the
+pipeline writes goes under `output/` except where a script still writes
+into `data/`.
 
 | Script | Does | Reads | Writes |
 |---|---|---|---|
-| `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation from AWS terrain tiles (`elevatr`, network); modern (age 50) vs paleo split | `data/veg_posts_interp_ice.RDS` | `data/lct_modern_reveals_interp.RDS`, `data/lct_paleo_reveals_interp.RDS` |
-| `2_calibration_lct_bluesky.R` | monthly blue-sky albedo at the modern cells, native pixel and 1-degree mean | `data/blue_sky_monthly_2000-2009.tif`, `data/grid.RDS`, `data/lct_modern_reveals_interp.RDS`, `data/map-data/geographic/pbs*.RDS` | `data/calibration_modern_lct_interp_bluesky.RDS`, `..._coarse.RDS`, albedo maps in `figures/` |
-| `3_plot_cal_lct_albedo.R` | diagnostic plots of the calibration data (optional side branch) | `data/calibration_modern_lct_interp_bluesky.RDS`, `scripts/make_grid.R` | figures |
-| `4_calibration_model.R` | model ladder mod1-mod8 for every month; AIC table; spatial-effects experiment | `data/calibration_modern_lct_interp_bluesky.RDS` | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`, `AIC_table.csv`, `calibration_mod_{spatial,elev,cover,...}_<month>.RDS` |
-| `5_calibration_eval.R` | fit diagnostics; saves model 8 as the selected model per month | the model files above | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`, `calibration_model_stats.csv`, figures |
-| `6_prediction_model.R` | hindcast albedo per slice and month with 100 draws | selected models, `data/lct_paleo_reveals_interp.RDS` | `output/prediction/paleo_interp_predict_gam[_samps|_summary]_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
-| `6_prediction_model_spatial_eval.R` | sensitivity of hindcasts to model structure (optional side branch) | spatial-experiment fits, `data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`, figures |
-| `7_plot_preds.R` | albedo, uncertainty and difference maps with ice overlays | `output/prediction/paleo_interp_predict_gam[_summary]_bluesky.RDS`, `data/grid.RDS`, `data/map-data/ice/glacier_shapefiles_21-1k.RDS`, `data/albedo_glacier_monthly.csv`, `pbs*.RDS` | figures, `data/ice_fort*.RDS`, `data/alb_interp_preds_diffs_bluesky.RDS` |
-| `7a_alb_diff_full.R` | slice-to-slice albedo differences split into vegetation and ice parts | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS`, `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif`, `data/albedo_glacier_monthly.csv`, `data/grid.RDS`, `pbs*.RDS` | `data/ALB_diffs_bluesky.RDS` |
-| `8_radiative.R` | forcing = albedo change x kernel, three kernels | `data/ALB_diffs_bluesky.RDS`, `data/ice_fort*.RDS`, `data/radiative-kernels/*.nc`, `pbs*.RDS` | `output/forcing/RF_holocene_all_cases.RDS` |
+| `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation from AWS terrain tiles (`elevatr`, network); modern (age 50) vs paleo split | `data/veg_posts_interp_ice.RDS` (`1:230`), `data/grid.RDS` (`1:44`) | `data/lct_modern_reveals_interp.RDS`, `data/lct_paleo_reveals_interp.RDS` |
+| `2_calibration_lct_bluesky.R` | monthly blue-sky albedo at the modern cells, native pixel and 1-degree mean | `data/blue_sky_monthly_2000-2009.tif` (`2:290`), `data/grid.RDS` (`2:39`), `data/lct_modern_reveals_interp.RDS` (`2:255`), `pbs*.RDS` (`2:36-37`) | `data/calibration_modern_lct_interp_bluesky.RDS`, `..._coarse.RDS`, albedo maps |
+| `3_plot_cal_lct_albedo.R` | diagnostic plots of the calibration data (optional) | `data/calibration_modern_lct_interp_bluesky.RDS` (`3:323`), `scripts/make_grid.R` (`3:57`) | figures |
+| `4_calibration_model.R` | model ladder mod1-mod8 for every month; AIC table; spatial-effects experiment | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:27`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`, `AIC_table.csv`, spatial-experiment fits |
+| `5_calibration_eval.R` | fit diagnostics; saves model 8 as the selected model per month | the model files above (`5:25`) | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`, `calibration_model_stats.csv`, figures |
+| `6_prediction_model.R` | hindcast albedo per slice and month with 100 draws | selected models (`6:43`), `data/lct_paleo_reveals_interp.RDS` (`6:32`) | `output/prediction/paleo_interp_predict_gam[_samps|_summary]_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
+| `6_prediction_model_spatial_eval.R` | sensitivity of hindcasts to model structure (optional) | spatial-experiment fits, `data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`, figures |
+| `7_plot_preds.R` | albedo, uncertainty and difference maps with ice overlays; coarse (7-period) albedo differences | `output/prediction/paleo_interp_predict_gam[_summary]_bluesky.RDS` (`7:141`), `data/grid.RDS` (`7:283`), `data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:85`), `data/albedo_glacier_monthly.csv` (`7:302`), `pbs*.RDS` (`7:33-34`) | figures, `data/ice_fort*.RDS`, `data/alb_interp_preds_diffs_bluesky.RDS` |
+| `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:44`), `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:103`), `data/albedo_glacier_monthly.csv` (`7a:283`), `data/grid.RDS` (`7a:220`), `pbs*.RDS` (`7a:185-186`) | `data/ALB_diffs_bluesky.RDS` |
+| `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants | `data/ALB_diffs_bluesky.RDS` (`8:95`), `data/ice_fort*.RDS` (`8:44-46`), kernels (`8:77`, `8:182`, `8:216`), `pbs*.RDS` (`8:73-74`) | `output/forcing/RF_holocene_all_cases.RDS` |
+| `9_forcing_barplot.R` | continental forcing by period beside the IPCC AR6 agents, plus kernel-spread and variant-sensitivity figures; every aggregation choice is an explicit assumption in its header | `output/forcing/RF_holocene_all_cases.RDS` (`9:97`), `data/alb_interp_preds_diffs_bluesky.RDS` (`9:269`), `data/ipcc-ar6/*.csv` (`9:152-154`) | `output/forcing/forcing_by_period*.csv`, `modern_ipcc_ar6_erf.csv`, figures |
 
-Not part of the interp pipeline: `GCM_snow_prob.R`, `thornthwaite.R`,
+Not part of the pipeline: `GCM_snow_prob.R`, `thornthwaite.R`,
 `beta_veg_lct_modern.R` and `scripts/archive/` (abandoned climate/snow
 branch and earlier versions).
 
-Run order is 1 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7a -> 8; 3 and 6-spatial-eval
-are optional. Measured runtime so far: the non-interp version of script 4
-took about 80 minutes for one month's ladder on ~500 cells with 8 cores.
-The interp ladder (12 months, larger basis sizes, ~2,900 cells) has not
-been timed yet.
+Run order is 1 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7a -> 8 -> 9; 3 and
+6-spatial-eval are optional, and 7 and 7a are independent of each other.
+Scripts 7, 7a, 8 and 9 log a provenance manifest (see below); the others
+will as they are next touched.
+
+Measured runtimes on this machine (48 cores, capped as noted, one R thread
+in the loops): script 1 ~4 min (mostly the elevation lookup); 2 ~20 min;
+4 ~27 h on 8 cores, four fifths of it model 7 (the Gaussian-process cover
+smooth) at ~2 h per month, every other model 1 to 5 min; 5 ~4 min; 6
+~15 min; 7 62 min; 7a 52 min; 8 20 s; 9 seconds. Scripts 7 and 7a are
+dominated by a per-cell `rbind` loop that is quadratic in output rows,
+which is the Stage 4 consolidation in the staged plan.
+
+Known stop: script 5 reads the spatial-experiment models from
+`output/calibration/spatial_experiment/` but script 4 writes them to
+`output/calibration/` (known issue 13). Its essential outputs are written
+before that point, so the pipeline continues.
 
 ## Data assets, interp flavour (`data/`, `output/`)
 
-Legend: 🟧 **missing** = required by a script and not in the repository;
-<mark>unknown</mark> = provenance not yet confirmed with Andria. Roles:
-**input** (external, no script here produces it), **derived** (produced
-by a numbered script), **result** (end product). Derived files and
-results of the interp flavour do not exist yet because the interp
-pipeline has not been run on this machine; they are listed so the
-expected outputs are known.
+Legend: <mark>unknown</mark> = provenance not yet confirmed with Andria.
+Roles: **input** (external, no script here produces it), **derived**
+(produced by a numbered script), **result** (end product). No required
+input is missing as of 2026-09-21.
 
 ### External inputs
 
 | File | Role | What | Provenance | Status |
 |---|---|---|---|---|
-| `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:218`) | interpolated land-cover posteriors: 2,860 cells x 25 slices x 200 draws x 3 classes, plus `cell_area` and a binary `ice` flag (7.2% of rows). Script 1 averages the draws and **drops `cell_area` and `ice`**, so neither reaches the rest of the pipeline | Andria, 2026-09-17; REVEALS + Bayesian spatial interpolation with ice mask, from the Climate of the Past land-cover paper | present |
-| `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:290`; non-interp half `2:95`) | 12-band monthly blue-sky albedo, 0.25 degree, 2000-2009 mean | MODIS MCD43A3 v061 + ERA5 as described in manuscript §2.1; <mark>unknown</mark> who built it and with what code | present |
-| `data/grid.RDS` | input to 1, 2, 7, 7a (`1:34`, `2:39`, `7:254`, `7a:201`) | 1-degree lon/lat raster with cell ids (-172 to 127 E, 17 to 79 N) | <mark>unknown</mark> (committed 2023-05-16, no generating code) | present |
-| `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2, 3, 6, 7, 7a, 8 (`2:36-37`, `3:39-40`, `6:283`, `7:24-26`, `7a:166-167`, `8:54-55`) | political boundaries, projected and lon/lat; includes ocean polygons | <mark>unknown</mark> | present |
-| elevation (not a file) | input to 1 (`1:230`; non-interp half `1:96`) | point elevation at cell centres | fetched from AWS terrain tiles by `elevatr` at run time; values can differ between runs | network |
-| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:57`) | 21 ice-margin polygon sets, 1,000-year steps, 21 to 1 ka, lon/lat. **The project's ice chronology**: a point-in-polygon test reproduces the `ice` flag above exactly (69/69 cells at 6 ka, 213/213 at 8 ka, 596/596 at 10 ka, 780/780 at 11 ka), so the flag was derived from these | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins, but pre-dates Dalton 2020 | present |
-| `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:273`, `7a:264`) | monthly albedo assigned to ice-covered cells; three columns offering alternative conventions (`ice_albedo` seasonal 0.6-0.8, `ice_albedo_fixed` constant 0.68, `ice_albedo_sc` smoothly varying 0.56-0.80) | Andria, 2026-09-20; <mark>unknown</mark> literature source for the values and which column is preferred | present |
-| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:84`) | continuous ice **fraction** per cell and slice, used to mix vegetation and ice albedo by area. Needed only because the polygons above are binary; see the note below. 26 layers named `yr<n>bp`, 12,000 to 50 BP, 116 x 62 cells, lon/lat WGS84, values 0 to 1; every one of the 25 pipeline ages matches a layer | Dalton et al. 2020 margins interpolated to the slices; Andria, 2026-09-20; <mark>unknown</mark> who did the interpolation and by what method | present |
-| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:58`) | HadGEM3 albedo kernel, clear-sky, top of atmosphere, W/m² per 1% | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 | 157 MB; downloaded 2026-09-19, git-ignored |
-| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:163`) | CAM5 albedo kernel; the script reads `FSNSC`, a **surface** flux | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 | 21 MB; downloaded 2026-09-19, git-ignored |
-| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:197`) | CACK all-sky TOA albedo kernel, 180 x 360 x 12 months x 16 years, units W/m² per unit albedo. The code's `band=3` selects **year 2002**, not a sky condition; a climatological mean `CACK CM` and uncertainty layers are in the same file (see scientific question C3) | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8, package `edi.396.1`; downloaded by hand 2026-09-21 | present (126.5 MB, unzipped from `CACKv1.0.zip`) |
+| `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:230`) | interpolated land-cover posteriors: 2,860 cells x 25 slices x 200 draws x 3 classes, plus `cell_area` and a binary `ice` flag (7.2% of rows). Script 1 averages the draws and **drops `cell_area` and `ice`**, so neither reaches the rest of the pipeline | Andria, 2026-09-17; REVEALS + Bayesian spatial interpolation with ice mask, from the Climate of the Past land-cover paper | present |
+| `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:290`) | 12-band monthly blue-sky albedo, 0.25 degree, 2000-2009 mean | MODIS MCD43A3 v061 + ERA5 as described in manuscript §2.1; <mark>unknown</mark> who built it and with what code | present |
+| `data/grid.RDS` | input to 1, 2, 7, 7a (`1:44`, `2:39`, `7:283`, `7a:220`) | 1-degree lon/lat raster with cell ids (-172 to 127 E, 17 to 79 N) | <mark>unknown</mark> (committed 2023-05-16, no generating code) | present |
+| `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2, 3, 7, 7a, 8 (`2:36-37`, `3:39-40`, `7:33-34`, `7a:185-186`, `8:73-74`) | political boundaries, projected and lon/lat; includes ocean polygons | <mark>unknown</mark> | present |
+| elevation (not a file) | input to 1 (`1:242`) | point elevation at cell centres | fetched from AWS terrain tiles by `elevatr` at run time; values can differ between runs | network |
+| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:85`) | 21 ice-margin polygon sets, 1,000-year steps, 21 to 1 ka, lon/lat. **The project's ice chronology**: a point-in-polygon test reproduces the `ice` flag above exactly (69/69 cells at 6 ka, 213/213 at 8 ka, 596/596 at 10 ka, 780/780 at 11 ka), so the flag was derived from these | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins, but pre-dates Dalton 2020 | present |
+| `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:302`, `7a:283`) | monthly albedo assigned to ice-covered cells; three columns offering alternative conventions (`ice_albedo` seasonal 0.6-0.8, `ice_albedo_fixed` constant 0.68, `ice_albedo_sc` smoothly varying 0.56-0.80) | Andria, 2026-09-20; <mark>unknown</mark> literature source for the values and which column is preferred | present |
+| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:103`) | continuous ice **fraction** per cell and slice, used to mix vegetation and ice albedo by area; needed because the polygons above are binary. 26 layers named `yr<n>bp`, 12,000 to 50 BP, 116 x 62 cells, lon/lat WGS84, values 0 to 1; every one of the 25 pipeline ages matches a layer | Dalton et al. 2020 margins interpolated to the slices; Andria, 2026-09-20; <mark>unknown</mark> who did the interpolation and by what method | present |
+| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:77`) | HadGEM3 albedo kernel, clear-sky, top of atmosphere, W/m² per 1% | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 | present (157 MB, Git LFS) |
+| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:182`) | CAM5 albedo kernel; the script reads `FSNSC`, a **surface** flux (question C3) | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 | present (21 MB) |
+| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:216`) | CACK all-sky TOA albedo kernel, 180 x 360 x 12 months x 16 years, W/m² per unit albedo. The code's `band=3` selects **year 2002**, not a sky condition; a climatological mean `CACK CM` and uncertainty layers are in the same file (question C3) | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8; downloaded by hand 2026-09-21 | present (126.5 MB, Git LFS) |
+| `data/ipcc-ar6/AR6_ERF_1750-2019{,_pc05,_pc95}.csv` | input to 9 (`9:152-154`) | IPCC AR6 WG1 Chapter 7 effective radiative forcing 1750-2019, best estimate and 5-95% bounds, by agent | github.com/IPCC-WG1/Chapter-7 `data_output/`, downloaded 2026-09-21 | present |
 | `scripts/make_grid.R` | sourced by 3 (`3:57`, `3:345`) | helper building a 2-degree grid for the diagnostic maps | original not in repo; the copy present is a reconstruction (2026-09-16) | present (reconstructed) |
 
 ### A note on ice
@@ -124,91 +148,120 @@ a point-in-polygon test of the polygons), and it supplies the ice
 outlines that `7_plot_preds.R` draws on the maps. That part is
 self-consistent.
 
-The missing Dalton raster is reached for by `7a_alb_diff_full.R` for one
-narrow reason: to split a cell's albedo change into a vegetation part
-and an ice part, that script needs a *fraction* of the cell covered by
-ice, and the polygons give only yes or no. Dalton supplies a fraction.
+The Dalton raster is used by `7a_alb_diff_full.R` for one narrow reason:
+to split a cell's albedo change into a vegetation part and an ice part,
+that script needs a *fraction* of the cell covered by ice, and the
+polygons give only yes or no. Dalton supplies a fraction.
 
-So the gap is narrower than it looks. Rasterising the polygons already
-in the repository onto the 1-degree grid with fractional coverage would
-produce the same quantity, remove the missing file from the critical
-path, and leave the pipeline with a single source of truth for ice. The
-trade-off is chronology rather than method: Dalton et al. 2020 updates
-the older reconstruction the polygons appear to come from, so deriving
-the fraction ourselves means using the older margins consistently
-instead of newer margins for the fraction and older ones for everything
-else. That choice is with Andria, as question C0 in
+Rasterising the polygons already in the repository onto the 1-degree
+grid with fractional coverage would produce the same quantity and leave
+the pipeline with a single source of truth for ice. The trade-off is
+chronology rather than method: Dalton et al. 2020 updates the older
+reconstruction the polygons appear to come from, so deriving the
+fraction ourselves means using the older margins consistently instead of
+newer margins for the fraction and older ones for everything else. That
+choice is with Andria, as question C0 in
 `docs/cc/questions_for_andria_scientific.md`.
 
 A second, separate point: `1_veg_lct_prep.R` discards the `ice` and
 `cell_area` columns when it averages the posterior draws, which is why
 the later scripts have to go looking for ice again at all.
 
-### Derived files and results (produced by the scripts)
+### Derived files and results
 
-| File | Written by | Read by | Status |
+All produced on this machine between 2026-09-19 and 2026-09-21 and frozen
+in `tests/anchors/`; the copies in `data/` and `output/` are regenerable
+and git-ignored.
+
+| File | Written by | Read by | Anchor |
 |---|---|---|---|
-| `data/lct_modern_reveals_interp.RDS`, `data/lct_paleo_reveals_interp.RDS` | 1 | 2 (`2:255`), 6 (`6:23`) | not yet produced |
-| `data/calibration_modern_lct_interp_bluesky.RDS`, `..._coarse.RDS` | 2 | 3 (`3:323`), 4 (`4:27`), 5 (`5:25`) | not yet produced |
-| `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`, `AIC_table.csv`, spatial-experiment fits | 4 | 4, 5, 6-spatial-eval | not yet produced |
-| `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`, `calibration_model_stats.csv` | 5 | 6 (`6:43`) | not yet produced |
-| `output/prediction/paleo_interp_predict_gam[_samps|_summary]_<month>_bluesky.RDS`; merged `paleo_interp_predict_gam_bluesky.RDS`, `..._summary_bluesky.RDS` | 6 | 7 (`7:112`), 7a (`7a:25`) | not yet produced |
-| `data/ice_fort.RDS`, `ice_fort_diff_young.RDS`, `ice_fort_diff_old.RDS`, `data/alb_interp_preds_diffs_bluesky.RDS` | 7 | 8 (`8:25`; loaded but unused) | not yet produced |
-| `data/ALB_diffs_bluesky.RDS` (result: albedo differences) | 7a | 8 (`8:76`) | not yet produced |
-| `output/forcing/RF_holocene_all_cases.RDS` (result: forcing) | 8 | | not yet produced |
+| `data/lct_modern_reveals_interp.RDS`, `data/lct_paleo_reveals_interp.RDS` | 1 | 2 (`2:255`), 6 (`6:32`) | `interp-allmonths-2026-09-20` |
+| `data/calibration_modern_lct_interp_bluesky.RDS`, `..._coarse.RDS` | 2 | 3 (`3:323`), 4 (`4:27`), 5 (`5:25`) | `interp-allmonths-2026-09-20` |
+| `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`, `AIC_table.csv`, spatial-experiment fits | 4 | 4, 5, 6-spatial-eval | AIC table and stats only (models are 3.6 GB) |
+| `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`, `calibration_model_stats.csv` | 5 | 6 (`6:43`) | stats only |
+| `output/prediction/paleo_interp_predict_gam[_samps|_summary]_<month>_bluesky.RDS`; merged `..._bluesky.RDS`, `..._summary_bluesky.RDS` | 6 | 7 (`7:141`), 7a (`7a:44`) | summaries in `interp-allmonths-2026-09-20` |
+| `data/ice_fort.RDS`, `ice_fort_diff_young.RDS`, `ice_fort_diff_old.RDS`, `data/alb_interp_preds_diffs_bluesky.RDS` | 7 | 8 (`8:44-46`), 9 (`9:269`) | `interp-tail-2026-09-21` |
+| `data/ALB_diffs_bluesky.RDS` (result: albedo differences) | 7a | 8 (`8:95`) | `interp-tail-2026-09-21`, reproduced byte for byte on re-run |
+| `output/forcing/RF_holocene_all_cases.RDS` (result: forcing) | 8 | 9 (`9:97`) | `interp-tail-2026-09-21` (Git LFS) |
+| `output/forcing/forcing_by_period*.csv`, `modern_ipcc_ar6_erf.csv` | 9 | | tracked in git (small) |
 
 ### Other files in `data/`
 
-Everything else in `data/` belongs to the non-interp flavour (see
+Everything else in `data/` belongs to the point flavour (see
 `docs/cc/README_nointerp.md`) or to abandoned branches: the `_albclim`,
 `calibration_model*`, `cal_data`, `calibration-albedo-climate*`,
 `lct_albedo_snow_modern_*`, `lct_paleo.RDS`, `pollen-modern-slice`,
 `*_CRU.csv`, `*_GCM.csv` and `climate_CRU.csv` files are read by no
 current script and are candidates for removal once confirmed.
 
-Large files: anything over 50 MB that exists nowhere else is tracked with
-Git LFS; install `git-lfs` before cloning or you will get pointer files.
-Published, citable datasets are git-ignored and fetched instead by
-`bash tools/download_kernels.sh`, which keeps the LFS quota for data that
-cannot be downloaded. Both kernels the script fetches carry their all-sky
-and clear-sky variants in the same file, so changing sky condition needs
-no new download.
+Large files: anything over 50 MB is tracked with Git LFS; install
+`git-lfs` before cloning or you will get pointer files. The two
+downloadable kernels can also be re-fetched with
+`bash tools/download_kernels.sh`; CACK must be downloaded by hand from
+the EDI portal (link in the table above) and unzipped into
+`data/radiative-kernels/CACKv1.0/`.
 
 ## Environment
 
-R 4.4 with `mgcv`, `terra`, `raster`, `sp`, `sf`, `dplyr`, `tidyr`,
-`reshape2`, `ggplot2`, `gratia`, `tidyterra`, `scico`, `ggtern`,
-`tricolore`, `scatterpie`, `fields`, `brms`, `elevatr` (needs network).
-On the development machine there is no system R; a user-space
+R 4.5 with `mgcv`, `terra`, `raster`, `sp`, `sf`, `dplyr`, `tidyr`,
+`reshape2`, `ggplot2`, `patchwork`, `gratia`, `tidyterra`, `scico`,
+`ggtern`, `tricolore`, `scatterpie`, `fields`, `brms`, `elevatr` (needs
+network). On the development machine there is no system R; a user-space
 environment is used:
 
 ```
-micromamba create -n paleo-rf -c conda-forge r-base=4.4 r-terra r-raster r-sp r-sf \
+micromamba create -n paleo-rf -c conda-forge r-base r-terra r-raster r-sp r-sf \
   r-dplyr r-tidyr r-ggplot2 r-reshape2 r-mgcv r-gam r-scales r-ggally r-rastervis \
-  r-scico r-scatterpie r-ggtern r-brms r-fields r-units r-ggbreak r-ncdf4 r-maps r-geosphere
+  r-scico r-scatterpie r-ggtern r-brms r-fields r-units r-ggbreak r-ncdf4 r-maps \
+  r-geosphere r-patchwork
 micromamba run -n paleo-rf Rscript -e 'install.packages(c("gratia","tidyterra","elevatr","tricolore"))'
 ```
 
-Run scripts from the repository root, e.g.
-`micromamba run -n paleo-rf Rscript scripts/4_calibration_model.R`. Cap
-BLAS threads (`OPENBLAS_NUM_THREADS=8`) or the fits will oversubscribe
-the machine. A package lockfile (`renv`) is planned.
+Run scripts from the repository root. **Cap the BLAS threads to the cores
+you give the job** or the fits oversubscribe the machine: an uncapped run
+on 2026-09-17 sat for 2.5 hours producing nothing. A typical launch:
 
-## Regression anchors
+```
+OPENBLAS_NUM_THREADS=8 OMP_NUM_THREADS=8 MKL_NUM_THREADS=8 RUN_CORES=0-7 \
+  RUN_NOTE="what this run is for" \
+  nice taskset -c 0-7 micromamba run -n paleo-rf Rscript scripts/7_plot_preds.R
+```
 
-`tests/anchors/` holds frozen pipeline outputs that a refactor must still
-reproduce, with a README explaining what is anchored and what is not.
-Andria's own outputs are preserved at the `v0-legacy` tag rather than
-copied; `bash tools/restore_original_outputs.sh` brings them back. There
-are no interp anchors yet, because the interp pipeline has never been run
-here.
+`RUN_CORES` and `RUN_NOTE` are picked up by the provenance manifest. A
+package lockfile (`renv`) is planned.
+
+## Run provenance (`runs/`)
+
+Scripts that source `R/run_manifest.R` write one markdown file per run to
+`runs/`, named by start time and script. It records the human note, the
+commit that was checked out when the run **started** (and whether HEAD
+moved during the run), whether `scripts/` or `R/` had uncommitted
+changes, the host, cores and thread caps, R and package versions, the
+script's configuration, every declared input with its md5, and every
+output with its size. Three older manifests were written by hand after
+the fact and are marked `RECONSTRUCTED`. Wiring the helper into a script
+is two calls, `run_start()` after its configuration and `run_end()` at
+the end; scripts 7, 7a, 8 and 9 have it.
+
+## Regression anchors (`tests/anchors/`)
+
+Frozen outputs that a refactor must still reproduce, each set with its
+md5s and a README entry saying how it was made and what it does not
+cover. Four sets: `nointerp-mar-2026-09-16` and `nointerp-may-2026-09-17`
+(the point flavour), `interp-allmonths-2026-09-20` (scripts 1 to 6) and
+`interp-tail-2026-09-21` (scripts 7, 7a, 8; 187 MB, determinism
+demonstrated by a byte-identical re-run of 7a). Andria's own outputs are
+preserved at the `v0-legacy` tag rather than copied;
+`bash tools/restore_original_outputs.sh` brings them back.
 
 ## Working practices
 
 See `CONTRIBUTING.md` (branches, commits, merges, where generated
 material lives) and `AGENTS.md` (notes for AI-assisted sessions).
-Branches: `main` (upstream), `legacy` (frozen copy of the code as
-received), `chris-dev` (working trunk), topic branches off it.
+Branches: `main` (upstream, merged only by pull request), `legacy`
+(frozen copy of the code as received, also tagged `v0-legacy`),
+`chris-dev` (working trunk), topic branches off it that are deleted when
+merged.
 
 ## Documents (`docs/cc/`)
 
@@ -216,6 +269,8 @@ received), `chris-dev` (working trunk), topic branches off it.
 - `2026-09-16_known_issues_missing_data_and_code.md`: defects, missing data, missing code.
 - `2026-09-17_manuscript_and_talk_outline.md`: structure of the draft paper and the EGU talk.
 - `2026-09-17_methodology_questions_newcomer_review.md`: 58 fundamental questions about the method.
-- `2026-09-17_methodology_schematic.*`: the full flowchart; `2026-09-17_nointerp_pipeline_diagram.*`: the March run.
-- `2026-09-18_code_review_original_code.md` and `2026-09-18_staged_plan_development_to_package.md`.
+- `2026-09-17_methodology_schematic.*`: the full flowchart; `2026-09-17_nointerp_pipeline_diagram.*` and `2026-09-17_nointerp_run_report_for_meeting.docx`: the point-flavour run.
+- `2026-09-18_code_review_original_code.md`: findings R1-R17; `2026-09-18_staged_plan_development_to_package.md`: the cleanup plan, stages 0-6.
+- `2026-09-19_interp_run_changes.md`: log of the first interp run and every change it needed; `2026-09-19_writeup_vs_code_comparison.md`: paper and talk against the code.
+- `README_nointerp.md`: the point flavour's scripts and data.
 - `questions_for_andria_general.md`, `questions_for_andria_scientific.md`: living lists of open questions.

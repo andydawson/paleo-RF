@@ -148,6 +148,18 @@ inspecting large June forcing values.
 - Reads: `ALB_diffs_bluesky.RDS`, `ice_fort*.RDS`, `data/radiative-kernels/*.nc`.
 - Writes: `output/forcing/RF_holocene_all_cases.RDS`.
 
+### `9_forcing_barplot.R` (~300 lines; added 2026-09-21)
+Not part of the code as received. Aggregates `output/forcing/RF_holocene_all_cases.RDS`
+to continental forcing by period and plots it beside the IPCC AR6 agents, in the
+layout of EGU slide 18. Every aggregation choice (variant, kernel, period bounds,
+summing of slice-pairs, month weighting, area weighting, domain-mean versus
+global-equivalent normalisation) is an explicit assumption listed in the header.
+A second block reruns the slide's original recipe, recovered from git `383002d`
+(the April 2024 version of `8_radiative.R`, deleted in Feb 2025): script 7's seven
+coarse slice-pairs, months feb/may/aug/nov, binary ice masking, unweighted mean.
+Reads the IPCC values from `data/ipcc-ar6/`. Writes summary CSVs to
+`output/forcing/` and figures. Logs a manifest.
+
 ## `scripts/archive/` (14 files, all superseded)
 Earlier generations of the same pipeline. Rough mapping to current scripts:
 - `1_pollen_modern.R`, `7_pollen_time.R`: LCT from raw pollen counts, modern
