@@ -574,13 +574,18 @@ monotonically into the past and peaks at 10-12 ka; ours peaks at 8-10 ka
 and dips negative at 4-6 ka where the slide is flat. The slide's
 late-Holocene cooling is also far deeper than ours.
 
-Given that the point (non-interp) maps were only replaced by the
-interpolated ones shortly before EGU, the most likely explanation is
-that slide 18 was made from the earlier point pipeline, or from a
-different ice or land-cover product, rather than from the interp inputs
-we hold. **Which run produced slide 18, and is the underlying table
-still available?** Comparing against it directly would settle the
-aggregation questions above far faster than us guessing.
+**Andria confirmed on the call that slide 18 is the interp version**, so
+the difference is not the point-versus-interp switch. Our figure uses
+the HadGEM3 kernel, as slide 14 says the talk did, so it is not the
+kernel either. What remains is some combination of: (i) a forcing
+variant we have not tried, such as the `_ice_res` family that is
+commented out in scripts 7a and 8; (ii) a different way of combining
+slices within a period, since summing is our assumption A5; (iii) a
+subset of months, noting that script 8 carries a commented-out
+`months = c('feb','may','aug','nov')`; (iv) an earlier version of the
+land-cover posterior or ice product; or (v) the 11.5 ka relabelling in
+C7. **Which script, or which saved table, produced the slide?** With
+that in hand this becomes a diff rather than a search.
 
 The IPCC panel does match: CO2 2.16, methane 0.54, water vapour 0.05,
 albedo (land use) -0.20 and aerosols -1.06 are AR6 values and reproduce
