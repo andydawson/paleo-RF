@@ -75,19 +75,35 @@ Files are named as the scripts write them, with `<month>` standing for
 pipeline writes goes under `output/` except where a script still writes
 into `data/`.
 
-| Script | Does | Reads | Writes |
-|---|---|---|---|
-| `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation from AWS terrain tiles (`elevatr`, network); modern (age 50) vs paleo split | `data/veg_posts_interp_ice.RDS` (`1:230`), `data/grid.RDS` (`1:44`) | `data/lct_modern_reveals_interp.RDS`, `data/lct_paleo_reveals_interp.RDS` |
-| `2_calibration_lct_bluesky.R` | monthly blue-sky albedo at the modern cells, native pixel and 1-degree mean | `data/blue_sky_monthly_2000-2009.tif` (`2:290`), `data/grid.RDS` (`2:39`), `data/lct_modern_reveals_interp.RDS` (`2:255`), `pbs*.RDS` (`2:36-37`) | `data/calibration_modern_lct_interp_bluesky.RDS`, `..._coarse.RDS`, albedo maps |
-| `3_plot_cal_lct_albedo.R` | diagnostic plots of the calibration data (optional) | `data/calibration_modern_lct_interp_bluesky.RDS` (`3:323`), `scripts/make_grid.R` (`3:57`) | figures |
-| `4_calibration_model.R` | model ladder mod1-mod8 for every month; AIC table; spatial-effects experiment | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:27`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`, `AIC_table.csv`, spatial-experiment fits |
-| `5_calibration_eval.R` | fit diagnostics; saves model 8 as the selected model per month | the model files above (`5:25`) | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`, `calibration_model_stats.csv`, figures |
-| `6_prediction_model.R` | hindcast albedo per slice and month with 100 draws | selected models (`6:43`), `data/lct_paleo_reveals_interp.RDS` (`6:32`) | `output/prediction/paleo_interp_predict_gam[_samps|_summary]_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
-| `6_prediction_model_spatial_eval.R` | sensitivity of hindcasts to model structure (optional) | spatial-experiment fits, `data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`, figures |
-| `7_plot_preds.R` | albedo, uncertainty and difference maps with ice overlays; coarse (7-period) albedo differences | `output/prediction/paleo_interp_predict_gam[_summary]_bluesky.RDS` (`7:141`), `data/grid.RDS` (`7:283`), `data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:85`), `data/albedo_glacier_monthly.csv` (`7:302`), `pbs*.RDS` (`7:33-34`) | figures, `data/ice_fort*.RDS`, `data/alb_interp_preds_diffs_bluesky.RDS` |
-| `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:44`), `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:103`), `data/albedo_glacier_monthly.csv` (`7a:283`), `data/grid.RDS` (`7a:220`), `pbs*.RDS` (`7a:185-186`) | `data/ALB_diffs_bluesky.RDS` |
-| `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants | `data/ALB_diffs_bluesky.RDS` (`8:95`), `data/ice_fort*.RDS` (`8:44-46`), kernels (`8:77`, `8:182`, `8:216`), `pbs*.RDS` (`8:73-74`) | `output/forcing/RF_holocene_all_cases.RDS` |
-| `9_forcing_barplot.R` | continental forcing by period beside the IPCC AR6 agents, plus kernel-spread and variant-sensitivity figures; every aggregation choice is an explicit assumption in its header | `output/forcing/RF_holocene_all_cases.RDS` (`9:97`), `data/alb_interp_preds_diffs_bluesky.RDS` (`9:269`), `data/ipcc-ar6/*.csv` (`9:152-154`) | `output/forcing/forcing_by_period*.csv`, `modern_ipcc_ar6_erf.csv`, figures |
+| Script | Does |
+|---|---|
+| `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation from AWS terrain tiles (`elevatr`, network); modern (age 50) vs paleo split |
+| `2_calibration_lct_bluesky.R` | monthly blue-sky albedo at the modern cells, native pixel and 1-degree mean |
+| `3_plot_cal_lct_albedo.R` | diagnostic plots of the calibration data (optional) |
+| `4_calibration_model.R` | model ladder mod1-mod8 for every month; AIC table; spatial-effects experiment |
+| `5_calibration_eval.R` | fit diagnostics; saves model 8 as the selected model per month |
+| `6_prediction_model.R` | hindcast albedo per slice and month with 100 draws |
+| `6_prediction_model_spatial_eval.R` | sensitivity of hindcasts to model structure (optional) |
+| `7_plot_preds.R` | albedo, uncertainty and difference maps with ice overlays; coarse (7-period) albedo differences |
+| `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts |
+| `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants |
+| `9_forcing_barplot.R` | continental forcing by period beside the IPCC AR6 agents, plus kernel-spread and variant-sensitivity figures; every aggregation choice is an explicit assumption in its header |
+
+What each script reads and writes (`script:line` is the load statement):
+
+| Script | Reads | Writes |
+|---|---|---|
+| `1_veg_lct_prep.R` | `data/veg_posts_interp_ice.RDS` (`1:230`)<br>`data/grid.RDS` (`1:44`) | `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` |
+| `2_calibration_lct_bluesky.R` | `data/blue_sky_monthly_2000-2009.tif` (`2:290`)<br>`data/grid.RDS` (`2:39`)<br>`data/lct_modern_reveals_interp.RDS` (`2:255`)<br>`pbs*.RDS` (`2:36-37`) | `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS`<br>albedo maps |
+| `3_plot_cal_lct_albedo.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`3:323`)<br>`scripts/make_grid.R` (`3:57`) | figures |
+| `4_calibration_model.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:27`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits |
+| `5_calibration_eval.R` | the model files above (`5:25`) | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv`<br>figures |
+| `6_prediction_model.R` | selected models (`6:43`)<br>`data/lct_paleo_reveals_interp.RDS` (`6:32`) | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
+| `6_prediction_model_spatial_eval.R` | spatial-experiment fits<br>`data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`<br>figures |
+| `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam[_summary]_bluesky.RDS` (`7:141`)<br>`data/grid.RDS` (`7:283`)<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:85`)<br>`data/albedo_glacier_monthly.csv` (`7:302`)<br>`pbs*.RDS` (`7:33-34`) | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
+| `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:44`)<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:103`)<br>`data/albedo_glacier_monthly.csv` (`7a:283`)<br>`data/grid.RDS` (`7a:220`)<br>`pbs*.RDS` (`7a:185-186`) | `data/ALB_diffs_bluesky.RDS` |
+| `8_radiative.R` | `data/ALB_diffs_bluesky.RDS` (`8:95`)<br>`data/ice_fort*.RDS` (`8:44-46`)<br>kernels (`8:77`, `8:182`, `8:216`)<br>`pbs*.RDS` (`8:73-74`) | `output/forcing/RF_holocene_all_cases.RDS` |
+| `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS` (`9:97`)<br>`data/alb_interp_preds_diffs_bluesky.RDS` (`9:269`)<br>`data/ipcc-ar6/*.csv` (`9:152-154`) | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
 
 Not part of the pipeline: `GCM_snow_prob.R`, `thornthwaite.R`,
 `beta_veg_lct_modern.R` and `scripts/archive/` (abandoned climate/snow
@@ -120,21 +136,39 @@ input is missing as of 2026-09-21.
 
 ### External inputs
 
-| File | Role | What | Provenance | Status |
-|---|---|---|---|---|
-| `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:230`) | interpolated land-cover posteriors: 2,860 cells x 25 slices x 200 draws x 3 classes, plus `cell_area` and a binary `ice` flag (7.2% of rows). Script 1 averages the draws and **drops `cell_area` and `ice`**, so neither reaches the rest of the pipeline | Andria, 2026-09-17; REVEALS + Bayesian spatial interpolation with ice mask, from the Climate of the Past land-cover paper | present |
-| `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:290`) | 12-band monthly blue-sky albedo, 0.25 degree, 2000-2009 mean | MODIS MCD43A3 v061 + ERA5 as described in manuscript §2.1; <mark>unknown</mark> who built it and with what code | present |
-| `data/grid.RDS` | input to 1, 2, 7, 7a (`1:44`, `2:39`, `7:283`, `7a:220`) | 1-degree lon/lat raster with cell ids (-172 to 127 E, 17 to 79 N) | <mark>unknown</mark> (committed 2023-05-16, no generating code) | present |
-| `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2, 3, 7, 7a, 8 (`2:36-37`, `3:39-40`, `7:33-34`, `7a:185-186`, `8:73-74`) | political boundaries, projected and lon/lat; includes ocean polygons | <mark>unknown</mark> | present |
-| elevation (not a file) | input to 1 (`1:242`) | point elevation at cell centres | fetched from AWS terrain tiles by `elevatr` at run time; values can differ between runs | network |
-| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:85`) | 21 ice-margin polygon sets, 1,000-year steps, 21 to 1 ka, lon/lat. **The project's ice chronology**: a point-in-polygon test reproduces the `ice` flag above exactly (69/69 cells at 6 ka, 213/213 at 8 ka, 596/596 at 10 ka, 780/780 at 11 ka), so the flag was derived from these | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins, but pre-dates Dalton 2020 | present |
-| `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:302`, `7a:283`) | monthly albedo assigned to ice-covered cells; three columns offering alternative conventions (`ice_albedo` seasonal 0.6-0.8, `ice_albedo_fixed` constant 0.68, `ice_albedo_sc` smoothly varying 0.56-0.80) | Andria, 2026-09-20; <mark>unknown</mark> literature source for the values and which column is preferred | present |
-| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:103`) | continuous ice **fraction** per cell and slice, used to mix vegetation and ice albedo by area; needed because the polygons above are binary. 26 layers named `yr<n>bp`, 12,000 to 50 BP, 116 x 62 cells, lon/lat WGS84, values 0 to 1; every one of the 25 pipeline ages matches a layer | Dalton et al. 2020 margins interpolated to the slices; Andria, 2026-09-20; <mark>unknown</mark> who did the interpolation and by what method | present |
-| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:77`) | HadGEM3 albedo kernel, clear-sky, top of atmosphere, W/m² per 1% | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 | present (157 MB, Git LFS) |
-| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:182`) | CAM5 albedo kernel; the script reads `FSNSC`, a **surface** flux (question C3) | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 | present (21 MB) |
-| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:216`) | CACK all-sky TOA albedo kernel, 180 x 360 x 12 months x 16 years, W/m² per unit albedo. The code's `band=3` selects **year 2002**, not a sky condition; a climatological mean `CACK CM` and uncertainty layers are in the same file (question C3) | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8; downloaded by hand 2026-09-21 | present (126.5 MB, Git LFS) |
-| `data/ipcc-ar6/AR6_ERF_1750-2019{,_pc05,_pc95}.csv` | input to 9 (`9:152-154`) | IPCC AR6 WG1 Chapter 7 effective radiative forcing 1750-2019, best estimate and 5-95% bounds, by agent | github.com/IPCC-WG1/Chapter-7 `data_output/`, downloaded 2026-09-21 | present |
-| `scripts/make_grid.R` | sourced by 3 (`3:57`, `3:345`) | helper building a 2-degree grid for the diagnostic maps | original not in repo; the copy present is a reconstruction (2026-09-16) | present (reconstructed) |
+| File | Used by | Status |
+|---|---|---|
+| `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:230`) | present |
+| `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:290`) | present |
+| `data/grid.RDS` | input to 1, 2, 7, 7a (`1:44`, `2:39`, `7:283`, `7a:220`) | present |
+| `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2, 3, 7, 7a, 8 (`2:36-37`, `3:39-40`, `7:33-34`, `7a:185-186`, `8:73-74`) | present |
+| elevation (not a file) | input to 1 (`1:242`) | network |
+| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:85`) | present |
+| `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:302`, `7a:283`) | present |
+| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:103`) | present |
+| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:77`) | present (157 MB, Git LFS) |
+| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:182`) | present (21 MB) |
+| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:216`) | present (126.5 MB, Git LFS) |
+| `data/ipcc-ar6/AR6_ERF_1750-2019{,_pc05,_pc95}.csv` | input to 9 (`9:152-154`) | present |
+| `scripts/make_grid.R` | sourced by 3 (`3:57`, `3:345`) | present (reconstructed) |
+
+What each input is and where it came from:
+
+| File | What | Provenance |
+|---|---|---|
+| `veg_posts_interp_ice.RDS` | interpolated land-cover posteriors: 2,860 cells x 25 slices x 200 draws x 3 classes, plus `cell_area` and a binary `ice` flag (7.2% of rows). Script 1 averages the draws and **drops `cell_area` and `ice`**, so neither reaches the rest of the pipeline | Andria, 2026-09-17; REVEALS + Bayesian spatial interpolation with ice mask, from the Climate of the Past land-cover paper |
+| `blue_sky_monthly_2000-2009.tif` | 12-band monthly blue-sky albedo, 0.25 degree, 2000-2009 mean | MODIS MCD43A3 v061 + ERA5 as described in manuscript §2.1; <mark>unknown</mark> who built it and with what code |
+| `grid.RDS` | 1-degree lon/lat raster with cell ids (-172 to 127 E, 17 to 79 N) | <mark>unknown</mark> (committed 2023-05-16, no generating code) |
+| `pbs.RDS` | political boundaries, projected and lon/lat; includes ocean polygons | <mark>unknown</mark> |
+| elevation (not a file) | point elevation at cell centres | fetched from AWS terrain tiles by `elevatr` at run time; values can differ between runs |
+| `glacier_shapefiles_21-1k.RDS` | 21 ice-margin polygon sets, 1,000-year steps, 21 to 1 ka, lon/lat. **The project's ice chronology**: a point-in-polygon test reproduces the `ice` flag above exactly (69/69 cells at 6 ka, 213/213 at 8 ka, 596/596 at 10 ka, 780/780 at 11 ka), so the flag was derived from these | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins, but pre-dates Dalton 2020 |
+| `albedo_glacier_monthly.csv` | monthly albedo assigned to ice-covered cells; three columns offering alternative conventions (`ice_albedo` seasonal 0.6-0.8, `ice_albedo_fixed` constant 0.68, `ice_albedo_sc` smoothly varying 0.56-0.80) | Andria, 2026-09-20; <mark>unknown</mark> literature source for the values and which column is preferred |
+| `dalton_interpolated_LC6k.tif` | continuous ice **fraction** per cell and slice, used to mix vegetation and ice albedo by area; needed because the polygons above are binary. 26 layers named `yr<n>bp`, 12,000 to 50 BP, 116 x 62 cells, lon/lat WGS84, values 0 to 1; every one of the 25 pipeline ages matches a layer | Dalton et al. 2020 margins interpolated to the slices; Andria, 2026-09-20; <mark>unknown</mark> who did the interpolation and by what method |
+| `HadGEM3-GA7.1_TOA_kernel_L19.nc` | HadGEM3 albedo kernel, clear-sky, top of atmosphere, W/m² per 1% | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 |
+| `alb.kernel.nc` | CAM5 albedo kernel; the script reads `FSNSC`, a **surface** flux (question C3) | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 |
+| `CACKv1.0.nc` | CACK all-sky TOA albedo kernel, 180 x 360 x 12 months x 16 years, W/m² per unit albedo. The code's `band=3` selects **year 2002**, not a sky condition; a climatological mean `CACK CM` and uncertainty layers are in the same file (question C3) | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8; downloaded by hand 2026-09-21 |
+| `AR6_ERF_1750-2019{,_pc05,_pc95}.csv` | IPCC AR6 WG1 Chapter 7 effective radiative forcing 1750-2019, best estimate and 5-95% bounds, by agent | github.com/IPCC-WG1/Chapter-7 `data_output/`, downloaded 2026-09-21 |
+| `make_grid.R` | helper building a 2-degree grid for the diagnostic maps | original not in repo; the copy present is a reconstruction (2026-09-16) |
 
 ### A note on ice
 
@@ -175,15 +209,15 @@ and git-ignored.
 
 | File | Written by | Read by | Anchor |
 |---|---|---|---|
-| `data/lct_modern_reveals_interp.RDS`, `data/lct_paleo_reveals_interp.RDS` | 1 | 2 (`2:255`), 6 (`6:32`) | `interp-allmonths-2026-09-20` |
-| `data/calibration_modern_lct_interp_bluesky.RDS`, `..._coarse.RDS` | 2 | 3 (`3:323`), 4 (`4:27`), 5 (`5:25`) | `interp-allmonths-2026-09-20` |
-| `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`, `AIC_table.csv`, spatial-experiment fits | 4 | 4, 5, 6-spatial-eval | AIC table and stats only (models are 3.6 GB) |
-| `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`, `calibration_model_stats.csv` | 5 | 6 (`6:43`) | stats only |
-| `output/prediction/paleo_interp_predict_gam[_samps|_summary]_<month>_bluesky.RDS`; merged `..._bluesky.RDS`, `..._summary_bluesky.RDS` | 6 | 7 (`7:141`), 7a (`7a:44`) | summaries in `interp-allmonths-2026-09-20` |
-| `data/ice_fort.RDS`, `ice_fort_diff_young.RDS`, `ice_fort_diff_old.RDS`, `data/alb_interp_preds_diffs_bluesky.RDS` | 7 | 8 (`8:44-46`), 9 (`9:269`) | `interp-tail-2026-09-21` |
+| `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` | 1 | 2 (`2:255`), 6 (`6:32`) | `interp-allmonths-2026-09-20` |
+| `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS` | 2 | 3 (`3:323`), 4 (`4:27`), 5 (`5:25`) | `interp-allmonths-2026-09-20` |
+| `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits | 4 | 4, 5, 6-spatial-eval | AIC table and stats only (models are 3.6 GB) |
+| `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv` | 5 | 6 (`6:43`) | stats only |
+| `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS`; merged `..._bluesky.RDS`<br>`..._summary_bluesky.RDS` | 6 | 7 (`7:141`), 7a (`7a:44`) | summaries in `interp-allmonths-2026-09-20` |
+| `data/ice_fort.RDS`<br>`ice_fort_diff_young.RDS`<br>`ice_fort_diff_old.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` | 7 | 8 (`8:44-46`), 9 (`9:269`) | `interp-tail-2026-09-21` |
 | `data/ALB_diffs_bluesky.RDS` (result: albedo differences) | 7a | 8 (`8:95`) | `interp-tail-2026-09-21`, reproduced byte for byte on re-run |
 | `output/forcing/RF_holocene_all_cases.RDS` (result: forcing) | 8 | 9 (`9:97`) | `interp-tail-2026-09-21` (Git LFS) |
-| `output/forcing/forcing_by_period*.csv`, `modern_ipcc_ar6_erf.csv` | 9 | | tracked in git (small) |
+| `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv` | 9 |  | tracked in git (small) |
 
 ### Other files in `data/`
 
