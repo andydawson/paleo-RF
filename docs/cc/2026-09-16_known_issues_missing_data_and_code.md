@@ -73,6 +73,11 @@ name marks the former.
 | 34 | Every script mixes the live path with commented-out or still-live older versions of itself (roughly 40% of script 4, half of script 7, the tail of script 5). Hard to tell what was run for the paper. |
 | 35 | The non-interp workflow is March only; the interp workflow fits all twelve months. Which one the manuscript reports should be stated. |
 | 36 | `7a_alb_diff_full.R` produces the definitive albedo differences for script 8, but `7_plot_preds.R` also writes `alb_*_diffs_*.RDS`; two parallel definitions of the same quantity. |
+| 37 | `8_radiative.R` L216-246: the CACK kernel is sampled one degree south of every cell (the `t(flip())` raster has whole-number cell centres, the `lat180` points are half-degrees, `extract` resolves downward). Domain-mean effect under 1 %. Also `band=3` is 2003, not 2002 (file: `Year: 2001 = 1`), and CACK is NA in Dec/Jan north of 69 N (5,904 rows). Found 2026-09-23. |
+| 38 | `5_calibration_eval.R` L216-247: "data in credible interval" divides by all 2,860 cells, so polar-night NA cells count as misses; December reads 0.56 instead of ~0.92. Found 2026-09-23. |
+| 39 | `7_plot_preds.R` L830-848 (chris-dev numbering): `ice_fort$ages` (coarse ages 50, 500, ...) is compared with `ice_years[idx]` (polygon years 1000, 1000, ...), so the `ice_fort_diff_*` tables lack the youngest periods' outlines. Found 2026-09-23. |
+| 40 | `7_plot_preds.R` L499-503: `subset(alb_grid_sub, year==year)` inside `for (year in ages_sub)` compares the column with itself, so every page of the per-slice PDF over-plots all eight slices. Found 2026-09-23. |
+| 41 | `7a_alb_diff_full.R` L545-549: where ice advances across the 0.5 threshold both difference terms are NA and `rowSums(na.rm=TRUE)` yields 0 (36 pairs); and an ice increase at the first pair of a series would index position 0 and error. Found 2026-09-23 (see C2). |
 
 ## 2. Missing data
 

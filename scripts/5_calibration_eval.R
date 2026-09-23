@@ -19,8 +19,10 @@
 #     Byte-for-byte copies of the model-8 fits. Script 6 reads these, so "which model is
 #     selected" is decided by the two lines that write them, not by any statistic.
 #   output/calibration/calibration_model_stats.csv          12 rows x 5 (anchored)
-#     Per month: correlation of modelled and observed albedo, fraction of observations
-#     inside the model's 95% interval, and the 2.5% and 97.5% quantiles of model-minus-data.
+#     Per month: correlation of modelled and observed albedo, fraction of ALL 2,860 cells
+#     whose observation lies inside the model's 95% interval (cells with no observation
+#     count as outside, which is why Nov-Jan are low; see Section 2), and the 2.5% and
+#     97.5% quantiles of model-minus-data.
 #   figures/cal_model_vs_data_gam_error_months.pdf          one page per month
 #   figures/cal_model_vs_data_gam_error_facet.{pdf,png}     all months on one page
 #   figures/cal_model_data_diff_histogram_facet.{pdf,png}   error histograms
@@ -37,6 +39,9 @@
 #     "fraction of data inside the interval" is measured against. The draws are random and
 #     no seed is set, so the statistics differ slightly from one run to the next (the
 #     anchored table was produced this way too; expect agreement to about two decimals).
+#     gratia's help page calls these "posterior simulations"; do not read that as
+#     coefficient uncertainty. Its code is predict() for the mean, then the family's
+#     random-deviate function with the coefficients held fixed.
 #
 # THE get(month) TRAP, IN PRACTICE
 #   The saved models have the literal formula get(month) ~ ... . predict() and simulate()
@@ -118,7 +123,10 @@ for (n in 1:length(months)){
   cor_month
   
   # ---- 100 simulated albedo values per cell ------------------------------------------
-  # See the header. Returns a 2,860 x 100 matrix (rows with NA albedo come back NA).
+  # See the header. Returns a 2,860 x 100 data.frame with a value for EVERY cell,
+  # including the 1,109 December cells with no observed albedo: prediction needs only
+  # the predictors. Those cells drop out later, where the observed value is compared
+  # (see the note on the fraction-inside statistic in Section 2).
   cal_interp_sim_gam = simulate(cal_interp_model,
                                 nsim = 100,
                                 data = cal_interp_data[,c('x', 'y', 'elev', 'ET', 'OL', 'ST', month)])
@@ -134,8 +142,9 @@ for (n in 1:length(months)){
   colnames(cal_interp_sim_gam_melt) = c('x', 'y', 'month', 'variable', 'value')
   
   # Per cell: mean, median and 2.5%/97.5% quantiles of the 100 simulated values.
-  # Grouping on `month` here groups on the observed albedo value, which is unique per
-  # cell in practice, so the result is still one row per cell.
+  # Grouping on `month` here means grouping on the observed albedo value, which is
+  # redundant: x and y already identify a cell, so the result is one row per cell
+  # whatever the albedo (including the NA cells in winter).
   cal_interp_sim_gam_sum = cal_interp_sim_gam_melt %>% 
     group_by(x, y, month) %>%
     summarize(alb_mean = mean(value), 
@@ -272,8 +281,12 @@ print(p)
 ggsave('figures/cal_model_vs_data_gam_error_facet.pdf', width=12, height=10)
 ggsave('figures/cal_model_vs_data_gam_error_facet.png', width=12, height=10)
 
-# Flag whether each observation falls inside its cell's 95% interval; for a well
-# calibrated model about 95% should.
+# Flag whether each observation falls inside its cell's 95% interval. NB the fraction
+# computed below divides by ALL cells, including the ones with no observed albedo (polar
+# night: 1,109 in December, 694 in January, 400 in November), which count as misses. That
+# is why the anchored table shows 0.56 for December and 0.70 for January against about
+# 0.92 elsewhere; on the cells that have data, every month is near 0.92. (For a well
+# calibrated model about 0.95 of the cells WITH data should fall inside.)
 cal_interp_sim_gam_quants = cal_interp_sim_gam_quants %>% 
   mutate(in_credible=((alb_data>alb_lo)&(alb_data<alb_hi)))
 

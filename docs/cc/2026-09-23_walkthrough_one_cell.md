@@ -7,7 +7,7 @@ be checked, and it will change only if the method changes.
 ## The cell
 
 Cell **8165**, centred at **51.5°N, 80.5°W**: the James Bay lowlands on the
-Ontario–Quebec border, elevation 1 m. It was chosen because it lived through the
+the James Bay lowlands near Moosonee, Ontario, elevation 1 m. It was chosen because it lived through the
 whole story: under the Laurentide ice sheet until about 9,000 years ago, then
 vegetated for the rest of the Holocene. One cell, one story, all nine scripts.
 
@@ -45,9 +45,11 @@ with this cell as one of 2,827 (summer) or 2,166 (January) data points.
 Nothing to show per cell: the model is a property of all cells together. For July the
 selected model (model 8) is
 
-    logit(albedo) = smooth(lon, lat) + smooth(elev) + smooth(OL, ET, ST) + noise
+    logit(mean albedo) = smooth(lon, lat) + smooth(elev) + smooth(OL, ET, ST)
+    albedo ~ Beta(mean, precision)
 
-fitted by beta regression. What matters for this cell is that the last term is what
+i.e. the smooths set the average and a beta distribution describes the scatter
+around it, on the albedo scale. What matters for this cell is that the last term is what
 will be evaluated at its past land cover.
 
 ## Script 6: what the model says it looked like

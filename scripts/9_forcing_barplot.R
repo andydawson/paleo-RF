@@ -37,12 +37,18 @@
 # ASSUMPTIONS
 #
 # A1. Forcing variant. Uses rf_<kernel>_veg_ice_thresh: the vegetation plus ice
-#     albedo change, threshold method. Chosen because it is the only family with
-#     no missing values over the whole domain and it includes both the
-#     vegetation and the ice contribution. The table holds nine other variants
+#     albedo change, threshold method. Chosen because it combines the vegetation
+#     and the ice contribution and, like the _parts family, has no missing values
+#     over the trimmed domain. Threshold rather than area-weighting was preferred
+#     because it is closer to the binary ice mask used elsewhere in the pipeline;
+#     the choice is question C5(a). The table holds nine other variants
 #     (_veg_thresh, _ice_thresh, _icesc_thresh, and the _part / _parts family
 #     that mixes vegetation and ice albedo by area fraction rather than by
-#     threshold). A2 below reports all of them, because the choice matters.
+#     threshold). A2 reports the alternatives, because the choice matters.
+#
+# A2. Variant sensitivity. All six variants with complete coverage are aggregated
+#     the same way and plotted side by side
+#     (figures/forcing_barplot_variant_sensitivity.pdf).
 #
 # A3. Kernel. HadGEM3 is the headline, matching the talk. CAM5 and CACK are
 #     carried through as a spread. They are NOT interchangeable: see C3/C4 in
@@ -63,6 +69,10 @@
 #
 # A6. Months. Averaged with equal weight to an annual mean, after the period sum.
 #     Equal weighting ignores that months differ in length and in insolation.
+#     NB months whose kernel is NA (CACK, Dec/Jan north of 69 N) drop out of the
+#     mean, whereas HadGEM3 and CAM5 store 0 there and stay in; the three kernels
+#     are therefore averaged over slightly different month sets at 216 northern
+#     cells.
 #
 # A7. Space. Cells are area-weighted using the `area` column (m^2).
 #
@@ -73,7 +83,8 @@
 #         sum(rf * area) / 5.101e14 m^2.
 #     IPCC ERF values are global means. Comparing a domain-mean regional forcing
 #     with a global-mean ERF overstates the Holocene signal by roughly the ratio
-#     of Earth's area to the study area (about 34x). The global-equivalent column
+#     of Earth's area to the study area (about 27x: the study area is 1.92e13
+#     m^2, 3.8 % of Earth's surface). The global-equivalent column
 #     is the like-for-like comparison and is what the headline figure plots.
 #
 # A9. Sign. Positive = warming (albedo fell). Inherited from script 8.
@@ -312,6 +323,9 @@ ggsave('figures/forcing_barplot_variant_sensitivity.pdf', p_sens, width = 10, he
 # are feb/may/aug/nov only; binary-flagged ice cells are masked; and the bar is
 # the PLAIN UNWEIGHTED MEAN over cells x months, i.e. a domain mean. See C5.
 d7 = readRDS(paste0('data/alb_interp_preds_diffs_', alb_prod, '.RDS'))
+# Kernel and area per cell-month come from `d`, which has already been trimmed to 27-74 N
+# and to period-complete cells (A4, A10); the join therefore applies the same trim to the
+# recipe, which Andria's April-2024 code did not.
 d7 = inner_join(d7, distinct(d, cell_id, month, rk_hadgem, area), by = c('cell_id','month'))
 d7$facets = sub(' ka$', '', labels_period)[match(d7$year, sort(unique(d7$year)))]
 d7$rf = d7$alb_diff * 100 * d7$rk_hadgem

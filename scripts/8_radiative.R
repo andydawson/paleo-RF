@@ -18,11 +18,13 @@
 #               (more albedo = less absorbed sunlight)
 #     CAM5      the variable read (FSNSC) is a SURFACE flux, clear-sky, per 1%, negative
 #     CACK      top-of-atmosphere, all-sky, per UNIT albedo (0..1), stored POSITIVE.
-#               band = 3 selects the year 2002 from a 16-year series, not a sky condition.
+#               band = 3 selects the year 2003 from the 16-year series 2001-2016 (the file
+#               says "2001 = 1"), not a sky condition.
 #   The sign and scale differences are why the forcing formulas below differ by kernel.
 #
 # WHAT COMES IN
-#   data/ALB_diffs_bluesky.RDS                    ~764,640 x 21, from script 7a
+#   data/ALB_diffs_bluesky.RDS                    806,172 x 21, from script 7a (764,640 after
+#                                                 the latitude trim below)
 #     One row per cell x month x consecutive slice-pair: coordinates, area, the two ice
 #     fractions, and ten albedo-difference columns (alb_diff_*).
 #   data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc   12 monthly layers, 1.25 x 1.875 deg
@@ -42,11 +44,18 @@
 #   kernel that is a POSITIVE forcing, i.e. warming. So in the output, positive = warming.
 #
 # HOW THE KERNELS ARE LINED UP WITH THE DATA
-#   The kernel files use longitude 0..360 (not -180..180), and CACK's file has no
-#   coordinate metadata at all, just a 180 x 360 array. The script therefore builds two
-#   extra coordinate columns, long360 and lat180, and samples the kernel rasters at those.
-#   The check plots that would confirm the alignment are commented out in the original;
-#   the alignment was checked independently on 2026-09-21 (every cell returns a value).
+#   The kernel files use longitude 0..360 (not -180..180). CACK's file stores its
+#   coordinates as plain variables (Latitude 89.5 to -89.5, Longitude 0.5 to 359.5) rather
+#   than as NetCDF dimensions, so raster() reads it as a bare 180 x 360 array. The script
+#   therefore builds two index columns, long360 and lat180, and samples at those. The
+#   check plots that would confirm the alignment are commented out in the original.
+#   Checked against the file's own coordinates on 2026-09-23: longitude is right, but
+#   every cell picks up the CACK value ONE DEGREE SOUTH of its true latitude (the sample
+#   points land on cell corners and raster resolves downward). The domain-mean effect is
+#   under 1 %, so the CACK/HadGEM3 comparison in C4 is not overturned, but the per-cell
+#   values are offset. CACK is also NA in December and January north of 69 N (polar
+#   night; 5,904 rows), where the other two kernels hold 0. Recorded under C3(d).
+#   HadGEM3 and CAM5 were checked the same way and match their nearest grid point.
 #
 # RUN TIME  About 20 seconds.
 ############################################################################################
@@ -90,7 +99,7 @@ run_start('8_radiative',
             'data/map-data/geographic/pbs_ll.RDS',
             'data/map-data/geographic/pbs.RDS')),
           config = list(alb_prod = alb_prod, months = months,
-                        cack_band = 3, cack_band_meaning = 'year 2002, see question C3'))
+                        cack_band = 3, cack_band_meaning = 'year 2003, see question C3'))
 
 # Ice outlines produced by script 7, for maps. Loaded; not used further in this script.
 ice_fort = readRDS('data/ice_fort.RDS')
@@ -132,8 +141,9 @@ alb_diff = alb_interp_diff_full
 # ---- Coordinates in the kernels' conventions ---------------------------------------------
 # long360: western-hemisphere longitudes (-166 to -50) become 194 to 310, i.e. 360 + long.
 #          Written as 180 + 180 - |long|, which is the same thing for negative longitudes.
-# lat180:  latitude shifted to 0..180, which is CACK's row index space (its file carries no
-#          coordinates, so row i = latitude i - 90).
+# lat180:  latitude plus 90, meant to be CACK's row index space. CACK rows are centred on
+#          half-degrees (89.5 N down to 89.5 S), so this puts every point on a row
+#          boundary; see the header for the one-degree offset that results.
 alb_diff$long360 = 180 + 180 - abs(alb_diff$long)
 alb_diff$lat180 = alb_diff$lat + 90
 
@@ -193,15 +203,17 @@ for (month in months){
   rk_cam5_df = as.data.frame(rk_cam5, xy=TRUE)
   colnames(rk_cam5_df) = c('x', 'y', 'kernel')
   
-  # ---- CACK: month = level, band 3 = the third year of the series (2002) -----------------
+  # ---- CACK: month = level, band 3 = the third year of the series (2003) -----------------
   rk_cack = raster('data/radiative-kernels/CACKv1.0/CACKv1.0.nc', 
                    varname='CACK', 
                    level=month_number, 
                    band=3)
   
   # The array comes in transposed and upside down relative to the (long360, lat180)
-  # index space; flip() then t() puts it the right way round. This is the step the
-  # commented-out check plots were for.
+  # index space; flip() then t() reorients it, but the resulting cells are centred on
+  # whole numbers while the sample points sit at half-degrees, so extract() takes the
+  # cell one degree south (see the header). This is the step the commented-out check
+  # plots were for.
   rk_cack =  t(flip((rk_cack)))
   
   rk_cack_df = as.data.frame(rk_cack, xy=TRUE)
@@ -217,8 +229,9 @@ for (month in months){
 # Forcing = albedo difference x kernel, for every kernel and every variant
 ############################################################################################
 
-# Keep only cells between 27 N and 74 N. Outside that band the land cover reconstruction
-# is sparse or absent; this is the study domain used for continental totals.
+# Keep only cells between 27 N and 74 N. Script 7a's coverage check shows that the 211
+# cells with fewer than 25 slices are exactly those outside this band (114 south, 97
+# north), so the trim leaves a complete cell set: 2,655 cells, 764,640 rows.
 alb_diff = alb_diff[which(alb_diff$lat>27),]
 alb_diff = alb_diff[which(alb_diff$lat<74),]
 

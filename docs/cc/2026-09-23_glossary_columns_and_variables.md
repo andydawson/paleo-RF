@@ -21,6 +21,9 @@ line references are to the annotated scripts.
 | **50 BP = "modern"** | The slice closest to the 2000-2009 satellite albedo the calibration uses. |
 | **12,000 BP** | Does not exist in the data. Script 7 relabels 11,500 as 12,000 so the coarse period set can end at "12 ka" (question C7). Script 7a and 8 keep 11,500. |
 | **`alb_prod`** | Always `"bluesky"`: which albedo product was used. It appears in most file names. |
+| **REVEALS** | The pollen-to-vegetation model (Sugita 2007) that converts pollen percentages into land-cover fractions before the spatial interpolation; run outside this repository. |
+| **ka** | Thousand years before present; 8 ka = 8,000 BP. |
+| **ERF** | Effective radiative forcing, the IPCC's global-mean forcing measure (W/m²); what the AR6 tables in script 9 hold. |
 | **`interp`** in a file name | The spatially complete land-cover product (this flavour). Files without it belong to the point flavour. |
 
 ## The three land-cover classes
@@ -72,7 +75,7 @@ Fitted `bam` objects, one per model `k` = 1..8 and month. The `_selected_` files
 |---|---|
 | `month` | |
 | `correlation` | Pearson correlation between observed and modelled (simulated median) albedo across cells. |
-| `data in credible interval` | Fraction of cells whose observed albedo lies inside the model's 95% simulation interval. |
+| `data in credible interval` | Fraction of ALL 2,860 cells whose observed albedo lies inside the model's 95% simulation interval; cells with no observation (polar night) count as outside, which is why Nov-Jan are low. |
 | `diff lower / upper (model - data; 2.5% / 97.5%)` | Quantiles of modelled-minus-observed albedo. |
 
 ### `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (script 6)
@@ -103,7 +106,7 @@ Differences between consecutive **coarse** slices (50, 500, 2000, 4000, 6000, 80
 | `alb_diff_ice` | With-ice albedo, young minus old. |
 
 ### `data/ice_fort.RDS`, `ice_fort_diff_young.RDS`, `ice_fort_diff_old.RDS` (script 7)
-Ice-margin polygons flattened for ggplot: `long`, `lat`, `order`, `hole`, `piece`, `id`, `group` (ggplot2's `fortify` columns), plus `ice_year` (which polygon set) and `ages` (which coarse slice it stands for). The two `_diff_` files are empty in the current output because of a bug noted in script 7.
+Ice-margin polygons flattened for ggplot: `long`, `lat`, `order`, `hole`, `piece`, `id`, `group` (ggplot2's `fortify` columns), plus `ice_year` (which polygon set) and `ages` (which coarse slice it stands for). The two `_diff_` files lack the outlines for the youngest one or two periods because of a bug noted in script 7 (the coarse age is compared with the polygon year); they are not empty.
 
 ### `data/ALB_diffs_bluesky.RDS` (script 7a) and `output/forcing/RF_holocene_all_cases.RDS` (script 8)
 Differences between **consecutive** slices (24 pairs), then the same table with kernels and forcings added.
@@ -116,12 +119,12 @@ Differences between **consecutive** slices (24 pairs), then the same table with 
 | `alb_diff_veg_thresh` | Vegetation albedo change; `NA` if either end is more than half ice. |
 | `alb_diff_ice_thresh` | Young vegetation albedo minus old **fixed** ice albedo, where the old end was ice; 0 if both ends ice. |
 | `alb_diff_icesc_thresh` | Same with the **seasonal** ice albedo. |
-| `alb_diff_veg_ice_thresh`, `alb_diff_veg_icesc_thresh` | The vegetation and ice threshold terms combined (they are mutually exclusive per pair). |
+| `alb_diff_veg_ice_thresh`, `alb_diff_veg_icesc_thresh` | The vegetation and ice threshold terms combined (exclusive except for a readvance across the 50 % line, which gives 0 rather than NA; C2). |
 | `alb_diff_veg_part` | Vegetation albedo change, weighted by the non-ice fraction at the old end. |
 | `alb_diff_ice_part`, `alb_diff_icesc_part` | (young vegetation albedo minus ice albedo) times the fraction of the cell that deglaciated. |
 | `alb_diff_veg_ice_parts`, `alb_diff_veg_icesc_parts` | Vegetation part plus ice part: the area-weighted total. |
 | `long360`, `lat180` | Longitude in 0..360 and latitude in 0..180, for sampling the kernel grids (script 8 only). |
-| `rk_hadgem`, `rk_cam5`, `rk_cack` | Kernel values at the cell for that month. HadGEM3 and CAM5: W/m² per 1% albedo, negative. CACK: W/m² per unit albedo, positive. |
+| `rk_hadgem`, `rk_cam5`, `rk_cack` | Kernel values at the cell for that month. HadGEM3 and CAM5: W/m² per 1% albedo, negative. CACK: W/m² per unit albedo, positive; sampled one degree south of the cell (script 8's header, C3) and NA in Dec/Jan north of 69 N. |
 | `rf_<kernel>_<variant>` | Forcing in W/m²: the `alb_diff_<variant>` column times the kernel (with the unit and sign handling in script 8). 30 columns. |
 
 Naming pattern, once seen: `alb_diff_` + **who** (`veg`, `ice`, `icesc`, `veg_ice`, `veg_icesc`) + `_` + **how** (`thresh` = all-or-nothing at 50% ice; `part`/`parts` = area-weighted). `icesc` = "ice, seasonal", i.e. the `ice_albedo_sc` column of `albedo_glacier_monthly.csv`.
@@ -145,7 +148,7 @@ Naming pattern, once seen: `alb_diff_` + **who** (`veg`, `ice`, `icesc`, `veg_ic
 | `cal_interp_model` | 5, 6 | The selected model (model 8) for the current month. |
 | `lct_interp_paleo` | 6 | The paleo land-cover table with `ages` renamed `year`. |
 | `alb_interp_preds` | 7, 7a | Script 6's summary table, being enriched. |
-| `alb_grid`, `alb_grid_sub`, `alb_grid_full` | 7, 7a | The same after cell ids and areas are attached; `_sub` = coarse slices only (7), `_full` = all slices (7a). |
+| `alb_grid`, `alb_grid_sub`, `alb_grid_full` | 7, 7a | The same after cell ids and centres (and, in 7a, areas) are attached; `_sub` = coarse slices only (7), `_full` = all slices (7a). |
 | `alb_cell`, `alb_cell_filled` | 7, 7a | One cell-month's rows inside the loop; `_filled` padded to every slice. |
 | `alb_diff_df` | 7, 7a | The growing difference table. |
 | `ice`, `ice_years` | 7 | The 21 polygon sets and their ages. |

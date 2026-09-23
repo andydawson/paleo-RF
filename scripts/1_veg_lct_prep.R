@@ -13,7 +13,7 @@
 #   data/veg_posts_interp_ice.RDS   (334 MB, Git LFS)
 #     A data.frame of 41,961,600 rows and 9 columns. It is the OUTPUT of a Bayesian model
 #     run outside this repository (Dawson et al., Climate of the Past): pollen -> REVEALS
-#     -> spatial interpolation onto a 1-degree grid, with an ice mask. Being Bayesian, it
+#     (a pollen-to-vegetation model) -> spatial interpolation onto a 1-degree grid, with an ice mask. Being Bayesian, it
 #     does not give one answer per cell; it gives 200 "posterior draws" (column `iter`),
 #     each a plausible map. One row = one cell, one time slice, one draw, one class:
 #       cell_area  area of the cell (km^2)                 <- dropped by this script
@@ -26,8 +26,10 @@
 #       LCT        land-cover type: "ET", "ST" or "OL"
 #       value      fraction of the cell in that class, 0..1; ET+ST+OL = 1 within a draw
 #       ice        flag marking cell-slices under the ice sheet   <- dropped by this script
-#     (2,860 cells x 25 slices x 200 draws x 3 classes would be 42.9 million rows; a few
-#     cell-slices under ice are absent, hence 41.96 million.)
+#     (2,870 cells appear somewhere in the 25 slices; 2,870 x 25 x 200 x 3 would be 43.05
+#     million rows. 1,814 cell-slices, about 2.5 %, are absent, hence 41.96 million.
+#     Which ones, and why, has not been checked; ice-covered cells are NOT systematically
+#     absent, see the walkthrough's cell 8165.)
 #
 # WHAT GOES OUT
 #   data/lct_modern_reveals_interp.RDS   2,860 rows x 6:  x, y, elev, ET, OL, ST
@@ -35,7 +37,9 @@
 #     albedo calibration (scripts 2, 4, 5) is fitted on.
 #   data/lct_paleo_reveals_interp.RDS    69,936 rows x 7:  ages, x, y, elev, ET, OL, ST
 #     All 25 slices, including 50 BP. This is what the fitted model hindcasts from
-#     (script 6). 69,936 = 2,860 x 25 minus the cell-slices missing under ice.
+#     (script 6). 69,936 rows: 2,870 cells over 25 slices minus 1,814 absent cell-slices.
+#     Only 2,860 of the cells are present at 50 BP, which is why the modern table is
+#     shorter.
 #
 # WHAT IT DOES, IN ONE SENTENCE
 #   Average the 200 draws to a single map per slice, spread the three classes into
@@ -120,8 +124,9 @@ locations_interp = lct_interp_wide[,c('x', 'y')]
 # elevation in metres at each point. `prj` tells it the coordinates are lon/lat degrees.
 # Two consequences worth knowing:
 #   * it needs an internet connection and takes a few minutes;
-#   * the service can return slightly different values from one day to the next, so `elev`
-#     is the one column of this script's output that is NOT bit-for-bit reproducible.
+#   * it depends on a remote service, so `elev` is treated as not bit-for-bit reproducible
+#     (the anchors README compares it with a tolerance); whether repeated lookups actually
+#     differ has not been tested. The re-run of 2026-09-23 returned identical values.
 # Elevation is used downstream as a predictor of albedo (higher ground is snowier).
 ele_get_interp = get_elev_point(locations_interp, prj=ll_proj, src = "aws")
 

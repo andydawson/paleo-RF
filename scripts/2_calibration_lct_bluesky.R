@@ -244,10 +244,11 @@ for(i in 1:length(months)) {
 ############################################################################################
 
 # ---- Why zeros are replaced ------------------------------------------------------------------
-# The calibration model in script 4 is a beta regression, which describes a quantity that
-# lies strictly BETWEEN 0 and 1; an exact 0 (or 1) has zero likelihood and breaks the fit.
-# Any albedo that came out as exactly zero is therefore nudged to 0.0001. (Exact ones do
-# not occur in this data; the maximum is 0.83.)
+# The calibration model in script 4 is a beta regression, which describes a quantity
+# strictly BETWEEN 0 and 1. mgcv would not fail on an exact 0: it silently clips the value
+# to about 1e-14, which is logit -31 and hugely influential. Nudging zeros to 0.0001
+# (logit -9) first is a milder choice. In the interp table no zero occurs (question B6);
+# the sampled maximum is 0.81.
 bs_interp_df[bs_interp_df==0] = 1e-4
 bs_interp_df_coarse[bs_interp_df_coarse==0] = 1e-4
 

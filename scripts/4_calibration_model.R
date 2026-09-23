@@ -13,8 +13,8 @@
 #     x, y (lon/lat degrees), elev (m), ET, OL, ST (fractions summing to 1), and twelve
 #     albedo columns jan ... dec (0 to 1, NA where the satellite saw nothing). Built by
 #     script 2. Because the winter high latitudes are NA, the number of cells actually
-#     used varies by month: 2,827 from March to September, 2,166 in January, 1,751 in
-#     December.
+#     used varies by month: 2,826-2,827 from March to October, 2,765 in February, 2,460
+#     in November, 2,166 in January, 1,751 in December.
 #
 # WHAT GOES OUT   (all under output/calibration/; <m> = jan ... dec)
 #   calibration_mod{1..8}_interp_<m>_bluesky.RDS    96 fitted models, the "ladder"
@@ -46,8 +46,11 @@
 #       A thin-plate-spline surface over the three cover fractions jointly. This is the
 #       term the whole paper relies on: it is what gets applied to past land cover. The
 #       three fractions always sum to 1, so the three inputs lie on a plane; the smooth
-#       is effectively two-dimensional and mgcv copes, but it is why a model with three
-#       SEPARATE cover smooths (model 5) is asking a partly redundant question.
+#       is effectively two-dimensional. mgcv fits it but reports the model as rank
+#       deficient (e.g. rank 744 of 748 for December), and any prediction row whose
+#       fractions do not sum to exactly one is evaluated in the empty direction
+#       (question B1). It is also why a model with three SEPARATE cover smooths
+#       (model 5) is asking a partly redundant question.
 #   method = "REML" chooses how wiggly each smooth is allowed to be by restricted maximum
 #   likelihood, the standard robust choice. bam() is mgcv's version of gam() for larger
 #   data: same models, less memory, optional threading.
@@ -60,9 +63,9 @@
 #   selected model. Two caveats belong here: AIC values of REML fits with different mean
 #   structures are not strictly comparable (mgcv's documentation says to use method="ML"
 #   for that), and the ladder is fitted on the centre-pixel albedo (script 2's header).
-#   Both are open questions with Andria (B4, B8).
+#   These are open questions with Andria (B1, B4, B5).
 #
-# COST
+# RUN TIME
 #   About 27 hours on 8 cores for the interp run. Four fifths of that is model 7: the
 #   Gaussian-process cover smooth (bs="gp" on three inputs, k=200) is far more expensive
 #   than the thin-plate version. Every other model takes one to five minutes per month.
@@ -75,8 +78,10 @@
 #      in scope with the right value (script 6 does).
 #   2. Model 8 is fitted THREE times in this script: in the ladder, again as
 #      "mod_spatial_elev_cover" in the spatial experiment, and once more in a final loop
-#      that overwrites the ladder's file with an identical fit. The last of these is the
-#      three hours of pure waste noted in the run manifest. All are kept here so that this
+#      that overwrites the ladder's file with an identical fit. The last of these costs
+#      twelve more model-8 fits, roughly half an hour to an hour. (The "3 h of waste" in
+#      the run manifest refers to a non-interp refit that this copy no longer contains.)
+#      All are kept here so that this
 #      copy runs exactly as the original did; removing the duplicates is Stage 4 of the
 #      staged plan.
 ############################################################################################
@@ -402,7 +407,7 @@ for (month in months) {
 # In the original this loop once fitted all eight models again with the other seven
 # since commented out. What is left refits model 8 with exactly the formula used in
 # Section 1 and saves it to exactly the same file. It changes nothing and costs about
-# three hours. Kept so this copy behaves as the original; removed in Stage 4.
+# an hour. Kept so this copy behaves as the original; removed in Stage 4.
 
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 
