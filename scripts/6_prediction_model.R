@@ -1,78 +1,137 @@
-library(raster)
-library(tidyr)
+############################################################################################
+# 6_prediction_model.R  --  hindcast albedo for every Holocene slice
+#
+# WHERE THIS SITS IN THE PIPELINE
+#   Step 6 of 9. Scripts 4 and 5 produced, for each month, a model that maps
+#   (location, elevation, land cover) to albedo, fitted on the modern world. This script
+#   points those models at the PAST: it feeds them the land cover of every cell at every
+#   time slice and asks what albedo that implies. This is the central assumption of the
+#   whole study, that the modern relationship held throughout the Holocene.
+#
+# WHAT COMES IN
+#   data/lct_paleo_reveals_interp.RDS      69,936 rows x 7:  ages, x, y, elev, ET, OL, ST
+#     From script 1: every cell at every one of the 25 slices (50 BP included).
+#   output/calibration/calibration_mod_interp_selected_<m>_bluesky.RDS   12 models
+#     From script 5 (model 8 for every month).
+#
+# WHAT GOES OUT   (all under output/prediction/; <m> = jan ... dec)
+#   paleo_interp_predict_gam_<m>_bluesky.RDS          69,936 x 8
+#     The input table plus alb_mean, the model's fitted mean albedo. Deterministic.
+#   paleo_interp_predict_gam_samps_<m>_bluesky.RDS    6,993,600 x 9, ~200 MB each
+#     100 simulated albedo values per cell-slice, in long form (one row per draw).
+#   paleo_interp_predict_gam_summary_<m>_bluesky.RDS  69,936 x 12
+#     Per cell-slice: mean, sd, 2.5%, 50% and 97.5% of the 100 draws.
+#   paleo_interp_predict_gam_bluesky.RDS              839,232 x 9   (12 months stacked)
+#   paleo_interp_predict_gam_summary_bluesky.RDS      839,232 x 13  (12 months stacked)
+#     The two stacked files are what scripts 7 and 7a read.
+#
+# WHAT THE UNCERTAINTY HERE IS, AND IS NOT
+#   simulate(nsim = 100) draws albedo values from the fitted beta distribution around
+#   each cell's mean, using the model's estimated precision. So the spread in the summary
+#   file is the scatter the model expects between individual observations and the mean,
+#   the same kind of interval script 5 checked against the modern data. It does NOT
+#   include uncertainty in the model's coefficients (simulate() treats them as known), and
+#   the uncertainty in the land cover itself was already averaged away in script 1. The
+#   draws are unseeded, so these files differ slightly between runs; the deterministic
+#   alb_mean does not, PROVIDED the BLAS thread count is the same: with 8 threads the
+#   mean-prediction file reproduces the anchor byte for byte, with 4 threads it differs
+#   in the last bits (summation order), enough to fail identical() but not all.equal(). Both points are in the questions file (section A). gratia's help
+#   page calls these "posterior simulations"; do not read that as coefficient
+#   uncertainty. Its code is predict() for the mean, then the family's random-deviate
+#   function with the coefficients held fixed.
+#
+# COLUMN NAME CHANGE
+#   The land-cover table calls the time slice `ages`; this script renames it `year` and
+#   everything downstream uses `year`. Values are still years before present.
+#
+# RUN TIME  About 15 minutes. Memory peaks around the melt of 7 million rows per month.
+############################################################################################
+
+# dplyr for group_by/summarize, mgcv for predict.gam on the saved models, gratia because
+# loading it is what gives simulate() a method for GAM objects (see script 5), reshape2
+# for melt. (raster, tidyr, sp and ggplot2 were loaded by the original for other paths
+# and are dropped here.)
 library(dplyr)
-# library(rgdal)
-library(sp)
-library(ggplot2)
 library(mgcv)
-# library(SemiPar)  # [run-nointerp] archived on CRAN; never used in this script
 library(gratia)
 library(reshape2)
 
 alb_prod = "bluesky"
 
-# [run-may] month of albedo used for the non-interp (single-month) calibration; override with CAL_MONTH=mar etc.
-cal_month = Sys.getenv('CAL_MONTH', 'may')
-run_tag = paste0(cal_month, '_', alb_prod)
-
-# [run-nointerp] see comment in 4_calibration_model.R
-run_interp = file.exists('data/lct_paleo_reveals_interp.RDS')
 dir.create('output/prediction', recursive = TRUE, showWarnings = FALSE)
 
-# months = c('feb', 'may', 'aug', 'nov')
-
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
-# months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'nov', 'dec')
 
+############################################################################################
+# The paleo land cover
+############################################################################################
 
-alb_proj = '+proj=aea +lat_1=50 +lat_2=70 +lat_0=40 +lon_0=-96 +x_0=0 +y_0=0
-+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
-
-if (run_interp) { # [run-nointerp] interp inputs are not in the repo
+# All cells at all 25 slices, with elevation and the three cover fractions.
 lct_interp_paleo = readRDS('data/lct_paleo_reveals_interp.RDS')
+# Rename the first column, `ages`, to `year`. Positional, so it relies on `ages` being
+# first, which script 1 guarantees.
 colnames(lct_interp_paleo)[1] = 'year'
 
-###############################################################################################################
-## PREDICT FROM INTERP CALIBRATION MODEL
-###############################################################################################################
+############################################################################################
+# Predict and simulate, one month at a time
+############################################################################################
 
 for (month in months){
   
   print(month)
   
+  # This month's selected model. Because its formula says get(month), the loop variable
+  # being called `month` is what makes predict() and simulate() below find the right
+  # response name (not that they need the response for prediction, but the formula is
+  # still evaluated).
   cal_interp_model = readRDS(paste0('output/calibration/calibration_mod_interp_selected_', month, '_', alb_prod, '.RDS'))
   
+  # ---- The hindcast ----------------------------------------------------------------
+  # predict.gam with newdata = the paleo table evaluates the fitted smooths at every
+  # cell-slice's (x, y), elev and (OL, ET, ST) and returns the mean albedo on the
+  # response scale. The location smooth is evaluated at the same coordinates as today;
+  # only the land cover (and hence the cover smooth's contribution) changes through time.
   print(">>Predict")
   paleo_interp_predict_gam_vec = predict.gam(cal_interp_model, 
                                              newdata = lct_interp_paleo , 
                                              type    = 'response')
+  # Attach as a column and save: 69,936 x 8.
   paleo_interp_predict_gam = data.frame(lct_interp_paleo,
                                         alb_mean = paleo_interp_predict_gam_vec)
   
-  # paleo_interp_predict_gam = data.frame(lct_interp_paleo)
-  # paleo_interp_predict_gam$get(month) = paleo_interp_predict_gam_vec
-  
   saveRDS(paleo_interp_predict_gam, paste0('output/prediction/paleo_interp_predict_gam_', month, '_', alb_prod, '.RDS'))
   
+  # ---- 100 draws per cell-slice ---------------------------------------------------------
+  # See the header for what these draws represent. Result: a 69,936 x 100 matrix with
+  # columns named X1 ... X100 once it is put into a data.frame.
   print(">>Simulate")
   paleo_interp_sim_gam = simulate(cal_interp_model,
                                   nsim = 100,
                                   data = lct_interp_paleo)
   
+  # Predictors alongside the 100 draw columns: 69,936 x 107.
   paleo_interp_sim_gam_df = data.frame(lct_interp_paleo,  
                                        paleo_interp_sim_gam)  
   
-  # paleo_interp_sim_gam_melt = melt(paleo_interp_sim_gam_df, id.vars = c('year', 'long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
+  # Long form: one row per cell-slice per draw, 6,993,600 rows. `variable` holds the
+  # draw column name (X1 ...), `value` the simulated albedo.
   paleo_interp_sim_gam_melt = melt(paleo_interp_sim_gam_df, id.vars = c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
   colnames(paleo_interp_sim_gam_melt) = c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'iter', 'value')#c('cell_idx', 'iter', 'value')
   
+  # Turn "X1" ... "X100" into the numbers 1 ... 100 by dropping the leading X.
   paleo_interp_sim_gam_melt$iter = as.numeric(substr(paleo_interp_sim_gam_melt$iter, 2, 4))
   
+  # Save the full set of draws (~200 MB per month).
   saveRDS(paleo_interp_sim_gam_melt, paste0('output/prediction/paleo_interp_predict_gam_samps_', month, '_', alb_prod, '.RDS'))
   
+  # ---- Summarise the draws per cell-slice ---------------------------------------------
+  # Grouping on the predictors as well as year/x/y is harmless (they are constant within
+  # a cell-slice) and keeps them in the output. .groups = 'keep' leaves the result
+  # grouped, so each per-month summary file is a grouped tibble. The stacking loop
+  # below wraps every month in data.frame(), so the file scripts 7 and 7a read is a
+  # plain data.frame.
   print(">>Summarize")
   paleo_interp_sim_gam_sum = paleo_interp_sim_gam_melt %>% 
-    # group_by(year, long, lat, x, y, elev, ET, OL, ST) %>%
     group_by(year, x, y, elev, ET, OL, ST) %>%
     summarize(alb_mean = mean(value), 
               alb_sd = sd(value),
@@ -81,16 +140,15 @@ for (month in months){
               alb_hi = quantile(value, c(0.975)), 
               .groups = 'keep')
   
-  # paleo_sim_gam_sum_df = data.frame(lct_paleo,  paleo_sim_gam_sum)  
-  
   saveRDS(paleo_interp_sim_gam_sum, paste0('output/prediction/paleo_interp_predict_gam_summary_', month, '_', alb_prod, '.RDS'))
   
 }
 
-###############################################################################################################
-## merge data frames 
-###############################################################################################################
+############################################################################################
+# Stack the twelve months into two files
+############################################################################################
 
+# Empty tables with the final column layout, grown month by month with rbind().
 alb_preds_summary_months = data.frame(matrix(NA, nrow=0, ncol=13))
 colnames(alb_preds_summary_months) = c("year", "x", "y", "elev",  "ET", "OL", "ST", 
                "alb_mean", "alb_sd",  "alb_lo", "alb_mid",  "alb_hi", "month")
@@ -103,212 +161,17 @@ for (month in months) {
   
   print(month)
   
+  # Read this month's mean-prediction file, add a `month` column, append.
   alb_preds_month = readRDS(paste0('output/prediction/paleo_interp_predict_gam_', month, '_', alb_prod, '.RDS'))
   alb_preds_months = rbind(alb_preds_months, 
                            data.frame(alb_preds_month, month = rep(month)))
   
+  # Same for the summary file.
   alb_preds_summary_month = readRDS(paste0('output/prediction/paleo_interp_predict_gam_summary_', month, '_', alb_prod, '.RDS'))
   alb_preds_summary_months = rbind(alb_preds_summary_months, 
                                    data.frame(alb_preds_summary_month, month = rep(month)))
 }
 
+# The two files scripts 7 and 7a read: 839,232 rows each (69,936 x 12).
 saveRDS(alb_preds_months, paste0('output/prediction/paleo_interp_predict_gam_', alb_prod, '.RDS'))
 saveRDS(alb_preds_summary_months, paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
-} # [run-nointerp] end of interp block
-
-###############################################################################################################
-## XXX OLD
-###############################################################################################################
-
-
-lct_paleo = readRDS('data/lct_paleo_reveals.RDS')
-colnames(lct_paleo)[1] = 'year'
-
-# lct_paleo = lct_paleo[which(lct_paleo$month == 4),]
-
-cal_model = readRDS(paste0('data/calibration_model_selected_', run_tag, '.RDS'))
-
-
-paleo_predict_gam = predict.gam(cal_model, 
-                                newdata = lct_paleo , 
-                                type    = 'response')
-paleo_predict_gam = data.frame(lct_paleo, alb_mean = paleo_predict_gam)  
-
-saveRDS(paleo_predict_gam, paste0('data/paleo_predict_gam_', run_tag, '.RDS'))
-
-
-paleo_sim_gam = simulate(cal_model,
-                         nsim = 100,
-                         data = lct_paleo)
-
-paleo_sim_gam_df = data.frame(lct_paleo,  paleo_sim_gam)  
-
-paleo_sim_gam_melt = melt(paleo_sim_gam_df, id.vars = c('year', 'long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
-colnames(paleo_sim_gam_melt) = c('year', 'long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'iter', 'value')#c('cell_idx', 'iter', 'value')
-
-paleo_sim_gam_melt$iter = as.numeric(substr(paleo_sim_gam_melt$iter, 2, 4))
-
-saveRDS(paleo_sim_gam_melt, paste0('data/paleo_predict_gam_samps_', run_tag, '.RDS'))
-
-paleo_sim_gam_sum = paleo_sim_gam_melt %>% 
-  group_by(year, long, lat, x, y, elev, ET, OL, ST) %>%
-  summarize(alb_mean = mean(value), 
-            alb_sd = sd(value),
-            alb_lo = quantile(value, c(0.025)), 
-            alb_mid = quantile(value, c(0.5)), 
-            alb_hi = quantile(value, c(0.975)), 
-            .groups = 'keep')
-
-# paleo_sim_gam_sum_df = data.frame(lct_paleo,  paleo_sim_gam_sum)  
-
-saveRDS(paleo_sim_gam_sum, paste0('data/paleo_predict_gam_summary_', run_tag, '.RDS'))
-
-# fix.family.rd(betar())$rd
-# function (mu, wt, scale) 
-# {
-#   Theta <- exp(get(".Theta"))
-#   r <- rbeta(n = length(mu), shape1 = Theta * mu, shape2 = Theta * 
-#                (1 - mu))
-#   eps <- get(".betarEps")
-#   r[r >= 1 - eps] <- 1 - eps
-#   r[r < eps] <- eps
-#   r
-# }
-
-###############################################################################################################
-## summarize by region
-###############################################################################################################
-
-# rmvn <- function(n, mu, sig) { ## MVN random deviates
-#   L <- mroot(sig)
-#   m <- ncol(L)
-#   t(mu + L %*% matrix(rnorm(m*n), m, n))
-# }
-# 
-# Vb <- vcov(cal_model)
-# # newd <- with(lct_paleo, data.frame(age = seq(min(age), max(age), length = 200)))
-# newd = lct_paleo
-# pred <- predict(cal_model, newd, se.fit = TRUE)
-# se.fit <- pred$se.fit
-# 
-# set.seed(42)
-# N <- 10000
-# BUdiff <- rmvn(N, mu = rep(0, nrow(Vb)), sig = Vb)
-# 
-# Cg <- predict(cal_model, newd, type = "lpmatrix")
-# simDev <- Cg %*% t(BUdiff)
-# 
-# absDev <- abs(sweep(simDev, 1, se.fit, FUN = "/"))
-# masd <- apply(absDev, 2L, max)
-# crit <- quantile(masd, prob = 0.95, type = 8)
-# 
-# pred <- transform(cbind(data.frame(pred), newd),
-#                   uprP = fit + (2 * se.fit),
-#                   lwrP = fit - (2 * se.fit),
-#                   uprS = fit + (crit * se.fit),
-#                   lwrS = fit - (crit * se.fit))
-
-# predict_paleo = predict.gam(cal_model, 
-#                             newdata = lct_paleo , 
-#                             type    = 'response')
-# lct_preds = data.frame(lct_paleo, alb_pred = predict_paleo)  
-# 
-# saveRDS(lct_preds,'data/lct_paleo_preds_albclim.RDS')
-# 
-# 
-# 
-# preds_albclim = readRDS('data/lct_paleo_preds_albclim.RDS')
-# preds_bluesky = readRDS('data/lct_paleo_preds_bluesky.RDS')
-# 
-# preds_merged = merge(preds_albclim[,c('ages', 'long', 'lat', 'alb_pred')], 
-#       preds_bluesky[,c('ages', 'long', 'lat', 'alb_pred')], by = c('ages', 'long', 'lat'))
-# 
-# ggplot(data=preds_merged) +
-#   geom_point(aes(alb_pred.x, y=alb_pred.y)) +
-#   geom_abline(slope=1, intercept = 0) +
-#   xlab('alb clim') +
-#   ylab('blue sky')
-# 
-# 
-# # cal_model = readRDS('data/calibration_model5.RDS')
-# # cal_model = readRDS('data/calibration_mod5_albclim.RDS')
-# cal_brm = readRDS(paste0('data/calibration_brms_m4_', alb_prod, '.RDS'))
-# 
-# paleo_predict_brm = predict(cal_brm, 
-#                             newdata = lct_paleo,
-#                             summary = TRUE)
-# paleo_predict_brm = data.frame(lct_paleo, 
-#                                alb_mean = paleo_predict_brm[,'Estimate'], 
-#                                alb_sd = paleo_predict_brm[,'Est.Error'])  
-# 
-# saveRDS(paleo_predict_brm, paste0('data/paleo_predict_brms_', alb_prod, '.RDS'))
-# 
-# 
-
-###############################################################################################################
-## summarize by region
-###############################################################################################################
-
-# rmvn <- function(n, mu, sig) { ## MVN random deviates
-#   L <- mroot(sig)
-#   m <- ncol(L)
-#   t(mu + L %*% matrix(rnorm(m*n), m, n))
-# }
-# 
-# Vb <- vcov(cal_model)
-# # newd <- with(lct_paleo, data.frame(age = seq(min(age), max(age), length = 200)))
-# newd = lct_paleo
-# pred <- predict(cal_model, newd, se.fit = TRUE)
-# se.fit <- pred$se.fit
-# 
-# set.seed(42)
-# N <- 10000
-# BUdiff <- rmvn(N, mu = rep(0, nrow(Vb)), sig = Vb)
-# 
-# Cg <- predict(cal_model, newd, type = "lpmatrix")
-# simDev <- Cg %*% t(BUdiff)
-# 
-# absDev <- abs(sweep(simDev, 1, se.fit, FUN = "/"))
-# masd <- apply(absDev, 2L, max)
-# crit <- quantile(masd, prob = 0.95, type = 8)
-# 
-# pred <- transform(cbind(data.frame(pred), newd),
-#                   uprP = fit + (2 * se.fit),
-#                   lwrP = fit - (2 * se.fit),
-#                   uprS = fit + (crit * se.fit),
-#                   lwrS = fit - (crit * se.fit))
-
-# predict_paleo = predict.gam(cal_model, 
-#                             newdata = lct_paleo , 
-#                             type    = 'response')
-# lct_preds = data.frame(lct_paleo, alb_pred = predict_paleo)  
-# 
-# saveRDS(lct_preds,'data/lct_paleo_preds_albclim.RDS')
-# 
-# 
-# 
-# preds_albclim = readRDS('data/lct_paleo_preds_albclim.RDS')
-# preds_bluesky = readRDS('data/lct_paleo_preds_bluesky.RDS')
-# 
-# preds_merged = merge(preds_albclim[,c('ages', 'long', 'lat', 'alb_pred')], 
-#       preds_bluesky[,c('ages', 'long', 'lat', 'alb_pred')], by = c('ages', 'long', 'lat'))
-# 
-# ggplot(data=preds_merged) +
-#   geom_point(aes(alb_pred.x, y=alb_pred.y)) +
-#   geom_abline(slope=1, intercept = 0) +
-#   xlab('alb clim') +
-#   ylab('blue sky')
-
-
-# cal_model = readRDS('data/calibration_model5.RDS')
-# cal_model = readRDS('data/calibration_mod5_albclim.RDS')
-# cal_brm = readRDS(paste0('data/calibration_brms_m4_', alb_prod, '.RDS'))
-# 
-# paleo_predict_brm = predict(cal_brm, 
-#                             newdata = lct_paleo,
-#                             summary = TRUE)
-# paleo_predict_brm = data.frame(lct_paleo, 
-#                                alb_mean = paleo_predict_brm[,'Estimate'], 
-#                                alb_sd = paleo_predict_brm[,'Est.Error'])  
-# 
-# saveRDS(paleo_predict_brm, paste0('data/paleo_predict_brms_', alb_prod, '.RDS'))
