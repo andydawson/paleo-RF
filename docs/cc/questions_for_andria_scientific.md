@@ -187,6 +187,14 @@ want it handled in the maps and in the annual means? Option (iii) may be
 the most defensible physically, since a forcing computed where no
 sunlight falls is close to meaningless.
 
+**A statistic this distorts (found 2026-09-23).** Script 5's "fraction
+of data inside the 95 % interval" divides by all 2,860 cells, so the
+polar-night cells with no observation count as misses. The anchored
+table therefore shows 0.56 for December, 0.70 for January and 0.80 for
+November against 0.90-0.94 elsewhere; on the cells that have data every
+month is about 0.92. The winter models are not worse; the denominator
+is. Worth fixing before the number is quoted.
+
 ### B3. The spatial term cancels through time and may have absorbed the cover effect
 **What the code does.** Every prediction uses the same location and
 elevation values for a cell in every time slice; only the cover fractions
@@ -281,6 +289,21 @@ albedo at the 1-degree cell centre and the 1-degree cell mean
 attributed to the whole cell's cover.
 **What we need from you.** Was the centre pixel a deliberate choice?
 
+**Added 2026-09-23, with the specifics.** Script 2 builds the calibration table by sampling the 0.25-degree albedo
+raster at each 1-degree cell's centre point (`terra::extract` at a
+point returns the pixel under it). So every row of the table pairs a
+land-cover fraction that describes the whole 1-degree cell with the
+albedo of one quarter-degree pixel, a sixteenth of the cell. The
+cell-average albedo is computed in the same script (`resample(method =
+"average")`, saved as `..._coarse.RDS`) but is only used for a
+diagnostic scatter; script 4 fits to the centre-pixel table. The code
+review of 2026-09-18 noted this; recording it here so it reaches you.
+
+Was the centre-pixel choice deliberate, for instance to avoid averaging
+in water or ice pixels at coasts and lake margins, and have you tried
+fitting to the cell average instead? If the two calibrations differ, the
+cell average is the like-for-like match to the 1-degree predictors.
+
 ### B6. Albedo values of exactly zero are set to 0.0001
 *Checked 2026-09-19: no cell-month in the interp calibration table hits
 this replacement, so it affects the non-interp flavour only.*
@@ -294,6 +317,7 @@ You said in the meeting that a model with within-year structure would be
 better but is out of scope. Should the paper state that "consistent
 pattern across months" is an observation rather than a constraint of the
 model?
+
 
 ## C. Differencing, ice and forcing
 
@@ -406,6 +430,16 @@ the rule for handling the ice chronology sets the largest numbers.
 will clamp the chronology to monotone retreat cleanly; if not we will
 keep real readvances.
 
+**Two code-level consequences, found 2026-09-23.** (i) The one-step
+smoothing is applied once, not iterated; 2,844 pairs in the anchored run
+still show ice growing forward in time afterwards. (ii) Where ice
+advances ACROSS the 50 % threshold (young end ice, old end vegetation),
+both the vegetation and the ice difference are `NA` and `rowSums(na.rm
+= TRUE)` turns them into 0, a silent "no change" that then receives a
+kernel: 36 pairs. And if the offending step were ever the first pair of
+a series the index arithmetic would hit position 0 and the script would
+stop; it has not happened in the data so far.
+
 ### C3. The three kernels are not like for like
 **Verified on 2026-09-19** for HadGEM3 and CAM5, and **on 2026-09-21**
 for CACK, by downloading the kernels and opening them (README.md records
@@ -430,7 +464,7 @@ are dimensionally consistent as written.
 **But `band = 3` is a year, not a sky condition.** The CACK file's
 fourth dimension is documented as `Year: Years after 2000 AD`, with 16
 entries. `raster(..., level = month, band = 3)` therefore pulls the
-kernel for **2002 alone** — one arbitrary satellite year — rather than a
+kernel for **2003 alone** — one arbitrary satellite year — rather than a
 climatology. The file also contains `CACK CM`, described as
 "Climatological mean kernel", which is almost certainly what a Holocene
 study wants, and which would remove a source of interannual noise that
@@ -461,7 +495,7 @@ all-sky test in C4 needs no new download.
 
 **What we need from you.** (a) Was top of atmosphere the intended flux
 level throughout? If so, may we switch CAM5 to `FSNTC` and re-run the
-comparison? (b) Was `band = 3` meant to select the year 2002, or was the
+comparison? (b) Was `band = 3` meant to select the year 2003, or was the
 climatological mean `CACK CM` intended? (c) CACK is all-sky while HadGEM3
 and CAM5 are read as clear-sky, which is a second way the three are not
 like for like, on top of the flux-level mismatch; was that deliberate?
