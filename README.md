@@ -245,6 +245,42 @@ downloadable kernels can also be re-fetched with
 the EDI portal (link in the table above) and unzipped into
 `data/radiative-kernels/CACKv1.0/`.
 
+## Getting a copy
+
+The large data files are stored with Git LFS, so LFS must be installed
+before the files will download. Once per machine:
+
+- Mac: `brew install git-lfs`; Windows: included with Git for Windows;
+  Ubuntu/Debian: install the `git-lfs` package with apt. Then
+  `git lfs install`.
+
+Fresh copy:
+
+```
+git clone git@github.com:andydawson/paleo-RF.git
+cd paleo-RF
+git checkout chris-dev
+```
+
+Existing copy:
+
+```
+git checkout chris-dev      # if this says the branch is unknown: git fetch origin, then retry
+git pull
+```
+
+Either way the three data inputs (617 MB) download during the checkout.
+Check with `git lfs ls-files`: the three `data/` files should show `*`.
+If they show `-` (the files are small pointer stubs, which happens when a
+clone predates `git lfs install`), run `git lfs pull` once. The anchored
+outputs under `tests/anchors/` are deliberately excluded by `.lfsconfig`
+and show `-`; that is correct.
+
+Downloads of LFS files count against a 1 GB per month allowance on the
+repository owner's GitHub account, so each fresh clone uses most of a
+month's allowance; `git pull` on an existing copy fetches only what has
+changed.
+
 ## Environment
 
 R 4.5 with `mgcv`, `terra`, `raster`, `sp`, `sf`, `dplyr`, `tidyr`,
