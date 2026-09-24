@@ -48,3 +48,28 @@ repository is branched, committed, merged and backed up. Agent sessions read
   `docs/cc/questions_for_andria_general.md` and
   `docs/cc/questions_for_andria_scientific.md`; add to them as questions
   arise, remove them when answered.
+
+## Decisions on record
+
+- **2026-09-17.** The point (non-interp) flavour is not developed further;
+  the interp flavour is the analysis (agreed with Andria).
+- **2026-09-24.** The point flavour is removed from `chris-dev`: every
+  script now holds its interp code only, lines unchanged. Preserved at
+  tags `v0-legacy` and `v1-both-flavours`, branch `legacy`, and
+  `origin/run-nointerp` / `origin/run-may`; documented in
+  `docs/cc/README_nointerp.md`; outputs in `tests/anchors/nointerp-*`.
+- **2026-09-24.** Andria reviews the method on `chris-dev` and commits her
+  comments and changes there directly. While that review is open, Chris and
+  agent sessions do not edit `scripts/` on `chris-dev`; work goes on topic
+  branches and is rebased onto her changes before merging.
+- **2026-09-23.** Branch `annotated-interp` is a teaching copy of the same
+  code with a comment on every line. It is read, not merged; its code is
+  kept identical to `chris-dev`'s by the comment-stripped comparison
+  described in its commit messages. Chris intends to prune it into package
+  documentation later.
+- **2026-09-24.** `.lfsconfig` excludes `tests/anchors/**` from LFS
+  fetches so that a clone downloads only the data inputs (617 MB) and stays
+  inside GitHub's 1 GB/month LFS bandwidth allowance on Andria's account.
+  Fetch anchors with `git lfs pull --include="tests/anchors/**"`.
+- **Manifest string.** `8_radiative.R` records `cack_band_meaning = 'year
+  2003'`; the file's Year dimension says 2001 = 1 (known issue 37).

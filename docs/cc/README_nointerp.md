@@ -6,11 +6,14 @@ cells that contain pollen sites and, in the code as received, fits March
 only. By agreement with Andria (2026-09-17) it is not developed further;
 this page records what it needs and produces so it can be revived without
 reconstruction. It ran end to end on 2026-09-16 (March) and 2026-09-17
-(May) on branch `chris-dev` with the changes listed at the end.
+(May) on branch `chris-dev` with the changes listed at the end. **On
+2026-09-24 the point code was removed from `chris-dev`**; check out tag
+`v1-both-flavours` (or `origin/run-nointerp`, `origin/run-may`) to see or
+run it. Line numbers on this page refer to `v1-both-flavours`.
 
 Legend: 🟧 **missing** = required and not in the repository;
 <mark>unknown</mark> = provenance not confirmed. Line numbers (`script:line`)
-refer to the scripts on `chris-dev`; commented-out loads are marked.
+refer to the scripts at tag `v1-both-flavours`; commented-out loads are marked.
 
 ## Scripts
 

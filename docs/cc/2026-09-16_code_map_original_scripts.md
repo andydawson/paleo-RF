@@ -1,5 +1,9 @@
 # Code map: paleo-RF
 
+> Describes the scripts **as received** (tag `v0-legacy`). Since 2026-09-24
+> the scripts on `chris-dev` contain the interp path only; line numbers here
+> do not apply to them. Kept as the record of the original code.
+
 High-level guide to the scripts in this repository, written 2026-09-16 from a
 read-through of the code (no code was changed). Use it as a map before
 exploring the scripts yourself. Line counts are approximate.

@@ -6,7 +6,8 @@ satellite-albedo calibration, and radiative kernels.
 
 **Status: research code under active development.** The pipeline runs end
 to end as of 2026-09-21 and its outputs are frozen as regression anchors.
-This README was last brought up to date on 2026-09-23. The authoritative
+Since 2026-09-24 the trunk carries the interp flavour only (see below).
+This README was last brought up to date on 2026-09-24. The authoritative
 descriptions of the scripts and data are in `docs/cc/`; see the index at
 the end.
 
@@ -47,31 +48,36 @@ Diagram: `docs/cc/2026-09-17_methodology_schematic.png`.
 | `docs/cc/` | reviews, plans, question lists and other generated documents |
 | `writing/` | the draft manuscript, the EGU talk and the reference papers |
 
-## The point flavour
+## The point flavour, and where it went
 
 The pipeline originally ran on the ~505 cells that contain pollen sites
 (the point, or non-interp, flavour). Shortly before the EGU talk it was
 switched to the spatially complete, interpolated maps (the interp
 flavour, files carrying `_interp`), which is the analysis in the talk
 and the draft paper. By agreement with Andria (2026-09-17) the point
-flavour is not developed further; it is kept only so it can be revived.
-Its scripts, data and the two runs made of it are documented in
-`docs/cc/README_nointerp.md`, and its outputs are anchored. Everything
-else in this README describes the interp flavour.
+flavour is not developed further, and on **2026-09-24 it was removed
+from `chris-dev`**: each script now contains its interp code only, every
+line unchanged, with the point blocks, the guards that skipped them and
+the commented-out dead code gone. Script 1 went from 258 lines to 37.
 
-The point blocks are still present inside the scripts, guarded so they
-do not run unless their inputs are on disk, and in script 7 additionally
-behind `RUN_NOINTERP=1`. The code also ties the flavour to a month
-choice (the point path fits one month, the interp path all twelve), which
-has nothing to do with interpolation; separating the two switches is on
-the roadmap for the config stage
+The point code is preserved and reachable: tag `v0-legacy` (as
+received), tag `v1-both-flavours` (the last trunk commit with both
+flavours, immediately before the removal), branch `legacy`, and
+`origin/run-nointerp` / `origin/run-may` (the two runs made of it). Its
+outputs are anchored in `tests/anchors/nointerp-*` and its scripts and
+data are documented in `docs/cc/README_nointerp.md`, whose line numbers
+refer to `v1-both-flavours`.
+
+One thing the removal did not change: the scripts loop over all twelve
+months and cannot run a single month without editing the loop. Making
+the month set a setting is on the roadmap for the config stage
 (`docs/cc/2026-09-18_staged_plan_development_to_package.md`).
 
 ## Scripts (`scripts/`)
 
 Files are named as the scripts write them, with `<month>` standing for
 `jan` ... `dec`. Line numbers (`script:line`) refer to the scripts on
-`chris-dev` and give the statement that loads the file. Everything the
+`chris-dev` as of 2026-09-24 and give the statement that loads the file. Everything the
 pipeline writes goes under `output/` except where a script still writes
 into `data/`.
 
@@ -93,17 +99,17 @@ What each script reads and writes (`script:line` is the load statement):
 
 | Script | Reads | Writes |
 |---|---|---|
-| `1_veg_lct_prep.R` | `data/veg_posts_interp_ice.RDS` (`1:230`)<br>`data/grid.RDS` (`1:44`) | `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` |
-| `2_calibration_lct_bluesky.R` | `data/blue_sky_monthly_2000-2009.tif` (`2:290`)<br>`data/grid.RDS` (`2:39`)<br>`data/lct_modern_reveals_interp.RDS` (`2:255`)<br>`pbs*.RDS` (`2:36-37`) | `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS`<br>albedo maps |
+| `1_veg_lct_prep.R` | `data/veg_posts_interp_ice.RDS` (`1:12`) | `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` |
+| `2_calibration_lct_bluesky.R` | `data/blue_sky_monthly_2000-2009.tif` (`2:38`)<br>`data/grid.RDS` (`2:15`)<br>`data/lct_modern_reveals_interp.RDS` (`2:19`)<br>`pbs_ll.RDS` (`2:36-37`) | `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS`<br>albedo maps |
 | `3_plot_cal_lct_albedo.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`3:323`)<br>`scripts/make_grid.R` (`3:57`) | figures |
-| `4_calibration_model.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:27`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits |
-| `5_calibration_eval.R` | the model files above (`5:25`) | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv`<br>figures |
-| `6_prediction_model.R` | selected models (`6:43`)<br>`data/lct_paleo_reveals_interp.RDS` (`6:32`) | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
+| `4_calibration_model.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:16`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits |
+| `5_calibration_eval.R` | the model files above (`5:19`) | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv`<br>figures |
+| `6_prediction_model.R` | selected models (`6:24`)<br>`data/lct_paleo_reveals_interp.RDS` (`6:17`) | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
 | `6_prediction_model_spatial_eval.R` | spatial-experiment fits<br>`data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`<br>figures |
-| `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam[_summary]_bluesky.RDS` (`7:141`)<br>`data/grid.RDS` (`7:283`)<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:85`)<br>`data/albedo_glacier_monthly.csv` (`7:302`)<br>`pbs*.RDS` (`7:33-34`) | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
-| `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:44`)<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:103`)<br>`data/albedo_glacier_monthly.csv` (`7a:283`)<br>`data/grid.RDS` (`7a:220`)<br>`pbs*.RDS` (`7a:185-186`) | `data/ALB_diffs_bluesky.RDS` |
-| `8_radiative.R` | `data/ALB_diffs_bluesky.RDS` (`8:95`)<br>`data/ice_fort*.RDS` (`8:44-46`)<br>kernels (`8:77`, `8:182`, `8:216`)<br>`pbs*.RDS` (`8:73-74`) | `output/forcing/RF_holocene_all_cases.RDS` |
-| `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS` (`9:97`)<br>`data/alb_interp_preds_diffs_bluesky.RDS` (`9:269`)<br>`data/ipcc-ar6/*.csv` (`9:152-154`) | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
+| `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam[_summary]_bluesky.RDS` (`7:84`)<br>`data/grid.RDS` (`7:148`)<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:46`)<br>`data/albedo_glacier_monthly.csv` (`7:163`)<br>`pbs*.RDS` (`7:27-28`) | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
+| `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:40`)<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:44`)<br>`data/albedo_glacier_monthly.csv` (`7a:121`)<br>`data/grid.RDS` (`7a:98`)<br>`pbs*.RDS` (`7a:77-78`) | `data/ALB_diffs_bluesky.RDS` |
+| `8_radiative.R` | `data/ALB_diffs_bluesky.RDS` (`8:59`)<br>`data/ice_fort*.RDS` (`8:38-40`)<br>kernels (`8:57`, `8:97`, `8:107`)<br>`pbs*.RDS` (`8:54-55`) | `output/forcing/RF_holocene_all_cases.RDS` |
+| `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS` (`9:141`)<br>`data/alb_interp_preds_diffs_bluesky.RDS` (`9:325`)<br>`data/ipcc-ar6/*.csv` (`9:199-201`) | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
 
 Not part of the pipeline: `GCM_snow_prob.R`, `thornthwaite.R`,
 `beta_veg_lct_modern.R` and `scripts/archive/` (abandoned climate/snow
@@ -138,18 +144,18 @@ input is missing as of 2026-09-21.
 
 | File | Used by | Status |
 |---|---|---|
-| `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:230`) | present |
-| `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:290`) | present |
-| `data/grid.RDS` | input to 1, 2, 7, 7a (`1:44`, `2:39`, `7:283`, `7a:220`) | present |
-| `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2, 3, 7, 7a, 8 (`2:36-37`, `3:39-40`, `7:33-34`, `7a:185-186`, `8:73-74`) | present |
-| elevation (not a file) | input to 1 (`1:242`) | network |
-| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:85`) | present |
-| `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:302`, `7a:283`) | present |
-| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:103`) | present |
-| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:77`) | present (157 MB, Git LFS) |
-| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:182`) | present (21 MB) |
-| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:216`) | present (126.5 MB, Git LFS) |
-| `data/ipcc-ar6/AR6_ERF_1750-2019{,_pc05,_pc95}.csv` | input to 9 (`9:152-154`) | present |
+| `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:12`) | present |
+| `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:38`) | present |
+| `data/grid.RDS` | input to 2, 7, 7a (`2:15`, `7:148`, `7a:98`) | present |
+| `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2 (`pbs_ll` only), 3, 7, 7a, 8 (`2:36-37`, `3:39-40`, `7:27-28`, `7a:77-78`, `8:54-55`) | present |
+| elevation (not a file) | input to 1 (`1:23`) | network |
+| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:46`) | present |
+| `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:163`, `7a:121`) | present |
+| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:44`) | present |
+| `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 (`8:57`) | present (157 MB, Git LFS) |
+| `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 (`8:97`) | present (21 MB) |
+| `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 (`8:107`) | present (126.5 MB, Git LFS) |
+| `data/ipcc-ar6/AR6_ERF_1750-2019{,_pc05,_pc95}.csv` | input to 9 (`9:199-201`) | present |
 | `scripts/make_grid.R` | sourced by 3 (`3:57`, `3:345`) | present (reconstructed) |
 
 What each input is and where it came from:
@@ -209,14 +215,14 @@ and git-ignored.
 
 | File | Written by | Read by | Anchor |
 |---|---|---|---|
-| `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` | 1 | 2 (`2:255`), 6 (`6:32`) | `interp-allmonths-2026-09-20` |
-| `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS` | 2 | 3 (`3:323`), 4 (`4:27`), 5 (`5:25`) | `interp-allmonths-2026-09-20` |
+| `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` | 1 | 2 (`2:19`), 6 (`6:17`) | `interp-allmonths-2026-09-20` |
+| `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS` | 2 | 3 (`3:323`), 4 (`4:16`), 5 (`5:19`) | `interp-allmonths-2026-09-20` |
 | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits | 4 | 4, 5, 6-spatial-eval | AIC table and stats only (models are 3.6 GB) |
-| `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv` | 5 | 6 (`6:43`) | stats only |
-| `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS`; merged `..._bluesky.RDS`<br>`..._summary_bluesky.RDS` | 6 | 7 (`7:141`), 7a (`7a:44`) | summaries in `interp-allmonths-2026-09-20` |
-| `data/ice_fort.RDS`<br>`ice_fort_diff_young.RDS`<br>`ice_fort_diff_old.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` | 7 | 8 (`8:44-46`), 9 (`9:269`) | `interp-tail-2026-09-21` |
-| `data/ALB_diffs_bluesky.RDS` (result: albedo differences) | 7a | 8 (`8:95`) | `interp-tail-2026-09-21`, reproduced byte for byte on re-run |
-| `output/forcing/RF_holocene_all_cases.RDS` (result: forcing) | 8 | 9 (`9:97`) | `interp-tail-2026-09-21` (Git LFS) |
+| `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv` | 5 | 6 (`6:24`) | stats only |
+| `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS`; merged `..._bluesky.RDS`<br>`..._summary_bluesky.RDS` | 6 | 7 (`7:84`), 7a (`7a:40`) | summaries in `interp-allmonths-2026-09-20` |
+| `data/ice_fort.RDS`<br>`ice_fort_diff_young.RDS`<br>`ice_fort_diff_old.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` | 7 | 8 (`8:38-40`), 9 (`9:325`) | `interp-tail-2026-09-21` |
+| `data/ALB_diffs_bluesky.RDS` (result: albedo differences) | 7a | 8 (`8:59`) | `interp-tail-2026-09-21`, reproduced byte for byte on re-run |
+| `output/forcing/RF_holocene_all_cases.RDS` (result: forcing) | 8 | 9 (`9:141`) | `interp-tail-2026-09-21` (Git LFS) |
 | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv` | 9 |  | tracked in git (small) |
 
 ### Other files in `data/`
@@ -229,7 +235,11 @@ Everything else in `data/` belongs to the point flavour (see
 current script and are candidates for removal once confirmed.
 
 Large files: anything over 50 MB is tracked with Git LFS; install
-`git-lfs` before cloning or you will get pointer files. The two
+`git-lfs` before cloning or you will get pointer files. `.lfsconfig`
+excludes `tests/anchors/**` from fetches, so a fresh clone downloads the
+three data inputs (617 MB) and leaves the 139 MB anchored forcing table
+as a pointer; fetch it when needed with
+`git lfs pull --include="tests/anchors/**"`. The two
 downloadable kernels can also be re-fetched with
 `bash tools/download_kernels.sh`; CACK must be downloaded by hand from
 the EDI portal (link in the table above) and unzipped into
@@ -282,7 +292,8 @@ the end; scripts 7, 7a, 8 and 9 have it.
 Frozen outputs that a refactor must still reproduce, each set with its
 md5s and a README entry saying how it was made and what it does not
 cover. Four sets: `nointerp-mar-2026-09-16` and `nointerp-may-2026-09-17`
-(the point flavour), `interp-allmonths-2026-09-20` (scripts 1 to 6) and
+(the point flavour; reproducible only from `v1-both-flavours` or earlier
+now that the trunk is interp only), `interp-allmonths-2026-09-20` (scripts 1 to 6) and
 `interp-tail-2026-09-21` (scripts 7, 7a, 8; 187 MB, determinism
 demonstrated by a byte-identical re-run of 7a). Andria's own outputs are
 preserved at the `v0-legacy` tag rather than copied;
@@ -294,8 +305,11 @@ See `CONTRIBUTING.md` (branches, commits, merges, where generated
 material lives) and `AGENTS.md` (notes for AI-assisted sessions).
 Branches: `main` (upstream, merged only by pull request), `legacy`
 (frozen copy of the code as received, also tagged `v0-legacy`),
-`chris-dev` (working trunk), topic branches off it that are deleted when
-merged.
+`chris-dev` (working trunk, interp only since 2026-09-24; Andria reviews
+and edits here directly), `annotated-interp` (a teaching copy of the
+same code with a comment on every line; read it, do not merge it), and
+topic branches off `chris-dev` that are deleted when merged. Tags:
+`v0-legacy`, `v1-both-flavours`.
 
 ## Documents (`docs/cc/`)
 
@@ -306,5 +320,8 @@ merged.
 - `2026-09-17_methodology_schematic.*`: the full flowchart; `2026-09-17_nointerp_pipeline_diagram.*` and `2026-09-17_nointerp_run_report_for_meeting.docx`: the point-flavour run.
 - `2026-09-18_code_review_original_code.md`: findings R1-R17; `2026-09-18_staged_plan_development_to_package.md`: the cleanup plan, stages 0-6.
 - `2026-09-19_interp_run_changes.md`: log of the first interp run and every change it needed; `2026-09-19_writeup_vs_code_comparison.md`: paper and talk against the code.
-- `README_nointerp.md`: the point flavour's scripts and data.
+- `README_nointerp.md`: the point flavour's scripts and data (line numbers as of `v1-both-flavours`).
+- `2026-09-23_glossary_columns_and_variables.md`: every column of every saved table, the naming patterns, and the conventions (units, signs, `year` meaning the younger slice).
+- `2026-09-23_walkthrough_one_cell.md`: one grid cell followed through all nine scripts with its actual numbers.
+- `2026-09-23_adversarial_review_of_annotations.md`: a second model's review of the annotated scripts; its four findings about the original code are known issues 37-41.
 - `questions_for_andria_general.md`, `questions_for_andria_scientific.md`: living lists of open questions.
