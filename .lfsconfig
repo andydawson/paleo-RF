@@ -1,0 +1,4 @@
+[lfs]
+	# Anchored outputs are only needed to check a refactor; skip them on clone and pull.
+	# To fetch them later: git lfs pull --include="tests/anchors/**"
+	fetchexclude = tests/anchors/**
