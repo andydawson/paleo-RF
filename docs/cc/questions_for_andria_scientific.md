@@ -733,15 +733,31 @@ How are samples whose age posteriors straddle a bin boundary assigned to
 time slices? Sharp events such as the hemlock decline can be smeared or
 sharpened by that choice.
 
-### D3. Ten cells exist only at 1,000-2,000 BP
-The land-cover product has 2,870 distinct cells, but only 2,860 at 50 BP.
-The ten missing there are a contiguous strip along 17.5 N from 100.5 W to
-91.5 W (the grid's southern edge, in southern Mexico) and they appear at
-exactly three slices: 1,000, 1,500 and 2,000 BP. That pattern looks like
-an edge artefact of the interpolation rather than a reconstruction. They
-never reach the forcing (script 8 trims to 27-74 N), but they are part of
-the "1,814 absent cell-slices" in script 1's header and worth knowing
-about when that coverage is characterised.
+### D3. The 1,814 absent cell-slices: all at the edges, none used downstream
+Characterised 2026-09-25. The land-cover product has 2,870 cells x 25
+slices = 71,750 cell-slices, of which 1,814 are absent. All of them
+belong to 211 cells, and every one of those cells lies outside the band
+the pipeline uses: 114 south of 27 N (1,422 absent cell-slices) and 97
+north of 74 N (392). No interior cell is missing any slice, so script
+8's 27-74 N trim removes every incomplete cell before the forcing is
+computed, and script 7a's coverage check finds exactly these 211.
+**Conclusion: harmless for the modelling as run.** Two patterns are still
+worth understanding as data quality:
+
+- South of 27 N the coverage shrinks back in time in steps: 10 cells
+  (a strip along 17.5 N, 100.5 W to 91.5 W, the grid's southern edge)
+  exist only at 1,000-2,000 BP; 84 cells are absent from 5,500 BP back;
+  all 114 are absent from 8,000 BP back. That reads like the southern
+  reach of the pollen-site network thinning into the past.
+- North of 74 N, 66 cells are absent at exactly three slices, 200, 4,500
+  and 6,000 BP, and present at every other slice including older ones;
+  97 are absent at 11,000 and 11,500 BP. Three isolated slices is not a
+  geological pattern; it looks like an artefact of the interpolation run
+  (and it is why the ice-flag count at 4,500 BP, 41, is below its
+  neighbours: 14 flagged cells are simply absent at that slice).
+
+Is the southern thinning intended (no pollen data), and do you know what
+happened at 200, 4,500 and 6,000 BP in the north?
 
 
 ## E. Validation
