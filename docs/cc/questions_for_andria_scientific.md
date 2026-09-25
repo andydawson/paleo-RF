@@ -353,6 +353,19 @@ predictor. Was a cell-mean elevation (e.g. from a DEM averaged over the
 cell) considered, and should offshore centres be clipped to zero?
 
 
+### B10. The "modern" land cover is nominally AD 1900; the albedo is 2000-2009
+The calibration pairs the land cover of the 50 BP slice with a satellite
+albedo climatology for 2000-2009. If 50 BP means what it usually means
+(before 1950, so about AD 1900), the predictors describe a landscape a
+century older than the response, and that century saw the largest land
+use changes in the record over much of the domain: agricultural
+expansion and later abandonment, forest regrowth in the east, fire
+suppression in the west. If instead the 50 BP slice is a bin that reaches
+to the present (say 150 BP to -60 BP), the mismatch is small. What does
+the slice actually cover, and was the pairing with 2000-2009 albedo
+considered acceptable on that basis?
+
+
 ## C. Differencing, ice and forcing
 
 ### C0. One ice chronology, plus a second one only for the fraction
