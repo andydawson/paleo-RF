@@ -339,6 +339,20 @@ one-line change in script 2 that could shift the fitted open-land
 albedo, which is the term the whole hindcast rests on.
 
 
+### B9. Elevation is a single point at the cell centre, at an unstated resolution
+Script 1 takes elevation from `elevatr::get_elev_point()` at each cell's
+centre coordinate: one spot in a cell 70-100 km across, against land
+cover that is a cell average. In flat country it hardly matters; in the
+Rockies or the Mexican highlands (the table reaches 3,492 m) the centre
+point can sit hundreds of metres from the cell mean, and for 
+coastal cells whose centre falls offshore the service returns the sea
+floor (the table's minimum is -28 m). The tile resolution queried is
+elevatr's default (`z = NULL`, version 0.99.1) and is nowhere stated.
+This is the same point-versus-cell mismatch as B5, applied to the second
+predictor. Was a cell-mean elevation (e.g. from a DEM averaged over the
+cell) considered, and should offshore centres be clipped to zero?
+
+
 ## C. Differencing, ice and forcing
 
 ### C0. One ice chronology, plus a second one only for the fraction
@@ -718,6 +732,17 @@ in the north, where the largest Holocene changes are.
 How are samples whose age posteriors straddle a bin boundary assigned to
 time slices? Sharp events such as the hemlock decline can be smeared or
 sharpened by that choice.
+
+### D3. Ten cells exist only at 1,000-2,000 BP
+The land-cover product has 2,870 distinct cells, but only 2,860 at 50 BP.
+The ten missing there are a contiguous strip along 17.5 N from 100.5 W to
+91.5 W (the grid's southern edge, in southern Mexico) and they appear at
+exactly three slices: 1,000, 1,500 and 2,000 BP. That pattern looks like
+an edge artefact of the interpolation rather than a reconstruction. They
+never reach the forcing (script 8 trims to 27-74 N), but they are part of
+the "1,814 absent cell-slices" in script 1's header and worth knowing
+about when that coverage is characterised.
+
 
 ## E. Validation
 
