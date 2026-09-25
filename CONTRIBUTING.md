@@ -49,6 +49,14 @@ repository is branched, committed, merged and backed up. Agent sessions read
   `docs/cc/questions_for_andria_scientific.md`; add to them as questions
   arise, remove them when answered.
 
+## Coding practice
+
+Research code, but written to good practice: no duplicated code (shared
+routines are functions in `R/`, sourced by the scripts); small functions with
+a stated purpose; comments say why; every change parsed and, where a run is
+feasible, checked against `tests/anchors/`; version control as above. Chris,
+2026-09-25. `AGENTS.md` carries the same rules for agent sessions.
+
 ## Decisions on record
 
 - **2026-09-17.** The point (non-interp) flavour is not developed further;
