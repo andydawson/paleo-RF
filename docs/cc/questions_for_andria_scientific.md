@@ -319,6 +319,26 @@ pattern across months" is an observation rather than a constraint of the
 model?
 
 
+### B8. Present-day ice caps sit in the modern calibration as vegetated cells
+The `ice` flag in `veg_posts_interp_ice.RDS` is applied only to slices
+of 1,000 BP and older: at 50, 200 and 500 BP no cell is flagged, although
+the 1 ka ice polygons contain 48, 35 and 48 of those slices' cells
+respectively (point-in-polygon test, 2026-09-25). So 48 of the 2,860
+modern cells are present-day ice caps (20 in Alaska west of 100 W, 10
+in the Canadian Arctic islands, 18 on Baffin and Labrador), and they
+enter the calibration table with land cover assigned by the
+interpolation (mean ET 0.30, OL 0.49, ST 0.21) and the satellite's ice
+albedo: July mean 0.36 against 0.13 for everything else, April 0.69
+against 0.38. They are 1.7 % of the cells but carry the highest albedos
+in the dataset and an open-land fraction that describes rock and ice,
+not vegetation.
+
+Was leaving them in deliberate? If not, excluding them (or masking with
+the 1 ka polygons, which the flag already uses for older slices) is a
+one-line change in script 2 that could shift the fitted open-land
+albedo, which is the term the whole hindcast rests on.
+
+
 ## C. Differencing, ice and forcing
 
 ### C0. One ice chronology, plus a second one only for the fraction
@@ -357,6 +377,15 @@ One related point either way: `1_veg_lct_prep.R` drops the `ice` column
 when it aggregates, so the flag never reaches the predictions and the
 pipeline picks ice up again later from a different file. Should it be
 carried through?
+
+**A coverage note (2026-09-25).** The flag itself is consistent: at every
+slice it equals the cells present in the product that fall inside the
+nearest polygon set (ties to the younger). Where the counts look odd it
+is the product's cell coverage: at 4,500 BP only 41 cells are flagged
+against 55 at 4,000 because 14 cells that exist at 4,000 are absent from
+the product at 4,500. That is the 1,814 missing cell-slices (2.5 %) of
+script 1's header showing through; which cells drop out at which
+slices, and why, has not been characterised.
 
 ### C0a. `albedo_glacier_monthly.csv` cannot be sourced; what should the values be?
 The code needs twelve rows with the columns `month`, `ice_albedo_fixed`
