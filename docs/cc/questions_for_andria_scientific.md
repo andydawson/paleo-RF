@@ -387,6 +387,12 @@ the product at 4,500. That is the 1,814 missing cell-slices (2.5 %) of
 script 1's header showing through; which cells drop out at which
 slices, and why, has not been characterised.
 
+**The two sources disagree at the modern slice (2026-09-25).** At 50 BP
+script 7's polygon test flags 48 cells as ice while script 7a's Dalton
+raster puts 28 cells over half ice (156 with any ice at all). Both are
+"today", so this is a direct measure of how far the two chronologies
+differ, independent of any dating question.
+
 ### C0a. `albedo_glacier_monthly.csv` cannot be sourced; what should the values be?
 The code needs twelve rows with the columns `month`, `ice_albedo_fixed`
 and `ice_albedo_sc` (`7a:264-268`), plus `ice_albedo` for
