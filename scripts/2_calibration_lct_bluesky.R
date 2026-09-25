@@ -12,6 +12,11 @@ months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct',
 
 pbs_ll = readRDS('data/map-data/geographic/pbs_ll.RDS')
 
+# Boundaries for the maps, prepared by the shared helper (see R/map_helpers.R for why the
+# raw file cannot be drawn as-is: the "weirdness" noted on 2026-09-24). Fix added 2026-09-25.
+source('R/map_helpers.R')
+pbs_land = prepare_boundaries(pbs_ll)
+
 grid <- rast(readRDS("data/grid.RDS"))
 
 dir.create('figures', showWarnings = FALSE)
@@ -42,18 +47,20 @@ grid = rast(grid)
 blue_all_months = rast('data/blue_sky_monthly_2000-2009.tif')
 
 # coarsen albedo by averaging albedo cells within a grid cell
+# CM: this cell-averaged albedo is saved but not currently used downstream
 blue_all_months_coarse = resample(blue_all_months, grid, method="average")
 
 names(blue_all_months) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 names(blue_all_months_coarse) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 
 # crop albedo (I think this removes the ocean grid cells? not sure)
+# CM: this crop is not needed (and not doing anything - cropping the raster to a box that is bigger than itself) - line 123 samples the raster at the 2870 land cover cells.
 blue_all_months_coarse = crop(blue_all_months_coarse, ext(pbs_ll))
 
 # some weirdness going on with these figures
 
 ggplot() +
-  geom_path(data=pbs_ll, aes(long,lat, group = group), color="grey50") +
+  boundary_layers(pbs_land) +
   geom_spatraster(data = blue_all_months, alpha=0.8) +
   scale_fill_gradientn(colours = terrain.colors(10), na.value='transparent', name = "Albedo") +
   theme_light() +
@@ -63,7 +70,7 @@ ggsave('figures/albedo_maps_monthly_bluesky_native.pdf')
 ggsave('figures/albedo_maps_monthly_bluesky_native.png')
 
 ggplot() +
-  geom_path(data=pbs_ll, aes(long, lat, group = group), color="grey50") +
+  boundary_layers(pbs_land) +
   geom_spatraster(data = blue_all_months_coarse, alpha=0.8) +
   scale_fill_gradientn(colours = terrain.colors(10), na.value='transparent', name = "Albedo") +
   theme_bw() +
@@ -89,7 +96,7 @@ for(i in 1:length(months)) {
   vname = sprintf('bs%02d', i)
 
   p <- ggplot() +
-    geom_path(data=pbs_ll, aes(long,lat, group = group), color="grey50") +
+    boundary_layers(pbs_land) +
     geom_spatraster(data=blue_month, alpha=0.8) +
     scale_fill_gradientn(colours=terrain.colors(10), na.value='transparent', name = "Albedo") +
     theme_bw() +
@@ -103,7 +110,7 @@ for(i in 1:length(months)) {
   vname = sprintf('bs%02d', i)
 
   p_coarse <- ggplot() +
-    geom_path(data=pbs_ll, aes(long,lat, group = group), color="grey50") +
+    boundary_layers(pbs_land) +
     geom_spatraster(data=blue_month_coarse, alpha=0.8) +
     scale_fill_gradientn(colours=terrain.colors(10), na.value='transparent', name = "Albedo") +
     theme_bw() +
