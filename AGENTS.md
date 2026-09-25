@@ -7,7 +7,7 @@ when done; never touch `legacy` (frozen snapshot of the original code) or
 `origin` at checkpoints and session end; `main` changes only via a PR that
 Andria approves.
 
-`docs/cc/2026-09-16_code_map_original_scripts.md` gives a high-level description of every script and its data
+`docs/cc/2026-09-16_code_map_original_scripts.md` (archived 2026-09-25; in git history) gives a high-level description of every script and its data
 inputs/outputs.
 
 Two living documents must be kept current in every session:

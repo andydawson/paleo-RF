@@ -3,7 +3,7 @@
 Frozen outputs that any refactor must still reproduce. The point of an
 anchor is to prove that a change to the code did not change the science;
 `tools/` and the staged plan
-(`docs/cc/2026-09-18_staged_plan_development_to_package.md`) call for a
+(`docs/cc/2026-09-18_staged_plan_development_to_package.md` (archived 2026-09-25; in git history)) call for a
 check against these before and after each cleanup step.
 
 ## What exists, and what does not

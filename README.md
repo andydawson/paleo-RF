@@ -71,7 +71,7 @@ refer to `v1-both-flavours`.
 One thing the removal did not change: the scripts loop over all twelve
 months and cannot run a single month without editing the loop. Making
 the month set a setting is on the roadmap for the config stage
-(`docs/cc/2026-09-18_staged_plan_development_to_package.md`).
+(the staged plan, archived 2026-09-25).
 
 ## Scripts (`scripts/`)
 
@@ -83,7 +83,7 @@ into `data/`.
 
 | Script | Does |
 |---|---|
-| `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation from AWS terrain tiles (`elevatr`, network); modern (age 50) vs paleo split |
+| `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation from a committed cache (first built from AWS terrain tiles); modern (age 50) vs paleo split. With `DIAGNOSTIC=TRUE` it also reports on the discarded ice flag, the absent cell-slices and mean-versus-median, and maps the ice flag at every slice into `figures/diagnostics/`
 | `2_calibration_lct_bluesky.R` | monthly blue-sky albedo at the modern cells, native pixel and 1-degree mean |
 | `3_plot_cal_lct_albedo.R` | diagnostic plots of the calibration data (optional) |
 | `4_calibration_model.R` | model ladder mod1-mod8 for every month; AIC table; spatial-effects experiment |
@@ -120,13 +120,18 @@ Run order is 1 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7a -> 8 -> 9; 3 and
 Scripts 7, 7a, 8 and 9 log a provenance manifest (see below); the others
 will as they are next touched.
 
+Diagnostics: script 1 has a `DIAGNOSTIC` switch (`DIAGNOSTIC=TRUE Rscript
+scripts/1_veg_lct_prep.R`, off by default) that adds checks and plots
+without changing any output; the plots go to `figures/diagnostics/`. The
+pattern is meant to be extended to the other scripts.
+
 Measured runtimes on this machine (48 cores, capped as noted, one R thread
 in the loops): script 1 ~4 min (mostly the elevation lookup); 2 ~20 min;
 4 ~27 h on 8 cores, four fifths of it model 7 (the Gaussian-process cover
 smooth) at ~2 h per month, every other model 1 to 5 min; 5 ~4 min; 6
 ~15 min; 7 62 min; 7a 52 min; 8 20 s; 9 seconds. Scripts 7 and 7a are
 dominated by a per-cell `rbind` loop that is quadratic in output rows,
-which is the Stage 4 consolidation in the staged plan.
+which is a planned consolidation.
 
 Known stop: script 5 reads the spatial-experiment models from
 `output/calibration/spatial_experiment/` but script 4 writes them to
@@ -148,7 +153,7 @@ input is missing as of 2026-09-21.
 | `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:38`) | present |
 | `data/grid.RDS` | input to 2, 7, 7a (`2:15`, `7:148`, `7a:98`) | present |
 | `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2 (`pbs_ll` only), 3, 7, 7a, 8 (`2:36-37`, `3:39-40`, `7:27-28`, `7a:77-78`, `8:54-55`) | present |
-| elevation (not a file) | input to 1 (`1:23`) | network |
+| `data/elev_interp_cells.RDS` | input to 1 (`1:57`) | present (16 KB, committed) |
 | `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:46`) | present |
 | `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:163`, `7a:121`) | present |
 | `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:44`) | present |
@@ -166,7 +171,7 @@ What each input is and where it came from:
 | `blue_sky_monthly_2000-2009.tif` | 12-band monthly blue-sky albedo, 0.25 degree, 2000-2009 mean | MODIS MCD43A3 v061 + ERA5 as described in manuscript §2.1; <mark>unknown</mark> who built it and with what code |
 | `grid.RDS` | 1-degree lon/lat raster with cell ids (-172 to 127 E, 17 to 79 N) | <mark>unknown</mark> (committed 2023-05-16, no generating code) |
 | `pbs.RDS` | political boundaries, projected and lon/lat; includes ocean polygons | <mark>unknown</mark> |
-| elevation (not a file) | point elevation at cell centres | fetched from AWS terrain tiles by `elevatr` at run time; values can differ between runs |
+| `elev_interp_cells.RDS` | point elevation (m) at each of the 2,870 cell centres: x, y, elev | fetched once from AWS terrain tiles by `elevatr` on 2026-09-25 and committed, so no network is needed; delete the file to force a fresh lookup |
 | `glacier_shapefiles_21-1k.RDS` | 21 ice-margin polygon sets, 1,000-year steps, 21 to 1 ka, lon/lat. **The project's ice chronology**: a point-in-polygon test reproduces the `ice` flag above exactly (69/69 cells at 6 ka, 213/213 at 8 ka, 596/596 at 10 ka, 780/780 at 11 ka), so the flag was derived from these | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins, but pre-dates Dalton 2020 |
 | `albedo_glacier_monthly.csv` | monthly albedo assigned to ice-covered cells; three columns offering alternative conventions (`ice_albedo` seasonal 0.6-0.8, `ice_albedo_fixed` constant 0.68, `ice_albedo_sc` smoothly varying 0.56-0.80) | Andria, 2026-09-20; <mark>unknown</mark> literature source for the values and which column is preferred |
 | `dalton_interpolated_LC6k.tif` | continuous ice **fraction** per cell and slice, used to mix vegetation and ice albedo by area; needed because the polygons above are binary. 26 layers named `yr<n>bp`, 12,000 to 50 BP, 116 x 62 cells, lon/lat WGS84, values 0 to 1; every one of the 25 pipeline ages matches a layer | Dalton et al. 2020 margins interpolated to the slices; Andria, 2026-09-20; <mark>unknown</mark> who did the interpolation and by what method |
@@ -313,15 +318,11 @@ topic branches off `chris-dev` that are deleted when merged. Tags:
 
 ## Documents (`docs/cc/`)
 
-- `2026-09-16_code_map_original_scripts.md`: what every script does, in detail.
-- `2026-09-16_known_issues_missing_data_and_code.md`: defects, missing data, missing code.
-- `2026-09-17_manuscript_and_talk_outline.md`: structure of the draft paper and the EGU talk.
-- `2026-09-17_methodology_questions_newcomer_review.md`: 58 fundamental questions about the method.
-- `2026-09-17_methodology_schematic.*`: the full flowchart; `2026-09-17_nointerp_pipeline_diagram.*` and `2026-09-17_nointerp_run_report_for_meeting.docx`: the point-flavour run.
-- `2026-09-18_code_review_original_code.md`: findings R1-R17; `2026-09-18_staged_plan_development_to_package.md`: the cleanup plan, stages 0-6.
-- `2026-09-19_interp_run_changes.md`: log of the first interp run and every change it needed; `2026-09-19_writeup_vs_code_comparison.md`: paper and talk against the code.
+- `questions_for_andria_scientific.md`, `questions_for_andria_general.md`: living lists of open questions, kept current.
+- `2026-09-16_known_issues_missing_data_and_code.md`: defects, missing data, missing code (items 37-41 are the ones found in September 2026).
 - `README_nointerp.md`: the point flavour's scripts and data (line numbers as of `v1-both-flavours`).
-- `2026-09-23_glossary_columns_and_variables.md`: every column of every saved table, the naming patterns, and the conventions (units, signs, `year` meaning the younger slice).
-- `2026-09-23_walkthrough_one_cell.md`: one grid cell followed through all nine scripts with its actual numbers.
-- `2026-09-23_adversarial_review_of_annotations.md`: a second model's review of the annotated scripts; its four findings about the original code are known issues 37-41.
-- `questions_for_andria_general.md`, `questions_for_andria_scientific.md`: living lists of open questions.
+
+Further working documents (code map, code review, staged plan, glossary,
+walkthrough, run logs) were removed from the repository on 2026-09-25 to
+reduce clutter; they remain in git history before that date and in a
+local archive on Chris's workstation.

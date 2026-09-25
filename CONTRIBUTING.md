@@ -26,7 +26,7 @@ repository is branched, committed, merged and backed up. Agent sessions read
 - Remote: `origin` (`andydawson/paleo-RF`). Push `chris-dev`, `legacy` and
   any open topic branches at natural checkpoints and before ending each
   session, without asking each time.
-- Keep `docs/cc/2026-09-16_code_map_original_scripts.md` current when scripts are added, renamed or retired.
+- The code map that used to live in `docs/cc/` was archived on 2026-09-25 (git history before that date); the README's script table is now the current map and is kept up to date when scripts are added, renamed or retired.
 - Andria's code and data as received are tagged `v0-legacy`. That tag is
   the store of her original pipeline outputs; recover them with
   `bash tools/restore_original_outputs.sh`. Never commit regenerated run
