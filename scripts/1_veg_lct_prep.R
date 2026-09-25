@@ -9,9 +9,12 @@ library(elevatr)
 
 # Diagnostic mode. Off by default. Switch on with DIAGNOSTIC=TRUE in the environment
 # (e.g. `DIAGNOSTIC=TRUE Rscript scripts/1_veg_lct_prep.R`) or by setting it here.
-# In diagnostic mode the script additionally reports on the ice flag it discards,
-# characterises the cell-slices absent from the input, and draws the ice extent at every
-# time slice into figures/diagnostics/. Nothing in diagnostic mode changes the outputs.
+# In diagnostic mode the script additionally (1) reports on the ice flag it discards,
+# (2) characterises the cell-slices absent from the input, (3) draws the ice extent at
+# every time slice into figures/diagnostics/, and (4) compares the mean and the median of
+# the 200 posterior draws as summaries of land cover: how far apart they are, where the
+# difference concentrates, and whether the medians still sum to one across the three
+# classes (the pipeline uses the mean). Nothing in diagnostic mode changes the outputs.
 diagnostic = as.logical(Sys.getenv('DIAGNOSTIC', 'FALSE'))
 
 # standard lat long projection
