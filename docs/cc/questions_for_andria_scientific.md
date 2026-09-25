@@ -756,8 +756,18 @@ worth understanding as data quality:
   (and it is why the ice-flag count at 4,500 BP, 41, is below its
   neighbours: 14 flagged cells are simply absent at that slice).
 
-Is the southern thinning intended (no pollen data), and do you know what
-happened at 200, 4,500 and 6,000 BP in the north?
+**Tested 2026-09-25: the northern absences are not the ice mask.** The
+same 66 cells are absent at all three of 200, 4,500 and 6,000 BP, and
+they are exactly the grid's three northernmost rows (76.5, 77.5, 78.5 N).
+Only 14 of them are flagged ice at the neighbouring slices and 33 are
+ever flagged at any slice, so this is not ice being removed rather than
+flagged. At 11,000 and 11,500 BP the 97 absent northern cells include
+those rows plus the 48 cells that are ice at 10,500 BP. The three
+isolated slices look like interpolation runs done on a slightly smaller
+extent, or clipped afterwards; the product does not say.
+
+Is the southern thinning intended (no pollen data), and what happened to
+the top three rows of the grid at 200, 4,500 and 6,000 BP?
 
 
 ## E. Validation
