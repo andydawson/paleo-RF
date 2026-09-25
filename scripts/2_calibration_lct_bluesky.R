@@ -26,9 +26,13 @@ lct_interp_spat = vect(lonlat_interp,
                 crs  = crs("+init=epsg:4326"),
                 atts = lct_interp_modern[,3:ncol(lct_interp_modern)])
 
+# construct objects to hold albedo data
+
+# albedo native resolution
 bs_interp_df = data.frame(matrix(NA, nrow=nrow(lct_interp_spat), ncol=12))
 colnames(bs_interp_df) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 
+# albedo coarser resolution (same as grid?)
 bs_interp_df_coarse = data.frame(matrix(NA, nrow=nrow(lct_interp_spat), ncol=12))
 colnames(bs_interp_df_coarse) = paste0('bs', c(paste0('0', seq(1, 9)), seq(10,12)))
 colnames(bs_interp_df_coarse) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
@@ -37,29 +41,33 @@ grid = rast(grid)
 
 blue_all_months = rast('data/blue_sky_monthly_2000-2009.tif')
 
+# coarsen albedo by averaging albedo cells within a grid cell
 blue_all_months_coarse = resample(blue_all_months, grid, method="average")
 
 names(blue_all_months) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 names(blue_all_months_coarse) = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 
+# crop albedo (I think this removes the ocean grid cells? not sure)
 blue_all_months_coarse = crop(blue_all_months_coarse, ext(pbs_ll))
+
+# some weirdness going on with these figures
 
 ggplot() +
   geom_path(data=pbs_ll, aes(long,lat, group = group), color="grey50") +
-  geom_spatraster(data=blue_all_months, alpha=0.8) +
-  scale_fill_gradientn(colours=terrain.colors(10), na.value='transparent', name = "Albedo") +
+  geom_spatraster(data = blue_all_months, alpha=0.8) +
+  scale_fill_gradientn(colours = terrain.colors(10), na.value='transparent', name = "Albedo") +
   theme_light() +
-  theme(axis.text.x= element_blank(), axis.ticks = element_blank(), axis.title = element_blank())+
+  theme(axis.text.x = element_blank(), axis.ticks = element_blank(), axis.title = element_blank())+
   facet_wrap(~lyr)
 ggsave('figures/albedo_maps_monthly_bluesky_native.pdf')
 ggsave('figures/albedo_maps_monthly_bluesky_native.png')
 
 ggplot() +
-  geom_path(data=pbs_ll, aes(long,lat, group = group), color="grey50") +
-  geom_spatraster(data=blue_all_months_coarse, alpha=0.8) +
-  scale_fill_gradientn(colours=terrain.colors(10), na.value='transparent', name = "Albedo") +
+  geom_path(data=pbs_ll, aes(long, lat, group = group), color="grey50") +
+  geom_spatraster(data = blue_all_months_coarse, alpha=0.8) +
+  scale_fill_gradientn(colours = terrain.colors(10), na.value='transparent', name = "Albedo") +
   theme_bw() +
-  theme(axis.text.x= element_blank(), axis.ticks = element_blank(), axis.title = element_blank())+
+  theme(axis.text.x = element_blank(), axis.ticks = element_blank(), axis.title = element_blank())+
   facet_wrap(~lyr)
 ggsave('figures/albedo_maps_monthly_bluesky_coarse.pdf')
 ggsave('figures/albedo_maps_monthly_bluesky_coarse.png')
