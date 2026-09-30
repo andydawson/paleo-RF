@@ -101,7 +101,7 @@ What each script reads and writes (`script:line` is the load statement):
 |---|---|---|
 | `1_veg_lct_prep.R` | `data/veg_posts_interp_ice.RDS` (`1:12`) | `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` |
 | `2_calibration_lct_bluesky.R` | `data/blue_sky_monthly_2000-2009.tif` (`2:38`)<br>`data/grid.RDS` (`2:15`)<br>`data/lct_modern_reveals_interp.RDS` (`2:19`)<br>`pbs_ll.RDS` (`2:36-37`) | `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS`<br>albedo maps |
-| `3_plot_cal_lct_albedo.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`3:323`)<br>`scripts/make_grid.R` (`3:57`) | figures |
+| `3_plot_cal_lct_albedo.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`3:38`)<br>`scripts/make_grid.R` (`3:51`, a reconstruction; the original is not in the repo) | figures (`figures/LCT_*_interp.*`); the albedo scatter plots print to `Rplots.pdf` |
 | `4_calibration_model.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:16`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits |
 | `5_calibration_eval.R` | the model files above (`5:19`) | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv`<br>figures |
 | `6_prediction_model.R` | selected models (`6:24`)<br>`data/lct_paleo_reveals_interp.RDS` (`6:17`) | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
