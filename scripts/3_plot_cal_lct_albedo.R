@@ -1,324 +1,39 @@
+# 3_plot_cal_lct_albedo.R: diagnostic plots of the calibration data (optional)
+# Interp (spatially complete) path only. The point-based first half of the original and
+# its [run-nointerp] guards are removed (2026-09-30; the other scripts had this done on
+# 2026-09-24, this one was left out because nothing downstream reads its output). The
+# plotting lines are Andria's, with three changes, each marked "# CM:" where it happens:
+# the map boundaries come from R/map_helpers.R, the pie map keeps its legend labels, and
+# a block that could not run on the melted table is dropped.
+#
+# Reads  data/calibration_modern_lct_interp_bluesky.RDS (from script 2)
+# Writes figures/LCT_*_interp.{png,pdf}; the albedo scatter plots are printed only, so a
+#        non-interactive run leaves them in Rplots.pdf.
+
 library(ggplot2)
 library(ggtern)
 library(scales)
-# library(rgeos)  # [run-nointerp] retired from CRAN (2023); not called directly in this script
-# library(rgdal)  # [run-nointerp] retired from CRAN (2023); not called directly in this script
-library(dplyr)   # [run-nointerp] %>% / group_by used below but dplyr was never loaded
+library(dplyr)
 library(raster)
 library(reshape2)
 library(tricolore)
+library(scatterpie)
 
-alb_prod = 'bluesky'
-# [run-nointerp] see comment in 2_calibration_lct_bluesky.R
-run_interp = file.exists('data/calibration_modern_lct_interp_bluesky.RDS')
 dir.create('figures', showWarnings = FALSE)
-
-# cal_data = readRDS('data/lct_albedo_snow_modern_glob.RDS')
-# cal_data = readRDS('data/lct_albedo_snow_modern_albclim.RDS')
-
-cal_data = readRDS(paste0('data/calibration_modern_lct_', alb_prod, '.RDS'))
-cal_long = melt(cal_data[,1:20], id.vars=c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
-colnames(cal_long) = c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'month', 'albedo')
-cal_long$month = as.numeric(substr(cal_long$month, 4, 5))
-
-cal_data_coarse = readRDS(paste0('data/calibration_modern_lct_', alb_prod, '_coarse.RDS'))
-cal_long_coarse = melt(cal_data_coarse[,1:20], id.vars=c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
-colnames(cal_long_coarse) = c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'month', 'albedo')
-cal_long_coarse$month = as.numeric(substr(cal_long_coarse$month, 4, 5))
-
-# cal_data_point = readRDS(paste0('data/calibration_modern_lct_', alb_prod, '_point.RDS'))  # [run-nointerp] input not in repo
-# cal_long_point = melt(cal_data_point[,1:20], id.vars=c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))  # [run-nointerp] input not in repo
-# colnames(cal_long_point) = c('long', 'lat', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'month', 'albedo')  # [run-nointerp] input not in repo
-# cal_long_point$month = as.numeric(substr(cal_long_point$month, 4, 5))  # [run-nointerp] input not in repo
-
-
 
 ###############################################################################################################
 ## maps data
 ###############################################################################################################
 pbs_ll = readRDS('data/map-data/geographic/pbs_ll.RDS')
-pbs = readRDS('data/map-data/geographic/pbs.RDS')
+
+# CM: boundaries prepared by the shared helper (see R/map_helpers.R for why the raw file
+# cannot be drawn as-is). The original drew pbs_ll with geom_polygon and coord_fixed.
+source('R/map_helpers.R')
+pbs_land = prepare_boundaries(pbs_ll)
 
 ###############################################################################################################
-## LCT maps
+## calibration data
 ###############################################################################################################
-
-library(scatterpie)
-
-# ggplot() +
-#   geom_polygon(data=world_proj, aes(x=x, y=y, group=group), color='black', fill=NA) +
-#   geom_scatterpie(data=cal_data, aes(x=x, y=y), cols=c('ET', 'OL', 'ST'), pie_scale=0.6, alpha=0.7) +
-#   theme_bw() +
-#   theme(axis.text = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.title = element_blank())
-
-# make grid for NA (or ENA)
-source('scripts/make_grid.R')
-grid <- make_grid(cal_data, coord_fun = ~ long + lat, projection = '+init=epsg:4326', resolution = 2)
-
-cell_id <- raster::extract(grid, cal_data[,c('long', 'lat')])
-
-cal_data_pie <- data.frame(cell_id, cal_data)
-
-cal_data_pie_agg = cal_data_pie %>% 
-  group_by(cell_id) %>%
-  summarize(ET = mean(ET), OL = mean(OL), ST = mean(ST), .groups='keep')
-
-coords = xyFromCell(grid, cal_data_pie_agg$cell_id)
-colnames(coords) = c('long', 'lat')
-
-
-cal_data_pie_agg = cbind(coords, cal_data_pie_agg)
-
-# cal_data_pie = aggregate(meansim ~ dataset_id + long + lat + ages + LCT, veg_pred, sum, na.rm=TRUE)
-
-sc_colour_qual <- scale_colour_brewer(type = "qual",
-                                            palette = "Dark2",#"BrBG",
-                                            # labels = labels,
-                                            na.value="transparent",#grey", 
-                                            name="Albedo change",
-                                            labels = c("Open Land", "Summergreen", "Evergreen"))
-
-sc_fill_qual <- scale_fill_brewer(type = "qual",
-                                      palette = "Dark2",#"BrBG",
-                                      # labels = labels,
-                                      na.value="transparent",#grey", 
-                                      name="Albedo change",
-                                      labels = c("Open Land", "Summergreen", "Evergreen"))
-
-# ggplot() +
-#   # geom_polygon(data=pbs, aes(x=x, y=y, group=group), color='black', fill=NA) +
-#   geom_path(data=pbs, aes(long,lat, group = group), color="black") +
-#   geom_scatterpie(data=cal_data_pie_agg, aes(x=x, y=y), cols=c('ET', 'OL', 'ST'), pie_scale=0.6, alpha=0.7) +
-#   theme_bw() +
-#   theme(axis.text = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.title = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=16))
-# ggsave('figures/LCT_cal_pie_map.png')
-
-
-ggplot() +
-  # geom_polygon(data=pbs_ll, aes(x=x, y=y, group=group), color='black', fill="lightgrey") +
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_scatterpie(data=cal_data_pie_agg, 
-                  aes(x=long, y=lat), 
-                  cols=c('OL', 'ST', 'ET'), 
-                  pie_scale=0.42, 
-                  alpha=0.7) +
-  theme_bw() +
-  theme(axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        axis.title = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=16),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank()) +
-  labs(fill='Cover') +
-  scale_fill_discrete(labels = c("Open Land", "Summergreen", "Evergreen"), guide = guide_legend(reverse = TRUE)) +
-  # scale_fill_manual(labels = c("Open Land", "Summergreen", "Evergreen"), values = c("#b15928", "#a6cee3","#33a02c")) +
-  # sc_fill_qual +
-  coord_fixed()
-ggsave('figures/LCT_cal_pie_map_ll.png')
-ggsave('figures/LCT_cal_pie_map_ll.pdf')
-
-
-tric_lct <- Tricolore(cal_data_pie_agg,
-                       p1 = 'ET', p2 = 'OL', p3 = 'ST', show_data = FALSE)
-
-tric_lct$key + theme_bw(18) + geom_point(data=cal_data_pie_agg, aes(x=ET, y=OL, z=ST), size=1)
-ggsave('figures/LCT_tricolore_key.png')
-ggsave('figures/LCT_tricolore_key.pdf')
-
-# add the vector of colors to the `euro_example` data
-cal_data_pie_agg$lct_rgb <- tric_lct$rgb
-
-plot_lct <-
-  # using data sf data `euro_example`...
-  ggplot() +
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  # ...draw a choropleth map
-  geom_tile(data=cal_data_pie_agg, aes(long, lat, fill = lct_rgb)) +
-  # ...and color each region according to the color-code
-  # in the variable `educ_rgb`
-  theme_bw() +
-  theme(axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        axis.title = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=16),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank()) +
-  coord_fixed() +
-  scale_fill_identity()
-
-plot_lct
-ggsave('figures/LCT_tricolore_map.png')
-ggsave('figures/LCT_tricolore_map.pdf')
-
-# plot_lct +
-#   annotation_custom(
-#     ggplotGrob(tric_lct$key), xmin = -40, xmax = -55, ymin = -50, ymax = 80
-#   )
-
-cal_lct_melt = melt(cal_long, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
-cal_lct_coarse_melt = melt(cal_long_coarse, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
-# cal_lct_point_melt = melt(cal_long_point, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))  # [run-nointerp] input not in repo
-
-
-ggplot() +
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
-  geom_tile(data=cal_lct_melt, 
-                  aes(x=long, y=lat, fill=value),
-                  alpha=0.7) +
-  # scale_fill_distiller(type='seq', palette='YlGn') +
-  scale_fill_gradientn(colours = rev(terrain.colors(10)), limits=c(0,1)) + 
-  theme_bw() +
-  theme(axis.text = element_blank(),
-        axis.ticks = element_blank(),
-        axis.title = element_blank(),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=16),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank()) +
-  labs(fill='Cover') +
-  coord_fixed() +
-  facet_grid(variable~.)
-ggsave('figures/LCT_gridded_maps_calibration.pdf')
-ggsave('figures/LCT_gridded_maps_calibration.png')
-
-###############################################################################################################
-## albedo versus other vars
-###############################################################################################################
-
-# albedo versus geographic
-
-ggplot(data=cal_long, aes(x=lat, y=albedo)) +
-  geom_point() +
-  # geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
-
-ggplot(data=cal_long, aes(x=long, y=albedo)) +
-  geom_point() +
-  geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
-
-ggplot(data=cal_long, aes(x=elev, y=albedo)) +
-  geom_point() +
-  geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
-
-# coarse
-ggplot(data=cal_long_coarse, aes(x=lat, y=albedo)) +
-  geom_point() +
-  # geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
-
-ggplot(data=cal_long_coarse, aes(x=long, y=albedo)) +
-  geom_point() +
-  geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
-
-ggplot(data=cal_long_coarse, aes(x=elev, y=albedo)) +
-  geom_point() +
-  geom_smooth(se = TRUE, method = lm)+
-  facet_wrap(~month)
-
-
-# ggplot(data=cal_long_point, aes(x=lat, y=albedo)) +  # [run-nointerp] point data not in repo
-#   geom_point() +
-#   # geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-
-# ggplot(data=cal_long_point, aes(x=long, y=albedo)) +  # [run-nointerp] point data not in repo
-#   geom_point() +
-#   geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-
-# ggplot(data=cal_long_point, aes(x=elev, y=albedo)) +  # [run-nointerp] point data not in repo
-#   geom_point() +
-#   geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-
-
-# albedo versus land cover & snow
-
-
-
-cal_lct_melt = melt(cal_long, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
-
-ggplot() +
-  geom_point(data=cal_long, aes(x=OL, y=albedo)) +
-  facet_wrap(~month)
-
-ggplot() +
-  geom_point(data=cal_long, aes(x=ST, y=albedo)) +
-  facet_wrap(~month)
-
-ggplot() +
-  geom_point(data=cal_long, aes(x=ET, y=albedo)) +
-  facet_wrap(~month)
-
-# relationship between land cover type and albedo in month 5; weak but there
-ggplot(data=cal_lct_melt, aes(x=value, y=albedo, colour=variable)) +
-  geom_point(alpha=0.6) +
-  geom_smooth(se = TRUE, method = lm, fullrange=TRUE)+
-  facet_wrap(~month)
-
-
-# relationship between land cover type and albedo in month 5; weak but there
-ggplot(data=cal_lct_melt, aes(x=lat, y=value, colour=variable)) +
-  geom_point(alpha=0.6) +
-  geom_smooth(se = TRUE, method = lm, fullrange=TRUE)
-
-
-corr_lct = cal_lct_melt %>% 
-  filter((!(is.na(albedo)))&(!(is.na(value)))) %>%
-  group_by(variable, month) %>% 
-  summarize(cor = cor(albedo, value))
-
-
-# ggplot(data=corr_lct) + 
-#   geom_tile(aes(x=variable, y=factor(month), fill=cor)) +
-#   scale_fill_gradient2(low = muted("red"),
-#                        mid = "white",
-#                        high = muted("blue"),
-#                        midpoint = 0,
-#                        limits = c(-0.6, 0.6), 
-#                        space = "Lab",
-#                        na.value = "grey50")
-
-ggplot(data=corr_lct) + 
-  geom_point(aes(y=variable, x=factor(month), size=abs(cor), colour=cor)) +
-  scale_colour_gradient2(low = muted("red"),
-                       mid = "white",
-                       high = muted("blue"),
-                       midpoint = 0,
-                       limits = c(-0.6, 0.6), 
-                       space = "Lab",
-                       na.value = "grey50") +
-  theme_bw() +
-  theme(axis.text = element_text(size=14),
-        axis.ticks = element_line(size=1),
-        axis.title = element_text(size=16),
-        legend.text = element_text(size=14),
-        legend.title = element_text(size=16))
-
-
-
-if (run_interp) { # [run-nointerp] interp inputs are not in the repo
-###############################################################################################################
-## interp
-###############################################################################################################
-
 
 cal_data = readRDS('data/calibration_modern_lct_interp_bluesky.RDS')
 cal_long = melt(cal_data, id.vars=c('x', 'y', 'elev', 'ET', 'OL', 'ST'))
@@ -331,17 +46,8 @@ cal_long = data.frame(long = cal_long$x, lat = cal_long$y, cal_long)
 ## LCT maps
 ###############################################################################################################
 
-library(scatterpie)
-
-# ggplot() +
-#   geom_polygon(data=world_proj, aes(x=x, y=y, group=group), color='black', fill=NA) +
-#   geom_scatterpie(data=cal_data, aes(x=x, y=y), cols=c('ET', 'OL', 'ST'), pie_scale=0.6, alpha=0.7) +
-#   theme_bw() +
-#   theme(axis.text = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.title = element_blank())
-
 # make grid for NA (or ENA)
+# CM: scripts/make_grid.R is a reconstruction (2026-09-16); the original is not in the repo.
 source('scripts/make_grid.R')
 grid <- make_grid(cal_data, coord_fun = ~ x + y, projection = '+init=epsg:4326', resolution = 2)
 
@@ -364,40 +70,11 @@ cal_data_pie_agg = cbind(coords, cal_data_pie_agg)
 
 cal_data_pie_agg = cal_data_pie_agg[which(!is.na(cal_data_pie_agg$x)),]
 
-# cal_data_pie = aggregate(meansim ~ dataset_id + long + lat + ages + LCT, veg_pred, sum, na.rm=TRUE)
-
-sc_colour_qual <- scale_colour_brewer(type = "qual",
-                                      palette = "Dark2",#"BrBG",
-                                      # labels = labels,
-                                      na.value="transparent",#grey", 
-                                      name="Albedo change",
-                                      labels = c("Open Land", "Summergreen", "Evergreen"))
-
-sc_fill_qual <- scale_fill_brewer(type = "qual",
-                                  palette = "Dark2",#"BrBG",
-                                  # labels = labels,
-                                  na.value="transparent",#grey", 
-                                  name="Albedo change",
-                                  labels = c("Open Land", "Summergreen", "Evergreen"))
-
-# ggplot() +
-#   # geom_polygon(data=pbs, aes(x=x, y=y, group=group), color='black', fill=NA) +
-#   geom_path(data=pbs, aes(long,lat, group = group), color="black") +
-#   geom_scatterpie(data=cal_data_pie_agg, aes(x=x, y=y), cols=c('ET', 'OL', 'ST'), pie_scale=0.6, alpha=0.7) +
-#   theme_bw() +
-#   theme(axis.text = element_blank(),
-#         axis.ticks = element_blank(),
-#         axis.title = element_blank(),
-#         legend.text = element_text(size=14),
-#         legend.title = element_text(size=16))
-# ggsave('figures/LCT_cal_pie_map.png')
-
 color_values_four = c("#CC79A7", "#009E73", "#0072B2", "#D55E00")
 color_values_three = c("#009E73","#0072B2", "#D55E00")
 
 ggplot() +
-  # geom_polygon(data=pbs_ll, aes(x=x, y=y, group=group), color='black', fill="lightgrey") +
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
+  boundary_layers(pbs_land, colour = "grey", fill = "grey") +
   geom_scatterpie(data=cal_data_pie_agg,
                   aes(x=x, y=y),
                   cols=c('OL', 'ST', 'ET'),
@@ -414,12 +91,12 @@ ggplot() +
         panel.border = element_blank(),
         panel.background = element_blank()) +
   labs(fill='Land cover \ntype') +
-  scale_fill_discrete(labels = c("Open land", "Summergreen", "Evergreen"), 
-                      guide = guide_legend(reverse = TRUE)) +
-  # scale_fill_manual(values = c("#E69F00", "#CC79A7", "#009E73")) +
-  scale_fill_manual(values = color_values_three) + #c("#fde725", "#440154", "#21918c")) +
-  # sc_fill_qual +
-  coord_fixed()
+  # CM: the original added scale_fill_discrete(labels, reversed guide) and then
+  # scale_fill_manual(values); the second replaced the first, so the labels were lost.
+  # One scale now carries both.
+  scale_fill_manual(values = color_values_three,
+                    labels = c("Open land", "Summergreen", "Evergreen"),
+                    guide = guide_legend(reverse = TRUE))
 ggsave('figures/LCT_cal_pie_map_ll_interp.png')
 ggsave('figures/LCT_cal_pie_map_ll_interp.pdf')
 
@@ -440,7 +117,7 @@ cal_data_pie$lct_rgb <- tric_lct$rgb
 plot_lct <-
   # using data sf data `euro_example`...
   ggplot() +
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
+  boundary_layers(pbs_land, colour = "grey", fill = "grey") +
   # ...draw a choropleth map
   geom_tile(data=cal_data_pie, aes(x, y, fill = lct_rgb)) +
   # ...and color each region according to the color-code
@@ -455,7 +132,6 @@ plot_lct <-
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank()) +
-  coord_fixed() +
   scale_fill_identity()
 
 plot_lct
@@ -463,19 +139,17 @@ ggsave('figures/LCT_tricolore_map_interp.png')
 ggsave('figures/LCT_tricolore_map_interp.pdf')
 
 ###############################################################################################################
-## interp
+## gridded land cover maps
 ###############################################################################################################
 
 cal_lct_melt = melt(cal_long, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
-# cal_lct_coarse_melt = melt(cal_long_coarse, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
-# cal_lct_point_melt = melt(cal_long_point, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
 
 cal_lct_melt$variable = factor(cal_lct_melt$variable, 
                                levels = c('ET', 'ST', 'OL'),
                                labels = c('ETS', 'STS', 'OVL'))
 
 ggplot() +
-  geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
+  boundary_layers(pbs_land, colour = "grey", fill = "grey") +
   geom_tile(data=cal_lct_melt, 
             aes(x=long, y=lat, fill=value),
             alpha=0.7) +
@@ -492,7 +166,6 @@ ggplot() +
         panel.border = element_blank(),
         panel.background = element_blank()) +
   labs(fill='Fractional \nland cover') +
-  coord_fixed() +
   facet_grid(variable~.)
 ggsave('figures/LCT_gridded_maps_calibration_interp.pdf')
 ggsave('figures/LCT_gridded_maps_calibration_interp.png')
@@ -527,56 +200,13 @@ ggplot(data=subset(cal_long, variable == 'OVL'), aes(x=value, y=albedo)) +
   geom_point(alpha=0.2) +
   facet_wrap(~month)
 
-# # coarse
-# ggplot(data=cal_long_coarse, aes(x=lat, y=albedo)) +
-#   geom_point() +
-#   # geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-# 
-# ggplot(data=cal_long_coarse, aes(x=long, y=albedo)) +
-#   geom_point() +
-#   geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-# 
-# ggplot(data=cal_long_coarse, aes(x=elev, y=albedo)) +
-#   geom_point() +
-#   geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-
-
-# ggplot(data=cal_long_point, aes(x=lat, y=albedo)) +
-#   geom_point() +
-#   # geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-# 
-# ggplot(data=cal_long_point, aes(x=long, y=albedo)) +
-#   geom_point() +
-#   geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-# 
-# ggplot(data=cal_long_point, aes(x=elev, y=albedo)) +
-#   geom_point() +
-#   geom_smooth(se = TRUE, method = lm)+
-#   facet_wrap(~month)
-
 
 # albedo versus land cover & snow
 
-
-
-cal_lct_melt = melt(cal_long, id.vars = c('long', 'lat', 'x', 'y', 'elev', 'month', 'albedo'))
-
-ggplot() +
-  geom_point(data=cal_long, aes(x=OL, y=albedo)) +
-  facet_wrap(~month)
-
-ggplot() +
-  geom_point(data=cal_long, aes(x=ST, y=albedo)) +
-  facet_wrap(~month)
-
-ggplot() +
-  geom_point(data=cal_long, aes(x=ET, y=albedo)) +
-  facet_wrap(~month)
+# CM: the original re-melted cal_long here and then plotted columns OL, ST and ET, which
+# no longer exist once the table is melted (they are 'variable' and 'value'). Those three
+# plots duplicate the per-class scatters above, so the block is dropped; cal_lct_melt from
+# the gridded-maps section is what the plots below use.
 
 # relationship between land cover type and albedo in month 5; weak but there
 ggplot(data=cal_lct_melt, aes(x=value, y=albedo, colour=variable)) +
@@ -597,16 +227,6 @@ corr_lct = cal_lct_melt %>%
   summarize(cor = cor(albedo, value))
 
 
-# ggplot(data=corr_lct) + 
-#   geom_tile(aes(x=variable, y=factor(month), fill=cor)) +
-#   scale_fill_gradient2(low = muted("red"),
-#                        mid = "white",
-#                        high = muted("blue"),
-#                        midpoint = 0,
-#                        limits = c(-0.6, 0.6), 
-#                        space = "Lab",
-#                        na.value = "grey50")
-
 ggplot(data=corr_lct) + 
   geom_point(aes(y=variable, x=factor(month), size=abs(cor), colour=cor)) +
   scale_colour_gradient2(low = muted("red"),
@@ -622,8 +242,3 @@ ggplot(data=corr_lct) +
         axis.title = element_text(size=16),
         legend.text = element_text(size=14),
         legend.title = element_text(size=16))
-
-
-
-
-} # [run-nointerp] end of interp block

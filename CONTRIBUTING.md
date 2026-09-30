@@ -70,6 +70,14 @@ feasible, checked against `tests/anchors/`; version control as above. Chris,
   comments and changes there directly. While that review is open, Chris and
   agent sessions do not edit `scripts/` on `chris-dev`; work goes on topic
   branches and is rebased onto her changes before merging.
+- **2026-09-30.** The 2026-09-24 removal covered the scripts the interp run
+  executes (1, 2, 4, 5, 6, 7, 7a, 8, 9) and left the two optional scripts as
+  they were, without saying so. `3_plot_cal_lct_albedo.R` was cleaned on this
+  date on topic branch `clean-script-3`, run on the interp data for the first
+  time, merged to `chris-dev` and cherry-picked onto `annotated-interp` so
+  every live branch holds one version. `origin/run-interp` and
+  `origin/run-nointerp` are run records and keep the old file.
+  `6_prediction_model_spatial_eval.R` is still the two-flavour original.
 - **2026-09-23.** Branch `annotated-interp` is a teaching copy of the same
   code with a comment on every line. It is read, not merged; its code is
   kept identical to `chris-dev`'s by the comment-stripped comparison

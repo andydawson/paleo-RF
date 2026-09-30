@@ -40,10 +40,12 @@ prepare_boundaries = function(pbs_sp, xlim = MAP_XLIM, ylim = MAP_YLIM) {
 
 # The two ggplot layers every map needs: the outline, and a coordinate system fixed to
 # the study window (coord_sf keeps lon/lat with a 1:1 aspect and clips to the window).
-boundary_layers = function(pbs_land, colour = "grey50", linewidth = 0.2,
+# fill = NA draws an outline only (script 2); script 3 fills the land grey, as its
+# original geom_polygon did, by passing fill = "grey".
+boundary_layers = function(pbs_land, colour = "grey50", linewidth = 0.2, fill = NA,
                            xlim = MAP_XLIM, ylim = MAP_YLIM) {
   list(
-    geom_sf(data = pbs_land, fill = NA, colour = colour, linewidth = linewidth),
+    geom_sf(data = pbs_land, fill = fill, colour = colour, linewidth = linewidth),
     coord_sf(xlim = xlim, ylim = ylim, expand = FALSE)
   )
 }
