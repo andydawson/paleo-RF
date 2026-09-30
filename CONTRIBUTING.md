@@ -77,12 +77,19 @@ feasible, checked against `tests/anchors/`; version control as above. Chris,
   time, merged to `chris-dev` and cherry-picked onto `annotated-interp` so
   every live branch holds one version. `origin/run-interp` and
   `origin/run-nointerp` are run records and keep the old file.
-  `6_prediction_model_spatial_eval.R` is still the two-flavour original.
+  `6_prediction_model_spatial_eval.R` (the model-structure sensitivity
+  check, optional) is Andria's original, untouched: it never had point-flavour
+  code, has not been run by us, and is the same file on every branch.
+- **2026-09-30.** `annotated-interp` is kept as a reference for the
+  annotations only and is no longer kept identical to `chris-dev`: script 2
+  there lacks the 2026-09-25 boundary fix and Andria's edits, and only script
+  3 was carried across. The branch will be retired once every script has been
+  worked through on `chris-dev` (Chris, 2026-09-30).
 - **2026-09-23.** Branch `annotated-interp` is a teaching copy of the same
-  code with a comment on every line. It is read, not merged; its code is
+  code with a comment on every line. It is read, not merged; its code was
   kept identical to `chris-dev`'s by the comment-stripped comparison
-  described in its commit messages. Chris intends to prune it into package
-  documentation later.
+  described in its commit messages until 2026-09-25 (see the 2026-09-30
+  entry). Chris intends to prune it into package documentation later.
 - **2026-09-24.** `.lfsconfig` excludes `tests/anchors/**` from LFS
   fetches so that a clone downloads only the data inputs (617 MB) and stays
   inside GitHub's 1 GB/month LFS bandwidth allowance on Andria's account.
