@@ -28,12 +28,28 @@ land-cover uncertainty is not propagated. (ii) Carry a subset of the
 draws (for example 20 to 50 of the 200) through prediction: fit the
 calibration once on the mean modern field, then run the hindcast once per
 draw and pool the results, so the albedo intervals include land-cover
-uncertainty. (iii) Both calibration and prediction per draw, which
-multiplies the fitting time by the number of draws and is probably out of
-reach.
+uncertainty. (iii) Both calibration and prediction per draw. Revised
+2026-10-07: refitting only the selected model (mod8) per draw is 1-5 min
+per month, so about an hour per draw and under two days of wall time for
+200 draws on the workstation; (iii) is feasible, but it is a different
+claim from (ii), not a bigger version of it.
 **What we need from you.** Is (i) acceptable for this paper, or should we
 implement (ii)? If (ii), how many draws, and should the calibration also
 see the spread?
+
+**(d) Added 2026-10-07, from the design reviews of the ensemble idea.**
+Two things only you can tell us, and both must be settled before any
+ensemble number is quoted. First: is `iter` a *joint* posterior draw of
+the spatial interpolation, i.e. does draw k in one cell, slice and the
+modern slice belong to the same realisation as draw k everywhere else?
+The file shows `iter` 1-200 complete for every cell-slice-class and every
+draw summing to exactly 1, but it cannot show whether draws are joint
+across cells. If they are independent per cell, summing forcing across
+cells within a draw averages the uncertainty away and the ensemble spread
+of the continental total would be spuriously narrow. Second: which
+uncertainty claim does the paper make? Land cover only, conditional on
+the fitted calibration (option ii, what a single ensemble switch can
+deliver), or including the GAM coefficient uncertainty (A2, more code)?
 
 ### A2. What the albedo "posterior samples" actually are
 **What the code does.** Script 6 (`6_prediction_model.R`, line 49) calls
