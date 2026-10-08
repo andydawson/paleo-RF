@@ -81,3 +81,22 @@ centre or a bin edge?
 - Are the archived scripts (`scripts/archive/`, the Thornthwaite,
   ClimateNA and GCM snow work) safe to remove from the working tree and
   keep only in git history?
+
+## 7. Small code questions raised by the configuration migration (2026-10-08)
+
+Found while designing the move to a single config file. None is urgent;
+answers let us delete code rather than carry it.
+
+- **Three map windows.** Scripts 7, 7a and 8 draw maps on -166..-50 E,
+  12..82 N; script 2 and the shared helper use -172..-50, 15..80; script 1's
+  diagnostics use -172..-50, 17..79. Inherited, not chosen. One window for
+  the paper, or keep the two?
+- **Model 8 is fitted three times** in script 4 (lines 98, 154 and 234, the
+  same formula each time, saved under three names). Can the second and
+  third fits go, with the selected model read from one file everywhere?
+- **The model-structure sensitivity check** (`6_prediction_model_spatial_eval.R`)
+  cannot run at present: it needs the `SemiPar` and `pwiser` packages, which
+  are not installed, uses an undefined variable at line 278, and its tail
+  from line 326 reads point-flavour files that no longer exist. Is this
+  analysis still wanted for the paper? If yes we will rebuild it on the
+  shared functions; if no we will retire it.
