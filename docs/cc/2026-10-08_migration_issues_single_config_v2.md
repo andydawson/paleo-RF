@@ -28,6 +28,29 @@ for comparison. This is the text to file as GitHub issues once Chris has confirm
 9. The feature branch merges `chris-dev` in at checkpoints instead of rebasing; the
    exception is recorded in CONTRIBUTING.
 
+**Filed on GitHub 2026-10-08** with label `single-config`; the issue bodies are the
+sections below, with dependency lines linked to issue numbers. Implementation proceeds
+one issue at a time: plan, Chris's approval, implement, verify, merge.
+
+| Id | Issue | Title |
+|---|---|---|
+| I01 | [#2](https://github.com/andydawson/paleo-RF/issues/2) | Establish the migration branch and regression contract |
+| I02 | [#3](https://github.com/andydawson/paleo-RF/issues/3) | Remove positional month indexing and fixed dimensions |
+| I03 | [#4](https://github.com/andydawson/paleo-RF/issues/4) | Add validated configuration and migrate script 9 |
+| I07 | [#5](https://github.com/andydawson/paleo-RF/issues/5) | Centralise paths while preserving baseline file names |
+| I05 | [#6](https://github.com/andydawson/paleo-RF/issues/6) | Implement one reliable manifest per invocation |
+| I04a | [#7](https://github.com/andydawson/paleo-RF/issues/7) | Centralise model, draw and reduction settings (scripts 1, 4, 5, 6) |
+| I04b | [#8](https://github.com/andydawson/paleo-RF/issues/8) | Centralise months, ages, domain, ice and kernel settings (scripts 7, 7a, 8) |
+| I06 | [#9](https://github.com/andydawson/paleo-RF/issues/9) | Wire manifests into every live pipeline script; add the draw-identity helper |
+| I08 | [#10](https://github.com/andydawson/paleo-RF/issues/10) | Extract preparation functions (scripts 1, 2, 3) |
+| I10 | [#11](https://github.com/andydawson/paleo-RF/issues/11) | Extract prediction and response-summary functions (script 6) |
+| I11 | [#12](https://github.com/andydawson/paleo-RF/issues/12) | Extract and consolidate both albedo-difference stages (scripts 7, 7a) |
+| I12 | [#13](https://github.com/andydawson/paleo-RF/issues/13) | Extract kernel sampling and forcing functions (script 8) |
+| I13a | [#14](https://github.com/andydawson/paleo-RF/issues/14) | Extract aggregation functions (script 9) |
+| I09 | [#15](https://github.com/andydawson/paleo-RF/issues/15) | Extract calibration fitting and evaluation functions (scripts 4, 5) |
+| I13b | [#16](https://github.com/andydawson/paleo-RF/issues/16) | Integration gate: full baseline run and reconciliation with chris-dev |
+| I14 | [#17](https://github.com/andydawson/paleo-RF/issues/17) | Reserve the ensemble driver for a separate design |
+
 Decisions this design is built on are in CONTRIBUTING, "Decisions on record",
 2026-10-08. Line citations refer to `chris-dev` f2cdaa7; the scripts are unchanged since
 the codex base commit.
