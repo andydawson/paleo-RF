@@ -1,0 +1,18 @@
+# anchor file name	path the pipeline writes it to, relative to the repo root (or a run directory)
+lct_modern_reveals_interp.RDS	data/lct_modern_reveals_interp.RDS
+lct_paleo_reveals_interp.RDS	data/lct_paleo_reveals_interp.RDS
+calibration_modern_lct_interp_bluesky.RDS	data/calibration_modern_lct_interp_bluesky.RDS
+AIC_table.csv	output/calibration/AIC_table.csv
+calibration_model_stats.csv	output/calibration/calibration_model_stats.csv
+paleo_interp_predict_gam_bluesky.RDS	output/prediction/paleo_interp_predict_gam_bluesky.RDS
+paleo_interp_predict_gam_summary_bluesky.RDS	output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS
+ice_fort.RDS	data/ice_fort.RDS
+ice_fort_diff_young.RDS	data/ice_fort_diff_young.RDS
+ice_fort_diff_old.RDS	data/ice_fort_diff_old.RDS
+alb_interp_preds_diffs_bluesky.RDS	data/alb_interp_preds_diffs_bluesky.RDS
+ALB_diffs_bluesky.RDS	data/ALB_diffs_bluesky.RDS
+RF_holocene_all_cases.RDS	output/forcing/RF_holocene_all_cases.RDS
+forcing_by_period.csv	output/forcing/forcing_by_period.csv
+forcing_by_period_egu2024recipe_vs_slide.csv	output/forcing/forcing_by_period_egu2024recipe_vs_slide.csv
+forcing_by_period_variant_sensitivity.csv	output/forcing/forcing_by_period_variant_sensitivity.csv
+modern_ipcc_ar6_erf.csv	output/forcing/modern_ipcc_ar6_erf.csv
