@@ -27,6 +27,10 @@ for comparison. This is the text to file as GitHub issues once Chris has confirm
    list is at 41-42).
 9. The feature branch merges `chris-dev` in at checkpoints instead of rebasing; the
    exception is recorded in CONTRIBUTING.
+10. Added by Chris after filing (2026-10-08): the random seed for the simulations in
+    scripts 5 and 6 is a config option (I04a), recorded in every manifest (I05), passed
+    explicitly to the extracted functions (I09, I10), and checked end to end (I13b).
+    This reverses revision 1's "no production seed".
 
 **Filed on GitHub 2026-10-08** with label `single-config`; the issue bodies are the
 sections below, with dependency lines linked to issue numbers. Implementation proceeds
@@ -142,6 +146,10 @@ The contract classifies every artefact:
   (`scripts/5_calibration_eval.R:116`, `:185`).
 - *The median path* (I04a): no anchor exists; verified by the properties in I04a, never
   by comparison with the mean anchors.
+- *Seeded runs* (after I04a): two runs with the same configured seed must be
+  byte-identical, and old code versus new code with the same seed likewise. The measured
+  tolerances above remain the standard only for comparisons with the historical,
+  unseeded anchors.
 
 The frozen-input inventory, with checksums, that later issues verify from: the
 calibration table (289c0f8a), the 192 fits in `output/calibration/` (4.0 GB) including
@@ -371,8 +379,9 @@ write_output(run, path, writer)
 
 One readable Markdown file per invocation, `runs/<producer>/<UTC-second>_<pid>.md`,
 containing a labelled JSON record: resolved config (both sections), full commit, dirty
-flag, status, inputs and outputs with MD5s, overrides, errors, and the existing runtime
-metadata. Created immediately at start, before config validation; a configuration
+flag, status, inputs and outputs with MD5s, overrides, errors, the RNG kind and the base
+seed actually used (the drawn one when the config says `"random"`), and the existing
+runtime metadata. Created immediately at start, before config validation; a configuration
 failure records its error. Caught errors set `failed`; `completed` follows successful
 writes and device closure; abrupt termination leaves `started`.
 
@@ -439,7 +448,8 @@ analysis = list(
                      maxit = 500,
                      k = list(space = 500, elev = 50, cover = 200)),
   draws = list(evaluation_response = 100L,  # A2/A3; 5:47
-               prediction_response = 100L)  # A2/A3; 6:37
+               prediction_response = 100L,  # A2/A3; 6:37
+               seed = "random")             # "random" or a whole number; see below
 )
 ```
 
@@ -457,6 +467,20 @@ Thread count (`nthreads`) is **not** an `analysis` key: it changes no number bey
 last bit, and a run on sixteen cores must not invalidate every downstream artefact. It
 comes from the environment (`RUN_CORES`) and is recorded as run metadata.
 
+**Random seed** (Chris, 2026-10-08). Scripts 5 and 6 are the only scripts that draw
+random numbers, through `simulate()` at `5:46`, `5:116`, `5:231`, `5:354` and `6:36`.
+`draws$seed` takes `"random"` (default) or a whole number. With a number, each
+`simulate()` call gets `seed = derive_seed(cfg_seed, stage, month, call)`, a stable hash
+of those four values (`digest` is installed), so a four-month subset reproduces exactly
+the draws the twelve-month run makes for those months, and adding a call does not shift
+the others. With `"random"`, one base seed is drawn from the clock at run start, used in
+the same way, and recorded in the manifest, so every run can be reproduced after the fact
+by copying that number into the config. Seeds are passed through `simulate()`'s own
+`seed` argument (gratia 0.11.2 applies it for that call and restores the global RNG
+state), never by a global `set.seed()`. The seed is an `analysis` key, so changing it
+stops downstream scripts like any other analysis change. `derive_seed()` lives in
+`R/random.R`.
+
 Draw counts must be values the existing summaries support; no zero-draw mode. `alb_prod`
 stays an implementation constant (one product exists). The registry records the expanded
 formula of the selected model in the manifest. Question ids in comments: A1, A2/A3, B1/B4.
@@ -464,7 +488,9 @@ formula of the selected model in the manifest. Question ids in comments: A1, A2/
 **Verification:** Run 1 (`reduction = "mean"` reproduces both tables byte for byte) and
 2 (byte-identical). Run 5 and 6 from the frozen fits; the one-month check for 4.
 Alternatives under a redirected profile (I07): another `model_id`, a draw label above
-999, and the median:
+999, the seed (two runs of scripts 5 and 6 with `seed = 1` are byte-identical; with
+`"random"` they differ and each manifest records a different base seed; a four-month run
+with `seed = 1` reproduces those months of the twelve-month run), and the median:
 
 - same schema, column order and row count as the mean output; ET + OL + ST within 1e-12
   of 1 in every row;
@@ -481,6 +507,8 @@ Alternatives under a redirected profile (I07): another `model_id`, a draw label 
 - [ ] Baseline formulas, selections and artefacts preserved; expanded formula in the
       manifest.
 - [ ] Question ids present on every key that encodes an open question.
+- [ ] Seeded runs of scripts 5 and 6 reproduce byte for byte; the base seed is in every
+      manifest; no global `set.seed()` in any script.
 
 **Open points:** Do not resolve A1, A2, B4 scientifically. Andria has been told what a
 median run costs and means (scientific A1(e)).
@@ -640,9 +668,12 @@ production seed.
 
 ```r
 predict_albedo(model, cover, month, cfg)
-simulate_responses(model, data, n)
+simulate_responses(model, data, n, seed)
 summarise_responses(samples)
 ```
+
+`seed` is the derived per-call seed from I04a, passed to `simulate()`; the function
+never touches the global RNG.
 
 Deterministic predictions, response samples and summaries returned separately. The
 baseline `iter` column on disk is preserved; internally the response identity is named
@@ -653,7 +684,8 @@ output directory.
 
 **Verification:** Run 6 from the frozen selected models and the frozen land-cover table.
 Deterministic predictions byte-identical to the anchor; summaries within I01's measured
-tolerances plus a paired-RNG check (same seed, old code versus new, identical). A
+tolerances against the historical anchor, and byte-identical between old code and new
+code run with the same configured seed. A
 two-`lc_draw` fixture stays distinct; a response label above 999 parses. Keep `gratia`
 attached unless a full run proves otherwise (`AGENTS.md:43`).
 
@@ -801,8 +833,11 @@ correction). The spatial-eval script is out of scope (I06).
 ```r
 fit_calibration(data, month, model_id, cfg)
 compare_calibrations(models)
-evaluate_calibration(model, data, month, cfg)
+evaluate_calibration(model, data, month, cfg, seed)
 ```
+
+Script 5's four `simulate()` calls go through I10's `simulate_responses()` with their
+derived seeds.
 
 Registry-driven; return numerical tables plus plot-ready data; record expanded formulas.
 Keep the existing execution and RNG order, including repeated fits or simulations where
@@ -811,8 +846,8 @@ through one function, but the three files are still written until Andria answers
 (general 7). All selected-model writes honour the configured id.
 
 **Verification:** Old code versus new function: fit mod8 for one month, predictions on
-the calibration table to 1e-6, integer AIC equal. Script 5 from the frozen fits with the
-paired-RNG check and I01's tolerances. Script 6 from the resulting selected fits. The
+the calibration table to 1e-6, integer AIC equal. Script 5 from the frozen fits: byte-identical between old and new code with the same
+configured seed; within I01's tolerances against the historical anchor. Script 6 from the resulting selected fits. The
 full ladder is refitted once, in I13b, not here.
 
 **Acceptance criteria:**
@@ -848,7 +883,8 @@ in diagnostic mode and script 3. Deterministic artefacts byte-identical; stochas
 artefacts within I01's measured tolerances; fitted models by formula, predictions and
 diagnostics. Then the alternative-setting runs under redirected profiles: one
 four-month subset through 4 to 9, one `reduction = "median"` run of scripts 1 and 2, one
-`analysis` mismatch stopped and overridden, one presentation-only change passing.
+`analysis` mismatch stopped and overridden, one presentation-only change passing, and scripts 5 and 6 run twice with a fixed
+seed, byte-identical.
 
 **Acceptance criteria:**
 
