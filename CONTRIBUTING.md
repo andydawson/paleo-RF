@@ -98,7 +98,16 @@ feasible, checked against `tests/anchors/`; version control as above. Chris,
   scripts as wrappers; the ensemble driver is parked. The work happens on
   one long-lived feature branch off `chris-dev`, topic branches per issue,
   because Andria's review continues on `chris-dev`. Issues designed in
-  `docs/cc/2026-10-08_migration_issues_single_config_codex_gpt6astra.md`.
+  `docs/cc/2026-10-08_migration_issues_single_config_codex_gpt6astra.md`,
+  reviewed in `..._adversarial_review_migration_issues_fable.md`, revised
+  in `..._migration_issues_single_config_v2.md` (the version to file).
+  Exception to the rebase rule above: the feature branch is built from
+  `--no-ff` merges, so rebasing it would flatten the history; instead
+  `chris-dev` is merged into the feature branch at each stage boundary and
+  once before the final merge (Chris, 2026-10-08). The mean/median
+  reduction switch is in scope; the model-structure sensitivity script
+  (`6_prediction_model_spatial_eval.R`) is out of scope pending Andria's
+  answer (general question 7).
 - **2026-09-23.** Branch `annotated-interp` is a teaching copy of the same
   code with a comment on every line. It is read, not merged; its code was
   kept identical to `chris-dev`'s by the comment-stripped comparison
