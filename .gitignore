@@ -60,3 +60,6 @@ data/lct_modern_reveals_interp.RDS
 data/lct_paleo_reveals_interp.RDS
 data/paleo_predict_gam_may_bluesky.RDS
 data/paleo_predict_gam_summary_may_bluesky.RDS
+
+# 2026-10-08: isolated run directories for verification runs (tools/rundir.sh).
+.rundirs/
