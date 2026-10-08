@@ -39,8 +39,15 @@ repository is branched, committed, merged and backed up. Agent sessions read
   file with its own home (code maps, issue lists, schematics, reports,
   generators) lives under `docs/cc/`, with dated, descriptive file names
   (`YYYY-MM-DD_what_and_why.ext`); living documents carry no date. The
-  repo root holds only README, CONTRIBUTING, AGENTS, .gitignore,
-  `scripts/`, `data/`, `docs/` and `tools/`.
+  repo root holds only README, CONTRIBUTING, AGENTS, the git and LFS
+  settings (`.gitignore`, `.gitattributes`, `.lfsconfig`), `config.R` (once
+  the single-config migration adds it), `scripts/` (the pipeline), `R/`
+  (shared functions), `data/` (inputs and intermediates), `docs/`, `tools/`
+  (helpers that are not pipeline), `tests/` (anchors and checks) and `runs/`
+  (run manifests) and `output/` (results; a few small tables are tracked,
+  the bulk is ignored). Not tracked, but present on a working machine:
+  `figures/`, `writing/` and `.rundirs/` (isolated verification runs,
+  `tools/rundir.sh`).
 - `scripts/` is the R analysis pipeline and nothing else. Helper code that
   is not part of the pipeline (data download, diagram generators) lives in
   `tools/`.
