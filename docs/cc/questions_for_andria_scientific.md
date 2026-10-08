@@ -51,6 +51,16 @@ uncertainty claim does the paper make? Land cover only, conditional on
 the fitted calibration (option ii, what a single ensemble switch can
 deliver), or including the GAM coefficient uncertainty (A2, more code)?
 
+**(e) Added 2026-10-08.** The configuration migration will add a switch,
+`land_cover.reduction = "mean" | "median"`, default mean. Two things to
+know before asking for a median run. It refits the calibration (about 27
+hours) and regenerates everything after it, because the modern slice is
+taken after the reduction. And the median path renormalises the three
+medians to sum to one per cell and slice, so it is a different estimator
+from the vector of marginal medians; the paper must say which was used.
+Script 1's diagnostic mode already reports how far the medians sit from
+the means, which tells you whether the run is worth making.
+
 ### A2. What the albedo "posterior samples" actually are
 **What the code does.** Script 6 (`6_prediction_model.R`, line 49) calls
 `simulate(model, nsim = 100)` on the fitted GAM. With the gratia package
