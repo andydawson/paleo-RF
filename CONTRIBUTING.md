@@ -85,6 +85,20 @@ feasible, checked against `tests/anchors/`; version control as above. Chris,
   there lacks the 2026-09-25 boundary fix and Andria's edits, and only script
   3 was carried across. The branch will be retired once every script has been
   worked through on `chris-dev` (Chris, 2026-09-30).
+- **2026-10-08.** Migration to a single configuration file, decided by Chris
+  after two design reviews (`docs/cc/2026-10-07_design_review_*` and
+  `..._adversarial_review_*`): `config.R` at the repo root with `analysis`
+  and `presentation` sections, loaded by a validating helper; scientific
+  decisions live there as selectors among implemented alternatives, with
+  open questions flagged by their id; one plain-text manifest per script
+  invocation; a simple consistency check (whole `analysis` section of each
+  input's manifest compared with the current config, stop on any difference,
+  `RUN_ALLOW_STALE=1` override recorded); output paths unchanged so the
+  anchors keep working; stages become functions in `R/` with the numbered
+  scripts as wrappers; the ensemble driver is parked. The work happens on
+  one long-lived feature branch off `chris-dev`, topic branches per issue,
+  because Andria's review continues on `chris-dev`. Issues designed in
+  `docs/cc/2026-10-08_migration_issues_single_config_codex_gpt6astra.md`.
 - **2026-09-23.** Branch `annotated-interp` is a teaching copy of the same
   code with a comment on every line. It is read, not merged; its code was
   kept identical to `chris-dev`'s by the comment-stripped comparison
