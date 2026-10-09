@@ -13,14 +13,18 @@ check against these before and after each cleanup step.
 | non-interp, March | Andria's own outputs, as received | tag `v0-legacy`; extract with `bash tools/restore_original_outputs.sh` |
 | non-interp, March | our re-run of 2026-09-16, which reproduces Andria's | `nointerp-mar-2026-09-16/` |
 | non-interp, May | our run of 2026-09-17; no counterpart from Andria | `nointerp-may-2026-09-17/` |
-| **interp, all months** | **none yet** | must be created by the first interp run |
+| **interp, scripts 1-6** | our first interp run, 2026-09-19/20 | `interp-allmonths-2026-09-20/` |
+| **interp, scripts 7, 7a, 8** | the first run of the tail, 2026-09-21 | `interp-tail-2026-09-21/` |
+| **interp, script 9** | the four summary tables, 2026-10-08 | `interp-forcing-2026-10-08/` |
 
-There are no interp anchors because there are no interp outputs anywhere
-in the repository or its history: the interp code path has been the live
-one since February 2024 but was never run here, and Andria committed only
-non-interp results. Creating the interp anchor is the first substantive
-step of the plan, and until it exists there is nothing to regress the
-interp flavour against.
+The interp flavour is the analysis; the point (non-interp) flavour was
+retired from the trunk on 2026-09-24. Every interp anchor directory has an
+`MD5SUMS.txt` for its deterministic files, checked with
+`tools/check_anchors.sh`; the stochastic ones (script 5's statistics,
+script 6's summary) are compared with `tools/compare_tables.R` against the
+measured tolerances in `tolerances.tsv`. What counts as unchanged for each
+artefact is set out in
+`docs/cc/2026-10-08_single_config_regression_contract.md`.
 
 ## Why Andria's outputs are not copied into this directory
 
@@ -90,11 +94,15 @@ reproduce.
 
   What to check when re-running: the six md5s in `MD5SUMS.txt`. The
   loops in 7 and 7a are deterministic, so these should reproduce exactly
-  unless the method changes. **This has been demonstrated, not assumed**:
-  7a was run a second time on 2026-09-21 (51.7 min, manifest
-  `runs/2026-09-21_1514_7a_alb_diff_full.md`) and reproduced
-  `ALB_diffs_bluesky.RDS` byte for byte, md5 8039899288aaf84877b904c51e941448. This is the anchor that protects the Stage 4
-  consolidation of the two per-cell difference loops.
+  unless the method changes. **This has been demonstrated, not assumed**,
+  for all three scripts: 7a was run a second time on 2026-09-21 (51.7 min,
+  manifest `runs/2026-09-21_1514_7a_alb_diff_full.md`) and reproduced
+  `ALB_diffs_bluesky.RDS` byte for byte, md5 8039899288aaf84877b904c51e941448;
+  and on 2026-10-08 scripts 7, 7a and 8 were re-run on `feature/single-config`
+  at 1b9d5a9 with a clean tree (manifests `runs/2026-10-08_1517_7_plot_preds.md`,
+  `..._1502_7a_alb_diff_full.md`, `..._1718_8_radiative.md`) and reproduced all
+  six files byte for byte. This is the anchor that protects the
+  consolidation of the two per-cell difference loops (issue I11).
 
   Note for whoever uses these: the three kernels do **not** agree. CACK
   gives 0.53 to 0.60 of the HadGEM3 forcing across the early-Holocene

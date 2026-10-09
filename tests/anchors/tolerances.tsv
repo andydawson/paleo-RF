@@ -1,0 +1,36 @@
+# Tolerances for comparing the stochastic artefacts with the historical, unseeded anchor
+# (tests/anchors/interp-allmonths-2026-09-20). Measured 2026-10-08 for issue I01 (#2) from
+# three re-runs each of scripts 5 and 6 plus the anchor (six pairs), approved by Chris on
+# 2026-10-09. Rules, set before any candidate result was seen:
+#   max_abs, p999_abs, mean_abs: twice the largest value seen across the six pairs;
+#     script 5 has a floor of 0.01, the rounding step of its CSV.
+#   abs_bias: four standard errors of the mean difference (sd of the per-row differences
+#     over the square root of 839,232 rows), because six pairs are too few to estimate it.
+# Used by: Rscript tools/compare_tables.R <anchor-file> <candidate-file> tests/anchors/tolerances.tsv
+# Not used once runs are seeded (issue I04a): seeded comparisons must be byte-identical.
+# Changing a value here is a decision for Chris, in its own commit.
+artefact	column	statistic	tolerance
+calibration_model_stats.csv	correlation	max_abs	0.02
+calibration_model_stats.csv	data in credible interval	max_abs	0.02
+calibration_model_stats.csv	diff lower (model - data; 2.5%)	max_abs	0.02
+calibration_model_stats.csv	diff upper (model - data; 97.5%)	max_abs	0.01
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_hi	max_abs	0.19
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_hi	p999_abs	0.1
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_hi	mean_abs	0.02
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_hi	abs_bias	5.7e-05
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_lo	max_abs	0.19
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_lo	p999_abs	0.099
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_lo	mean_abs	0.016
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_lo	abs_bias	4.9e-05
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_mean	max_abs	0.083
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_mean	p999_abs	0.041
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_mean	mean_abs	0.0077
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_mean	abs_bias	2.2e-05
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_mid	max_abs	0.086
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_mid	p999_abs	0.051
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_mid	mean_abs	0.0097
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_mid	abs_bias	2.8e-05
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_sd	max_abs	0.05
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_sd	p999_abs	0.029
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_sd	mean_abs	0.0056
+paleo_interp_predict_gam_summary_bluesky.RDS	alb_sd	abs_bias	1.6e-05
