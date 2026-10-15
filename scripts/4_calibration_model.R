@@ -72,14 +72,16 @@ for (month in months) {
 
 write_output(run, AIC_df, path_file(paths, 'aic_table'), write.csv, row.names = FALSE)
 
-# The spatial experiments (R/model_registry.R), compared by script 5.
+# The spatial experiments (R/model_registry.R), compared by AIC in script 5, so fitted by the
+# same comparison method as the ladder (decided by Chris on 2026-10-15, question B4; the
+# original fitted them by REML, which the legacy configuration keeps).
 for (month in months) {
 
   print(paste0('Fitting calibration models for ', month, ' albedo'))
 
   for (model_id in SPATIAL_MODELS) {
-    print(paste('Fitting', CALIBRATION_MODELS[[model_id]]$label))
-    write_output(run, fit_calibration_model(model_id, month, cal_interp_data),
+    print(paste('Fitting', CALIBRATION_MODELS[[model_id]]$label, 'by', comparison_method))
+    write_output(run, fit_calibration_model(model_id, month, cal_interp_data, method = comparison_method),
                  path_calibration_model(paths, model_id, month))
   }
 

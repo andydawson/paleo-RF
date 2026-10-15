@@ -41,7 +41,8 @@ list(
     # Script 4 fits model_id by REML for prediction (the file script 5 saves as the selected
     # model and script 6 uses). One of the ladder mod1 ... mod8; their formulas are in
     # R/model_registry.R. Model 8 was chosen by hand (question B4).
-    # comparison_method: how script 4 fits the ladder that scripts 4 and 5 compare by AIC.
+    # comparison_method: how script 4 fits the models that scripts 4 and 5 compare by AIC (the
+    # ladder and the seven spatial experiments).
     # "ML" (decided by Chris on 2026-10-14, question B4: REML likelihoods are not comparable
     # between models with different fixed terms) or "REML" (the original).
     # ice_mask: script 2 leaves out of the calibration table the modern cells whose centre
