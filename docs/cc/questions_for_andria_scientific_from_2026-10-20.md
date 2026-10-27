@@ -76,6 +76,17 @@ outside the range of today's mixes.
   today's albedo falls from 97% to 67% of deviance explained. The data cannot pin down the
   evergreen effect here.
 
+**Diagnostic figures (made 20 October; scripts in `tools/plotting/` on the migration branch).**
+- `plot_training_support.R`: the cover triangle with today's mixes, their outer range and the past
+  mixes outside it; the share outside at each time slice; and a map of how often each cell is
+  outside. The log gives the share outside by more than 0.02, 0.05 and 0.10, since the outer range
+  is a strict test.
+- `plot_forcing_vs_training_support.R`: the vegetation forcing of each period with the cells
+  outside the range outlined, showing which regional signals rest on extrapolation.
+- `plot_pollen_site_coverage.R`: the cells with a pollen-based cover estimate before
+  interpolation. It bears also on question B2 of the earlier file (calibration on the interpolated
+  field): the northeast is well sampled, the southern Plains very sparsely.
+
 **What we propose to check.**
 - The model's fitted albedo for pure evergreen and pure summergreen cover,
   month by month, against published values for conifer and deciduous
@@ -175,3 +186,16 @@ you disagree.**
   that is in effect weighted by the day's sunlight; at low sun (snow, high latitudes) noon albedo is
   somewhat lower. Because the forcing uses differences between time slices, much of that offset
   should cancel (our reasoning, not yet checked).
+
+## 4. Model 7 does not converge in January and May (follow-up to B4 in the earlier file)
+
+In the headline 19 October run, model 7 stopped at the 500-step limit in January and May
+(500 iterations in the saved fits), although it converged in those months in the 18 October run
+(the table under B4), so neither month's 7-against-8
+comparison there rests on a converged fit. A check refitting model 7 for those two months with
+a 2000-step limit (started 22 October) was stopped unfinished on 26 October (Chris's decision):
+it was not needed for any regression test, and with the machine shared by other jobs it had run
+almost four days, against about two and a half hours for 500 steps on 19 October. The check
+moves to the refit on the rebuilt MODIS albedo, where every model is fitted again; there, run
+R's maths library (OpenBLAS) at one thread, because 48 threads per R process waiting on each
+other was what made it slow.

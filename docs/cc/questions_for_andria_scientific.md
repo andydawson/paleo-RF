@@ -520,16 +520,6 @@ convergence from mgcv's real signal. **Does model 7 (a Gaussian-process smooth o
 cover fractions) need to stay in the ladder, and if so, should it get more iterations or a
 different set-up rather than be compared unconverged?**
 
-*Update 2026-10-26.* In the headline 19 October run, model 7 also stopped at the 500-step limit
-in January and May (500 iterations in the saved fits), so neither month's 7-against-8
-comparison there rests on a converged fit. A check refitting model 7 for those two months with
-a 2000-step limit (started 22 October) was stopped unfinished on 26 October (Chris's decision):
-it was not needed for any regression test, and with the machine shared by other jobs it had run
-almost four days, against about two and a half hours for 500 steps on 19 October. The check
-moves to the refit on the rebuilt MODIS albedo, where every model is fitted again; there, run
-R's maths library (OpenBLAS) at one thread, because 48 threads per R process waiting on each
-other was what made it slow.
-
 ### B4a. Land cover matters most in autumn, least in midwinter
 **Found 2026-09-20 in the interp AIC table.**
 
