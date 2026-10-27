@@ -43,7 +43,7 @@ Diagram: `docs/cc/2026-09-17_methodology_schematic.png`.
 | `config.R` | every setting the pipeline reads (the current analysis) |
 | `configs/` | `legacy_config.R`: the same settings for the original analysis |
 | `R/` | functions the scripts share: settings and their checks (`config.R`, `config_schema.R`), file locations (`paths.R`), run records (`run_manifest.R`), model formulas (`model_registry.R`), months, seeds, preparation, differencing, kernels and maps |
-| `tools/` | not part of the pipeline: preparation of fixed inputs (`prepare_*.R`), and development checks (verification, regression anchors, table comparison); mostly R, with a few older shell and Python helpers |
+| `tools/` | not part of the pipeline: preparation of fixed inputs (`prepare_*.R`), development checks (verification, regression anchors, table comparison), and diagnostic figures run by hand after a run (`tools/plotting/`, written to `figures/diagnostics/`); mostly R, with a few older shell and Python helpers |
 | `data/` | inputs, plus some intermediates the scripts still write here |
 | `output/` | fitted models, predictions, forcing (git-ignored except small summary tables) |
 | `figures/` | figures (git-ignored; regenerable) |
