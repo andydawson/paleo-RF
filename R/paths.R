@@ -57,6 +57,8 @@ PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
   c('ipcc_erf',                 'data/ipcc-ar6/AR6_ERF_1750-2019.csv',                                'input',   NA),
   c('ipcc_erf_pc05',            'data/ipcc-ar6/AR6_ERF_1750-2019_pc05.csv',                           'input',   NA),
   c('ipcc_erf_pc95',            'data/ipcc-ar6/AR6_ERF_1750-2019_pc95.csv',                           'input',   NA),
+  # The pollen-based (REVEALS) cover before interpolation; read by tools/plotting/plot_pollen_site_coverage.R.
+  c('lct_paleo_reveals',        'data/lct_paleo_reveals.RDS',                                         'input',   NA),
   c('lct_modern',               'data/lct_modern_reveals_interp.RDS',                                 'product', '1_veg_lct_prep'),
   c('lct_paleo',                'data/lct_paleo_reveals_interp.RDS',                                  'product', '1_veg_lct_prep'),
   c('calibration_table',        'data/calibration_modern_lct_interp_{tag}.RDS',                       'product', '2_calibration_lct_bluesky'),

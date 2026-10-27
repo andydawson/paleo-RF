@@ -1297,3 +1297,46 @@ should-fixes (this entry, the test, saving before printing, the wording at the s
 NOT on any optimiser failure) were approved by Chris and applied. Verification:
 `2026-10-22_convergence-report` (no script rerun; the helper on all 204 fits of the full run of
 18 October, script 4's print lines, the new test).
+
+## Diagnostic figures for Andria in tools/plotting/, 2026-10-27
+
+**Why.** On 20 October three diagnostic figures were drawn for Andria from scratch scripts, to
+judge which regional forcing signals rest on interpolation or extrapolation (the northeast
+hemlock result in particular). Chris asked on 27 October for them to be under version control
+and runnable after any run.
+
+**Changed.** Three scripts in `tools/plotting/` (not `scripts/`, which is the numbered pipeline;
+Chris's choice), run by hand from the repository root after a run, each with its own run
+manifest; figures go to `figures/diagnostics/`:
+- `plot_pollen_site_coverage.R`: the 1-degree cells with a pollen-based cover estimate before
+  interpolation, and counts for six regions;
+- `plot_training_support.R`: the cover triangle with today's (training) mixes, their convex
+  hull and the past mixes outside it; the share outside by time slice; where those cells are;
+  and in the log, the share outside by more than 0.02, 0.05 and 0.10 (the hull is a strict test);
+- `plot_forcing_vs_training_support.R`: HadGEM3's vegetation forcing per cell and period, with
+  the cells outside the training range outlined.
+
+The "outside the training range" rule is one set of functions, `R/training_support.R`, used by
+both support figures; it stops if a cover mix does not sum to one. The forcing map groups
+slice-pairs with `assign_forcing_periods()` (`R/forcing_periods.R`), as scripts 9 and 10 do.
+`R/paths.R` gains one input row, `data/lct_paleo_reveals.RDS` (the pollen-based cover before
+interpolation), which `read_input()` needs. The comment on the `diagnostics` map window in
+`config.R` and `configs/legacy_config.R` says that it now frames these figures too. No
+pipeline output changes.
+
+**What it shows (18 October run).** 11.1% of past cell-slices lie outside the training range,
+but only 4.3%, 1.7% and 0.5% by more than 0.02, 0.05 and 0.10 in cover fraction; the eastern
+deciduous forest is outside at up to 20 of 24 slices. Pollen coverage is good in the northeast
+and Great Lakes and sparse in the southern Plains. Pointers are in item 1 of
+`questions_for_andria_scientific_from_2026-10-20.md` (chris-dev).
+
+**Review and verification.** On the 18 October products the new scripts flag the same 7,419
+cell-slices as the scratch scripts (all slices; 7,417 without 50 BP, as in the figure) (none differs) with identical distances. One
+change-reviewer (tools): no defect in the figures; its should-fixes (the sum-to-one stop,
+the 50 BP slice left out by name, a redundant folder creation removed, the map-window comment,
+these records) were approved by Chris and applied; its proposed unit test was not taken up.
+Verification: `2026-10-27_diagnostic-plots-2` (the three scripts on the 18 October products).
+
+The model 7 refit with a 2000-step limit mentioned in the previous entry was stopped unfinished
+on 26 October (Chris's decision); the check moves to the refit after the MODIS rebuild
+(item 4 of the questions file from 20 October).

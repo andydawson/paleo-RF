@@ -143,7 +143,8 @@ list(
     # were inherited (questions_for_andria_general.md, section 7):
     #   calibration  maps of the modern calibration data (scripts 2 and 3)
     #   tail         maps of the hindcast and its differences (script 7)
-    #   diagnostics  script 1's ice-extent diagnostics (DIAGNOSTIC=TRUE)
+    #   diagnostics  script 1's ice-extent diagnostics (DIAGNOSTIC=TRUE) and the diagnostic
+    #                figures of tools/plotting/
     map_windows = list(calibration = list(x = c(-172, -50), y = c(15, 80)),
                        tail        = list(x = c(-166, -50), y = c(12, 82)),
                        diagnostics = list(x = c(-172, -50), y = c(17, 79)))
