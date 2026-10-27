@@ -22,6 +22,11 @@ library(sf)
 # Positions on the cover triangle: open land bottom-left, summergreen bottom-right,
 # evergreen at the top. `cover` is a data frame with columns OL, ET and ST.
 cover_triangle_xy = function(cover) {
+  # The position uses ST and ET only, so a mix that did not sum to one would be placed as if
+  # the shortfall were open land; stop instead of judging it in the wrong place.
+  off_triangle = abs(cover$OL + cover$ET + cover$ST - 1) > 1e-6
+  if (any(off_triangle, na.rm = TRUE))
+    stop(sum(off_triangle, na.rm = TRUE), ' cover mixes do not sum to one; they cannot be placed on the cover triangle', call. = FALSE)
   data.frame(px = cover$ST + cover$ET / 2, py = cover$ET * sqrt(3) / 2)
 }
 

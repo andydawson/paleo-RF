@@ -67,7 +67,6 @@ figure = ggplot() +
        subtitle = 'grey: grid cells filled only by the spatial interpolation')
 
 figure_file = path_figure(paths, 'diagnostics', 'pollen_site_coverage.png')
-dir.create(dirname(figure_file), recursive = TRUE, showWarnings = FALSE)
 ggsave(figure_file, figure, width = 9, height = 6, dpi = 150)
 
 run_finish(run)

@@ -86,7 +86,6 @@ figure = ggplot() +
   theme_bw(base_size = 9) + theme(strip.text = element_text(face = 'bold'))
 
 figure_file = path_figure(paths, 'diagnostics', 'forcing_vs_training_support.png')
-dir.create(dirname(figure_file), recursive = TRUE, showWarnings = FALSE)
 ggsave(figure_file, figure, width = 11, height = 15, dpi = 150)
 
 run_finish(run)

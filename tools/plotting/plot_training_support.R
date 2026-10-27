@@ -44,7 +44,7 @@ hull = training_hull(training)
 
 # Cover does not depend on the month: one month's rows hold every cell and slice once.
 hindcast = read_input(run, path_file(paths, 'prediction_point'))
-hindcast = hindcast[hindcast$month == 'may' & hindcast$year > min(hindcast$year), c('year', 'x', 'y', 'OL', 'ET', 'ST')]
+hindcast = hindcast[hindcast$month == 'may' & hindcast$year != 50, c('year', 'x', 'y', 'OL', 'ET', 'ST')]   # 50 BP: today
 hindcast = cbind(hindcast, training_support(hindcast, hull))
 n_slices = n_distinct(hindcast$year)
 
@@ -112,7 +112,6 @@ figure = panel_triangle + (panel_share / panel_map + plot_layout(heights = c(1, 
     theme = theme(plot.title = element_text(size = 12, face = 'bold'), plot.caption = element_text(size = 7, hjust = 0)))
 
 figure_file = path_figure(paths, 'diagnostics', 'training_support.png')
-dir.create(dirname(figure_file), recursive = TRUE, showWarnings = FALSE)
 ggsave(figure_file, figure, width = 13, height = 7.5, dpi = 170)
 
 run_finish(run)
