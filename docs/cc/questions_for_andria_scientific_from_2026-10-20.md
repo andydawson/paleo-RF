@@ -54,10 +54,18 @@ outside the range of today's mixes.
   The cooling after 4 ka is the same effect in reverse.
 - At a fixed place in the box, the May model gives albedo 0.06 for 10% evergreen and
   0.49 for 60% evergreen (open land fixed at 6%). Both ends are implausible for forest.
-- The data the model was fitted on point the other way. Across the 83 box cells today,
-  May albedo falls as evergreen share rises (correlation -0.63). Evergreen share is almost
-  a function of latitude there (correlation 0.92), so the location term and the cover term
-  can trade off against each other (related to question B3 in the earlier file).
+- Today's data in the box cannot tell which way evergreen cover moves the albedo. Across the
+  83 box cells, May albedo falls as evergreen share rises (correlation -0.63), but evergreen
+  share rises almost in step with latitude there (correlation 0.92), and albedo also falls
+  northwards. With latitude held fixed, the evergreen effect is close to zero (+0.003, standard
+  error 0.003, per 0.1 of evergreen share), so these cells cannot sign it. The link between
+  evergreen share and latitude is local: across all 2,792 fitting cells its correlation is
+  0.06. So the location term and the cover term can trade off against each other here, a
+  known difficulty in spatial regression (spatial confounding; Hodges and Reich 2010,
+  Paciorek 2010), related to the question in the earlier file on the spatial term absorbing
+  the cover effect. *(Corrected 28 October: this bullet first said the fitting data "point
+  the other way", taking the correlation of -0.63 as the evergreen effect; with latitude held
+  fixed they do not.)*
 - The 4.5 ka cover mixes lie outside the mixes the model was fitted on: the median distance
   to the nearest modern mix is 0.12 in cover fraction, against 0.04 at 6 ka.
 - Checked for May with the selected model only; other months are not yet checked.
@@ -66,8 +74,10 @@ outside the range of today's mixes.
 - *No modern counterpart for most of the Holocene.* On the cover triangle, nearly every box cell
   lies outside the range of all of today's North American cover mixes from 1 ka to 8 ka (99% at
   1 ka, 100% at 4.5 ka, 98% at 6 ka; 15% at 0.2 ka). The past forest there had little open land
-  (about 6%); every modern cell with that much summergreen has more open land. Across the whole
-  study area, 10-15% of past cells lie outside today's range at each time slice.
+  (about 6%); every modern cell with that much summergreen has more open land. The evergreen
+  share itself stays within today's range in the box (0.09 to 0.50 today; 0.40 at 6 ka, 0.22 at
+  4.5 ka): what has no modern counterpart is the low open land (lowest today 7%, median 15%).
+  Across the whole study area, 10-15% of past cells lie outside today's range at each time slice.
 - *It is the conifer-to-deciduous swap.* Replacing evergreen by summergreen alone, with open land
   held fixed, reproduces almost the whole modelled 6 to 4.5 ka change in every month (May -0.094
   against -0.095).
@@ -83,6 +93,11 @@ outside the range of today's mixes.
   is a strict test.
 - `plot_forcing_vs_training_support.R`: the vegetation forcing of each period with the cells
   outside the range outlined, showing which regional signals rest on extrapolation.
+- `plot_northeast_cover_and_location.R` (added 28 October): for May in the box, today's
+  evergreen share against latitude; today's albedo against evergreen share, coloured by
+  latitude, with the evergreen effect at fixed latitude; and the model's albedo as evergreen
+  replaces summergreen, with and without the location term. It shows the evidence for the first
+  possible cause above, which the other figures do not.
 - `plot_pollen_site_coverage.R`: the cells with a pollen-based cover estimate before
   interpolation. It bears also on question B2 of the earlier file (calibration on the interpolated
   field): the northeast is well sampled, the southern Plains very sparsely.
