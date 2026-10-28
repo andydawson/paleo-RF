@@ -142,7 +142,10 @@ figure = (panel_latitude + panel_albedo) / panel_model + plot_layout(heights = c
     caption = paste0('Calibration data: today\'s cover (interpolated pollen-based reconstruction, 50 BP) and satellite blue-sky albedo. ',
                      'Past cover: the reconstruction at 6 and 4.5 ka, the hemlock decline.\n',
                      'Both fits are by REML on the same cells. Points in c are the models\' predictions at the actual past mixes; ',
-                     'the lines hold open land fixed, so they show the evergreen-summergreen swap alone.'),
+                     'the lines hold open land fixed, so they show the evergreen-summergreen swap alone.\n',
+                     sprintf(paste0('Open land at 6 ka (region mean %.2f) is below that of every cell in the region today (lowest %.2f), ',
+                                    'so both lines are themselves extrapolations: they show that the data do not fix the sign, not the true effect.'),
+                             mean(at_6ka$OL), min(today_ne$OL))),
     theme = theme(plot.title = element_text(size = 12, face = 'bold'), plot.caption = element_text(size = 7, hjust = 0)))
 
 figure_file = path_figure(paths, 'diagnostics', 'northeast_cover_and_location.png')
