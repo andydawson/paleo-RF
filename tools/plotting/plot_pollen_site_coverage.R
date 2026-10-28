@@ -20,11 +20,12 @@
 # WHAT GOES OUT
 #   figures/diagnostics/pollen_site_coverage.png   grid cells in grey; cells with a pollen
 #       estimate coloured by the number of time slices that have one
-#   The log prints, for six regions, the grid cells and the median number of cells with a
-#   pollen estimate per time slice.
+#   The log prints, for the six regions of R/regions.R, the grid cells and the median number
+#   of cells with a pollen estimate per time slice.
 
 source('R/run_manifest.R')
 source('R/map_helpers.R')
+source('R/regions.R')
 run   = run_begin('plot_pollen_site_coverage')
 cfg   = run$cfg
 paths = run$paths
@@ -35,15 +36,6 @@ library(dplyr)
 pollen = read_input(run, path_file(paths, 'lct_paleo_reveals'))
 grid   = read_input(run, path_file(paths, 'elevation_cache'))[, c('x', 'y')]
 
-# The regions discussed with Andria, as longitude-latitude boxes (approximate, for counting).
-region_of = function(lon, lat) case_when(
-  lon >= -115 & lon < -103 & lat >= 28 & lat < 38 ~ 'Southwest (AZ, NM, W Texas)',
-  lon >= -103 & lon < -94  & lat >= 26 & lat < 40 ~ 'Southern Plains (TX, OK, KS)',
-  lon >= -94  & lat >= 24  & lat < 37             ~ 'Southeast (AR, LA to FL, GA, Carolinas)',
-  lon >= -80  & lon < -66  & lat >= 40 & lat < 48 ~ 'Northeast (hemlock box)',
-  lon >= -97  & lon < -80  & lat >= 40 & lat < 50 ~ 'Upper Midwest / Great Lakes',
-  lon < -125  & lat >= 55                         ~ 'Alaska / Yukon',
-  TRUE ~ 'elsewhere')
 grid$region   = region_of(grid$x, grid$y)
 pollen$region = region_of(pollen$long, pollen$lat)
 

@@ -1340,3 +1340,38 @@ Verification: `2026-10-27_diagnostic-plots-2` (the three scripts on the 18 Octob
 The model 7 refit with a 2000-step limit mentioned in the previous entry was stopped unfinished
 on 26 October (Chris's decision); the check moves to the refit after the MODIS rebuild
 (item 4 of the questions file from 20 October).
+
+## Diagnostic figure: the northeast evergreen effect and the location term, 2026-10-28
+
+**Why.** The three diagnostic figures of 27 October show that the northeast's past cover mixes (the
+hemlock decline, 6 to 4.5 ka) have no modern counterpart, but nothing in them showed the evidence for
+the leading explanation of why the model darkens the surface there. Chris pointed out on 28 October
+that Andria had only the numbers in the questions file to go on, and asked for a figure.
+
+**Changed.** A fourth script, `tools/plotting/plot_northeast_cover_and_location.R`, for May in the
+northeast box (80-66 W, 40-48 N): (a) today's evergreen share against latitude; (b) today's albedo
+against evergreen share, coloured by latitude, with the evergreen slope at fixed latitude; (c) the
+model's region-mean albedo as evergreen replaces summergreen, with and without the location term,
+using two fits that script 4 already stores (the prediction fit and the cover-plus-elevation model,
+both REML on the same data), so nothing is refitted. The regions of the diagnostic figures are now
+defined once, in `R/regions.R`, used by this script and by `plot_pollen_site_coverage.R` (whose
+labels, table and figure are unchanged). No pipeline output changes.
+
+**What it shows (18 October run).** In the region, evergreen share follows latitude (correlation
+0.92; across all 2,792 fitting cells, 0.06, so the link is local). Albedo falls with both
+(-0.63, -0.72), but with latitude held fixed the evergreen slope is +0.003 per 0.1 of evergreen share
+(standard error 0.003, p = 0.40): the region's data cannot sign it. With the location term the 6 to
+4.5 ka change is -0.095 (darker; 97% of deviance explained), without it +0.043 (brighter; 67%). Most
+of the lines rest on mixes outside the training range (every cell at evergreen up to 0.27, 92% at
+0.40; 98% of cells at 6 ka, 100% at 4.5 ka), so the figure shows that the data do not fix the sign,
+not the true effect. In checking, the questions file's claim that the fitting data "point the other
+way" was found too strong and corrected (chris-dev, item 1 of the file from 20 October).
+
+**Review and verification.** One change-reviewer (tools): one blocker, the caption's first
+extrapolation sentence, which argued from the region's mean open land and used the word more loosely
+than the training-range rule; Chris chose the training-range rule, and to apply the smaller fixes
+(data-level check that the two fits share their cells, stops for missing 4.5 ka rows and for lines
+that would drop cells, the albedo-latitude correlation behind panel b's title, why May, the shared
+region table). The region table was checked against the old rule on every grid cell, every pollen
+row and a 0.5-degree lattice: identical. Verification: `2026-10-28_northeast-location-plot-3` (both
+scripts on the 18 October products; the pollen figure byte-identical to 27 October's).
