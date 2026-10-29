@@ -18,6 +18,7 @@ rejects <- function(pattern, ...) {
 }
 
 cfg <- load_config()
+legacy_text <- readLines("configs/legacy_config.R")
 
 stopifnot(
   # the shipped config loads and holds today's script settings
@@ -132,6 +133,28 @@ stopifnot(
   identical(cfg$analysis$calibration$ice_mask, "centre_in_1ka_polygon"),
   identical(load_config("configs/legacy_config.R")$analysis$calibration$ice_mask, "none"),
   rejects("ice_mask has 'all'", 'ice_mask = "centre_in_1ka_polygon"', 'ice_mask = "all"'),
+  # the calibration albedo (Chris, 2026-10-29): the MODIS cell table in config.R, the raster
+  # in the legacy file; with the raster, statistic and version must keep their defaults
+  identical(cfg$analysis$albedo, list(source = "modis_cells", statistic = "all_days", version = "full_75")),
+  identical(load_config("configs/legacy_config.R")$analysis$albedo,
+            list(source = "legacy_raster", statistic = "all_days", version = "full_75")),
+  identical(load_variant('statistic = "all_days"', 'statistic = "snow_free"')$analysis$albedo$statistic, "snow_free"),
+  identical(load_variant('statistic = "all_days"', 'statistic = "snowy"')$analysis$albedo$statistic, "snowy"),
+  identical(load_variant('version = "full_75"', 'version = "any_75"')$analysis$albedo$version, "any_75"),
+  identical(load_variant('version = "full_75"', 'version = "full_70"')$analysis$albedo$version, "full_70"),
+  identical(load_variant('version = "full_75"', 'version = "full_nocut"')$analysis$albedo$version, "full_nocut"),
+  identical(load_variant('source = "modis_cells"', 'source = "legacy_raster"')$analysis$albedo$source, "legacy_raster"),
+  rejects("albedo\\$source has 'raster'", 'source = "modis_cells"', 'source = "raster"'),
+  rejects("albedo\\$statistic has 'snowless'", 'statistic = "all_days"', 'statistic = "snowless"'),
+  rejects("albedo\\$statistic must be a single value", 'statistic = "all_days"', 'statistic = c("all_days", "snowy")'),
+  rejects("albedo\\$version has 'full_80'", 'version = "full_75"', 'version = "full_80"'),
+  rejects("albedo is missing key\\(s\\) version", ', version = "full_75")', ')'),
+  rejects('with source "legacy_raster".*statistic must be "all_days"',
+          text = sub('statistic = "all_days"', 'statistic = "snow_free"', legacy_text, fixed = TRUE)),
+  rejects('with source "legacy_raster".*version "full_75"',
+          text = sub('version = "full_75"', 'version = "full_nocut"', legacy_text, fixed = TRUE)),
+  rejects('with source "legacy_raster"',
+          text = sub('source = "modis_cells", statistic = "all_days"', 'source = "legacy_raster", statistic = "snowy"', base_text, fixed = TRUE)),
   # the stale-input override (issue I05): off by default, TRUE or FALSE only
   identical(cfg$run$allow_stale, FALSE),
   # script 1's diagnostic switch (issue I06)

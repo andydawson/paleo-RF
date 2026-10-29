@@ -46,6 +46,26 @@ list(
     # tiles at the cell's centre point, data/elev_interp_cells.RDS.
     elevation = list(method = "land_mean"),
 
+    # Script 2: the satellite albedo that the calibration models are fitted to (decided by
+    # Chris on 2026-10-29, docs/cc/2026-10-29_refit_plan_decisions.md).
+    # source: "modis_cells", the monthly blue-sky albedo of 2000-2009 rebuilt from MODIS over
+    #   the land pixels of each 1-degree cell, data/albedo_modis_cells.csv (made by
+    #   tools/prepare_bluesky_albedo.R, whose header gives every choice and its source); or
+    #   "legacy_raster", the original 0.25-degree raster data/blue_sky_monthly_2000-2009.tif
+    #   read at each cell centre (who made it, and how, is unknown; it mixes water into
+    #   coastal and lake cells).
+    # statistic: "all_days", the albedo over all days; "snow_free", over the days the MODIS
+    #   snow flag calls snow-free (a calibration on snow-free retrievals only, not a forcing
+    #   without snow); "snowy", over the snow-flagged days.
+    # version: which retrievals count. "full_75", full BRDF inversions with the noon sun
+    #   within 75 degrees of overhead (the main version); "any_75", any processed retrieval,
+    #   75 degrees; "full_70", full inversions, 70 degrees; "full_nocut", full inversions with
+    #   no sun-angle rule. The winter check is a run with months = c("jan", "feb", "nov",
+    #   "dec") and version = "full_nocut".
+    # statistic and version choose among the cell table's columns, so with "legacy_raster"
+    # they must stay "all_days" and "full_75".
+    albedo = list(source = "modis_cells", statistic = "all_days", version = "full_75"),
+
     # Script 4 fits model_id by REML for prediction (the file script 5 saves as the selected
     # model and script 6 uses). One of the ladder mod1 ... mod8; their formulas are in
     # R/model_registry.R. Model 8 was chosen by hand (question B4).
