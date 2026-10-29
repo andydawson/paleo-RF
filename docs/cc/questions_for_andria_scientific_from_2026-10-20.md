@@ -227,3 +227,29 @@ almost four days, against about two and a half hours for 500 steps on 19 October
 moves to the refit on the rebuilt MODIS albedo, where every model is fitted again; there, run
 R's maths library (OpenBLAS) at one thread, because 48 threads per R process waiting on each
 other was what made it slow.
+
+## 5. The refit on the rebuilt albedo (from the plan and its review, 29 October)
+
+*From Astra's plan for the refit and Fable's review of it (feature/single-config,
+docs/cc/2026-10-29_refit_plan_*.md). Chris's decisions are in the decisions file there; in short, the
+model is fitted again on the rebuilt land-only albedo for all-days, snow-free and snowy albedo, with
+the any-quality and no-sun-angle-rule versions as sensitivities, and a control on your raster.*
+
+1. **Is a snow-free winter albedo meaningful under a conifer canopy?** The product's snow flag
+   describes the retrieval, not the ground: where a dense evergreen canopy hides snow on the forest
+   floor, the day can be flagged snow-free, while open land is flagged snow-free only when it is
+   bare. A calibration on snow-free days would then carry a bias that depends on cover type, in the
+   very contrast the forcing rests on (evergreen against open land). Should the snow-free and snowy
+   calibrations be limited to months or regions where this matters less, or is it a caveat to state?
+2. **Should the snow-free and snowy calibrations use a minimum share or weights?** A cell whose
+   snow-free days are 2% of its usable days enters the snow-free fit with the same weight as one at
+   100%. The "no minimum coverage" default (section 3) was set for the all-days albedo. Fewer cells
+   also enter the snow-free fits: in March and April about a third of the northern cells drop out,
+   in the months of the largest northeast changes.
+3. **If the northeast result stays unstable after the refit,** what further model or independent
+   comparison would you accept for the paper (see also items 1 and 2.7)?
+4. **For information (decided by Chris, 29 October):** script 5's share of observations inside the
+   credible interval counted cells with no observation as misses (December read 0.56; on observed
+   cells it is about 0.92). It will count only observed cells, for both albedo sources.
+
+The cell mean over land pixels in place of the centre pixel is item 2.5 above.
