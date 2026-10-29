@@ -190,8 +190,12 @@ November to February with the no-rule version, to show whether the forcing depen
 
 **Current defaults (Chris, 20 October). They can be changed later without rebuilding; tell us only if
 you disagree.**
-- *Today's snow share* = the share of usable satellite retrievals flagged snowy (it depends on cloud,
-  quality and sun-angle screening), rather than a snow fraction from a separate snow-cover product.
+- *Today's snow share* (changed by Chris on 29 October, after reading the published precedents in
+  full): NASA's monthly snow-cover product (MOD10CM), averaged per cell over 2000-2009, with the share
+  of usable satellite retrievals flagged snowy compared beside it. The two published studies that mix
+  snowy and snow-free MODIS albedo by a snow fraction, Barnes and Roy 2010 (JGR 115, G04033, eq. 3) and
+  Ghimire et al. 2014 (GRL 41, 9087, eq. 1), both take the fraction from that product; the flag share
+  depends on cloud, quality and sun-angle screening and has no precedent as a snow fraction.
 - *No minimum coverage:* every cell-month with any usable retrieval is used, and the counts (years,
   days, share of land observed) are kept beside each value. In July 2005, 30% of cells had
   full-quality retrievals for under 90% of their land (mostly Alaska and south of 30 N); there the
