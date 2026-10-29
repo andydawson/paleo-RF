@@ -43,6 +43,7 @@ PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
   # id                          template                                                              kind       producer
   c('veg_posts',                'data/veg_posts_interp_ice.RDS',                                      'input',   NA),
   c('elevation_cache',          'data/elev_interp_cells.RDS',                                         'input',   NA),
+  c('elevation_land_mean',      'data/elev_land_mean_cells.csv',                                      'input',   NA),
   c('grid',                     'data/grid.RDS',                                                      'input',   NA),
   c('bluesky_raster',           'data/blue_sky_monthly_2000-2009.tif',                                'input',   NA),
   c('boundaries_ll',            'data/map-data/geographic/pbs_ll.RDS',                                'input',   NA),
@@ -56,6 +57,8 @@ PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
   c('ipcc_erf',                 'data/ipcc-ar6/AR6_ERF_1750-2019.csv',                                'input',   NA),
   c('ipcc_erf_pc05',            'data/ipcc-ar6/AR6_ERF_1750-2019_pc05.csv',                           'input',   NA),
   c('ipcc_erf_pc95',            'data/ipcc-ar6/AR6_ERF_1750-2019_pc95.csv',                           'input',   NA),
+  # The pollen-based (REVEALS) cover before interpolation; read by tools/plotting/plot_pollen_site_coverage.R.
+  c('lct_paleo_reveals',        'data/lct_paleo_reveals.RDS',                                         'input',   NA),
   c('lct_modern',               'data/lct_modern_reveals_interp.RDS',                                 'product', '1_veg_lct_prep'),
   c('lct_paleo',                'data/lct_paleo_reveals_interp.RDS',                                  'product', '1_veg_lct_prep'),
   c('calibration_table',        'data/calibration_modern_lct_interp_{tag}.RDS',                       'product', '2_calibration_lct_bluesky'),
@@ -82,6 +85,7 @@ PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
   c('forcing_variant_sensitivity', 'output/forcing/forcing_by_period_variant_sensitivity.csv',        'product', '9_forcing_barplot'),
   c('forcing_egu2024_recipe',   'output/forcing/forcing_by_period_egu2024recipe_vs_slide.csv',        'product', '9_forcing_barplot'),
   c('modern_erf',               'output/forcing/modern_ipcc_ar6_erf.csv',                             'product', '9_forcing_barplot'),
+  c('forcing_breakdown',        'output/forcing/forcing_by_month_latitude.csv',                       'product', '10_forcing_breakdown'),
   # The model-structure sensitivity script is out of the migration's scope (question for
   # Andria, general 7) and reads its paths itself; its outputs are listed so the catalogue
   # is complete.

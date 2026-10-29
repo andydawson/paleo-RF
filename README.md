@@ -43,7 +43,7 @@ Diagram: `docs/cc/2026-09-17_methodology_schematic.png`.
 | `config.R` | every setting the pipeline reads (the current analysis) |
 | `configs/` | `legacy_config.R`: the same settings for the original analysis |
 | `R/` | functions the scripts share: settings and their checks (`config.R`, `config_schema.R`), file locations (`paths.R`), run records (`run_manifest.R`), model formulas (`model_registry.R`), months, seeds, preparation, differencing, kernels and maps |
-| `tools/` | not part of the pipeline: preparation of fixed inputs (`prepare_*.R`), and development checks (verification, regression anchors, table comparison); mostly R, with a few older shell and Python helpers |
+| `tools/` | not part of the pipeline: preparation of fixed inputs (`prepare_*.R`), development checks (verification, regression anchors, table comparison), and diagnostic figures run by hand after a run (`tools/plotting/`, written to `figures/diagnostics/`); mostly R, with a few older shell and Python helpers |
 | `data/` | inputs, plus some intermediates the scripts still write here |
 | `output/` | fitted models, predictions, forcing (git-ignored except small summary tables) |
 | `figures/` | figures (git-ignored; regenerable) |
@@ -85,7 +85,7 @@ into `data/`.
 
 | Script | Does |
 |---|---|
-| `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation from a committed cache (first built from AWS terrain tiles); modern (age 50) vs paleo split. With `diagnostic = TRUE` in the run section of `config.R` it also reports on the discarded ice flag, the absent cell-slices and mean-versus-median, and maps the ice flag at every slice into `figures/diagnostics/`
+| `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation per cell, by default the land mean from `data/elev_land_mean_cells.csv` (made once by `tools/prepare_land_elevation.R`; the original centre point from a committed cache is the legacy setting); modern (age 50) vs paleo split. With `diagnostic = TRUE` in the run section of `config.R` it also reports on the discarded ice flag, the absent cell-slices and mean-versus-median, and maps the ice flag at every slice into `figures/diagnostics/`
 | `2_calibration_lct_bluesky.R` | monthly blue-sky albedo at the modern cells, native pixel and 1-degree mean |
 | `3_plot_cal_lct_albedo.R` | diagnostic plots of the calibration data (optional) |
 | `4_calibration_model.R` | model ladder mod1-mod8 for every month; AIC table; spatial-effects experiment |
@@ -96,6 +96,7 @@ into `data/`.
 | `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts |
 | `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants |
 | `9_forcing_barplot.R` | continental forcing by period beside the IPCC AR6 agents, plus kernel-spread and variant-sensitivity figures; every aggregation choice is an explicit assumption in its header |
+| `10_forcing_breakdown.R` | script 9's period totals broken down by month and latitude band (where the forcing comes from, for the snow question); stops unless the parts add up to script 9 |
 
 What each script reads and writes (`script:line` is the load statement):
 
@@ -108,16 +109,17 @@ What each script reads and writes (`script:line` is the load statement):
 | `5_calibration_eval.R` | the model files above (`5:19`) | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv`<br>figures |
 | `6_prediction_model.R` | selected models (`6:24`)<br>`data/lct_paleo_reveals_interp.RDS` (`6:17`) | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
 | `6_prediction_model_spatial_eval.R` | spatial-experiment fits<br>`data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`<br>figures |
-| `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam[_summary]_bluesky.RDS` (`7:84`)<br>`data/grid.RDS` (`7:148`)<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:46`)<br>`data/albedo_glacier_monthly.csv` (`7:163`)<br>`pbs*.RDS` (`7:27-28`) | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
-| `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:40`)<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:44`)<br>`data/albedo_glacier_monthly.csv` (`7a:121`)<br>`data/grid.RDS` (`7a:98`)<br>`pbs*.RDS` (`7a:77-78`) | `data/ALB_diffs_bluesky.RDS` |
-| `8_radiative.R` | `data/ALB_diffs_bluesky.RDS` (`8:59`)<br>`data/ice_fort*.RDS` (`8:38-40`)<br>kernels (`8:57`, `8:97`, `8:107`)<br>`pbs*.RDS` (`8:54-55`) | `output/forcing/RF_holocene_all_cases.RDS` |
-| `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS` (`9:141`)<br>`data/alb_interp_preds_diffs_bluesky.RDS` (`9:325`)<br>`data/ipcc-ar6/*.csv` (`9:199-201`) | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
+| `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7:84`)<br>`data/grid.RDS` (`7:148`)<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:46`)<br>`data/albedo_glacier_monthly.csv` (`7:163`)<br>`pbs_ll.RDS` (`7:23`) | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
+| `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:40`)<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:44`)<br>`data/albedo_glacier_monthly.csv` (`7a:121`)<br>`data/grid.RDS` (`7a:98`) | `data/ALB_diffs_bluesky.RDS` |
+| `8_radiative.R` | `data/ALB_diffs_bluesky.RDS`<br>kernels | `output/forcing/RF_holocene_all_cases.RDS` |
+| `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS` (`9:139`)<br>`data/alb_interp_preds_diffs_bluesky.RDS` (`9:311`)<br>`data/ipcc-ar6/*.csv` (`9:180-182`) | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
+| `10_forcing_breakdown.R` | `output/forcing/RF_holocene_all_cases.RDS` (`10:72`)<br>`output/forcing/forcing_by_period.csv` (`10:100`) | `output/forcing/forcing_by_month_latitude.csv`<br>`figures/forcing_by_month_latitude.pdf` |
 
 Not part of the pipeline: `GCM_snow_prob.R`, `thornthwaite.R`,
 `beta_veg_lct_modern.R` and `scripts/archive/` (abandoned climate/snow
 branch and earlier versions).
 
-Run order is 1 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7a -> 8 -> 9; 3 and
+Run order is 1 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7a -> 8 -> 9 -> 10; 3 and
 6-spatial-eval are optional, and 7 and 7a are independent of each other.
 Every script logs a provenance manifest (see below).
 
@@ -151,8 +153,9 @@ input is missing as of 2026-09-21.
 | `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:12`) | present |
 | `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:38`) | present |
 | `data/grid.RDS` | input to 2, 7, 7a (`2:15`, `7:148`, `7a:98`) | present |
-| `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2 (`pbs_ll` only), 3, 7, 7a, 8 (`2:36-37`, `3:39-40`, `7:27-28`, `7a:77-78`, `8:54-55`) | present |
-| `data/elev_interp_cells.RDS` | input to 1 (`1:57`) | present (16 KB, committed) |
+| `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2 and 7 (`pbs_ll` only) and 3 | present |
+| `data/elev_interp_cells.RDS` | input to 1 (legacy setting) | present (16 KB, committed) |
+| `data/elev_land_mean_cells.csv` | input to 1 (current setting) | present (59 KB, committed; made by `tools/prepare_land_elevation.R`) |
 | `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`7:46`) | present |
 | `data/albedo_glacier_monthly.csv` | input to 7, 7a (`7:163`, `7a:121`) | present |
 | `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`7a:44`) | present |
@@ -170,7 +173,8 @@ What each input is and where it came from:
 | `blue_sky_monthly_2000-2009.tif` | 12-band monthly blue-sky albedo, 0.25 degree, 2000-2009 mean | MODIS MCD43A3 v061 + ERA5 as described in manuscript §2.1; <mark>unknown</mark> who built it and with what code |
 | `grid.RDS` | 1-degree lon/lat raster with cell ids (-172 to 127 E, 17 to 79 N) | <mark>unknown</mark> (committed 2023-05-16, no generating code) |
 | `pbs.RDS` | political boundaries, projected and lon/lat; includes ocean polygons | <mark>unknown</mark> |
-| `elev_interp_cells.RDS` | point elevation (m) at each of the 2,870 cell centres: x, y, elev | fetched once from AWS terrain tiles by `elevatr` on 2026-09-25 and committed, so no network is needed; delete the file to force a fresh lookup |
+| `elev_interp_cells.RDS` | point elevation (m) at each of the 2,870 cell centres: x, y, elev | fetched once from AWS terrain tiles by `elevatr` on 2026-09-25 and committed, so no network is needed; `tools/prepare_centre_elevation.R` remakes it if it is ever lost |
+| `elev_land_mean_cells.csv` | mean elevation (m) over each of the 2,870 cells' non-ocean area, lakes kept: x, y, elev, non_ocean_share (diagnostic) | `tools/prepare_land_elevation.R` on 2026-10-15 from GMTED2010 30-arc-second mean elevation (Danielson & Gesch 2011, doi:10.3133/ofr20111073; `mn30_grd.zip`, SHA-256 dfd0d6c6...149d) the sea being GMTED's own 0 m pixels; method after New et al. 2002 and ISLSCP II HYDRO1k. The raw input is not committed; the tool's header says how to obtain it |
 | `glacier_shapefiles_21-1k.RDS` | 21 ice-margin polygon sets, 1,000-year steps, 21 to 1 ka, lon/lat. **The project's ice chronology**: a point-in-polygon test reproduces the `ice` flag above exactly (69/69 cells at 6 ka, 213/213 at 8 ka, 596/596 at 10 ka, 780/780 at 11 ka), so the flag was derived from these | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins, but pre-dates Dalton 2020 |
 | `albedo_glacier_monthly.csv` | monthly albedo assigned to ice-covered cells; three columns offering alternative conventions (`ice_albedo` seasonal 0.6-0.8, `ice_albedo_fixed` constant 0.68, `ice_albedo_sc` smoothly varying 0.56-0.80) | Andria, 2026-09-20; <mark>unknown</mark> literature source for the values and which column is preferred |
 | `dalton_interpolated_LC6k.tif` | continuous ice **fraction** per cell and slice, used to mix vegetation and ice albedo by area; needed because the polygons above are binary. 26 layers named `yr<n>bp`, 12,000 to 50 BP, 116 x 62 cells, lon/lat WGS84, values 0 to 1; every one of the 25 pipeline ages matches a layer | Dalton et al. 2020 margins interpolated to the slices; Andria, 2026-09-20; <mark>unknown</mark> who did the interpolation and by what method |
@@ -253,8 +257,8 @@ the EDI portal (link in the table above) and unzipped into
 
 R 4.5 (4.5.3 on the development machine) with `mgcv`, `terra`, `raster`, `sp`, `sf`, `dplyr`, `tidyr`,
 `reshape2`, `ggplot2`, `patchwork`, `gratia`, `tidyterra`, `scico`,
-`ggtern`, `tricolore`, `scatterpie`, `fields`, `brms`, `elevatr` (needs
-network). On the development machine there is no system R; a user-space
+`ggtern`, `tricolore`, `scatterpie`, `fields`, `brms`; `elevatr` (needs the network) only
+for `tools/prepare_centre_elevation.R`. On the development machine there is no system R; a user-space
 environment is used:
 
 ```

@@ -14,8 +14,13 @@ frozen <- sub("^[0-9a-f]+ +", "", readLines("tests/frozen_inputs.md5"))
 cat_files <- catalogue_paths(base)
 # Products added to the pipeline since then: the REML fit used for prediction, one file
 # per month, in its own file once the ladder could be fitted by ML (issue I16).
-added_files <- grep("output/calibration/calibration_prediction_fit_", cat_files, value = TRUE, fixed = TRUE)
-missing <- setdiff(cat_files, c(frozen, added_files))
+# And script 10's breakdown of the forcing by month and latitude (question B2d).
+added_files <- c(grep("output/calibration/calibration_prediction_fit_", cat_files, value = TRUE, fixed = TRUE),
+                 "output/forcing/forcing_by_month_latitude.csv")
+# Inputs made since then by a preparation tool in tools/ and committed: the land-mean
+# elevation per cell (tools/prepare_land_elevation.R, issue I16c).
+prepared_inputs <- "data/elev_land_mean_cells.csv"
+missing <- setdiff(cat_files, c(frozen, added_files, prepared_inputs))
 if (length(missing)) cat("catalogued but not in the frozen inventory:\n ", paste(missing, collapse = "\n  "), "\n")
 
 # The anchors' map from anchor file name to the place the pipeline writes it.
@@ -36,8 +41,10 @@ stopifnot(
   length(missing) == 0,
   all(live$path %in% cat_files),
   # every product family on disk is covered: 192 fits, 12 selected, 5 prediction families;
-  # plus the 12 prediction fits added in I16
-  length(added_files) == 12,
+  # plus the 12 prediction fits added in I16 and script 10's breakdown
+  length(added_files) == 12 + 1,
+  all(added_files %in% cat_files),
+  all(prepared_inputs %in% cat_files),
   sum(grepl("^output/calibration/.*\\.RDS$", cat_files)) == 192 + 12,
   sum(grepl("^output/prediction/", cat_files)) == 12 * 3 + 2,
 

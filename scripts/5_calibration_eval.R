@@ -121,11 +121,10 @@ for (n in 1:length(months)){
 
   print(month)
 
-  # The selected model (model_id above), fitted by REML in script 4, saved for script 6.
+  # The selected model (model_id above), fitted by REML in script 4 (saved for script 6 in
+  # the first loop).
   cal_interp_model = read_input(run, path_file(paths, 'calibration_prediction_fit', month = month))
   summary(cal_interp_model)
-
-  write_output(run, cal_interp_model, path_file(paths, 'calibration_selected', month = month))
 
   cal_interp_predict_gam = predict(cal_interp_model,
                                    newdata = cal_interp_data,
@@ -330,8 +329,8 @@ p = ggplot(data=cal_sims) +
   facet_wrap(~model)
 print(p)
 
-# CM: November-only block (model comparison, re-save of the November selected model, and its
-# figures), to the end of the script. It runs only when November is among the selected
+# CM: November-only block (model comparison and its figures; the selected model is saved in
+# the first loop), to the end of the script. It runs only when November is among the selected
 # months.
 if ('nov' %in% months) {
   month = "nov"
@@ -345,19 +344,14 @@ if ('nov' %in% months) {
   mod7_interp = read_input(run, path_file(paths, 'calibration_ladder', month = month, model = 'mod7'))
   mod8_interp = read_input(run, path_file(paths, 'calibration_ladder', month = month, model = 'mod8'))
 
+  # CM: AIC only; the original's chi-square analysis of deviance is removed, as in script 4.
   AIC(mod1_interp, mod2_interp, mod3_interp, mod4_interp, mod5_interp,
       mod6_interp, mod7_interp, mod8_interp)
 
-  anova_gam_interp = anova.gam(mod1_interp, mod2_interp, mod3_interp, mod4_interp,
-                               mod5_interp, mod6_interp, mod7_interp, mod8_interp,
-                               test = "Chisq")
-  anova_gam_interp
-
-  # The selected model (model_id above), fitted by REML in script 4, saved again for November.
+  # The selected model (model_id above), fitted by REML in script 4 (saved for script 6 in
+  # the first loop).
   cal_interp_model = read_input(run, path_file(paths, 'calibration_prediction_fit', month = month))
   summary(cal_interp_model)
-
-  write_output(run, cal_interp_model, path_file(paths, 'calibration_selected', month = month))
 
   cal_interp_predict_gam = predict(cal_interp_model,
                                    newdata = cal_interp_data,

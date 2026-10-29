@@ -66,9 +66,10 @@ calibration_formula = function(model_id, month) {
 calibration_terms = function(model_id) paste(deparse(CALIBRATION_MODELS[[model_id]]$rhs[[2]], width.cutoff = 500L), collapse = ' ')
 
 # Fit one model for one month to the calibration table. method is "REML" (the default, for
-# the fit used to predict) or "ML" (for comparing models that differ in their fixed terms,
-# as the ladder does: REML likelihoods are not comparable across such models;
-# question B4).
+# the fit used to predict and for the spatial experiments) or "ML" (the ladder in the current
+# configuration, config.R analysis$calibration$comparison_method; question B4). ML is the
+# usual convention when models with different terms are compared; mgcv's AIC is valid on
+# either.
 fit_calibration_model = function(model_id, month, data, method = "REML") {
   mgcv::bam(calibration_formula(model_id, month),
             data      = data,
@@ -76,4 +77,29 @@ fit_calibration_model = function(model_id, month, data, method = "REML") {
             method    = method,
             na.action = na.omit,
             control   = CALIBRATION_CONTROL)
+}
+
+# One line saying whether a fit really converged, for script 4's log. bam() always stores
+# converged = TRUE without checking (mgcv 1.9.4), so its own field is no evidence. The first
+# check is the one bam's fitting loop makes itself (it only warns "algorithm did not
+# converge"): did the loop stop before its step limit? The rest is what mgcv's gam.check()
+# prints for the smoothing-parameter optimiser (in the last loop step, for bam): full
+# convergence, the largest gradient, and whether the Hessian is positive definite. Every
+# sign of failure is marked NOT, so a log can be searched for it.
+fit_convergence = function(fit) {
+  # A loop that converged on exactly its last step looks the same in the saved fit as one
+  # that ran out, so at the limit the line points to R's warning instead of guessing.
+  loop = if (fit$iter >= fit$control$maxit) {
+    sprintf('fitting loop: reached its limit of %d steps, probably NOT converged (see R\'s "algorithm did not converge" warning)',
+            fit$control$maxit)
+  } else {
+    sprintf('fitting loop: %d of %d steps', fit$iter, fit$control$maxit)
+  }
+  outer = fit$outer.info
+  if (is.null(outer) || is.null(outer$conv)) return(paste0(loop, '; smoothing parameters: not available'))
+  optimiser = if (outer$conv == 'full convergence') outer$conv else paste('NOT converged:', outer$conv)
+  smallest_eigenvalue = min(eigen(outer$hess, symmetric = TRUE, only.values = TRUE)$values)
+  sprintf('%s; smoothing parameters: %s after %d iterations; largest gradient %.1e; Hessian %s (smallest eigenvalue %.2g)',
+          loop, optimiser, outer$iter, max(abs(outer$grad)),
+          if (smallest_eigenvalue > 0) 'positive definite' else 'NOT positive definite', smallest_eigenvalue)
 }

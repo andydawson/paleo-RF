@@ -38,12 +38,23 @@ list(
     # ("not sure if should use median") is question A1.
     land_cover = list(reduction = "mean"),
 
+    # Script 1: the elevation beside each cell's land-cover fractions (question B9).
+    # "land_mean" (decided by Chris on 2026-10-14 and 2026-10-15): the mean of the GMTED2010
+    # 30-arc-second DEM over the cell's non-ocean area, lakes kept, as in New et al. (2002)
+    # and ISLSCP II HYDRO1k; read from data/elev_land_mean_cells.csv, which
+    # tools/prepare_land_elevation.R makes. "centre_point" (the original): the AWS terrain
+    # tiles at the cell's centre point, data/elev_interp_cells.RDS.
+    elevation = list(method = "land_mean"),
+
     # Script 4 fits model_id by REML for prediction (the file script 5 saves as the selected
     # model and script 6 uses). One of the ladder mod1 ... mod8; their formulas are in
     # R/model_registry.R. Model 8 was chosen by hand (question B4).
     # comparison_method: how script 4 fits the ladder that scripts 4 and 5 compare by AIC.
-    # "ML" (decided by Chris on 2026-10-14, question B4: REML likelihoods are not comparable
-    # between models with different fixed terms) or "REML" (the original).
+    # "ML" (decided by Chris on 2026-10-14, kept on 2026-10-16, question B4) or "REML" (the
+    # original); both are to be compared. ML is the standard convention for comparing models
+    # that differ in their terms (mgcv's gam.selection help), not a requirement: the AIC that
+    # mgcv computes (the conditional AIC with the corrected degrees of freedom of Wood, Pya and
+    # Saefken 2016) is also valid on REML fits, and Wood's own help examples use it so.
     # ice_mask: script 2 leaves out of the calibration table the modern cells whose centre
     # lies under the 1 ka ice polygons, present-day ice caps that the interpolation gave
     # vegetation fractions (48 cells; question B8). "centre_in_1ka_polygon" (decided by Chris
@@ -119,18 +130,31 @@ list(
       # figure plots the global-equivalent forcing for comparison with the IPCC's global
       # means (decision C5, 2026-10-14); the domain mean stays as a separate figure.
       earth_area_m2 = 5.101e14,
-      # The forcing variant reported: vegetation plus ice albedo change, threshold
-      # method (script 9, A1). Which ice representation the paper reports is question
-      # C1; the variant choice is C5(a). Legal: any of script 8's ten rf_* variants.
-      variant = "veg_ice_thresh",
+      # The forcing variant reported (script 9, A1): vegetation plus ice albedo change,
+      # partial ice, i.e. each cell's albedo is its ice fraction times the fixed glacier
+      # albedo plus the rest times its vegetation albedo. Andria's intended headline (her
+      # answer to question C1, 2026-10-19); the all-or-nothing version (a cell is all ice
+      # above the threshold) stays in the sensitivity figure. Legal: one of the four
+      # totals, veg_ice_parts, veg_ice_thresh, veg_icesc_parts or veg_icesc_thresh
+      # (icesc: the month-by-month glacier albedo); a vegetation-only or ice-only part
+      # is refused (R/config_schema.R).
+      variant = "veg_ice_parts",
       # The kernels carried through, HadGEM3 first as the headline (A3; C3, C4).
       # Must include hadgem.
       report_kernels = c("hadgem", "cam5", "cack"),
-      # The variants compared in the sensitivity table and figure, HadGEM3 only (A2).
-      # veg_thresh and ice_thresh have missing values (no-ice cells); the
-      # aggregation drops them.
+      # The variants compared in the sensitivity table and figure, HadGEM3 only (A2):
+      # the totals, and both of Andria's vegetation/ice splits, each adding up to its
+      # total (veg_thresh + ice_thresh = veg_ice_thresh, by kind of step;
+      # veg_part + ice_part = veg_ice_parts, by area share). With the "endpoint"
+      # difference method (ice above), script 9 sets a threshold part that does not
+      # apply to 0, so cells with both kinds of step stay in (R/forcing_components.R).
       sensitivity_variants = c("veg_thresh", "ice_thresh", "veg_ice_thresh",
-                               "veg_icesc_thresh", "veg_ice_parts", "veg_icesc_parts")
+                               "veg_part", "ice_part", "veg_ice_parts",
+                               "veg_icesc_thresh", "veg_icesc_parts"),
+      # Script 10: the width of the latitude bands its breakdown uses, degrees (bands
+      # start at multiples of it; the outer two are cut at the domain's limits). Shapes a
+      # breakdown only, never a total (Chris, 2026-10-15, question B2d).
+      latitude_band_width = 10
     )
   ),
 
@@ -139,7 +163,8 @@ list(
     # were inherited (questions_for_andria_general.md, section 7):
     #   calibration  maps of the modern calibration data (scripts 2 and 3)
     #   tail         maps of the hindcast and its differences (script 7)
-    #   diagnostics  script 1's ice-extent diagnostics (DIAGNOSTIC=TRUE)
+    #   diagnostics  script 1's ice-extent diagnostics (DIAGNOSTIC=TRUE) and the diagnostic
+    #                figures of tools/plotting/
     map_windows = list(calibration = list(x = c(-172, -50), y = c(15, 80)),
                        tail        = list(x = c(-166, -50), y = c(12, 82)),
                        diagnostics = list(x = c(-172, -50), y = c(17, 79)))

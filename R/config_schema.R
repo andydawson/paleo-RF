@@ -28,6 +28,12 @@ FORCING_VARIANTS = c('veg_thresh', 'ice_thresh', 'icesc_thresh',
                      'veg_part', 'ice_part', 'icesc_part',
                      'veg_ice_parts', 'veg_icesc_parts')
 FORCING_KERNELS  = c('hadgem', 'cam5', 'cack')
+# The headline (analysis$forcing$variant) must be one of the four totals, vegetation plus
+# ice: a vegetation-only or ice-only part is not the forcing of the whole surface. (The
+# all-or-nothing parts would also lose, in script 9's headline sums, every cell whose
+# steps are of both kinds; the parts appear only in the sensitivity figure.) Chris,
+# 2026-10-19.
+FORCING_TOTALS   = c('veg_ice_thresh', 'veg_icesc_thresh', 'veg_ice_parts', 'veg_icesc_parts')
 
 # Numbers: no NA, no names, optionally a fixed length, strictly increasing, or a range.
 check_numbers = function(v, len = NULL, min_len = 1, increasing = FALSE, range = NULL) {
@@ -117,6 +123,8 @@ CONFIG_SCHEMA = list(
     ages = function(v) check_numbers(v, min_len = 2, increasing = TRUE, range = c(0, 100000)),
     land_cover = list(
       reduction = function(v) check_choice(v, c('mean', 'median'), single = TRUE)),
+    elevation = list(
+      method = function(v) check_choice(v, c('land_mean', 'centre_point'), single = TRUE)),
     calibration = list(
       model_id = function(v) check_choice(v, LADDER_MODELS, single = TRUE),
       comparison_method = function(v) check_choice(v, c('ML', 'REML'), single = TRUE),
@@ -146,9 +154,10 @@ CONFIG_SCHEMA = list(
       cack_year       = function(v) check_whole(v, range = c(2001, 2016))),
     forcing = list(
       earth_area_m2        = function(v) check_numbers(v, len = 1, range = c(1, Inf)),
-      variant              = function(v) check_choice(v, FORCING_VARIANTS, single = TRUE),
+      variant              = function(v) check_choice(v, FORCING_TOTALS, single = TRUE),
       report_kernels       = function(v) check_choice(v, FORCING_KERNELS),
-      sensitivity_variants = function(v) check_choice(v, FORCING_VARIANTS))),
+      sensitivity_variants = function(v) check_choice(v, FORCING_VARIANTS),
+      latitude_band_width  = function(v) check_whole(v, range = c(1, 90)))),
   presentation = list(
     map_windows = list(calibration = MAP_WINDOW_SCHEMA,
                        tail        = MAP_WINDOW_SCHEMA,

@@ -11,6 +11,7 @@
 #   ice$difference_method     "legacy_components"                  config.R: "endpoint"
 #   calibration$comparison_method "REML"                           config.R: "ML"
 #   calibration$ice_mask      "none"                               config.R: "centre_in_1ka_polygon"
+#   elevation$method          "centre_point"                       config.R: "land_mean"
 #   draws$seed                1   (the original was unseeded; seed 1 reproduces the seeded
 #                                  anchor and meets the unseeded anchor's tolerances; Chris)
 #   run$dir                   ".rundirs/legacy"
@@ -35,6 +36,12 @@ list(
     # rescaled so that ET + OL + ST = 1 in every cell and slice. Andria's note in script 1
     # ("not sure if should use median") is question A1.
     land_cover = list(reduction = "mean"),
+
+    # Script 1: the elevation beside each cell's land-cover fractions (question B9).
+    # "centre_point" (the original): the AWS terrain tiles at the cell's centre point,
+    # data/elev_interp_cells.RDS. "land_mean": the GMTED2010 mean over the cell's
+    # non-ocean area, data/elev_land_mean_cells.csv.
+    elevation = list(method = "centre_point"),
 
     # Script 5: the model, by id, that is saved as the selected calibration model and used
     # by script 6 for prediction. One of the ladder mod1 ... mod8; their formulas are in
@@ -111,8 +118,10 @@ list(
       # means (decision C5, 2026-10-14); the domain mean stays as a separate figure.
       earth_area_m2 = 5.101e14,
       # The forcing variant reported: vegetation plus ice albedo change, threshold
-      # method (script 9, A1). Which ice representation the paper reports is question
-      # C1; the variant choice is C5(a). Legal: any of script 8's ten rf_* variants.
+      # method (script 9, A1), as in the original analysis. Legal: one of the four
+      # totals, veg_ice_thresh, veg_ice_parts, veg_icesc_thresh or veg_icesc_parts
+      # (icesc: the month-by-month glacier albedo); a vegetation-only or ice-only part
+      # is refused (R/config_schema.R).
       variant = "veg_ice_thresh",
       # The kernels carried through, HadGEM3 first as the headline (A3; C3, C4).
       # Must include hadgem.
@@ -121,7 +130,11 @@ list(
       # veg_thresh and ice_thresh have missing values (no-ice cells); the
       # aggregation drops them.
       sensitivity_variants = c("veg_thresh", "ice_thresh", "veg_ice_thresh",
-                               "veg_icesc_thresh", "veg_ice_parts", "veg_icesc_parts")
+                               "veg_icesc_thresh", "veg_ice_parts", "veg_icesc_parts"),
+      # Script 10: the width of the latitude bands its breakdown uses, degrees (bands
+      # start at multiples of it; the outer two are cut at the domain's limits). Shapes a
+      # breakdown only, never a total (Chris, 2026-10-15, question B2d).
+      latitude_band_width = 10
     )
   ),
 
@@ -130,7 +143,8 @@ list(
     # were inherited (questions_for_andria_general.md, section 7):
     #   calibration  maps of the modern calibration data (scripts 2 and 3)
     #   tail         maps of the hindcast and its differences (script 7)
-    #   diagnostics  script 1's ice-extent diagnostics (DIAGNOSTIC=TRUE)
+    #   diagnostics  script 1's ice-extent diagnostics (DIAGNOSTIC=TRUE) and the diagnostic
+    #                figures of tools/plotting/
     map_windows = list(calibration = list(x = c(-172, -50), y = c(15, 80)),
                        tail        = list(x = c(-166, -50), y = c(12, 82)),
                        diagnostics = list(x = c(-172, -50), y = c(17, 79)))
