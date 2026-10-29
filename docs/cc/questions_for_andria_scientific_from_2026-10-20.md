@@ -175,6 +175,19 @@ half), mostly in summer (open water; July -0.005 overall) and hardly in December
 add an albedo to only 52 of 7,078 cell-months. The build keeps the shoreline days per pixel, so this
 can be changed later without rebuilding.
 
+**Northern winter gap: the 75-degree rule stays, with a check without it (Chris, 29 October, from
+the full build; your view welcome).** In winter the noon sun in the north is more than 75 degrees from
+overhead, so the rebuilt albedo has no value there, and the calibration model leaves those cells out of
+that month's fit. Your raster has the same gap, but a smaller one. Over the full 2000-2009 build, the
+cells with an albedo in your calibration table but none in the rebuilt one are: November 581,
+December 333, January 436, February 344 (March 6), of 2,860. The northernmost December value is at
+53.5 N in the rebuild and 59.5 N in your raster. Without the sun-angle rule the gap shrinks to 106-167
+cells a month (December to 57.5 N), but that keeps the low-sun values the product team calls least
+reliable, over snow especially. Ten years barely helped (December: 1,327 cells from one year, 1,418
+from ten), so the sun-angle rule sets the gap, not missing data. Where both have a value they agree:
+median difference within 0.02, correlation 0.84-0.92 (November to February). The refit will also fit
+November to February with the no-rule version, to show whether the forcing depends on this choice.
+
 **Current defaults (Chris, 20 October). They can be changed later without rebuilding; tell us only if
 you disagree.**
 - *Today's snow share* = the share of usable satellite retrievals flagged snowy (it depends on cloud,
