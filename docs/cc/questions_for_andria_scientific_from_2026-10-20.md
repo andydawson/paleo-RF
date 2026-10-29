@@ -244,12 +244,12 @@ the any-quality and no-sun-angle-rule versions as sensitivities, and a control o
 2. **Should the snow-free and snowy calibrations use a minimum share or weights?** A cell whose
    snow-free days are 2% of its usable days enters the snow-free fit with the same weight as one at
    100%. The "no minimum coverage" default (section 3) was set for the all-days albedo. Fewer cells
-   also enter the snow-free fits: in March and April about a third of the northern cells drop out,
-   in the months of the largest northeast changes.
+   also enter the snow-free fits: on provisional counts, 1,764 of 2,808 cells have a snow-free value in
+   March and 2,039 in April, the months of the largest northeast changes.
 3. **If the northeast result stays unstable after the refit,** what further model or independent
-   comparison would you accept for the paper (see also items 1 and 2.7)?
+   comparison would you accept for the paper (see also section 1 and item 7 of section 2)?
 4. **For information (decided by Chris, 29 October):** script 5's share of observations inside the
    credible interval counted cells with no observation as misses (December read 0.56; on observed
    cells it is about 0.92). It will count only observed cells, for both albedo sources.
 
-The cell mean over land pixels in place of the centre pixel is item 2.5 above.
+The cell mean over land pixels in place of the centre pixel is item 5 of section 2.
