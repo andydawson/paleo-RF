@@ -41,6 +41,14 @@ recorded as his decisions.
    started 29 October), and correct the seed records (done 29 October: the 19 October ice-cap run's
    prediction draws used seed 1384237515, the 18 October run's 1549466984, so the two were not paired).
 
+8. **References audited (29 October):** see `2026-10-29_refit_references_audit_summary.md`. Chris
+   then decided: the later snow-mixing step takes today's snow share from NASA's monthly snow-cover
+   product (MOD10CM), averaged per cell over 2000-2009, as both published precedents do (Barnes and
+   Roy 2010, Ghimire et al. 2014), with the share of snow-flagged albedo retrievals compared beside it.
+   This replaces the 20 October default (the flag share). It does not affect this refit.
+9. **Build:** start (29 October), code and tests only; no runs until Fable's and Astra's reviews of
+   the code are back and Chris has seen the input check.
+
 ## Agreed by both agents, not yet put to Chris as a choice
 - Join on exact cell centres from the modern predictors; the four modern cells absent from the cell
   table stay missing; both unmatched lists recorded; no filling, no coverage filter.
