@@ -20,7 +20,8 @@
 #                from 5 March 2000, the start of the validated record (MCD43 user guide; algorithm:
 #                Schaaf et al. 2002, doi:10.1016/S0034-4257(02)00091-3; daily collection 6: Wang
 #                et al. 2018, doi:10.1016/j.rse.2018.02.001). Each daily value comes from the
-#                observations of a 16-day window centred on that day.
+#                observations of a 16-day window in which that day is the ninth (days 1-16 for
+#                day 9; Wang et al. 2018), not one centred on it.
 #   Blue sky     (1 - f) x black-sky + f x white-sky, the isotropic approximation of the MCD43A3
 #                user guide (Lucht et al. 2000, doi:10.1109/36.841980), which the guide says is
 #                weakest at large solar angles over bright surfaces such as snow; Roman et al. 2010
