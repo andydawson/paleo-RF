@@ -1,5 +1,10 @@
 # Refit on the rebuilt albedo: adversarial review of Astra's plan by Fable (science-reviewer, 29 October 2026)
 
+> **Correction from the reference audit of 29 October** (`2026-10-29_refit_references_audit_summary.md`):
+> item 12's "Bright et al. 2015 sections 2.2.1 and 4" should read section 2.1, the Figure 2 caption
+> (p. 2200) and section 4; Barnes and Roy 2010 section 4.5, Ghimire 2014 section 2.3 and Figure 2, and
+> King and Zeng 2006 section 2.3 are now verified.
+
 Fable was given the same brief, Astra's plan, the code (feature/single-config at dd83724), the cell table
 and the earlier runs. Chris's decisions: 2026-10-29_refit_plan_decisions.md.
 
