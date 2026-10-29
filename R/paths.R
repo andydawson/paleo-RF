@@ -46,6 +46,10 @@ PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
   c('elevation_land_mean',      'data/elev_land_mean_cells.csv',                                      'input',   NA),
   c('grid',                     'data/grid.RDS',                                                      'input',   NA),
   c('bluesky_raster',           'data/blue_sky_monthly_2000-2009.tif',                                'input',   NA),
+  # The rebuilt MODIS albedo per cell and month, and the note of how it was made, both from
+  # tools/prepare_bluesky_albedo.R (committed); read by script 2 when config.R chooses it.
+  c('albedo_modis_cells',       'data/albedo_modis_cells.csv',                                        'input',   NA),
+  c('albedo_modis_provenance',  'data/albedo_modis_cells_provenance.txt',                             'input',   NA),
   c('boundaries_ll',            'data/map-data/geographic/pbs_ll.RDS',                                'input',   NA),
   c('boundaries',               'data/map-data/geographic/pbs.RDS',                                   'input',   NA),
   c('glacier_shapes',           'data/map-data/ice/glacier_shapefiles_21-1k.RDS',                     'input',   NA),
