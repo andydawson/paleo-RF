@@ -177,6 +177,7 @@ require_script_sha = function() {
 #   'c0ffee...(its 64-character SHA-256)',   # commit 1a2b3c4: comment-only change; verified by ...
 # A version's SHA-256 is the one in its monthly files and build records. Empty: this version only.
 ACCEPTED_OLDER_SHAS = c(
+  '2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5'   # made all 4,484 monthly files of the 28 October build; the next version changed one comment (the 16-day window is not centred on the day, Wang et al. 2018); verified 2026-10-29 by code_of() of tools/check_comments_only.R: both versions parse to the same 78 expressions
 )
 
 APPEEARS_DIR = file.path(WORK_DIR, 'appeears')  # collected months, one folder each
