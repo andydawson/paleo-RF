@@ -12,7 +12,12 @@
 # Changing a value here is a decision for Chris, in its own commit.
 artefact	column	statistic	tolerance
 calibration_model_stats.csv	correlation	max_abs	0.02
-calibration_model_stats.csv	data in credible interval	max_abs	0.02
+# Retired 2026-10-30 (Chris's decision): the next row is no longer applied. Script 5's
+# "data in credible interval" now divides by the cells with an observation, not by every cell
+# (decision 4 of docs/cc/2026-10-29_refit_plan_decisions.md), so this anchor's values mean
+# something else. Without a tolerance the column is only reported (its NA pattern must still
+# match); the corrected statistic is checked exactly by the seed-1 anchor once regenerated.
+# calibration_model_stats.csv	data in credible interval	max_abs	0.02
 calibration_model_stats.csv	diff lower (model - data; 2.5%)	max_abs	0.02
 calibration_model_stats.csv	diff upper (model - data; 97.5%)	max_abs	0.01
 paleo_interp_predict_gam_summary_bluesky.RDS	alb_hi	max_abs	0.19
