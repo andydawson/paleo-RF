@@ -52,6 +52,19 @@ CALIBRATION_MODELS = list(
 LADDER_MODELS  = paste0('mod', 1:8)
 SPATIAL_MODELS = setdiff(names(CALIBRATION_MODELS), LADDER_MODELS)
 
+# The predictors any calibration model uses (x, y, elev, OL, ET, ST).
+CALIBRATION_PREDICTORS = unique(unlist(lapply(CALIBRATION_MODELS, function(model) all.vars(model$rhs))))
+
+# The rows a month's models are fitted on: the cells with that month's albedo and every
+# predictor (fit_calibration_model drops the others, na.omit).
+complete_model_rows = function(data, month) sum(stats::complete.cases(data[, c(month, CALIBRATION_PREDICTORS)]))
+
+# The number of coefficients of a model, from mgcv's model setup without fitting (seconds).
+# The family is left at mgcv's default: it does not change the model matrix.
+model_coefficients = function(model_id, month, data) {
+  ncol(mgcv::gam(calibration_formula(model_id, month), data = data, fit = FALSE)$X)
+}
+
 # Fitting controls for every model. Eight threads is not an analysis setting: it changes no
 # result beyond the last bit, and it is the thread count the stored fits were made with.
 CALIBRATION_CONTROL = list(nthreads = 8, maxit = 500)

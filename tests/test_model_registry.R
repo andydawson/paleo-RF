@@ -43,4 +43,15 @@ stopifnot(
   nrow(default_fit$model) == 198,
   grepl("fitted on 198 rows$", fit_convergence(default_fit))
 )
+# The rows a month can be fitted on, and a model's coefficients from its setup.
+cells = data.frame(x = runif(600, -120, -70), y = runif(600, 30, 60), elev = runif(600, 0, 3000),
+                   OL = 0.2, ET = 0.3, ST = 0.5, jan = runif(600, 0.1, 0.8))
+cells$jan[1:3] = NA; cells$elev[3:4] = NA; cells$feb = cells$jan; cells$feb[10] = NA
+stopifnot(
+  setequal(CALIBRATION_PREDICTORS, c("x", "y", "elev", "OL", "ET", "ST")),
+  complete_model_rows(cells, "jan") == 600 - 4,      # rows 1-3 lack the albedo, 3-4 the elevation
+  complete_model_rows(cells, "feb") == 600 - 5,
+  model_coefficients("elev", "jan", cells) == 50,     # s(elev, k = 50): intercept + 49
+  model_coefficients("spatial_elev", "jan", cells) == 549
+)
 cat("test_model_registry: all tests passed\n")
