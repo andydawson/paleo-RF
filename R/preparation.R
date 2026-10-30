@@ -6,6 +6,9 @@
 # contract, so the median can be run without editing the script.
 # Issue I08 adds the other preparation steps of scripts 1 to 3 here.
 
+# The month names (MONTHS), used by the albedo functions below.
+source('R/calendar.R')
+
 # One value per cell, slice and land-cover class from the posterior draws, as one row per
 # cell and slice with a column per class (cell_id, x, y, ages, ET, OL, ST).
 #   "mean"   the mean of the draws: the original reduction, kept exactly as it was. Each
