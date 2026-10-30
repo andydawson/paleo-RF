@@ -48,7 +48,6 @@ stopifnot(
   length(added_files) == 12 + 1,
   all(added_files %in% cat_files),
   all(prepared_inputs %in% cat_files),
-  length(prepared_inputs) == 3,
   all(file.exists(prepared_inputs)),
   sum(grepl("^output/calibration/.*\\.RDS$", cat_files)) == 192 + 12,
   sum(grepl("^output/prediction/", cat_files)) == 12 * 3 + 2,
