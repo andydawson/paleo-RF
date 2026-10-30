@@ -25,6 +25,30 @@ stopifnot(
   control$max_abs_fitted_change < 1e-10,
   identical(control$steps_saved, sub(" of 2000$", " of 500", control$steps_refit))
 )
+# It stops unless the refit compares like with like, before fitting when the data differ.
+stops_with = function(pattern, expr) grepl(pattern, tryCatch({ expr; "" }, error = conditionMessage))
+frame_differs = "would not compare like with like: the model frame differs"
+stopifnot(
+  stops_with(frame_differs, check_refit("feb", converged, toy[-10, ], model_id = "elev")),                       # a dropped row
+  stops_with(frame_differs, check_refit("feb", converged, toy[c(1:9, 11, 10, 12:300), ], model_id = "elev")),           # reordered rows
+  stops_with(frame_differs, check_refit("feb", converged, within(toy, feb[20] <- 0.5), model_id = "elev")),     # a changed response
+  stops_with(frame_differs, check_refit("feb", converged, within(toy, feb[30] <- NA), model_id = "elev")),      # changed missingness
+  stops_with("the formula differs", check_refit("mar", converged, within(toy, mar <- feb), model_id = "elev")),   # same values, another month's column
+  # after fitting too: a fitting function with another link is refused
+  stops_with("the family or its link differs",
+             check_refit("feb", converged, toy, model_id = "elev",
+                         fit_fun = function(model_id, month, data, method, control)
+                           mgcv::bam(calibration_formula(model_id, month), data = data, family = mgcv::betar(link = "probit"),
+                                     method = method, na.action = na.omit, control = control))),
+  # the saved fit's own controls are kept, only the step limit changes
+  identical(check_refit("feb", converged, toy, model_id = "elev",
+                        fit_fun = function(model_id, month, data, method, control) {
+                          stopifnot(identical(control[names(control) != "maxit"], converged$control[names(converged$control) != "maxit"]),
+                                    control$maxit == 2000)
+                          fit_calibration_model(model_id, month, data, method, control)
+                        })$aic_refit, control$aic_saved)
+)
+
 # The command line refuses a call without months.
 rscript = file.path(R.home("bin"), "Rscript")
 stopifnot(system2(rscript, c("tools/check_model7_convergence.R", "."), stdout = FALSE, stderr = FALSE) == 2)

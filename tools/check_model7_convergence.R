@@ -8,9 +8,12 @@
 # The pipeline's limit is not changed: this is a diagnostic only.
 #
 # The refit uses the pipeline's own fitting function (fit_calibration_model in
-# R/model_registry.R) with the saved fit's method (ML or REML) and only the step limit raised,
-# so the formula, family and data are those of the saved fit. Nothing is written; the report is
-# printed.
+# R/model_registry.R) with the saved fit's own method (ML or REML) and fitting controls, only
+# the step limit raised. It stops unless the refit compares like with like: the same formula,
+# the same family and link, and the same model frame (the same rows, in the same order, with
+# the same values), checked before fitting and again after. No result file is written (the
+# report is printed), though setting up the run's paths creates its product directories if
+# they are missing.
 #
 # Usage, from the repository root:
 #   Rscript tools/check_model7_convergence.R <run-dir> <month> [<month> ...]
@@ -23,15 +26,38 @@ source('R/paths.R')
 
 MODEL7_CHECK_MAXIT = 2000
 
+# Why a refit would not be comparable with the saved fit: one sentence per difference in the
+# formula, the model frame (rows and values, in order) or the family and its link.
+setup_differences = function(saved, formula, model_frame, family) {
+  family_name = function(f) sub('\\(.*$', '', f$family)   # "Beta regression(46.1)": theta is estimated
+  c(if (!identical(deparse(stats::formula(saved)), deparse(formula))) 'the formula differs',
+    if (!isTRUE(all.equal(saved$model, model_frame, check.attributes = FALSE)))
+      'the model frame differs (rows dropped, added or reordered, or values changed)',
+    if (!identical(family_name(saved$family), family_name(family)) || !identical(saved$family$link, family$link))
+      'the family or its link differs')
+}
+
+stop_unless_comparable = function(month, differences) {
+  if (length(differences)) stop(sprintf('check_refit, %s: the refit would not compare like with like: %s',
+                                        month, paste(differences, collapse = '; ')), call. = FALSE)
+}
+
 # Refit one month's saved fit with a higher step limit and compare. `fit_fun` is the fitting
 # function, replaceable for the tests. Returns one row: per fit its method, rows fitted, steps
 # taken out of the limit and AIC, the largest change in the fitted values, and both convergence
 # lines of fit_convergence().
 check_refit = function(month, saved, data, model_id = 'mod7', maxit = MODEL7_CHECK_MAXIT,
                        fit_fun = fit_calibration_model) {
+  # Checked before fitting, which takes hours for model 7: the data must give the saved fit's
+  # model frame under the registry's formula (the variables of the smooths, rows with a
+  # missing value dropped, as fit_calibration_model does).
+  formula = calibration_formula(model_id, month)
+  frame = stats::model.frame(mgcv::interpret.gam(formula)$fake.formula, data, na.action = na.omit)
+  stop_unless_comparable(month, setup_differences(saved, formula, frame, saved$family))
   started = Sys.time()
   refit = fit_fun(model_id, month, data, method = saved$method,
-                  control = modifyList(CALIBRATION_CONTROL, list(maxit = maxit)))
+                  control = modifyList(saved$control, list(maxit = maxit)))
+  stop_unless_comparable(month, setup_differences(saved, stats::formula(refit), refit$model, refit$family))
   data.frame(month = month, model = model_id, method = saved$method,
              rows_saved = nrow(saved$model), rows_refit = nrow(refit$model),
              steps_saved = sprintf('%d of %d', saved$iter, saved$control$maxit),
