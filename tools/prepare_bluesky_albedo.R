@@ -172,12 +172,16 @@ require_script_sha = function() {
 # Older versions of this script whose monthly files the cell step still accepts, because each was
 # checked to compute the same numbers as this version (Chris, 2026-10-21). Any other version's
 # files are refused, so without an entry here even a comment edit would make the cell step refuse
-# every month built before it. Add a version only after that check, one line each, saying what
-# changed and how the check was made, e.g.
-#   'c0ffee...(its 64-character SHA-256)',   # commit 1a2b3c4: comment-only change; verified by ...
-# A version's SHA-256 is the one in its monthly files and build records. Empty: this version only.
+# every month built before it. Add a version only after that check, one entry each, with a
+# comment saying what changed and how the check was made, e.g.
+#   # commit 1a2b3c4: comment-only change; verified by ...
+#   'c0ffee...(its 64-character SHA-256)',
+# A version's SHA-256 is the one in its monthly files and build records.
 ACCEPTED_OLDER_SHAS = c(
-  '2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5'   # made all 4,484 monthly files of the 28 October build; the next version changed one comment (the 16-day window is not centred on the day, Wang et al. 2018); verified 2026-10-29 by code_of() of tools/check_comments_only.R: both versions parse to the same 78 expressions
+  # Made all 4,484 monthly files of the 28 October build. The next version changed one comment
+  # (the 16-day window is not centred on the day, Wang et al. 2018); verified 2026-10-29 by
+  # code_of() of tools/check_comments_only.R: both versions parse to the same 78 expressions.
+  '2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5'
 )
 
 APPEEARS_DIR = file.path(WORK_DIR, 'appeears')  # collected months, one folder each
