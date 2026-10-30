@@ -18,7 +18,9 @@ toy <- data.frame(
   full_75_snowy       = c(0.60, 0.70, 0.65, 0.80),
   full_nocut          = c(0.31, 0.42, 0.36, 0.51),
   full_nocut_snowfree = c(0.21, 0.26, 0.23, 0.46),
-  full_nocut_snowy    = c(0.61,   NA, 0.66, 0.81))
+  full_nocut_snowy    = c(0.61,   NA, 0.66, 0.81),
+  full_75_coverage    = c(0.90, 0.50, 0.80, 0.10),
+  full_75_days        = c(20,   10,   15,    1))
 # The calibration cells, in their own order: B, A, then C (-98.5, 40.5), which the table lacks.
 predictors <- data.frame(x = c(-99.5, -100.5, -98.5), y = c(40.5, 40.5, 40.5), elev = c(100, 200, 300))
 
@@ -47,6 +49,19 @@ for (statistic in names(expected)) for (version in names(expected[[statistic]]))
       identical(got$cells_without_predictor, data.frame(x = -97.5, y = 41.5)))
   }
 }
+
+# The retrieval support over the cells with a value: January has only B (coverage 0.5, 10 days);
+# February B and A (0.8 and 0.9; 15 and 20 days): median 0.85 and 17.5, 10th percentile
+# 0.8 + 0.1 x 0.1 = 0.81 and 15 + 0.1 x 5 = 15.5. Months without a value: NA.
+support = retrieval_support(shuffled, predictors, "full_75",
+                            cell_albedo_by_month(shuffled, predictors, "all_days", "full_75")$albedo)
+stopifnot(
+  identical(support$month, MONTHS),
+  same(unlist(support[support$month == "jan", -1]), c(coverage_median = 0.5, coverage_p10 = 0.5, days_median = 10, days_p10 = 10)),
+  isTRUE(all.equal(unlist(support[support$month == "feb", -1]), c(coverage_median = 0.85, coverage_p10 = 0.81, days_median = 17.5, days_p10 = 15.5))),
+  all(is.na(support[!support$month %in% c("jan", "feb"), -1])),
+  fails(retrieval_support(toy, predictors, "full_nocut", cell_albedo_by_month(toy, predictors, "all_days", "full_nocut")$albedo))
+)
 
 # What must stop, and what may pass.
 with_value <- function(v) { t <- toy; t$full_75[2] <- v; t }

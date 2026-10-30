@@ -42,13 +42,15 @@ lct_interp_modern = read_input(run, path_file(paths, 'lct_modern'))
 # the glacier shapes) carry interpolated vegetation fractions but the satellite's ice albedo.
 # They stay in the prediction domain; only the calibration table loses them. The cells left
 # out are recorded in the run manifest.
+ice_masked_centres = data.frame(x = numeric(0), y = numeric(0))
 if (cfg$analysis$calibration$ice_mask == 'centre_in_1ka_polygon') {
   source('R/preparation.R')
   ice_1ka   = read_input(run, path_file(paths, 'glacier_shapes'))[[1]]
   under_ice = cells_in_polygons(lct_interp_modern$x, lct_interp_modern$y, ice_1ka)
+  ice_masked_centres = lct_interp_modern[under_ice, c('x', 'y')]
   run_record(run, 'calibration_ice_mask', list(method = 'centre_in_1ka_polygon',
                                                cells_left_out = sum(under_ice),
-                                               cells = lct_interp_modern[under_ice, c('x', 'y')]))
+                                               cells = ice_masked_centres))
   lct_interp_modern = lct_interp_modern[!under_ice, ]
 }
 
@@ -171,14 +173,29 @@ if (albedo_settings$source == 'legacy_raster') {
   cells_provenance = read_input(run, path_file(paths, 'albedo_modis_provenance'), readLines)
   attached = cell_albedo_by_month(albedo_cells, lct_interp_modern, albedo_settings$statistic, albedo_settings$version)
   bs_interp_df = attached$albedo
-  # The cell-table centres without a calibration cell include those the ice mask above left out.
+  # The cell-table centres without a calibration cell are of two kinds: those the ice mask above
+  # left out, and centres outside the modern land-cover table (the 17.5 N row).
+  unmatched = attached$cells_without_predictor
+  left_out_by_ice_mask = paste(unmatched$x, unmatched$y) %in% paste(ice_masked_centres$x, ice_masked_centres$y)
+  # How many retrievals stand behind each month's values (R/preparation.R, retrieval_support).
+  support_meaning = paste('Over the calibration cells with a value that month: median and 10th percentile of the',
+                          'coverage (mean share of the cell\'s land pixels with a qualifying retrieval, over the years',
+                          'with data) and days (qualifying pixel-days per land pixel, per year with data) of ALL',
+                          'qualifying retrievals of version', albedo_settings$version)
+  if (albedo_settings$statistic != 'all_days')
+    support_meaning = paste(support_meaning, '- not the support of the', albedo_settings$statistic,
+                            'days alone, which the cell table does not give')
   albedo_record = list(source = 'modis_cells',
                        statistic = albedo_settings$statistic,
                        version = albedo_settings$version,
                        cell_table = list(path = cells_file, md5 = unname(tools::md5sum(cells_file))),
                        cell_table_provenance = cells_provenance,
                        calibration_cells_without_albedo_cell = attached$predictors_without_cell,
-                       albedo_cells_without_calibration_cell = attached$cells_without_predictor)
+                       albedo_cells_left_out_by_ice_mask = unmatched[left_out_by_ice_mask, ],
+                       albedo_cells_outside_the_modern_cells = unmatched[!left_out_by_ice_mask, ],
+                       retrieval_support = list(meaning = support_meaning,
+                                                per_month = retrieval_support(albedo_cells, lct_interp_modern,
+                                                                              albedo_settings$version, bs_interp_df)))
 
   # Maps of the selected monthly albedo and of where it is missing, one panel per month.
   albedo_long = melt(data.frame(lct_interp_modern[, c('x', 'y')], bs_interp_df), id.vars = c('x', 'y'),

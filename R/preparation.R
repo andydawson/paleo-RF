@@ -127,14 +127,47 @@ cell_albedo_by_month = function(cells, predictors, statistic, version) {
                                   named(paste0(cell_month[unusable], ' = ', value[unusable]))))
 
   predictor_centre = paste(predictors$x, predictors$y)
-  albedo = data.frame(matrix(NA_real_, nrow = nrow(predictors), ncol = length(MONTHS)))
-  colnames(albedo) = MONTHS
-  for (month in MONTHS) {
-    in_month = cells$month == month
-    albedo[[month]] = value[in_month][match(predictor_centre, centre[in_month])]
-  }
   centres = function(rows) data.frame(x = rows$x, y = rows$y)   # plain rows, for the run manifest
-  list(albedo = albedo,
+  list(albedo = column_by_month(cells, predictors, column),
        predictors_without_cell = centres(predictors[!predictor_centre %in% centre, ]),
        cells_without_predictor = centres(unique(cells[!centre %in% predictor_centre, c('x', 'y')])))
+}
+
+# One column of the cell table as a table with columns jan ... dec, one row per row of
+# `predictors` in their order, matched on the exact cell centre; NA where the cell table has no
+# row. Used by cell_albedo_by_month(), which checks the table first, and retrieval_support().
+column_by_month = function(cells, predictors, column) {
+  if (!column %in% names(cells)) stop('column_by_month: the cell table has no column ', column)
+  centre = paste(cells$x, cells$y)
+  predictor_centre = paste(predictors$x, predictors$y)
+  by_month = data.frame(matrix(NA_real_, nrow = nrow(predictors), ncol = length(MONTHS)))
+  colnames(by_month) = MONTHS
+  for (month in MONTHS) {
+    in_month = cells$month == month
+    by_month[[month]] = cells[[column]][in_month][match(predictor_centre, centre[in_month])]
+  }
+  by_month
+}
+
+# The retrievals behind each month's albedo, for script 2's run record (asked for by both
+# reviewers, approved by Chris on 2026-10-30): over the calibration cells with a value that
+# month, the median and 10th percentile of the version's coverage (the mean share of a cell's
+# land pixels with a qualifying retrieval, over the years with data) and days (qualifying
+# pixel-days per land pixel, per year with data). These describe ALL qualifying retrievals of
+# the version, whatever the statistic: for the snow-free or snowy albedo they are not the
+# support of the snow-free or snowy days (the cell table has none). `albedo` is the table
+# cell_albedo_by_month() returned for the same cells and version.
+retrieval_support = function(cells, predictors, version, albedo) {
+  quantile_where_valued = function(suffix, p) {
+    support = column_by_month(cells, predictors, paste0(version, suffix))
+    vapply(MONTHS, function(month) {
+      v = support[[month]][!is.na(albedo[[month]])]
+      if (length(v)) unname(stats::quantile(v, p, na.rm = TRUE)) else NA_real_
+    }, numeric(1), USE.NAMES = FALSE)
+  }
+  data.frame(month = MONTHS,
+             coverage_median = quantile_where_valued('_coverage', 0.5),
+             coverage_p10    = quantile_where_valued('_coverage', 0.1),
+             days_median     = quantile_where_valued('_days', 0.5),
+             days_p10        = quantile_where_valued('_days', 0.1))
 }
