@@ -181,7 +181,11 @@ ACCEPTED_OLDER_SHAS = c(
   # Made all 4,484 monthly files of the 28 October build. The next version changed one comment
   # (the 16-day window is not centred on the day, Wang et al. 2018); verified 2026-10-29 by
   # code_of() of tools/check_comments_only.R: both versions parse to the same 78 expressions.
-  '2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5'
+  '2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5',
+  # The version of commit 1a041d1 (made no monthly files). The next version only wrapped the
+  # comment above; verified 2026-10-30 by code_of() of tools/check_comments_only.R: both
+  # versions parse to the same 78 expressions.
+  '9ecaf7f15ba54cfd0c70df3ac8d170cc70291042855a9c7e01839bf1ab19633e'
 )
 
 APPEEARS_DIR = file.path(WORK_DIR, 'appeears')  # collected months, one folder each
