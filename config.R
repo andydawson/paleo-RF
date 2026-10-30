@@ -63,7 +63,7 @@ list(
     #   no sun-angle rule. The winter check is a run with months = c("jan", "feb", "nov",
     #   "dec") and version = "full_nocut".
     # statistic and version choose among the cell table's columns, so with "legacy_raster"
-    # they must stay "all_days" and "full_75".
+    # they must stay "all_days" and "full_75" (an implementation rule, R/config_schema.R).
     albedo = list(source = "modis_cells", statistic = "all_days", version = "full_75"),
 
     # Script 4 fits model_id by REML for prediction (the file script 5 saves as the selected

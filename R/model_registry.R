@@ -101,7 +101,9 @@ fit_calibration_model = function(model_id, month, data, method = "REML", control
 # convergence, the largest gradient, and whether the Hessian is positive definite. Every
 # sign of failure is marked NOT, so a log can be searched for it. A fit that keeps its model
 # frame (every bam fit) also says how many rows it was fitted on: the cells with an albedo that
-# month (na.omit), which differ by month and by albedo choice (Chris, 2026-10-29).
+# month (na.omit), which differ by month and by albedo choice. (The brief of 2026-10-29 asked for
+# the rows on script 4's convergence line; putting them here, so that the line and the model-7
+# tool both carry them, was the implementer's choice.)
 fit_convergence = function(fit) {
   rows = if (is.null(fit$model)) '' else sprintf('; fitted on %d rows', nrow(fit$model))
   paste0(loop_and_optimiser(fit), rows)

@@ -3,8 +3,8 @@
 # A complete copy of config.R with every method choice set back to the original analysis,
 # so that the pipeline can still reproduce it (and the regression anchors in tests/anchors).
 # Use it as `Rscript scripts/<script>.R --config configs/legacy_config.R`; its products go to
-# its own run directory. Differences from config.R, each a decision Chris took on
-# 2026-10-14 for the new analysis (to be reviewed by Andria):
+# its own run directory. Differences from config.R, each a decision Chris took for the new
+# analysis (to be reviewed by Andria), on 2026-10-14 unless dated otherwise:
 #   kernels$hadgem_variable   "albedo_sw_cs"  (clear-sky)          config.R: "albedo_sw"
 #   kernels$cam5_variable     "FSNSC"  (clear-sky, surface)        config.R: "FSNT"
 #   kernels$cack_variable     "CACK"   (the single year 2003)      config.R: "CACK CM"
@@ -13,6 +13,7 @@
 #   calibration$ice_mask      "none"                               config.R: "centre_in_1ka_polygon"
 #   elevation$method          "centre_point"                       config.R: "land_mean"
 #   albedo$source             "legacy_raster"                      config.R: "modis_cells"
+#                                  (Chris, 2026-10-29, docs/cc/2026-10-29_refit_plan_decisions.md)
 #   draws$seed                1   (the original was unseeded; seed 1 reproduces the seeded
 #                                  anchor and meets the unseeded anchor's tolerances; Chris)
 #   run$dir                   ".rundirs/legacy"
@@ -50,7 +51,8 @@ list(
     # pixels of each cell, data/albedo_modis_cells.csv (config.R's setting, decided by Chris on
     # 2026-10-29, docs/cc/2026-10-29_refit_plan_decisions.md). statistic and version choose
     # among the columns of that table (config.R says what each value means), so with the
-    # raster they must stay "all_days" and "full_75".
+    # raster they must stay "all_days" and "full_75" (an implementation rule from the brief of
+    # 2026-10-29, following Fable's plan review, not one of Chris's decisions; R/config_schema.R).
     albedo = list(source = "legacy_raster", statistic = "all_days", version = "full_75"),
 
     # Script 5: the model, by id, that is saved as the selected calibration model and used

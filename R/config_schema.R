@@ -193,7 +193,8 @@ config_combination_errors = function(cfg) {
   }
   # The raster has one albedo per month: statistic and version choose among the columns of the
   # MODIS cell table only, so with the raster they must keep their defaults rather than be
-  # silently ignored (Chris, 2026-10-29).
+  # silently ignored. An implementation rule from the brief of 2026-10-29 (following Fable's
+  # review of the refit plan), not one of Chris's decisions.
   if (a$albedo$source == 'legacy_raster' && (a$albedo$statistic != 'all_days' || a$albedo$version != 'full_75'))
     errs = c(errs, 'analysis$albedo: with source "legacy_raster" (one albedo per month), statistic must be "all_days" and version "full_75"')
   if (!'hadgem' %in% cfg$analysis$forcing$report_kernels)
