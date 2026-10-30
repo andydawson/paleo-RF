@@ -129,6 +129,28 @@ if (!file.exists(cells_file)) {
                         cells[[paste0("full_nocut", suffix)]][sun_rule_inactive]))
   stopifnot(sum(sun_rule_inactive) > 20000)
 
+  # And where the versions differ, each keeps no fewer retrievals than the stricter one: any
+  # processed retrieval >= full inversions; the 75-degree rule >= the 70-degree rule; no rule >=
+  # the 75-degree rule. Compared as qualifying pixel-days per land pixel over the whole record,
+  # _days x _years (the per-year average _days alone is not ordered: a version can have more
+  # years with data and fewer days in each); a version with no value counts 0 days. _days is
+  # rounded to 0.01, so each side may be off by years x 0.005. (Astra and Fable, Chris
+  # 2026-10-30.)
+  over_record = function(version) {
+    days = cells[[paste0(version, "_days")]]; years = cells[[paste0(version, "_years")]]
+    list(total = ifelse(is.na(days), 0, days * years), years = ifelse(is.na(years), 0, years))
+  }
+  not_fewer = function(looser, stricter) {
+    a = over_record(looser); b = over_record(stricter)
+    fewer = a$total < b$total - 0.005 * (a$years + b$years)
+    if (any(fewer)) cat(looser, "has fewer pixel-days than", stricter, "in:",
+                        paste(head(paste(cells$x, cells$y, cells$month)[fewer], 20), collapse = "; "), "\n")
+    !any(fewer)
+  }
+  stopifnot(not_fewer("any_75", "full_75"), not_fewer("full_75", "full_70"), not_fewer("full_nocut", "full_75"))
+  # The rule does act: December cells north of 53 N with a no-rule value and no 75-degree one.
+  stopifnot(any(cells$month == "dec" & cells$y > 53 & !is.na(cells$full_nocut) & is.na(cells$full_75)))
+
   # The whole table passes the function's checks for every choice.
   for (version in ALBEDO_VERSIONS) for (statistic in names(ALBEDO_STATISTICS))
     stopifnot(!fails(cell_albedo_by_month(cells, cells[cells$month == "jul", c("x", "y")], statistic, version)))
