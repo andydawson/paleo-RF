@@ -28,3 +28,13 @@ the draws are 2.4 GB and can be remade with seed 1. Compare a run with
 **Limit.** The draws are made around the model's predictions, which are bit-reproducible
 only at 8 BLAS threads on this machine (regression contract, section 1). On another
 machine or thread count, a seeded run reproduces these files only approximately.
+
+**Regenerated 31 October 2026: `calibration_model_stats.csv` only** (Chris's decision 4 of
+29 October, `docs/cc/2026-10-29_refit_plan_decisions.md`). Script 5's "data in credible
+interval" now divides by the cells with an observation, not by every cell. The new file comes
+from the verification run `docs/cc/verification/2026-10-31_refit-legacy-seed1-2` (seed 1, eight
+threads, commit 83415db). Before it was accepted: the other 25 anchor files matched byte for
+byte; the correlation and both error quantiles were unchanged in every month; and each month's
+new coverage lay in the range computed beforehand from the old file as old x cells / observed
+cells, allowing for both roundings (e.g. December 0.56 -> 0.91, range 0.902-0.928; January
+0.71 -> 0.93, range 0.926-0.949). Old checksum 5e5d157561bdddbe0b6a0487d7ac16c8.
