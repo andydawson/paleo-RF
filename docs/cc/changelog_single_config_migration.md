@@ -1375,3 +1375,140 @@ that would drop cells, the albedo-latitude correlation behind panel b's title, w
 region table). The region table was checked against the old rule on every grid cell, every pollen
 row and a 0.5-degree lattice: identical. Verification: `2026-10-28_northeast-location-plot-3` (both
 scripts on the 18 October products; the pollen figure byte-identical to 27 October's).
+
+## Calibration on the rebuilt MODIS albedo cell table (configuration choice), 2026-10-31
+
+Branch `refit-modis`, made from `feature/single-config` at 0c65aa7. Commits 0c65aa7..3d6a05a, then the records; merged into `feature/single-config` on 31 October.
+
+**Purpose.** Let the calibration models be fitted to the albedo rebuilt from MODIS over the land pixels of each 1-degree cell (`data/albedo_modis_cells.csv`, made by `tools/prepare_bluesky_albedo.R`) instead of the original 0.25-degree raster. Nobody knows who made that raster or how. It is read at each cell's centre, and it mixes water into coastal and lake cells. The original raster stays available as a setting, and the original configuration still reproduces its outputs. The benefit to the paper, as the decisions file states it: the refit shows how the forcing, and the northeast hemlock result, depend on this input.
+
+**Decisions** (Chris, 29 October 2026, `docs/cc/2026-10-29_refit_plan_decisions.md`, items 1-9). He chose between Astra's plan and Fable's review of it:
+- **Snow, in steps.** The 19 October plan is live: calibrate on the snowy and on the snow-free albedo, then mix the two by each cell-month's snow share. This change only lets the calibration use the all-days, snow-free or snowy albedo of the cell table. The mixing is a later change with its own plan. That later step will take the snow share from NASA's monthly snow-cover product (MOD10CM), averaged over 2000-2009 (item 8). This does not affect the present change.
+- **Code shape: Fable's minimal version.** One tested function attaches the albedo by exact cell centre. Script 2 has one if/else between the raster and the cell table. The support is given as counts in the run record, with no new product. The winter check has no setting of its own: it is a November-February run with the no-sun-angle-rule version selected. Model 7 is refitted at 2,000 steps only where it hit its 500-step limit, plus one month where it converged, as a control.
+- **Script 5's interval-coverage share** is fixed everywhere, for both albedo sources. The one saved reference file it changes is updated in its own commit (item 4).
+- **The cell table is committed** (7.8 MB), as the land elevation table was (item 6).
+- **Runs and parallelism** (items 2, 5): see "The new runs" below.
+- **No runs until** Fable's and Astra's reviews of the code were back and Chris had seen the input check (item 9).
+
+Decided by Chris after the code reviews (30 and 31 October; items 10-15 of the decisions file):
+- apply every fix both reviewers agreed, then verify the original configuration;
+- stop comparing the coverage column with the unseeded anchor;
+- put the retrieval support in script 2's record;
+- choose the snowy run's months himself from script 2's counts, before any fitting;
+- a drift-and-conciseness review of the whole code after this merge;
+- script 5's new check compares the missing values value by value.
+
+The implementer's two reworded real-table tests were accepted by both reviewers, not put to Chris.
+
+The following are implementation rules, not decisions by Chris:
+- With the raster, `statistic` and `version` must keep their defaults (from the brief, following Fable's plan review).
+- The rows fitted are printed by `fit_convergence()` rather than in script 4 (the implementer's choice).
+
+**Changes:**
+- **Cell table, new and committed:** `data/albedo_modis_cells.csv` and `data/albedo_modis_cells_provenance.txt`, plain git (not LFS). Both are in the path catalogue (`R/paths.R`, `albedo_modis_cells`, `albedo_modis_provenance`), among the prepared inputs in `tests/test_paths.R`, and in README's data table.
+- **`config.R`:** a new setting, `analysis$albedo`:
+  - `source`: `"modis_cells"` (current) or `"legacy_raster"`;
+  - `statistic`: `"all_days"`, `"snow_free"` or `"snowy"`;
+  - `version`: `"full_75"` (full BRDF inversions, noon sun within 75° of overhead; the main version), `"any_75"`, `"full_70"` or `"full_nocut"`.
+
+  The defaults are `modis_cells`, `all_days`, `full_75`. The comment says that a snow-free run is a calibration on snow-free retrievals only, not a forcing without snow.
+- **`configs/legacy_config.R`:** `source = "legacy_raster"`, listed among its differences from `config.R`.
+- **`R/config_schema.R`:** checks the three keys. Their legal values are defined once, in `R/preparation.R`. It refuses a non-default statistic or version under the raster, because the raster has one albedo per month.
+- **`R/preparation.R`:**
+  - `cell_albedo_by_month()` matches the cell table to the calibration cells on the exact centre, `paste(x, y)`, as script 1 does for elevation. It keeps the calibration table's row order and fills nothing: a missing cell-month stays NA. It returns the centres unmatched in each direction. It stops, naming the cells, on any of these: a missing column, a repeated cell-month, an unknown month, or a value that is not a number in [0, 1). An exact 0 passes and is floored by script 2 as before.
+  - `retrieval_support()` gives, per month, the median and 10th percentile of the version's coverage and of its pixel-days per land pixel, over the cells with a value. These describe all qualifying retrievals, not the snow-free or snowy days alone.
+  - The file now sources `R/calendar.R` itself.
+- **Script 2:**
+  - *Raster branch:* the original statements, in their original order, with three changes. The grid is read inside the branch. Three plots are wrapped in `print()`, because inside an `if` block they are no longer drawn automatically. The record lines are added.
+  - *MODIS branch:* the function above, and two facet maps (`albedo_maps_monthly_modis_cells`, `albedo_missing_monthly_modis_cells`). It writes no coarse table and draws no native-versus-coarse figures. Nothing downstream reads those.
+  - *Shared by both branches:* the ice mask, the zero floor and the write of the calibration table. The calibration table keeps exactly its columns.
+  - *Run record (`calibration_albedo`):* the source; per month, the cells with an albedo and the cells floored from 0. For MODIS it also gives the statistic, the version, the table's path and MD5, the provenance lines, the support above, and the unmatched centres by kind (left out by the ice mask, or outside the modern cells).
+- **Script 4:** before any fitting, it prints the rows each month can be fitted on and stops, naming the months, where a month has fewer rows than the largest model has coefficients. Its convergence line now ends "fitted on N rows". Neither changes a fit.
+- **Script 5:**
+  - The share of observed albedo inside the model's 95% interval now divides by the cells with an observation, not by every cell. Before, a cell with no satellite value that month counted as a miss: polar night, and the four lake cells.
+  - A check stops the script if an observed cell has no interval.
+- **`R/model_registry.R`:**
+  - `fit_calibration_model()` takes an optional `control`, which defaults to the existing controls, so every pipeline fit is unchanged.
+  - New helpers `complete_model_rows()` and `model_coefficients()`.
+- **`tools/check_model7_convergence.R` (new, diagnostic only):** refits model 7 for named months at 2,000 steps, with the saved fit's own method and controls. It stops unless the formula, the family and link, and the model frame (same rows, same order, same values) equal those of the saved fit. It then prints steps, AIC and the largest change in a fitted value beside the saved 500-step fit.
+- **`tools/prepare_bluesky_albedo.R`:**
+  - The header no longer says the 16-day window is "centred" on the day. It is the window in which that day is the ninth (Wang et al. 2018).
+  - The two older versions of the script are added to `ACCEPTED_OLDER_SHAS`, each with an entry saying that only comments changed and how that was checked. Without them the cell step would refuse the monthly files of the 28 October build.
+- **Tests:**
+  - `tests/test_preparation_albedo.R` (new): a hand-worked toy case and every stop case. On the real table it checks four things: the snow mixing identity for all four versions (within the 2.5e-6 rounding bound); the snow-free value equals the all-days value where every day was snow-free; `full_75` and `full_nocut` are identical wherever the 75° rule cannot act; and each looser version keeps no fewer pixel-days than the stricter one.
+  - `tests/test_check_model7_convergence.R` (new): includes a dropped row, reordered rows, a changed response and changed missingness, each of which must stop.
+  - Additions to `tests/test_config.R` and `tests/test_model_registry.R`.
+- **References for the seed-1 and unseeded runs:**
+  - `tests/anchors/interp-seed1-2026-10-14/calibration_model_stats.csv` is regenerated, with its checksum and a README note (commit 3d6a05a).
+  - In `tests/anchors/tolerances.tsv` and `2026-10-08_single_config_regression_contract.md`, the coverage column is no longer compared with the unseeded anchor `interp-allmonths-2026-09-20`. That file is kept unchanged, with every other check.
+
+**Effect on the outputs.**
+- **Original configuration (`configs/legacy_config.R`).** Every output is reproduced byte for byte except one column of `calibration_model_stats.csv`, "data in credible interval". The correlation and both error quantiles are unchanged in every month.
+
+  | | jan | feb | mar | apr | may | jun | jul | aug | sep | oct | nov | dec |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | before (÷ 2,860 cells) | 0.71 | 0.90 | 0.91 | 0.92 | 0.92 | 0.92 | 0.93 | 0.93 | 0.93 | 0.92 | 0.80 | 0.56 |
+  | after (÷ observed cells) | 0.93 | 0.93 | 0.92 | 0.93 | 0.94 | 0.93 | 0.94 | 0.94 | 0.94 | 0.93 | 0.93 | 0.91 |
+  | observed cells | 2,166 | 2,765 | 2,827 | 2,827 | 2,827 | 2,827 | 2,827 | 2,827 | 2,827 | 2,826 | 2,460 | 1,751 |
+
+  The winter models were never worse. The old share counted the cells with no observation as misses. If this share is quoted anywhere, it moves as in the table; nothing else in the original analysis moves.
+- **Current configuration (`config.R`).** The albedo the models are fitted to changes, so everything from the calibration fits onward will change: the AIC ladder, the predictions, the forcing and the northeast result. None of it has been measured yet; the runs below are for that. The implementer exercised script 2's MODIS branch with stand-in file reading and writing (not a pipeline run, and not reproduced by either reviewer). It gave the following:
+  - 2,812 calibration cells;
+  - 4 calibration centres with no cell in the table;
+  - 58 table centres with no calibration cell: 48 left out by the ice mask and 10 at 17.5 N;
+  - cells with an all-days value under the main version: 1,726 in January and 1,416 in December.
+
+  Winter fits will therefore rest on fewer cells than the raster's 2,166 and 1,751. Some winter values also rest on few retrievals, for example 9% of a cell's land pixels (Fable's review, hand check 3). The new support numbers in the run record show this.
+
+**Reviews.** Independent reviews by Fable and Astra, each followed by one reconciliation round. Neither found an error in how the MODIS albedo is attached. Both found the same main gap: the model-7 tool did not check that it compared like with like. The findings applied are listed below. Chris approved applying them on 30 October (item 10).
+- the like-with-like stops in the model-7 tool;
+- the row check in script 4;
+- the interval check in script 5;
+- the support and the unmatched centres by kind in script 2's record;
+- the version-order test;
+- three attributions corrected (implementation rules no longer called Chris's decisions);
+- the calendar sourced in `R/preparation.R`;
+- two test and comment nits.
+
+Not applied: Fable's suggestion to wrap script 2's last `cor()` in `print()`. Astra showed that it still prints. Reviews: `fable_review.md`, `astra_review.md`, `fable_reconcile.md`, `astra_reconcile.md` (`docs/cc/2026-10-30_refit_code_review/`, with the implementer's brief and report).
+
+**Verification** (`tools/verify_change.R`, each from its own worktree under `paleo-RF-verify/`, original configuration; the 331 frozen inputs matched before and after every run):
+
+| Report (`docs/cc/verification/`) | Commit | What | Result | Time |
+|---|---|---|---|---|
+| `2026-10-30_refit-legacy-prep` | 527ea1c | scripts 1 and 2; `tools/check_anchors.R` against `interp-allmonths-2026-09-20`; the 13 test files that run in a fresh worktree | **PASS** | 0.4 + 2.7 min |
+| `2026-10-30_refit-legacy-seed1` | 527ea1c | scripts 5 and 6, seed 1, from the frozen fits | **FAIL** (script 5 exit status 1, run record "failed") | 1.7 min |
+| `2026-10-31_refit-legacy-seed1-2` | 83415db | the same | **FAIL**: "tests/anchors/interp-seed1-2026-10-14: NOT all MATCH"; `calibration_model_stats.csv` DIFFER, the other 25 MATCH | 6.6 + 11.7 min |
+| `2026-10-31_refit-legacy-seed1-3` | 3d6a05a | scripts 5 and 6, seed 1, against the regenerated seed-1 anchor; the 13 test files | **PASS**: every seed-1 anchor file matches; the 13 test files pass | 6.8 + 11.6 min |
+
+- **The first seed-1 run** stopped on script 5's new interval check. The log's error was `identical(is.na(...in_credible), is.na(...alb_data)) is not TRUE`, because `identical()` also compared the names that `quantile()` attaches. Commit 83415db compares value by value instead.
+- **The second run** was expected to fail on the statistics table: that is the change, and the run is the evidence for regenerating that table. Before the new file was accepted, three things were checked:
+  - the other 25 files matched;
+  - the three other columns were unchanged;
+  - each month's new coverage lay in a range computed beforehand from the old file, as old × cells / observed cells, allowing for the rounding of both values. For example, December 0.56 → 0.91, range 0.902-0.928; January 0.71 → 0.93, range 0.926-0.949.
+
+  The README of `tests/anchors/interp-seed1-2026-10-14/` records this.
+- **The coarse calibration table** of the prep run is not in that report. Its MD5 in the run record (`.../refit-legacy-prep/runs/2_calibration_lct_bluesky/20261030T171817.767Z_2993520.md`) is 3886938b…, equal to the frozen `data/calibration_modern_lct_interp_bluesky_coarse.RDS`. The main table is 289c0f8a…, equal to the anchor. The figures were not compared.
+- **Run records:**
+  - `20261030T171756.252Z_2992778.md` (script 1, prep);
+  - `20261031T182448.407Z_3466742.md` and `20261031T183126.542Z_3468486.md` (scripts 5 and 6, seed1-2).
+
+**Not yet verified by a run.** The MODIS branch of script 2, the model-7 tool on real fits, and the new runs. The reviewers list the checks for them:
+- the written MODIS table against an independent merge of the CSV, with the counts above;
+- a repeat MODIS run, byte-identical at the same seed and threads;
+- the raster control's calibration table against the 18 October script-2 manifest;
+- the model-7 control month reproducing its saved AIC.
+
+**The new runs** (Chris, items 2, 3 and 5):
+- Six satellite runs: all-days and snow-free under each of three versions. The versions are the main one (`full_75`), any processed retrieval (`any_75`), and November to February with no sun-angle rule (`full_nocut`, `months = c("jan", "feb", "nov", "dec")`).
+- One snowy run on the main version.
+- A full refit on the original raster with the current settings, as a control.
+- The model-7 check at 2,000 steps.
+- Up to four runs at once, eight cores per fitting job and one maths-library thread. Each run going at the same time gets its own code-identical commit. Script 6 runs one at a time until its memory is measured.
+
+**Open questions.**
+- Which months the snowy run fits: Chris chooses from script 2's counts before any fitting (item 13); script 4 stops before fitting if a month has too few rows.
+- The November-February run: scripts 9 and 10 average the selected months, and script 10 labels the result "annual". Both reviewers advise reporting the four months from script 10's per-month column, against the same months of the main run, and never quoting the four-month aggregate as annual. To put to Chris with the input check; no code changed.
+- For Andria:
+  - Should a cell-month supported by a few per cent of its land pixels enter the calibration at full weight, or should a minimum or weights apply? The code applies none.
+  - How should winter "snow-free" retrievals under conifer canopy be read?
