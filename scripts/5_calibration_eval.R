@@ -193,7 +193,8 @@ ggsave(path_figure(paths, 'cal_model_vs_data_gam_error_facet.png'), width=12, he
 cal_interp_sim_gam_quants = cal_interp_sim_gam_quants %>%
   mutate(in_credible=((alb_data>alb_lo)&(alb_data<alb_hi)))
 # An observed cell always has an interval, so only cells without an observation lack in_credible.
-stopifnot(identical(is.na(cal_interp_sim_gam_quants$in_credible), is.na(cal_interp_sim_gam_quants$alb_data)))
+# (Compared value by value: in_credible carries quantile()'s "2.5%" names, so identical() would fail.)
+stopifnot(all(is.na(cal_interp_sim_gam_quants$in_credible) == is.na(cal_interp_sim_gam_quants$alb_data)))
 
 cal_interp_sim_gam_quants$alb_diff = cal_interp_sim_gam_quants$alb_mid - cal_interp_sim_gam_quants$alb_data
 
