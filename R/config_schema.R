@@ -14,6 +14,10 @@
 source('R/model_registry.R')
 source('R/calendar.R')
 
+# The versions and statistics of the MODIS cell albedo (ALBEDO_VERSIONS, ALBEDO_STATISTICS),
+# defined beside the function that reads them.
+source('R/preparation.R')
+
 # The kernel variables that can be read (R/kernels.R).
 source('R/kernels.R')
 kernel_variable = function(kernel) function(v) check_choice(v, KERNEL_VARIABLES$variable[KERNEL_VARIABLES$kernel == kernel], single = TRUE)
@@ -125,6 +129,10 @@ CONFIG_SCHEMA = list(
       reduction = function(v) check_choice(v, c('mean', 'median'), single = TRUE)),
     elevation = list(
       method = function(v) check_choice(v, c('land_mean', 'centre_point'), single = TRUE)),
+    albedo = list(
+      source    = function(v) check_choice(v, c('modis_cells', 'legacy_raster'), single = TRUE),
+      statistic = function(v) check_choice(v, names(ALBEDO_STATISTICS), single = TRUE),
+      version   = function(v) check_choice(v, ALBEDO_VERSIONS, single = TRUE)),
     calibration = list(
       model_id = function(v) check_choice(v, LADDER_MODELS, single = TRUE),
       comparison_method = function(v) check_choice(v, c('ML', 'REML'), single = TRUE),
@@ -183,6 +191,12 @@ config_combination_errors = function(cfg) {
     if (!a$coarse$slice_alias[2] %in% a$coarse$ages)
       errs = c(errs, 'analysis$coarse$slice_alias: its second value must be one of analysis$coarse$ages')
   }
+  # The raster has one albedo per month: statistic and version choose among the columns of the
+  # MODIS cell table only, so with the raster they must keep their defaults rather than be
+  # silently ignored. An implementation rule from the brief of 2026-10-29 (following Fable's
+  # review of the refit plan), not one of Chris's decisions.
+  if (a$albedo$source == 'legacy_raster' && (a$albedo$statistic != 'all_days' || a$albedo$version != 'full_75'))
+    errs = c(errs, 'analysis$albedo: with source "legacy_raster" (one albedo per month), statistic must be "all_days" and version "full_75"')
   if (!'hadgem' %in% cfg$analysis$forcing$report_kernels)
     errs = c(errs, 'analysis$forcing$report_kernels must include hadgem: script 9 draws its headline figure and the variant sensitivity with it')
   errs

@@ -152,6 +152,7 @@ input is missing as of 2026-09-21.
 |---|---|---|
 | `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:12`) | present |
 | `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:38`) | present |
+| `data/albedo_modis_cells.csv`, `albedo_modis_cells_provenance.txt` | input to 2 (current setting; the raster above is the legacy setting) | present (7.8 MB, committed; made by `tools/prepare_bluesky_albedo.R`) |
 | `data/grid.RDS` | input to 2, 7, 7a (`2:15`, `7:148`, `7a:98`) | present |
 | `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2 and 7 (`pbs_ll` only) and 3 | present |
 | `data/elev_interp_cells.RDS` | input to 1 (legacy setting) | present (16 KB, committed) |
@@ -171,6 +172,7 @@ What each input is and where it came from:
 |---|---|---|
 | `veg_posts_interp_ice.RDS` | interpolated land-cover posteriors: 2,860 cells x 25 slices x 200 draws x 3 classes, plus `cell_area` and a binary `ice` flag (7.2% of rows). Script 1 averages the draws and **drops `cell_area` and `ice`**, so neither reaches the rest of the pipeline | Andria, 2026-09-17; REVEALS + Bayesian spatial interpolation with ice mask, from the Climate of the Past land-cover paper |
 | `blue_sky_monthly_2000-2009.tif` | 12-band monthly blue-sky albedo, 0.25 degree, 2000-2009 mean | MODIS MCD43A3 v061 + ERA5 as described in manuscript §2.1; <mark>unknown</mark> who built it and with what code |
+| `albedo_modis_cells.csv` | monthly blue-sky albedo 2000-2009 over the land pixels of each 1-degree cell (34,392 cell-months): per version (`full_75`, `any_75`, `full_70`, `full_nocut`) the all-days, snow-free, snowy and unknown-snow albedos, their shares, and the years, coverage and days behind them; `albedo_modis_cells_provenance.txt` beside it records the land rule, settings and script versions | `tools/prepare_bluesky_albedo.R` (its header gives every choice and its source), cell step run 2026-10-29 from MODIS MCD43A3/A2 collection 6.1 via AppEEARS and ERA5 diffuse fraction |
 | `grid.RDS` | 1-degree lon/lat raster with cell ids (-172 to 127 E, 17 to 79 N) | <mark>unknown</mark> (committed 2023-05-16, no generating code) |
 | `pbs.RDS` | political boundaries, projected and lon/lat; includes ocean polygons | <mark>unknown</mark> |
 | `elev_interp_cells.RDS` | point elevation (m) at each of the 2,870 cell centres: x, y, elev | fetched once from AWS terrain tiles by `elevatr` on 2026-09-25 and committed, so no network is needed; `tools/prepare_centre_elevation.R` remakes it if it is ever lost |

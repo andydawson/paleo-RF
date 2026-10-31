@@ -52,6 +52,19 @@ CALIBRATION_MODELS = list(
 LADDER_MODELS  = paste0('mod', 1:8)
 SPATIAL_MODELS = setdiff(names(CALIBRATION_MODELS), LADDER_MODELS)
 
+# The predictors any calibration model uses (x, y, elev, OL, ET, ST).
+CALIBRATION_PREDICTORS = unique(unlist(lapply(CALIBRATION_MODELS, function(model) all.vars(model$rhs))))
+
+# The rows a month's models are fitted on: the cells with that month's albedo and every
+# predictor (fit_calibration_model drops the others, na.omit).
+complete_model_rows = function(data, month) sum(stats::complete.cases(data[, c(month, CALIBRATION_PREDICTORS)]))
+
+# The number of coefficients of a model, from mgcv's model setup without fitting (seconds).
+# The family is left at mgcv's default: it does not change the model matrix.
+model_coefficients = function(model_id, month, data) {
+  ncol(mgcv::gam(calibration_formula(model_id, month), data = data, fit = FALSE)$X)
+}
+
 # Fitting controls for every model. Eight threads is not an analysis setting: it changes no
 # result beyond the last bit, and it is the thread count the stored fits were made with.
 CALIBRATION_CONTROL = list(nthreads = 8, maxit = 500)
@@ -69,14 +82,15 @@ calibration_terms = function(model_id) paste(deparse(CALIBRATION_MODELS[[model_i
 # the fit used to predict and for the spatial experiments) or "ML" (the ladder in the current
 # configuration, config.R analysis$calibration$comparison_method; question B4). ML is the
 # usual convention when models with different terms are compared; mgcv's AIC is valid on
-# either.
-fit_calibration_model = function(model_id, month, data, method = "REML") {
+# either. control is CALIBRATION_CONTROL for every pipeline fit; only a diagnostic passes
+# another, e.g. a higher step limit in tools/check_model7_convergence.R (Chris, 2026-10-29).
+fit_calibration_model = function(model_id, month, data, method = "REML", control = CALIBRATION_CONTROL) {
   mgcv::bam(calibration_formula(model_id, month),
             data      = data,
             family    = mgcv::betar(link = "logit"),
             method    = method,
             na.action = na.omit,
-            control   = CALIBRATION_CONTROL)
+            control   = control)
 }
 
 # One line saying whether a fit really converged, for script 4's log. bam() always stores
@@ -85,8 +99,18 @@ fit_calibration_model = function(model_id, month, data, method = "REML") {
 # converge"): did the loop stop before its step limit? The rest is what mgcv's gam.check()
 # prints for the smoothing-parameter optimiser (in the last loop step, for bam): full
 # convergence, the largest gradient, and whether the Hessian is positive definite. Every
-# sign of failure is marked NOT, so a log can be searched for it.
+# sign of failure is marked NOT, so a log can be searched for it. A fit that keeps its model
+# frame (every bam fit) also says how many rows it was fitted on: the cells with an albedo that
+# month (na.omit), which differ by month and by albedo choice. (The brief of 2026-10-29 asked for
+# the rows on script 4's convergence line; putting them here, so that the line and the model-7
+# tool both carry them, was the implementer's choice.)
 fit_convergence = function(fit) {
+  rows = if (is.null(fit$model)) '' else sprintf('; fitted on %d rows', nrow(fit$model))
+  paste0(loop_and_optimiser(fit), rows)
+}
+
+# The convergence part of fit_convergence()'s line.
+loop_and_optimiser = function(fit) {
   # A loop that converged on exactly its last step looks the same in the saved fit as one
   # that ran out, so at the limit the line points to R's warning instead of guessing.
   loop = if (fit$iter >= fit$control$maxit) {

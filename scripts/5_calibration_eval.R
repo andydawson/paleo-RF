@@ -192,6 +192,9 @@ ggsave(path_figure(paths, 'cal_model_vs_data_gam_error_facet.png'), width=12, he
 
 cal_interp_sim_gam_quants = cal_interp_sim_gam_quants %>%
   mutate(in_credible=((alb_data>alb_lo)&(alb_data<alb_hi)))
+# An observed cell always has an interval, so only cells without an observation lack in_credible.
+# (Compared value by value: in_credible carries quantile()'s "2.5%" names, so identical() would fail.)
+stopifnot(all(is.na(cal_interp_sim_gam_quants$in_credible) == is.na(cal_interp_sim_gam_quants$alb_data)))
 
 cal_interp_sim_gam_quants$alb_diff = cal_interp_sim_gam_quants$alb_mid - cal_interp_sim_gam_quants$alb_data
 
@@ -203,14 +206,20 @@ print(p)
 ggsave(path_figure(paths, 'cal_model_data_diff_histogram_facet.pdf'), width=12, height=10)
 ggsave(path_figure(paths, 'cal_model_data_diff_histogram_facet.png'), width=12, height=10)
 
+# CM: the share of cells whose observed albedo lies inside the model's 95% interval counts only
+# cells with an observation. The original divided by n(), every cell, so a cell with no
+# satellite value that month (polar night, the four lake cells) counted as outside, and the
+# share fell with the number of gaps: 0.56 in December was about 0.92 of the observed cells.
+# Chris, 2026-10-29 (docs/cc/2026-10-29_refit_plan_decisions.md, decision 4), for both albedo
+# sources.
 cal_interp_sim_gam_quants %>%
   group_by(month) %>%
-  summarize(frac_in=sum(in_credible, na.rm=TRUE)/n())
+  summarize(frac_in=sum(in_credible, na.rm=TRUE)/sum(!is.na(alb_data)))
 
 calibration_stats = cal_interp_sim_gam_quants %>%
   group_by(month) %>%
   summarize(alb_corr = round(cor(alb_mid, alb_data,, use = "pairwise.complete.obs"),2),
-            frac_in=round(sum(in_credible, na.rm=TRUE)/n(),2),
+            frac_in=round(sum(in_credible, na.rm=TRUE)/sum(!is.na(alb_data)),2),
             diff_lo = round(quantile(alb_diff, c(0.025), na.rm=TRUE),2),
             diff_hi = round(quantile(alb_diff, c(0.975), na.rm=TRUE),2),
             .groups = "keep")

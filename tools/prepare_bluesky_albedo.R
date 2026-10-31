@@ -20,7 +20,8 @@
 #                from 5 March 2000, the start of the validated record (MCD43 user guide; algorithm:
 #                Schaaf et al. 2002, doi:10.1016/S0034-4257(02)00091-3; daily collection 6: Wang
 #                et al. 2018, doi:10.1016/j.rse.2018.02.001). Each daily value comes from the
-#                observations of a 16-day window centred on that day.
+#                observations of a 16-day window in which that day is the ninth (days 1-16 for
+#                day 9; Wang et al. 2018), not one centred on it.
 #   Blue sky     (1 - f) x black-sky + f x white-sky, the isotropic approximation of the MCD43A3
 #                user guide (Lucht et al. 2000, doi:10.1109/36.841980), which the guide says is
 #                weakest at large solar angles over bright surfaces such as snow; Roman et al. 2010
@@ -171,11 +172,20 @@ require_script_sha = function() {
 # Older versions of this script whose monthly files the cell step still accepts, because each was
 # checked to compute the same numbers as this version (Chris, 2026-10-21). Any other version's
 # files are refused, so without an entry here even a comment edit would make the cell step refuse
-# every month built before it. Add a version only after that check, one line each, saying what
-# changed and how the check was made, e.g.
-#   'c0ffee...(its 64-character SHA-256)',   # commit 1a2b3c4: comment-only change; verified by ...
-# A version's SHA-256 is the one in its monthly files and build records. Empty: this version only.
+# every month built before it. Add a version only after that check, one entry each, with a
+# comment saying what changed and how the check was made, e.g.
+#   # commit 1a2b3c4: comment-only change; verified by ...
+#   'c0ffee...(its 64-character SHA-256)',
+# A version's SHA-256 is the one in its monthly files and build records.
 ACCEPTED_OLDER_SHAS = c(
+  # Made all 4,484 monthly files of the 28 October build. The next version changed one comment
+  # (the 16-day window is not centred on the day, Wang et al. 2018); verified 2026-10-29 by
+  # code_of() of tools/check_comments_only.R: both versions parse to the same 78 expressions.
+  '2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5',
+  # The version of commit 1a041d1 (made no monthly files). The next version only wrapped the
+  # comment above; verified 2026-10-30 by code_of() of tools/check_comments_only.R: both
+  # versions parse to the same 78 expressions.
+  '9ecaf7f15ba54cfd0c70df3ac8d170cc70291042855a9c7e01839bf1ab19633e'
 )
 
 APPEEARS_DIR = file.path(WORK_DIR, 'appeears')  # collected months, one folder each

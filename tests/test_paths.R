@@ -18,8 +18,11 @@ cat_files <- catalogue_paths(base)
 added_files <- c(grep("output/calibration/calibration_prediction_fit_", cat_files, value = TRUE, fixed = TRUE),
                  "output/forcing/forcing_by_month_latitude.csv")
 # Inputs made since then by a preparation tool in tools/ and committed: the land-mean
-# elevation per cell (tools/prepare_land_elevation.R, issue I16c).
-prepared_inputs <- "data/elev_land_mean_cells.csv"
+# elevation per cell (tools/prepare_land_elevation.R, issue I16c), and the rebuilt MODIS
+# albedo per cell and month with its provenance note (tools/prepare_bluesky_albedo.R; the
+# refit, Chris, 2026-10-29).
+prepared_inputs <- c("data/elev_land_mean_cells.csv",
+                     "data/albedo_modis_cells.csv", "data/albedo_modis_cells_provenance.txt")
 missing <- setdiff(cat_files, c(frozen, added_files, prepared_inputs))
 if (length(missing)) cat("catalogued but not in the frozen inventory:\n ", paste(missing, collapse = "\n  "), "\n")
 
@@ -45,6 +48,7 @@ stopifnot(
   length(added_files) == 12 + 1,
   all(added_files %in% cat_files),
   all(prepared_inputs %in% cat_files),
+  all(file.exists(prepared_inputs)),
   sum(grepl("^output/calibration/.*\\.RDS$", cat_files)) == 192 + 12,
   sum(grepl("^output/prediction/", cat_files)) == 12 * 3 + 2,
 

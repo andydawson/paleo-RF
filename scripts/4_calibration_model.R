@@ -30,6 +30,15 @@ cal_data3 = cal_data2[,c('site', 'ET', 'OL', 'ST')]
 source('R/calendar.R')
 months = cfg$analysis$months
 
+# Before hours of fitting: each month needs more rows to fit (cells with its albedo and every
+# predictor) than the largest model has coefficients, or that model cannot be fitted. The
+# rows are printed, and a month with too few stops the run here, named (Chris, 2026-10-30).
+most_coefficients = max(sapply(names(CALIBRATION_MODELS), model_coefficients, month = months[1], data = cal_interp_data))
+rows_to_fit = sapply(months, complete_model_rows, data = cal_interp_data)
+print(paste0('rows to fit (largest model ', most_coefficients, ' coefficients): ', paste(months, rows_to_fit, collapse = ', ')))
+too_few = months[rows_to_fit < most_coefficients]
+if (length(too_few)) stop('fewer rows than the largest model has coefficients (', most_coefficients, ') in: ', paste(too_few, collapse = ', '))
+
 # The eight-model ladder for every month, fitted by config.R's comparison method ("ML" or
 # the original "REML"; question B4) because the ladder is compared by AIC below
 # and in script 5. The formulas are in R/model_registry.R.

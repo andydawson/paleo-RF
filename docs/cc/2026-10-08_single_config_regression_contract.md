@@ -54,6 +54,17 @@ within twice the largest run-to-run difference seen, with a floor of one roundin
 0.02 for the correlation, the share of data in the credible interval and the lower
 difference quantile; 0.01 for the upper difference quantile, which never moved.
 
+**2026-10-30, Chris's decision: the share of data in the credible interval is no longer
+compared with this unseeded anchor.** Script 5 now divides that share by the cells with an
+observation instead of by every cell (decision 4 of `2026-10-29_refit_plan_decisions.md`), so
+the anchor's values (for example 0.56 in December, about 0.92 of the observed cells) measure
+something else and would fail the 0.02 tolerance in January, February, November and December.
+The anchor file is kept unchanged, with every other check; the column's row in
+`tests/anchors/tolerances.tsv` is commented out with the reason, so `tools/compare_tables.R`
+only reports it (its pattern of missing values must still match). The corrected statistic is
+checked byte for byte by the seed-1 anchor (`interp-seed1-2026-10-14`) once that is regenerated
+after a verification run, in its own commit.
+
 **Script 6, `paleo_interp_predict_gam_summary_bluesky.RDS`** (839,232 rows). Four
 statistics per summary column, because each cell's summary rests on only 100 draws: the
 mean albedo of a single cell moves by up to 0.04 between identical runs, while the
