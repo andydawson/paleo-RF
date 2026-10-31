@@ -1,5 +1,11 @@
 # Refit on the rebuilt albedo: plan by Astra (GPT-6 Astra via Codex, ultra effort, 29 October 2026)
 
+> **Corrections from the reference audit of 29 October** (`2026-10-29_refit_references_audit_summary.md`):
+> Wood 2011 develops mgcv's REML method but mentions concurvity only in passing (section 3.3), so
+> "discusses numerical difficulties associated with concurvity" overstates it; Barnes and Roy 2010's
+> mixture is eq. 3 (section 3.1), applied with the fraction at zero in section 4.5; Jia et al. 2022
+> give no restriction to full inversions (the precedent is for the 75-degree rule only).
+
 Planned from the brief in 2026-10-29_refit_plan_brief.md (whose snow plan was out of date). Reviewed
 adversarially by Fable (2026-10-29_refit_plan_review_fable.md); Chris's decisions on both are in
 2026-10-29_refit_plan_decisions.md. File links point to the worktree it read (feature/single-config at dd83724).

@@ -1,5 +1,28 @@
 # Snow-free calibration as a first estimate of the snow effect: literature check by Fable
 
+> **Corrections from the full-text audit of 29 October 2026**
+> (`2026-10-29_refit_references_audit_summary.md`). The text below is unchanged; where it differs, this note holds.
+> - Barnes and Roy 2010 use **median**, not mean, monthly snow and snow-free albedo per class,
+>   ecoregion and month; the quotation "mean monthly broadband MODIS snow and snow-free albedo values"
+>   is not in the published paper. The weighting is confirmed: the MOD10CM monthly snow fraction per
+>   ecoregion (eq. 3), with the snow-free case (fraction set to zero) in section 4.5.
+> - Ghimire et al. 2014: blending by the MODIS snow-cover fraction is confirmed (eq. 1; MOD10 monthly
+>   climate-modelling-grid snow cover per 1-degree cell, 2001-2011); the attribution to snow is
+>   qualitative (largest in winter), with no term-by-term decomposition and no snow-free-only case.
+> - Neither paper takes the snow fraction from the share of snow-flagged albedo retrievals (Question 3's
+>   "or the share of snow-flagged retrievals" has no precedent in them). Chris decided on 29 October to
+>   use MOD10CM for the mixing step, with the flag share as a check.
+> - Barnes and Roy 2008 against 2010 is not a clean snow comparison (2010 also covers 26% more area);
+>   the clean one is inside the 2010 paper, section 4.5.
+> - Bright et al. 2015 has no section 2.2.1: the MODIS data are section 2.1 (January-May 2007,
+>   November-May 2008 and 2009), the December exclusion is in the Figure 2 caption (p. 2200). The
+>   cold-dry-snow underestimate is Bright's summary of Jin et al. 2002, Stroeve et al. 2005 and Wang and
+>   Zender 2010; cite those.
+> - Moody et al. 2005: single-year (2001, 2002) 16-day snow-free maps from the MOD43B3 snow flag, not a
+>   climatology and not the MCD43A2 flag; snow-covered statistics are Moody et al. 2007 (abstract only).
+> - Wang et al. 2018: a snow-flagged retrieval uses only snow-covered observations (section 2.1.2); the
+>   converse for snow-free days is not stated.
+
 ## Verdict
 
 The building blocks of the proposal are standard; the exact comparison is not. Separating MODIS MCD43 retrievals into snow-free and snow-covered with the MCD43A2 snow flag, and building per-land-cover albedo statistics for each, is the normal practice (Moody 2005, 2007; Gao 2014; Barnes and Roy 2010; the NASA snow-free products MCD43C2 and MCD43GF are themselves made this way). What the published forcing studies then do is recombine the two with a snow-cover fraction, so the snow contribution comes out either as a decomposition (Jiao 2017) or as a snow-free-only sensitivity case against a snow-weighted case (Barnes and Roy 2008 versus 2010). I found no published study that estimates the snow contribution as "pipeline on all-days albedo minus pipeline on snow-free albedo". The nearest precedent is the Barnes and Roy pair: 2008 computed forcing from snow-free albedo only, 2010 added snow and snow-free albedo with snow data and reported that snow "exacerbated" the forcing. So the proposed two-run comparison is a defensible simplified variant of established practice, but a reviewer could ask why the snow term is left implicit in the all-days run rather than made explicit with a snow fraction, which is the established form and is also what the second test (shifting snow timing) needs.
