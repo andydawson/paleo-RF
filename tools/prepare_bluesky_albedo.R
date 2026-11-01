@@ -185,7 +185,11 @@ ACCEPTED_OLDER_SHAS = c(
   # The version of commit 1a041d1 (made no monthly files). The next version only wrapped the
   # comment above; verified 2026-10-30 by code_of() of tools/check_comments_only.R: both
   # versions parse to the same 78 expressions.
-  '9ecaf7f15ba54cfd0c70df3ac8d170cc70291042855a9c7e01839bf1ab19633e'
+  '9ecaf7f15ba54cfd0c70df3ac8d170cc70291042855a9c7e01839bf1ab19633e',
+  # The version of commit 1af6502 (made no monthly files). The next version only updated the
+  # header's note on script 2 (the cell table is now read by it); verified 2026-11-01 by
+  # code_of() of tools/check_comments_only.R: both versions parse to the same 78 expressions.
+  '85353d3b1176cf4ec3606d339507a0e1484323070782a12d18328876cfd5edb0'
 )
 
 APPEEARS_DIR = file.path(WORK_DIR, 'appeears')  # collected months, one folder each
