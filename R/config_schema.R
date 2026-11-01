@@ -82,9 +82,10 @@ check_run_dir = function(v) {
   repository = normalizePath('.', winslash = '/')
   run_dir = resolved_dir(v)
   if (run_dir == repository) return('must not be the repository itself; use NULL for the baseline locations')
-  for (forbidden in file.path(repository, RUN_DIR_FORBIDDEN))
-    if (run_dir == forbidden || startsWith(run_dir, paste0(forbidden, '/')))
-      return(sprintf("must not be inside the repository's %s/ directory", basename(forbidden)))
+  # The protected folders are resolved too: a linked output/ is refused at its target.
+  forbidden = vapply(file.path(repository, RUN_DIR_FORBIDDEN), resolved_dir, '')
+  inside = run_dir == forbidden | startsWith(run_dir, paste0(forbidden, '/'))
+  if (any(inside)) return(sprintf("must not be inside the repository's %s/ directory", RUN_DIR_FORBIDDEN[inside][1]))
   NULL
 }
 

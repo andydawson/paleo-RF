@@ -212,4 +212,15 @@ stopifnot(
   fails(config_path(c("--config"))),
   fails(config_path(c("--config", "a.R", "--config=b.R")))
 )
+# A repository whose output/ is a link elsewhere: the run directory is refused in either
+# spelling, at the link or at its target, and an unrelated folder is accepted.
+local({
+  repo <- file.path(tempfile("linked_repo_"), "repo"); storage <- file.path(dirname(repo), "storage")
+  dir.create(repo, recursive = TRUE); dir.create(storage)
+  if (!isTRUE(suppressWarnings(file.symlink(storage, file.path(repo, "output"))))) return(cat("linked output/: skipped (no symlinks here)\n"))
+  old <- setwd(repo); on.exit({ setwd(old); unlink(dirname(repo), recursive = TRUE) })
+  refused <- function(v) isTRUE(grepl("inside the repository's output/", check_run_dir(v)))
+  stopifnot(refused("output/alt"), refused(file.path(storage, "alt")), is.null(check_run_dir("elsewhere")))
+})
+
 cat("test_config: all tests passed\n")
