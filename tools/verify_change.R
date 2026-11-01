@@ -130,17 +130,7 @@ catalogue_files = function(checkout, config_file, ids, run_dir = tempfile()) {
   cfg = env$load_config(config_file)
   base = suppressMessages(env$pipeline_paths(cfg, env$baseline_paths()))
   run  = suppressMessages(env$pipeline_paths(cfg, env$redirected_paths(run_dir)))
-  files = unlist(lapply(ids, function(id) {
-    t = env$PATH_CATALOGUE[id, 'template']
-    if (is.na(t)) stop('verify_change: no catalogue id ', id)
-    # MONTHS comes from R/calendar.R, which R/paths.R sources into the global environment.
-    months = if (grepl('{month}', t, fixed = TRUE)) get('MONTHS', envir = env) else list(NULL)
-    models = if (grepl('{model}', t, fixed = TRUE)) env$TEMPLATE_MODELS[[id]] else list(NULL)
-    files = unlist(lapply(months, function(m) lapply(models, function(k) env$path_file(base, id, month = m, model = k))))
-    if (!length(files)) stop('verify_change: catalogue id ', id, ' named no files')
-    files
-  }))
-  list(files = files, run = run, seed_run_dir = env$seed_run_dir)
+  list(files = env$catalogue_paths(base, ids = ids), run = run, seed_run_dir = env$seed_run_dir)
 }
 
 # Copy baseline products (by catalogue id) and further files into the run folder.

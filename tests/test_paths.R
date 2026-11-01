@@ -11,7 +11,10 @@ alt  <- suppressMessages(pipeline_paths(cfg, redirected_paths(tmp)))
 # The baseline catalogue against the files on disk when the migration began (I01): every
 # catalogued file of the pipeline is one of them, under exactly the name it had.
 frozen <- sub("^[0-9a-f]+ +", "", readLines("tests/frozen_inputs.md5"))
-cat_files <- catalogue_paths(base)
+# Not the outputs of the model-structure sensitivity script, which is outside the migration
+# (question for Andria, general 7) and has not been run here.
+pipeline_ids <- PATH_CATALOGUE$id[!startsWith(PATH_CATALOGUE$id, "spatial_eval")]
+cat_files <- catalogue_paths(base, pipeline_ids)
 # Products added to the pipeline since then: the REML fit used for prediction, one file
 # per month, in its own file once the ladder could be fitted by ML (issue I16).
 # And script 10's breakdown of the forcing by month and latitude (question B2d).
@@ -34,7 +37,7 @@ live <- read.delim("tests/anchors/live_paths.tsv", comment.char = "#", header = 
 # of every one of them (producer() stops on a path it does not know).
 input_ids     <- PATH_CATALOGUE$id[PATH_CATALOGUE$kind == "input"]
 input_files   <- vapply(input_ids, function(id) path_file(base, id), "", USE.NAMES = FALSE)
-alt_files     <- catalogue_paths(alt)
+alt_files     <- catalogue_paths(alt, pipeline_ids)
 alt_inputs    <- alt_files[alt_files %in% input_files]
 alt_products  <- setdiff(alt_files, input_files)
 base_producers <- vapply(cat_files, function(p) producer(base, p), "", USE.NAMES = FALSE)
@@ -74,6 +77,16 @@ stopifnot(
   dir.exists(file.path(tmp, "output/calibration")), dir.exists(file.path(tmp, "figures")),
   all(startsWith(alt_products, tmp)), !any(startsWith(alt_inputs, tmp)),
 
+  # the expansion: the same files in both layouts; every month and model id of a template
+  # once; all ids by default; none for no ids; an unknown id stops
+  identical(vapply(alt_files, function(p) root_relative(alt, p), "", USE.NAMES = FALSE), cat_files),
+  !anyDuplicated(cat_files),
+  length(catalogue_paths(base, "calibration_ladder")) == 12 * length(LADDER_MODELS),
+  length(catalogue_paths(base, c("calibration_spatial", "lct_paleo"))) == 12 * 6 + 1,
+  length(catalogue_paths(base)) == length(cat_files) + 3 * 12 + 1,
+  identical(catalogue_paths(base, character()), character()),
+  fails(catalogue_paths(base, c("lct_paleo", "nonsense"))),
+
   # producer() resolves every catalogued path, in both layouts, and knows inputs
   identical(is.na(base_producers), cat_files %in% input_files),
   identical(is.na(alt_producers), is.na(base_producers)),
@@ -95,6 +108,12 @@ stopifnot(
   fails(path_calibration_model(base, "mod8")),
   fails(seed_run_dir(base, "data/grid.RDS"))
 )
+
+# A template that takes model ids but has none listed would expand to nothing: it stops.
+saved_models <- TEMPLATE_MODELS
+TEMPLATE_MODELS$calibration_spatial <- NULL
+stopifnot(fails(catalogue_paths(base, "calibration_spatial")))
+TEMPLATE_MODELS <- saved_models
 
 # In a run directory, plots printed with no device open go to its own Rplots.pdf.
 local({
