@@ -231,10 +231,10 @@ variant_labels = c(veg_ice_thresh   = 'total, all-or-nothing ice, fixed glacier 
                    ice_part         = 'ice part, partial ice',
                    veg_icesc_thresh = 'total, all-or-nothing ice, month-by-month glacier albedo',
                    veg_icesc_parts  = 'total, partial ice, month-by-month glacier albedo')
-headline_line = paste('Ice method:', variant_labels[[cfg$analysis$forcing$variant]])
 # The figures are means over the analysis months (A6); say which when they are not all twelve.
-if (months_label(cfg$analysis$months) != 'annual')
-  headline_line = paste0(headline_line, '; mean of ', months_label(cfg$analysis$months), ' only, not annual')
+months_note = if (months_label(cfg$analysis$months) == 'annual') '' else
+  paste0('; mean of ', months_label(cfg$analysis$months), ' only, not annual')
+headline_line = paste0('Ice method: ', variant_labels[[cfg$analysis$forcing$variant]], months_note)
 
 # Layout matched to slide 18 of dawson_EGU.pptx (ppt/media/image37.png):
 # horizontal bars, two stacked panels sharing one x axis, panel labels in strips
@@ -305,14 +305,12 @@ ggsave(path_figure(paths, 'forcing_barplot_slide18.png'), p_slide_lab, width = 8
 kernel_comparison = forcing_by_period %>%
   transmute(kernel, label = sub(' ka$', '', as.character(period)), value = global_equiv)
 kernel_comparison$label = factor(kernel_comparison$label, levels = rev(sub(' ka$', '', labels_period)))
-# Labels say which kernel variable was read (R/kernels.R). The subtitle states, from the
-# settings, which reported kernels are clear-sky and which all-sky; it no longer infers
-# "about a factor of two" or "CACK is the only all-sky kernel" from a mix of sky types,
-# which held only for the original choice of variables (review of 1 November 2026,
-# finding 8).
+# Labels say which kernel variable was read (R/kernels.R); the subtitle says, from the
+# settings, which reported kernels are clear-sky and which all-sky.
 kernel_rows = kernels_read(cfg)
 reported_rows = kernel_rows[names(FORCING_COLUMNS), ]
-kernel_names_by_sky = tapply(sub(' \\(.*', '', reported_rows$label), reported_rows$sky, paste, collapse = ', ')
+kernel_names = sub(' \\(.*', '', reported_rows$label)   # 'HadGEM3 (clear, TOA)' -> 'HadGEM3'
+kernel_names_by_sky = tapply(kernel_names, reported_rows$sky, paste, collapse = ', ')
 sky_line = paste(sprintf('%s-sky: %s', names(kernel_names_by_sky), kernel_names_by_sky), collapse = '; ')
 p_kern = ggplot(kernel_comparison, aes(x = label, y = value, fill = kernel)) +
   geom_col(position = position_dodge(0.8), width = 0.7) +
@@ -350,7 +348,7 @@ p_sens = ggplot(sens_plot, aes(x = period, y = global_equiv, fill = label)) +
   geom_col(position = position_dodge(0.85), width = 0.8) +
   geom_hline(yintercept = 0, linewidth = 0.3) +
   labs(title = 'Forcing by ice method, and its vegetation and ice parts (HadGEM3 kernel)',
-       subtitle = sens_subtitle, fill = NULL,
+       subtitle = paste0(sens_subtitle, months_note), fill = NULL,
        x = NULL, y = expression('global-equivalent forcing ('*W~m^-2*')')) +
   theme_bw(base_size = 11) + theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ggsave(path_figure(paths, 'forcing_barplot_variant_sensitivity.pdf'), p_sens, width = 10, height = 5)

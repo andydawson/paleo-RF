@@ -275,15 +275,19 @@ check("without git the run goes on and says the code version is unknown",
 
 # --- seeded files (finding 4 of the review of 1 November 2026) ---------------------------
 # Only a file actually copied in is listed in SEEDED.txt, and a seeded file the run writes
-# again leaves the list, so the anchor check treats it as the run's own product.
+# again leaves the list, so the anchor check treats it as the run's own product; a seeded
+# file it does not write stays listed.
 seeded_cfg <- config_variant(tempfile(fileext = ".R"), "dir = NULL", 'dir = "seeded_run"')
 seeded_paths <- suppressMessages(pipeline_paths(load_config(seeded_cfg)))
 dir.create("seeded_run/data", recursive = TRUE, showWarnings = FALSE)
 invisible(file.copy("data/albedo_glacier_monthly.csv", "seeded_run/data/"))   # already there: not a copy
-invisible(seed_run_dir(seeded_paths, c(product, "data/albedo_glacier_monthly.csv")))
-check("only the file actually copied in is listed as seeded", identical(readLines("seeded_run/SEEDED.txt"), product))
+not_rewritten <- "output/forcing/forcing_by_period.csv"                        # a baseline product the toy run does not write
+dir.create(dirname(not_rewritten), recursive = TRUE, showWarnings = FALSE); writeLines("baseline", not_rewritten)
+invisible(seed_run_dir(seeded_paths, c(product, "data/albedo_glacier_monthly.csv", not_rewritten)))
+check("only the files actually copied in are listed as seeded",
+      identical(readLines("seeded_run/SEEDED.txt"), sort(c(product, not_rewritten))))
 r <- run_toy("7a_alb_diff_full", producer_body, c("--config", seeded_cfg))
-check("a seeded file the run writes again is no longer listed as seeded",
-      r$status == 0 && identical(readLines("seeded_run/SEEDED.txt"), character()))
+check("a seeded file the run writes again leaves the list; one it does not write stays",
+      r$status == 0 && identical(readLines("seeded_run/SEEDED.txt"), not_rewritten))
 
 cat("test_run_manifest: all tests passed\n")

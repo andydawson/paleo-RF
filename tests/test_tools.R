@@ -46,6 +46,14 @@ stopifnot(identical(res$result, "NO MAPPING"), !anchors_ok(res))
 out <- capture.output(res <- check_anchors(anchor, file.path(tempdir(), "no_such_run_dir")))
 stopifnot(all(res$result == "NOT PRODUCED"), !anchors_ok(res),
           status(anchor, file.path(tempdir(), "no_such_run_dir")) == 1)
+# A file copied in by verify_change's `copy` list is SEEDED, not MATCH: seed_run() writes
+# its line in SEEDED.txt, which check_anchors must read back exactly (a trailing space once
+# made it pass as MATCH).
+verify_tool <- new.env(); sys.source("tools/verify_change.R", envir = verify_tool)
+copied <- "output/forcing/forcing_by_period_variant_sensitivity.csv"
+invisible(verify_tool$seed_run(getwd(), list(copy = list(c(file.path(anchor, basename(copied)), copied))), run, "config.R"))
+out <- capture.output(res <- check_anchors(anchor, run))
+stopifnot(identical(result_of(res, basename(copied)), "SEEDED"))
 unlink(c(run, odd), recursive = TRUE)
 
 # compare_tables: "within tolerance" only when a number was held to a tolerance; a numeric
@@ -62,6 +70,8 @@ stopifnot(partial$ok, partial$numbers_checked, identical(partial$unchecked, "y")
           grepl("^RESULT: within tolerance; UNCHECKED .*: y$", comparison_verdict(partial)))
 both <- compare_tables(ref, cand, rbind(tol_x, data.frame(column = "y", statistic = "max_abs", tolerance = 1)))
 stopifnot(!both$ok, comparison_verdict(both) == "RESULT: OUTSIDE tolerance or structure differs")
+ids_only <- compare_tables(ref["id"], cand["id"])                       # no numeric column at all
+stopifnot(ids_only$ok, comparison_verdict(ids_only) == "RESULT: identifiers identical; no numbers to check")
 cand$x[1] <- NA                                                         # missing values must still agree
 stopifnot(!compare_tables(ref, cand)$ok)
 cat("test_tools: all tests passed\n")

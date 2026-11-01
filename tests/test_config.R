@@ -92,8 +92,10 @@ stopifnot(
   refuses("run\\$dir must not be the repository itself", with_setting("run$dir", "./")),
   refuses("run\\$dir must not be inside the repository's output/", with_setting("run$dir", file.path(getwd(), "output/alt"))),
   refuses("run\\$dir must not be inside the repository's data/", with_setting("run$dir", "./data")),
-  { link_to_repo <- file.path(tempdir(), "link_to_repo"); file.symlink(getwd(), link_to_repo)
-    refuses("run\\$dir must not be inside the repository's figures/", with_setting("run$dir", file.path(link_to_repo, "figures/alt"))) },
+  { link_to_repo <- file.path(tempfile(), "link_to_repo"); dir.create(dirname(link_to_repo))
+    linked <- isTRUE(suppressWarnings(file.symlink(getwd(), link_to_repo)))   # FALSE where symlinks cannot be made: skipped
+    ok <- !linked || refuses("run\\$dir must not be inside the repository's figures/", with_setting("run$dir", file.path(link_to_repo, "figures/alt")))
+    unlink(link_to_repo); unlink(dirname(link_to_repo), recursive = TRUE); ok },   # the link first: never recurse into the repository
   accepts(with_setting("run$dir", file.path(tempdir(), "alt_run"))),
   refuses("run is missing key\\(s\\) dir", { s <- cfg; s$run$dir <- NULL; s }),
   # the model, draw and reduction settings (issue I04a)
@@ -217,4 +219,15 @@ stopifnot(
   fails(config_path(c("--config"))),
   fails(config_path(c("--config", "a.R", "--config=b.R")))
 )
+# A repository whose output/ is a link elsewhere: the run directory is refused in either
+# spelling, at the link or at its target, and an unrelated folder is accepted.
+local({
+  repo <- file.path(tempfile("linked_repo_"), "repo"); storage <- file.path(dirname(repo), "storage")
+  dir.create(repo, recursive = TRUE); dir.create(storage)
+  if (!isTRUE(suppressWarnings(file.symlink(storage, file.path(repo, "output"))))) return(cat("linked output/: skipped (no symlinks here)\n"))
+  old <- setwd(repo); on.exit({ setwd(old); unlink(dirname(repo), recursive = TRUE) })
+  refused <- function(v) isTRUE(grepl("inside the repository's output/", check_run_dir(v)))
+  stopifnot(refused("output/alt"), refused(file.path(storage, "alt")), is.null(check_run_dir("elsewhere")))
+})
+
 cat("test_config: all tests passed\n")
