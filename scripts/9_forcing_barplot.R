@@ -63,14 +63,12 @@
 #         whose ice changed (a signed change: ice retreat or advance);
 #         _veg_part + _ice_part = _veg_ice_parts.
 #     R/differences.R gives the threshold components NA where they do not apply (a
-#     vegetation step has no ice part and vice versa). Until 2026-10-19 those NAs
-#     reached the period sum (A5), so a cell with both kinds of step in one period
-#     dropped out of BOTH bars: at 8-10 ka, 343 cells carrying 99% of the total
-#     (found by Opus and confirmed by Astra on 2026-10-18,
-#     docs/cc/2026-10-18_forcing_code_check_codex_gpt6astra.md). Fixed by setting the
+#     vegetation step has no ice part and vice versa); R/forcing_components.R sets the
 #     part that does not apply to 0 before aggregating, the 'by kind of step'
-#     definition Chris chose on 2026-10-19 (R/forcing_components.R); genuinely missing
-#     pairs (total NA) stay NA. Under the legacy configuration ("legacy_components")
+#     definition Chris chose on 2026-10-19, so a cell with both kinds of step in a
+#     period counts in both bars; genuinely missing pairs (total NA) stay NA. Why: the
+#     changelog entry "Vegetation-only and ice-only bars add up", 2026-10-19
+#     (docs/cc/changelog_single_config_migration.md). Under the legacy configuration ("legacy_components")
 #     the split does not hold (question C2), and Chris chose (2026-10-19) to keep its
 #     outputs as they were: there the threshold parts still leave out cells with both
 #     kinds of step. The headline (A1) does not use these components and is unaffected.
@@ -128,10 +126,7 @@
 source('R/calendar.R')
 source('R/forcing_periods.R')
 source('R/forcing_components.R')
-# Settings, file locations and this run's manifest: run_begin() reads config.R (or the file
-# given with --config), sets up the paths of R/paths.R and starts the run's
-# manifest, which records the inputs with checksums and the whole configuration; files are
-# then read and written through it.
+# Settings, paths and the run manifest: R/run_manifest.R.
 source('R/run_manifest.R')
 run   = run_begin('9_forcing_barplot')
 cfg   = run$cfg
