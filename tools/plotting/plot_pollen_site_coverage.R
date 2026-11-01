@@ -21,7 +21,7 @@
 #   figures/diagnostics/pollen_site_coverage.png   grid cells in grey; cells with a pollen
 #       estimate coloured by the number of time slices that have one
 #   The log prints, for the six regions of R/regions.R, the grid cells and the median number
-#   of cells with a pollen estimate per time slice.
+#   of cells with a pollen estimate per time slice (a slice with none counts as zero).
 
 source('R/run_manifest.R')
 source('R/map_helpers.R')
@@ -39,8 +39,14 @@ grid   = read_input(run, path_file(paths, 'elevation_cache'))[, c('x', 'y')]
 grid$region   = region_of(grid$x, grid$y)
 pollen$region = region_of(pollen$long, pollen$lat)
 
+# Cells with a pollen estimate per region and slice, with a zero for every slice at which a
+# region has none: counting only the slices that have some would put a region with sites at
+# one slice alone at a positive median (review of 1 November 2026, finding 10).
+cells_per_slice = expand.grid(region = unique(grid$region), ages = sort(unique(pollen$ages)), stringsAsFactors = FALSE) %>%
+  left_join(pollen %>% count(region, ages), by = c('region', 'ages')) %>%
+  mutate(n = ifelse(is.na(n), 0L, n))
 coverage = grid %>% count(region, name = 'grid_cells') %>%
-  left_join(pollen %>% count(region, ages) %>% group_by(region) %>%
+  left_join(cells_per_slice %>% group_by(region) %>%
               summarise(median_cells_with_pollen_per_slice = median(n), .groups = 'drop'), by = 'region') %>%
   mutate(share_of_grid = round(median_cells_with_pollen_per_slice / grid_cells, 3))
 print(as.data.frame(coverage), row.names = FALSE)
