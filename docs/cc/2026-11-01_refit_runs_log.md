@@ -34,3 +34,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   started automatically when the last part finishes (cores 0-7 or 8-19, eight threads).
 - Run 8 (raster control) fitting part 1: a documentation-only commit so that it gets its own worktree.
 - Run 8 (raster control) fitting part 2: a documentation-only commit so that it gets its own worktree.
+- Run 8 (raster control) fitting part 3: a documentation-only commit so that it gets its own worktree.
