@@ -305,11 +305,8 @@ ggsave(path_figure(paths, 'forcing_barplot_slide18.png'), p_slide_lab, width = 8
 kernel_comparison = forcing_by_period %>%
   transmute(kernel, label = sub(' ka$', '', as.character(period)), value = global_equiv)
 kernel_comparison$label = factor(kernel_comparison$label, levels = rev(sub(' ka$', '', labels_period)))
-# Labels say which kernel variable was read (R/kernels.R). The subtitle states, from the
-# settings, which reported kernels are clear-sky and which all-sky; it no longer infers
-# "about a factor of two" or "CACK is the only all-sky kernel" from a mix of sky types,
-# which held only for the original choice of variables (review of 1 November 2026,
-# finding 8).
+# Labels say which kernel variable was read (R/kernels.R); the subtitle says, from the
+# settings, which reported kernels are clear-sky and which all-sky.
 kernel_rows = kernels_read(cfg)
 reported_rows = kernel_rows[names(FORCING_COLUMNS), ]
 kernel_names = sub(' \\(.*', '', reported_rows$label)   # 'HadGEM3 (clear, TOA)' -> 'HadGEM3'
