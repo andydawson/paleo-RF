@@ -216,10 +216,6 @@ if (diagnostic) {
     LCT = class_draw_stats$LCT[1], mean_abs_diff = round(mean(abs(class_draw_stats$diff)), 4), p95_abs_diff = round(quantile(abs(class_draw_stats$diff), 0.95), 4),
     max_abs_diff = round(max(abs(class_draw_stats$diff)), 4), share_over_0.01 = round(mean(abs(class_draw_stats$diff) > 0.01), 3),
     share_over_0.05 = round(mean(abs(class_draw_stats$diff) > 0.05), 4)))), row.names = FALSE)
-  cat('\nFor scale: the smallest slice-to-slice change in vegetation albedo that script 7a treats as\n',
-      'real is of order 0.001-0.01, and land-cover fractions enter the albedo model through a smooth\n',
-      'whose gradient is of order 0.1-0.3 albedo per unit fraction, so a 0.01 shift in a fraction is\n',
-      'roughly 0.001-0.003 in albedo. Compare the columns above with that.\n')
   # Sum-to-one: the mean fractions sum to 1 exactly; the medians do not.
   cover_fraction_sums = draw_stats %>% group_by(cell_id, ages) %>%
     dplyr::summarize(sum_mean = sum(mean), sum_median = sum(median), .groups = 'drop')
