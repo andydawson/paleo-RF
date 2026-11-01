@@ -83,8 +83,10 @@ stopifnot(
   rejects("run\\$dir must not be the repository itself", 'dir = NULL', 'dir = "./"'),
   rejects("run\\$dir must not be inside the repository's output/", 'dir = NULL', sprintf('dir = "%s/output/alt"', getwd())),
   rejects("run\\$dir must not be inside the repository's data/", 'dir = NULL', 'dir = "./data"'),
-  { link_to_repo <- file.path(tempdir(), "link_to_repo"); file.symlink(getwd(), link_to_repo)
-    rejects("run\\$dir must not be inside the repository's figures/", 'dir = NULL', sprintf('dir = "%s/figures/alt"', link_to_repo)) },
+  { link_to_repo <- file.path(tempfile(), "link_to_repo"); dir.create(dirname(link_to_repo))
+    linked <- isTRUE(suppressWarnings(file.symlink(getwd(), link_to_repo)))   # FALSE where symlinks cannot be made: skipped
+    ok <- !linked || rejects("run\\$dir must not be inside the repository's figures/", 'dir = NULL', sprintf('dir = "%s/figures/alt"', link_to_repo))
+    unlink(link_to_repo); unlink(dirname(link_to_repo), recursive = TRUE); ok },   # the link first: never recurse into the repository
   identical(load_variant('dir = NULL', sprintf('dir = "%s/alt_run"', tempdir()))$run$dir, file.path(tempdir(), "alt_run")),
   rejects("run is missing key\\(s\\) dir", 'dir = NULL,', ''),
   # the model, draw and reduction settings (issue I04a)
