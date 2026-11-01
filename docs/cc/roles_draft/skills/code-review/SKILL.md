@@ -67,4 +67,4 @@ should be.
 - 14 October 2026: readability (`docs/cc/2026-10-14_readability_review_codex_gpt6astra.md`)
 - 15 October 2026: simplicity (`docs/cc/2026-10-15_simplicity_review_codex_gpt6astra.md`)
 - 1 November 2026: drift and conciseness (`docs/cc/2026-11-01_drift_conciseness_review_codex_gpt6astra.md`)
-- 1 November 2026: simplicity and conciseness (filed when it reports)
+- 1 November 2026: simplicity and conciseness (`docs/cc/2026-11-01_simplicity_review_codex_gpt6astra.md`)
