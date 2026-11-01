@@ -36,7 +36,11 @@
 #   cells outside the training range along the lines of panel c (R/training_support.R).
 #
 # The region is the northeast box of R/regions.R (the region of figure 4a of Dawson et al.
-# 2025). The model label in panel c comes from the configuration, as in script 5.
+# 2025). The figure is built for one comparison: model 8 (the prediction model of config.R)
+# against cover_elev, which is model 8 without its location term. With another prediction
+# model more than the location term would differ, so the tool stops. The directions in the
+# panel titles and the conclusion in the caption are worked out from the results, not
+# written in (review of 1 November 2026, finding 6).
 
 source('R/run_manifest.R')
 source('R/model_registry.R')
@@ -54,6 +58,12 @@ REGION = 'Northeast (hemlock box)'
 # 0.50 in the 18 October run) on both sides, so the reader sees how each model behaves there.
 EVERGREEN_STEPS = seq(0.05, 0.65, by = 0.01)
 
+# cover_elev is model 8's formula less s(x, y) (R/model_registry.R); only for model 8 is the
+# difference between the two fits the location term alone.
+if (cfg$analysis$calibration$model_id != 'mod8')
+  stop('this figure compares model 8 with the same terms without location (cover_elev); config.R ',
+       'analysis$calibration$model_id is ', cfg$analysis$calibration$model_id,
+       ', for which the two fits would differ in more than the location term', call. = FALSE)
 support_inputs   = read_training_support_inputs(run)   # R/training_support.R
 with_location    = support_inputs$fit
 without_location = read_input(run, path_file(paths, 'calibration_spatial', month = 'may', model = 'cover_elev'))
@@ -136,13 +146,28 @@ cat('share of the cells on the lines of panel c outside the training range, by e
 every_fifth_step = line_support[seq(1, nrow(line_support), by = 5), ]
 every_fifth_step$outside = round(every_fifth_step$outside, 2)
 print(every_fifth_step, row.names = FALSE)
-all_outside_up_to = max(line_support$ET[cumprod(line_support$outside == 1) == 1])
+all_outside_steps = line_support$ET[cumprod(line_support$outside == 1) == 1]   # from the lowest step up
 outside_at_6ka_evergreen = line_support$outside[which.min(abs(line_support$ET - mean(at_6ka$ET)))]
+
+# The directions the titles state, from the results: the signs of today's correlations, and
+# for each model whether its albedo rises or falls as evergreen goes from the lowest to the
+# highest share seen in the region today (the grey band of panel c).
+rises_or_falls = function(change) if (change > 0) 'rises' else if (change < 0) 'falls' else 'does not change'
+if (min(today_ne$ET) < min(EVERGREEN_STEPS) || max(today_ne$ET) > max(EVERGREEN_STEPS))
+  stop('today\'s evergreen range in the region runs beyond the steps of panel c; widen EVERGREEN_STEPS', call. = FALSE)
+evergreen_effect = sapply(names(models), function(name) {
+  line = curves[curves$model == name, ]
+  albedo_at = approx(line$ET, line$albedo, xout = range(today_ne$ET))$y
+  albedo_at[2] - albedo_at[1]
+})
+effect_sign_differs = sign(evergreen_effect[1]) != sign(evergreen_effect[2])
+cat(sprintf('change in model May albedo across today\'s evergreen range in the region: %s %+.3f, %s %+.3f\n',
+            names(models)[1], evergreen_effect[1], names(models)[2], evergreen_effect[2]))
 
 # --- a. evergreen share against latitude --------------------------------------------------
 panel_latitude = ggplot(today_ne, aes(y, ET)) + geom_point(colour = 'darkgreen', size = 1.2) +
   labs(x = 'latitude (°N)', y = 'evergreen share today',
-       title = 'a. Today, evergreen share rises northwards',
+       title = sprintf('a. Today, evergreen share %s northwards', rises_or_falls(cor_ET_lat_region)),
        subtitle = sprintf('%d cells in the region; correlation %.2f\n(over all %s fitting cells across North America: %.2f)',
                           nrow(today_ne), cor_ET_lat_region, format(nrow(today), big.mark = ','), cor_ET_lat_all)) +
   theme_bw(base_size = 9)
@@ -151,7 +176,8 @@ panel_latitude = ggplot(today_ne, aes(y, ET)) + geom_point(colour = 'darkgreen',
 panel_albedo = ggplot(today_ne, aes(ET, albedo, colour = y)) + geom_point(size = 1.2) +
   scale_colour_viridis_c(name = 'latitude\n(°N)', option = 'viridis') +
   labs(x = 'evergreen share today', y = 'May albedo today (calibration data)',
-       title = 'b. Albedo falls with evergreen share, and with latitude',
+       title = sprintf('b. Albedo %s with evergreen share, and %s with latitude',
+                       rises_or_falls(cor_albedo_ET), rises_or_falls(cor_albedo_lat)),
        subtitle = sprintf(paste0('correlation with evergreen share %.2f, with latitude %.2f. With latitude held fixed,\n',
                                  'the evergreen slope is %+.3f per 0.1 of evergreen share (standard error %.3f, p = %.2f)'),
                           cor_albedo_ET, cor_albedo_lat, fixed_latitude['Estimate'] / 10, fixed_latitude['Std. Error'] / 10,
@@ -167,7 +193,10 @@ panel_model = ggplot() +
   scale_colour_manual(values = model_colours, name = NULL) +
   scale_shape_manual(values = c('6 ka' = 16, '4.5 ka' = 17), name = 'past cover\n(region mean)') +
   labs(x = 'evergreen share (open land as at 6 ka; summergreen the rest)', y = 'model May albedo (region mean)',
-       title = 'c. The sign of the model\'s evergreen effect depends on the location term',
+       title = sprintf(paste0(if (effect_sign_differs) 'c. The sign of the model\'s evergreen effect depends on the location term'
+                              else 'c. The location term does not change the sign of the model\'s evergreen effect',
+                              ' (over today\'s range, albedo %s as evergreen increases with it, %s without it)'),
+                       rises_or_falls(evergreen_effect[1]), rises_or_falls(evergreen_effect[2])),
        subtitle = sprintf(paste0('with: %s, the fit the hindcast uses (%.0f%% of deviance explained)\n',
                                  'without: the same cover and elevation terms only (%.0f%%); grey: today\'s evergreen range in the region'),
                           model_label, 100 * summary(with_location)$dev.expl, 100 * summary(without_location)$dev.expl)) +
@@ -180,10 +209,12 @@ figure = (panel_latitude + panel_albedo) / panel_model + plot_layout(heights = c
                      'Past cover: the reconstruction at 6 and 4.5 ka, the hemlock decline.\n',
                      'Both fits are by REML on the same cells. Points in c are the models\' predictions at the actual past mixes; ',
                      'the lines hold open land fixed, so they show the evergreen-summergreen swap alone.\n',
-                     sprintf(paste0('Most of the lines rest on cover mixes outside the training range (the rule of the other diagnostic figures): ',
-                                    'every cell at evergreen shares up to %.2f, %.0f%% at %.2f; and %.0f%% of cells at 6 ka, %.0f%% at 4.5 ka.\n',
-                                    'So the lines show that the data do not fix the sign of the evergreen effect, not what the true effect is.'),
-                             all_outside_up_to, 100 * outside_at_6ka_evergreen, mean(at_6ka$ET), 100 * outside_6ka, 100 * outside_4.5ka)),
+                     sprintf(paste0('On average %.0f%% of the cells along the lines have cover mixes outside May\'s training range (the rule of the other diagnostic figures)',
+                                    if (length(all_outside_steps)) sprintf(': every cell at evergreen shares up to %.2f', max(all_outside_steps)) else '',
+                                    '; %.0f%% at %.2f; and %.0f%% of cells at 6 ka, %.0f%% at 4.5 ka.\n',
+                                    if (effect_sign_differs) 'So the lines show that the data do not fix the sign of the evergreen effect, not what the true effect is.'
+                                    else 'The two fits agree on the sign of the evergreen effect; where the lines leave the training range they are extrapolations.'),
+                             100 * mean(line_support$outside), 100 * outside_at_6ka_evergreen, mean(at_6ka$ET), 100 * outside_6ka, 100 * outside_4.5ka)),
     theme = theme(plot.title = element_text(size = 12, face = 'bold'), plot.caption = element_text(size = 7, hjust = 0)))
 
 figure_file = path_figure(paths, 'diagnostics', 'northeast_cover_and_location.png')
