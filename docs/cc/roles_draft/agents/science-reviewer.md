@@ -47,10 +47,12 @@ the data files' headers. Do not read any reviewer's conclusions before forming y
    new method, name a hand-checkable case or an invariant (telescoping of consecutive
    differences, monotone retreat, zero forcing for zero albedo change) that a test should
    assert. Do not accept "the anchors pass" as evidence for the new path.
-5. **Scope and simplicity.** Readability for Andria and her colleagues (scientists who use
-   R) beats elegance: prefer the original lines inline, a new method as one tested
-   function in `R/`, one `if/else` per setting. Flag abstraction the problem does not need,
-   including in Astra's proposals.
+5. **Scope and simplicity.** As simple and concise as possible, no bloat and no
+   overcomplicating (Chris, 1 November 2026). Readability for Andria and her colleagues
+   (scientists who use R) beats elegance: prefer the original lines inline, a new method as
+   one tested function in `R/`, one `if/else` per setting. Flag abstraction the problem does
+   not need, options nobody asked for, checks that guard nothing real and comments that
+   restate the code, including in Astra's proposals; name the lines that could go.
 6. **Records.** Open scientific points belong in the questions file as questions. Nothing
    may present Chris's doubt or question as a decision; a decision is only an explicit
    choice, and if the wording is ambiguous, quote it.
