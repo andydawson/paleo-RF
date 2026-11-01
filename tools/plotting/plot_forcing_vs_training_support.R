@@ -1,5 +1,5 @@
 # plot_forcing_vs_training_support.R: the vegetation forcing of each period, cell by cell,
-# with the cells whose cover mix lies outside the range of the training data outlined.
+# with the cells whose cover mix lies outside the range of May's training data outlined.
 #
 # WHY (Chris, 2026-10-20, for Andria). It shows which regional forcing signals rest on
 # extrapolation of the calibration model (outlined) and which lie within the range of
@@ -10,7 +10,10 @@
 #
 # WHAT COMES IN
 #   output/calibration/calibration_prediction_fit_may_bluesky.RDS   script 4: the training
-#       mixes (as in plot_training_support.R)
+#       mixes of the May fit (as in plot_training_support.R). The forcing is averaged over
+#       the analysis months, but the outline judges cover against May's training data only:
+#       other months are fitted to their own cells, which can differ. The tool stops if May
+#       is not among the analysis months (R/training_support.R)
 #   output/prediction/paleo_interp_predict_gam_bluesky.RDS          script 6: past cover
 #   output/forcing/RF_holocene_all_cases.RDS                        script 8: forcing per
 #       cell, month and slice-pair
@@ -26,7 +29,7 @@
 #      mean over months (script 9's A5 and A6), in W/m2.
 #   3. The column is HadGEM3's vegetation part (rf_hadgem_veg_part): only the vegetation
 #      part depends on the cover mix, and HadGEM3 is the headline kernel.
-#   4. A cell is outlined if its mix is outside the training range at either end of any
+#   4. A cell is outlined if its mix is outside May's training range at either end of any
 #      slice-pair in the period.
 #   Colours are clipped at the 98th percentile of the absolute values, so a few extreme
 #   cells do not wash out the rest. Positive = warming (albedo fell), as in scripts 8 and 9.
@@ -81,7 +84,8 @@ figure = ggplot() +
   facet_wrap(~period, ncol = 2) +
   scale_fill_gradient2(low = '#2166ac', mid = 'grey95', high = '#b2182b', name = 'W/m2') +
   labs(title = 'Vegetation forcing per cell, by period (HadGEM3, vegetation part; red = warming, blue = cooling)',
-       subtitle = sprintf(paste0('Black outline: cell whose cover mix lies outside the range of the training data at either end of a slice pair in that period.\n',
+       subtitle = sprintf(paste0('Black outline: cell whose cover mix lies outside the range of the May training data at either end of a slice pair in that period\n',
+                                 '(support relative to May; the forcing is the mean over the analysis months, whose fits can use other cells). ',
                                  'Colour clipped at the 98th percentile (%.0f W/m2).'), colour_limit),
        x = NULL, y = NULL) +
   theme_bw(base_size = 9) + theme(strip.text = element_text(face = 'bold'))

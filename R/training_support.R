@@ -57,7 +57,16 @@ training_support = function(cover, hull) {
 # script 6's merged prediction table (cover does not depend on the month, so one month's
 # rows hold every cell and slice once). Each figure filters and plots these itself. Written
 # once because the three tools had each copied it (review of 1 November 2026, finding 15).
+# The training range is May's: other months are fitted to their own cells, which can differ
+# (the MODIS albedo has valid values in different cells each month), so the figures show
+# support relative to May, and say so. Monthly support is an open choice (refit decisions),
+# not made here. Without May among the analysis months there is no May fit: stop and say
+# so rather than read a stale one (review of 1 November 2026, finding 5).
 read_training_support_inputs = function(run) {
+  if (!'may' %in% run$cfg$analysis$months)
+    stop('the training-support figures use the May fit as the training range, but config.R analysis$months (',
+         paste(run$cfg$analysis$months, collapse = ', '), ') has no May; add "may" to the months, ',
+         'or leave these figures out of this run', call. = FALSE)
   fit   = read_input(run, path_file(run$paths, 'calibration_prediction_fit', month = 'may'))
   cover = read_input(run, path_file(run$paths, 'prediction_point'))
   list(fit = fit, hull = training_hull(fit$model), cover = cover[cover$month == 'may', ])
