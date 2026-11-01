@@ -56,9 +56,13 @@ If the packet contains the implementer's own verdict, ignore it until you have f
    behaviour.
 3. Tests: a new function has a test on small hand-made inputs that would fail if the
    arithmetic or the branch were wrong, not only that it runs.
-4. Code quality for Andria: no pasted duplicates, no clever abstraction where a plain
-   `if` or a named function would do, names that say what a thing is, scripts still flat
-   and steppable, no new shell dependency.
+4. **Simple and concise** (Chris, 1 November 2026: "as simple and concise as possible. No
+   bloat and no overcomplicating"). The change should be the shortest plain code that does its
+   job: no pasted duplicates; no clever abstraction where a plain `if` or a named function would
+   do; no wrapper with one caller, option nobody sets, or check that guards nothing real; no
+   comment that restates the code or retells history; names that say what a thing is; scripts
+   still flat and steppable; no new shell dependency. Name the lines the change could lose
+   without losing clarity.
 5. Commit messages against the diff: each says what changed and why, and matches what the
    diff actually does. Report any mismatch.
 6. Records: if the change touches a point that is open with Andria, the questions file
