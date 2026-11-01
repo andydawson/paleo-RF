@@ -84,6 +84,14 @@ r = run('two_checks', 'scripts/good.R', checks = list(c('-e', 'cat("first\\n")')
 logs = file.path(r$worktree, '.rundirs/two_checks', c('check_01.log', 'check_02.log'))
 stopifnot(r$verdict == 'PASS', all(file.exists(logs)), readLines(logs[1]) == 'first', readLines(logs[2]) == 'second')
 
+# A spec that would verify nothing is refused before anything is run (finding 3 of the review
+# of 1 November 2026): an empty script list with no checks or anchors once gave a PASS.
+empty = tryCatch(run('nothing', character()), error = conditionMessage)
+stopifnot(is.character(empty), grepl('would verify nothing', empty),
+          !file.exists(file.path(fixture, 'docs/cc/verification', sprintf('%s_nothing_report.md', format(Sys.Date())))))
+r = run('checks_only', character(), checks = list(c('-e', 'quit(status = 0)')))
+stopifnot(r$verdict == 'PASS')
+
 # A run folder name is never reused: a second verification must not mix with the first.
 stopifnot(inherits(try(run('good', 'scripts/good.R'), silent = TRUE), 'try-error'))
 
