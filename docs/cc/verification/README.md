@@ -41,5 +41,9 @@ list(
   env     = c(THREADS = '8', CORES = '8-15'))
 ```
 
+The tool at or after commit 993f77b (one catalogue expansion, 1 November 2026) verifies only commits at
+or after 993f77b when the spec seeds products: older commits lack the new `catalogue_paths(ids =)` and the
+run stops with "unused argument". Chris chose to record this limit rather than add fallback code.
+
 A merge without a report is possible only as a recorded exception: `git merge --no-verify`,
 with the reason in the merge message.

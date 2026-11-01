@@ -72,6 +72,21 @@ ice_colour = 'gray60'
 ice_fill_dark = 'ivory3'
 ice_colour_dark = 'gray40'
 
+# The theme of every map below: a black axis line, no grid, no axis titles, ticks or labels,
+# legend text at 12 points. text_size is theme_bw()'s base size (the four-month panel uses 20).
+map_theme = function(text_size = 12) {
+  theme_bw(text_size) +
+    theme(axis.line = element_line(colour = "black"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.title = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text = element_blank(),
+          legend.text = element_text(size=12),
+          legend.title = element_text(size=12))
+}
+
 alb_interp_preds = read_input(run, path_file(paths, 'prediction_summary'))
 # CM: the slice alias, config.R analysis$coarse$slice_alias (question C7): the
 # 11,500 BP slice is treated as 12,000 BP, which also gives it the 12 ka ice polygon below.
@@ -184,16 +199,7 @@ if ('feb' %in% months) {
                       na.value = "white",
                       labels = labels_alb) +
     facet_grid(facets~.)+
-    theme_bw(12)+
-    theme(axis.line = element_line(colour = "black"),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          axis.title = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          legend.text = element_text(size=12),
-          legend.title = element_text(size=12)) +
+    map_theme()+
     coord_fixed(xlim = xlim, ylim = ylim)
   ggsave(path_figure(paths, paste0('alb_interp_preds_binned_tile_grid_', alb_prod, '.pdf')))#, width=12, height=14)
   ggsave(path_figure(paths, paste0('alb_interp_preds_binned_tile_grid_', alb_prod, '.png')))#, width=12, height=14)
@@ -210,16 +216,7 @@ ggplot()+
                     na.value = "white",
                     labels = labels_alb) +
   facet_grid(facets~month)+
-  theme_bw(12)+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=12),
-        legend.title = element_text(size=12)) +
+  map_theme()+
   coord_fixed(xlim = xlim, ylim = ylim)
 ggsave(path_figure(paths, paste0('alb_interp_preds_month_binned_tile_grid_', alb_prod, '.pdf')), width=14, height=12)
 ggsave(path_figure(paths, paste0('alb_interp_preds_month_binned_tile_grid_', alb_prod, '.png')), width=14, height=12)
@@ -239,16 +236,7 @@ if (length(months_sub)) {
                       na.value = "white",
                       labels = labels_alb) +
     facet_grid(facets~month)+
-    theme_bw(20)+
-    theme(axis.line = element_line(colour = "black"),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          axis.title = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          legend.text = element_text(size=12),
-          legend.title = element_text(size=12)) +
+    map_theme(text_size = 20)+   # larger text for the four-month panel
     coord_fixed(xlim = xlim, ylim = ylim)
   ggsave(path_figure(paths, paste0('alb_interp_preds_month_sub_binned_tile_grid_', alb_prod, '.pdf')), width=14, height=12)
   ggsave(path_figure(paths, paste0('alb_interp_preds_month_sub_binned_tile_grid_', alb_prod, '.png')), width=14, height=12)
@@ -263,16 +251,7 @@ if ('feb' %in% months) {
     scale_fill_brewer(type='seq', palette='YlOrBr',
                       na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
     facet_wrap(facets~.) +
-    theme_bw(12)+
-    theme(axis.line = element_line(colour = "black"),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          axis.title = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          legend.text = element_text(size=12),
-          legend.title = element_text(size=12)) +
+    map_theme()+
     coord_fixed(xlim = xlim, ylim = ylim)
   ggsave(path_figure(paths, paste0('alb_interp_preds_binned_tile_wrap_', alb_prod, '.pdf')), width=14, height=12)
   ggsave(path_figure(paths, paste0('alb_interp_preds_binned_tile_wrap_', alb_prod, '.png')), width=14, height=12)
@@ -291,16 +270,7 @@ for (year in ages_sub){
     scale_fill_brewer(type='seq', palette='YlOrBr',
                       na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
     facet_wrap(~month, nrow=4, ncol=4)+
-    theme_bw(12)+
-    theme(axis.line = element_line(colour = "black"),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          axis.title = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          legend.text = element_text(size=12),
-          legend.title = element_text(size=12)) +
+    map_theme()+
     coord_fixed(xlim = xlim, ylim = ylim)
   print(p)
 }
@@ -318,16 +288,7 @@ ggplot()+
                     direction=1,
                     labels = labels_sd) +
   facet_grid(facets~month)+
-  theme_bw(12)+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=12),
-        legend.title = element_text(size=12)) +
+  map_theme()+
   coord_fixed(xlim = xlim, ylim = ylim)
 ggsave(path_figure(paths, paste0('alb_interp_preds_month_sd_binned_tile_grid_', alb_prod, '.pdf')), width=14, height=12)
 ggsave(path_figure(paths, paste0('alb_interp_preds_month_sd_binned_tile_grid_', alb_prod, '.png')), width=14, height=12)
@@ -341,16 +302,7 @@ ggplot()+
   scale_fill_brewer(type='seq', palette='YlOrBr',
                     na.value='transparent', name = "CV", direction=1, labels = labels_sd) +
   facet_grid(facets~month)+
-  theme_bw(12)+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=12),
-        legend.title = element_text(size=12)) +
+  map_theme()+
   coord_fixed(xlim = xlim, ylim = ylim)
 ggsave(path_figure(paths, paste0('alb_interp_preds_month_cv_binned_tile_grid_', alb_prod, '.pdf')), width=14, height=12)
 ggsave(path_figure(paths, paste0('alb_interp_preds_month_cv_binned_tile_grid_', alb_prod, '.png')), width=14, height=12)
@@ -470,16 +422,7 @@ ggplot()+
   geom_polygon(data=ice_fort_diff_young, aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
   sc_fill_diverge +
   facet_grid(month~facets)+
-  theme_bw(12)+
-  theme(axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.text = element_text(size=12),
-        legend.title = element_text(size=12)) +
+  map_theme()+
   coord_fixed(xlim = xlim, ylim = ylim)
 ggsave(path_figure(paths, paste0('alb_interp_preds_month_diff_tile_grid_', alb_prod, '.png')), width=12, height=14)
 ggsave(path_figure(paths, paste0('alb_interp_preds_month_diff_tile_grid_', alb_prod, '.pdf')), width=12, height=14)
@@ -500,15 +443,8 @@ for (i in 1:length(facets)){
     geom_polygon(data=subset(ice_fort_diff_young, facets==facet), aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
     facet_wrap(~month, nrow=3, ncol=4) +
     sc_fill_diverge +
-    theme_bw(12)+
-    theme(panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          axis.title = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          legend.text = element_text(size=12),
-          legend.title = element_text(size=12)) +
+    map_theme() +
+    theme(axis.line = element_blank()) +   # these pages have no axis line
     coord_fixed(xlim = xlim, ylim = ylim)
   print(p)
 }

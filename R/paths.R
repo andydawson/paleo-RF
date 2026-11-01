@@ -221,15 +221,18 @@ template_regex = function(id, tag) {
   paste0('^', pattern, '$')
 }
 
-# Every catalogued path for the given months, expanded over months and model ids. Used by
-# the tests to compare the catalogue with the files on disk.
-catalogue_paths = function(paths, months = MONTHS, include_spatial_eval = FALSE) {
+# The paths of the given catalogue ids (all by default), each expanded over every month and
+# model id its template takes. Used by the tests to compare the catalogue with the files on
+# disk, and by tools/verify_change.R to name the baseline products it copies into a run.
+catalogue_paths = function(paths, ids = PATH_CATALOGUE$id) {
+  unknown = setdiff(ids, PATH_CATALOGUE$id)
+  if (length(unknown)) stop('catalogue_paths: no catalogued file with id ', paste(sQuote(unknown, FALSE), collapse = ', '))
   expanded_paths = character()
-  for (id in PATH_CATALOGUE$id) {
-    if (!include_spatial_eval && startsWith(id, 'spatial_eval')) next
+  for (id in ids) {
     path_template = PATH_CATALOGUE[id, 'template']
-    template_months = if (grepl('{month}', path_template, fixed = TRUE)) months else list(NULL)
+    template_months = if (grepl('{month}', path_template, fixed = TRUE)) MONTHS else list(NULL)
     template_models = if (grepl('{model}', path_template, fixed = TRUE)) TEMPLATE_MODELS[[id]] else list(NULL)
+    if (!length(template_models)) stop('catalogue_paths: ', id, ' takes model ids but TEMPLATE_MODELS lists none')
     for (month in template_months) for (model_id in template_models) expanded_paths = c(expanded_paths, path_file(paths, id, month = month, model = model_id))
   }
   expanded_paths

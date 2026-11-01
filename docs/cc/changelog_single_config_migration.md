@@ -1549,3 +1549,34 @@ the four diagnostic tools on the 18 October products print the same numbers as o
 net-contrast line (`drift-diagnostics`).
 
 **Effect on outputs.** None on any table; figure titles and wording only.
+
+## Simplifications from the simplicity review, 2026-11-01
+
+Branch `simplify-2026-11-01`, made from the drift-fix line at a14118f; the merged drift fixes taken in; merged 1 November.
+
+**Purpose.** Astra's simplicity review (`docs/cc/2026-11-01_simplicity_review_codex_gpt6astra.md`), asked for after Chris
+set the rule that the code be "as simple and concise as possible. No bloat and no overcomplicating." Chris chose to do
+items 1, 2, 7 and 8 now and to hand over items 3, 4, 5, 6 and 9 until the migration is finished.
+
+**Changes.** 61 lines fewer over 14 files.
+- Script 7 states its map theme once (`map_theme()`), used by all nine maps; script 5 builds its model-against-data
+  plot once and adds each figure's facet.
+- Script 1 goes from 249 to 83 lines: its optional diagnostics are one function in `R/land_cover_diagnostics.R`,
+  called after both tables are written (helper kept in `R/`, Chris's choice).
+- One expansion of the path catalogue, `catalogue_paths(paths, ids)` in `R/paths.R`, used by both the tests and
+  `tools/verify_change.R`; the unused `months` and `include_spatial_eval` arguments removed. Because the tool uses the
+  `R/paths.R` of the commit it verifies, it now seeds products only for commits from this change on; recorded in
+  `docs/cc/verification/README` (Chris's choice).
+- Tests change settings as lists (`with_setting()`, `refuses()`, `accepts()`) through the production check, now
+  `config_errors()` in `R/config.R`; one shared test cell (`tests/cell_fixture.R`); the equation-of-time test checks
+  fixed values instead of a copy of the formula.
+
+**Review.** One change review (`docs/cc/2026-11-01_simplifications_review/`): no blocker; its two questions answered
+by Chris as above.
+
+**Verification** (all PASS): legacy scripts 1-2 (`2026-11-01_simplify-legacy-prep`), 5-6 at seed 1 with 17 test files
+(`simplify-legacy-seed1`), 7, 7a and 8 (`simplify-legacy-scripts78`) and 9-10 with the path and comment-check tests
+(`simplify-legacy-forcing`) reproduce their anchors. Script 1's 29 diagnostic figures and console output, and script
+7's 17 outputs, are identical before and after (`comparisons.md` in the review folder).
+
+**Effect on outputs.** None.

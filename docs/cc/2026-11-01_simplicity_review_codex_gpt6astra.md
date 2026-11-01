@@ -3,7 +3,7 @@
 Chris (1 November): the code must be "as simple and concise as possible. No bloat and no overcomplicating."
 Reviewed feature/single-config at 837f2d3, read-only; prompt in the session scratch folder (astra_simplicity2/prompt.md).
 Excludes the drift findings being fixed (docs/cc/2026-11-01_drift_conciseness_review_codex_gpt6astra.md).
-Chris's choice of what to act on: to be recorded here.
+**Chris's choice (1 November):** do now items 1 (shared plot styling), 2 (script 1's diagnostics into a named helper), 7 (one catalogue expansion; the review's numbering) and 8 (simpler test setup); the five hand-over items (3, 4, 5, 6, 9) wait until the migration is finished and handed back to Andria, after the refit runs.
 
 ---
 
