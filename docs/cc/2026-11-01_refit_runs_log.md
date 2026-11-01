@@ -9,3 +9,4 @@ Model fitting runs in four month-split parts at once; each part needs its own wo
 its own code-identical commit on branch `refit-runs` (documentation-only commits).
 
 ## Commits for the parallel fitting parts
+- part 2: a documentation-only commit so that part 2 gets its own worktree
