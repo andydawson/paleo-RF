@@ -27,3 +27,8 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - Fitting started 1 November 2026, about 08:37 UTC: four parts (jan-mar 5ddcb94, apr-jun be277d7,
   jul-sep f9f9e46, oct-dec 8db4a5e), THREADS=1, cores 0-31. Rows to fit: Jan 1726, Feb 2397, Mar 2806,
   Apr-Sep 2808, Oct 2662, Nov 1866, Dec 1416.
+- Fitting parts apr-jun, jul-sep and oct-dec finished with exit status 0. Model 7 reached its 500-step limit in
+  January, April, June and October (May 436 steps, July 86, August 62, September 98, November 170, December 215;
+  February and March still fitting).
+- The rest of the pipeline (scripts 1-3, 5-10) runs once from the four parts' fits as `run1-main`, on d5d5df5,
+  started automatically when the last part finishes (cores 0-7 or 8-19, eight threads).
