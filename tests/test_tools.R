@@ -46,6 +46,14 @@ stopifnot(identical(res$result, "NO MAPPING"), !anchors_ok(res))
 out <- capture.output(res <- check_anchors(anchor, file.path(tempdir(), "no_such_run_dir")))
 stopifnot(all(res$result == "NOT PRODUCED"), !anchors_ok(res),
           status(anchor, file.path(tempdir(), "no_such_run_dir")) == 1)
+# A file copied in by verify_change's `copy` list is SEEDED, not MATCH: seed_run() writes
+# its line in SEEDED.txt, which check_anchors must read back exactly (a trailing space once
+# made it pass as MATCH).
+verify_tool <- new.env(); sys.source("tools/verify_change.R", envir = verify_tool)
+copied <- "output/forcing/forcing_by_period_variant_sensitivity.csv"
+invisible(verify_tool$seed_run(getwd(), list(copy = list(c(file.path(anchor, basename(copied)), copied))), run, "config.R"))
+out <- capture.output(res <- check_anchors(anchor, run))
+stopifnot(identical(result_of(res, basename(copied)), "SEEDED"))
 unlink(c(run, odd), recursive = TRUE)
 
 # compare_tables: "within tolerance" only when a number was held to a tolerance; a numeric
