@@ -32,3 +32,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   February and March still fitting).
 - The rest of the pipeline (scripts 1-3, 5-10) runs once from the four parts' fits as `run1-main`, on d5d5df5,
   started automatically when the last part finishes (cores 0-7 or 8-19, eight threads).
+- Run 8 (raster control) fitting part 1: a documentation-only commit so that it gets its own worktree.
