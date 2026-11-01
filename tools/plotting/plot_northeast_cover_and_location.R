@@ -39,8 +39,8 @@
 # 2025). The figure is built for one comparison: model 8 (the prediction model of config.R)
 # against cover_elev, which is model 8 without its location term. With another prediction
 # model more than the location term would differ, so the tool stops. The directions in the
-# panel titles and the conclusion in the caption are worked out from the results, not
-# written in (review of 1 November 2026, finding 6).
+# titles of panels a and b are worked out from the results; panel c gives each model's
+# numbers and draws no conclusion (Chris, 1 November 2026).
 
 source('R/run_manifest.R')
 source('R/model_registry.R')
@@ -149,20 +149,20 @@ print(every_fifth_step, row.names = FALSE)
 all_outside_steps = line_support$ET[cumprod(line_support$outside == 1) == 1]   # from the lowest step up
 outside_at_6ka_evergreen = line_support$outside[which.min(abs(line_support$ET - mean(at_6ka$ET)))]
 
-# The directions the titles state, from the results: the signs of today's correlations, and
-# for each model whether its albedo rises or falls as evergreen goes from the lowest to the
-# highest share seen in the region today (the grey band of panel c).
+# The directions panels a and b state, from the signs of today's correlations; and for panel c
+# each model's net contrast between the lowest and highest evergreen share seen in the region
+# today (the grey band): an end-to-end difference, not a direction along the whole line.
 rises_or_falls = function(change) if (change > 0) 'rises' else if (change < 0) 'falls' else 'does not change'
 if (min(today_ne$ET) < min(EVERGREEN_STEPS) || max(today_ne$ET) > max(EVERGREEN_STEPS))
   stop('today\'s evergreen range in the region runs beyond the steps of panel c; widen EVERGREEN_STEPS', call. = FALSE)
-evergreen_effect = sapply(names(models), function(name) {
+net_contrast = sapply(names(models), function(name) {
   line = curves[curves$model == name, ]
   albedo_at = approx(line$ET, line$albedo, xout = range(today_ne$ET))$y
   albedo_at[2] - albedo_at[1]
 })
-effect_sign_differs = sign(evergreen_effect[1]) != sign(evergreen_effect[2])
-cat(sprintf('change in model May albedo across today\'s evergreen range in the region: %s %+.3f, %s %+.3f\n',
-            names(models)[1], evergreen_effect[1], names(models)[2], evergreen_effect[2]))
+past_change_by_model = sapply(names(models), function(name) diff(past_change$albedo[past_change$model == name]))   # 4.5 ka minus 6 ka
+cat(sprintf('net contrast in model May albedo across today\'s evergreen range in the region: %s %+.3f, %s %+.3f\n',
+            names(models)[1], net_contrast[1], names(models)[2], net_contrast[2]))
 
 # --- a. evergreen share against latitude --------------------------------------------------
 panel_latitude = ggplot(today_ne, aes(y, ET)) + geom_point(colour = 'darkgreen', size = 1.2) +
@@ -193,12 +193,14 @@ panel_model = ggplot() +
   scale_colour_manual(values = model_colours, name = NULL) +
   scale_shape_manual(values = c('6 ka' = 16, '4.5 ka' = 17), name = 'past cover\n(region mean)') +
   labs(x = 'evergreen share (open land as at 6 ka; summergreen the rest)', y = 'model May albedo (region mean)',
-       title = sprintf(paste0(if (effect_sign_differs) 'c. The sign of the model\'s evergreen effect depends on the location term'
-                              else 'c. The location term does not change the sign of the model\'s evergreen effect',
-                              ' (over today\'s range, albedo %s as evergreen increases with it, %s without it)'),
-                       rises_or_falls(evergreen_effect[1]), rises_or_falls(evergreen_effect[2])),
-       subtitle = sprintf(paste0('with: %s, the fit the hindcast uses (%.0f%% of deviance explained)\n',
-                                 'without: the same cover and elevation terms only (%.0f%%); grey: today\'s evergreen range in the region'),
+       title = 'c. May albedo with and without the location term',
+       subtitle = sprintf(paste0('6 to 4.5 ka change in the region (4.5 ka minus 6 ka): with the location term %+.3f, without the location term %+.3f\n',
+                                 'net contrast across today\'s evergreen range (ET %.2f to %.2f, open land fixed at each cell\'s 6 ka level, mean %.2f): ',
+                                 'with the location term %+.3f, without the location term %+.3f\n',
+                                 'with the location term: %s, the fit the hindcast uses (%.0f%% of deviance explained)\n',
+                                 'without the location term: the same cover and elevation terms only (%.0f%%); grey: today\'s evergreen range in the region'),
+                          past_change_by_model[1], past_change_by_model[2],
+                          min(today_ne$ET), max(today_ne$ET), mean(at_6ka$OL), net_contrast[1], net_contrast[2],
                           model_label, 100 * summary(with_location)$dev.expl, 100 * summary(without_location)$dev.expl)) +
   theme_bw(base_size = 9) + theme(legend.position = 'right')
 
@@ -212,8 +214,7 @@ figure = (panel_latitude + panel_albedo) / panel_model + plot_layout(heights = c
                      sprintf(paste0('On average %.0f%% of the cells along the lines have cover mixes outside May\'s training range (the rule of the other diagnostic figures)',
                                     if (length(all_outside_steps)) sprintf(': every cell at evergreen shares up to %.2f', max(all_outside_steps)) else '',
                                     '; %.0f%% at %.2f; and %.0f%% of cells at 6 ka, %.0f%% at 4.5 ka.\n',
-                                    if (effect_sign_differs) 'So the lines show that the data do not fix the sign of the evergreen effect, not what the true effect is.'
-                                    else 'The two fits agree on the sign of the evergreen effect; where the lines leave the training range they are extrapolations.'),
+                                    'Where the lines leave the training range they are extrapolations.'),
                              100 * mean(line_support$outside), 100 * outside_at_6ka_evergreen, mean(at_6ka$ET), 100 * outside_6ka, 100 * outside_4.5ka)),
     theme = theme(plot.title = element_text(size = 12, face = 'bold'), plot.caption = element_text(size = 7, hjust = 0)))
 
