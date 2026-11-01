@@ -153,7 +153,8 @@ seed_run = function(worktree, spec, run_dir, config_file) {
     target = file.path(run_dir, pair[2])
     dir.create(dirname(target), recursive = TRUE, showWarnings = FALSE)
     if (!file.copy(pair[1], target, overwrite = TRUE)) stop('verify_change: could not copy ', pair[1])
-    cat(pair[2], '\n', file = file.path(run_dir, 'SEEDED.txt'), append = TRUE)
+    # One path per line, nothing else: check_anchors.R matches the lines exactly.
+    cat(pair[2], '\n', file = file.path(run_dir, 'SEEDED.txt'), append = TRUE, sep = '')
   }
   c(found$files, vapply(spec$copy, `[`, '', 1))
 }

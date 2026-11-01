@@ -273,4 +273,17 @@ check("without git the run goes on and says the code version is unknown",
       r$status == 0 && m$status == "completed" && is.null(m$code$commit) &&
       any(grepl("unknown (git not available)", readLines(manifests("toy_nogit")[1]), fixed = TRUE)))
 
+# --- seeded files (finding 4 of the review of 1 November 2026) ---------------------------
+# Only a file actually copied in is listed in SEEDED.txt, and a seeded file the run writes
+# again leaves the list, so the anchor check treats it as the run's own product.
+seeded_cfg <- config_variant(tempfile(fileext = ".R"), "dir = NULL", 'dir = "seeded_run"')
+seeded_paths <- suppressMessages(pipeline_paths(load_config(seeded_cfg)))
+dir.create("seeded_run/data", recursive = TRUE, showWarnings = FALSE)
+invisible(file.copy("data/albedo_glacier_monthly.csv", "seeded_run/data/"))   # already there: not a copy
+invisible(seed_run_dir(seeded_paths, c(product, "data/albedo_glacier_monthly.csv")))
+check("only the file actually copied in is listed as seeded", identical(readLines("seeded_run/SEEDED.txt"), product))
+r <- run_toy("7a_alb_diff_full", producer_body, c("--config", seeded_cfg))
+check("a seeded file the run writes again is no longer listed as seeded",
+      r$status == 0 && identical(readLines("seeded_run/SEEDED.txt"), character()))
+
 cat("test_run_manifest: all tests passed\n")
