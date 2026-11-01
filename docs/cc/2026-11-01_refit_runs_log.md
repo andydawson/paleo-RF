@@ -12,3 +12,18 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - part 2: a documentation-only commit so that part 2 gets its own worktree
 - part 3: a documentation-only commit so that part 3 gets its own worktree
 - part 4: a documentation-only commit so that part 4 gets its own worktree
+
+## Decisions during the runs
+- **Snowy run (run 7) months, Chris, 1 November:** every month except July and August. Snowy cells per
+  month under the main version on run 1's calibration cells (after the ice mask; largest model 748
+  coefficients): Jan 1389, Feb 2025, Mar 2352, Apr 2182, May 1796, Jun 1253, Jul 470, Aug 360, Sep 1091,
+  Oct 1737, Nov 1327, Dec 1079. July and August cannot support the unchanged models; June and September
+  are thin but fit.
+- **Code:** all eight runs use the code at 837f2d3 (refit-runs is documentation-only on top of it), so
+  they stay comparable; the drift fixes chosen on 1 November go in separately, and the diagnostic figures
+  are redrawn with the fixed tools afterwards.
+
+## Run 1 (main)
+- Fitting started 1 November 2026, about 08:37 UTC: four parts (jan-mar 5ddcb94, apr-jun be277d7,
+  jul-sep f9f9e46, oct-dec 8db4a5e), THREADS=1, cores 0-31. Rows to fit: Jan 1726, Feb 2397, Mar 2806,
+  Apr-Sep 2808, Oct 2662, Nov 1866, Dec 1416.
