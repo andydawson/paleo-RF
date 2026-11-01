@@ -7,20 +7,26 @@
 # A5 and A10 in its header), moved unchanged.
 #
 # Input: script 8's table (one row per cell, month and consecutive pair of slices; `year` is
-# the younger slice of the pair) and the coarse ages that bound the periods (config.R,
-# analysis$coarse$ages).
+# the younger slice of the pair), the coarse ages that bound the periods (config.R,
+# analysis$coarse$ages) and the time slices script 7a paired (config.R, analysis$ages).
 # Output: the same table without the pairs outside every period and without the cell-months
 # that miss a pair within their period, with two columns added: `age_old` (the older slice
 # of the pair) and `period` (a factor labelled by period_labels() of R/calendar.R). Prints
 # the number of pairs per period and of cell-month-periods dropped.
 # Needs dplyr.
-assign_forcing_periods <- function(forcing_by_cell, ages_sub) {
+assign_forcing_periods <- function(forcing_by_cell, ages_sub, slice_ages) {
   labels_period = period_labels(ages_sub)
 
   # --- A4/A5: assign each slice-pair to a period -------------------------------
-  # A row's `year` is the YOUNGER end of the pair; the pair spans year -> next age.
-  ages      = sort(unique(c(forcing_by_cell$year, 11500)))
-  forcing_by_cell$age_old = ages[match(forcing_by_cell$year, ages) + 1]
+  # A row's `year` is the YOUNGER end of the pair; the pair spans year -> the next configured
+  # slice. The slices come from the configuration, not from the table plus a fixed 11,500 BP,
+  # which gave the wrong older end when the configured slices stop earlier (review of
+  # 1 November 2026, finding 7).
+  unpaired = setdiff(forcing_by_cell$year, head(slice_ages, -1))
+  if (length(unpaired))
+    stop('assign_forcing_periods: forcing rows at ', paste(sort(unpaired), collapse = ', '),
+         ' BP are not the younger end of a pair of the configured slices (config.R analysis$ages)', call. = FALSE)
+  forcing_by_cell$age_old = slice_ages[match(forcing_by_cell$year, slice_ages) + 1]
   forcing_by_cell$period  = cut(forcing_by_cell$year, breaks = ages_sub, right = FALSE, labels = labels_period)
   forcing_by_cell         = forcing_by_cell[!is.na(forcing_by_cell$period), ]
 

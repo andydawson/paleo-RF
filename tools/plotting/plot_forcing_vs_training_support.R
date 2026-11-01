@@ -54,13 +54,18 @@ cover = cover[cover$month == 'may', ]
 cover$outside = training_support(cover, hull)$outside
 outside_at = setNames(cover$outside, paste(cover$year, cover$x, cover$y))
 
-forcing = assign_forcing_periods(read_input(run, path_file(paths, 'forcing')), cfg$analysis$coarse$ages)
-forcing$outside = outside_at[paste(forcing$year, forcing$x, forcing$y)] |
-                  outside_at[paste(forcing$age_old, forcing$x, forcing$y)]
+forcing = assign_forcing_periods(read_input(run, path_file(paths, 'forcing')), cfg$analysis$coarse$ages, cfg$analysis$ages)
+outside_young = outside_at[paste(forcing$year, forcing$x, forcing$y)]
+outside_old   = outside_at[paste(forcing$age_old, forcing$x, forcing$y)]
+# Both ends of every slice pair must have a cover row; a missing one would otherwise drop out
+# of any() below and leave the cell unjudged (review of 1 November 2026, finding 7).
+if (anyNA(outside_young) || anyNA(outside_old))
+  stop(sum(is.na(outside_young) | is.na(outside_old)), ' forcing rows have no cover row at one end of their slice pair', call. = FALSE)
+forcing$outside = outside_young | outside_old
 
 forcing_by_cell = forcing %>%
   group_by(period, cell_id, x, y, month) %>%
-  summarise(rf = sum(.data[[FORCING_COLUMN]]), outside = any(outside, na.rm = TRUE), .groups = 'drop') %>%
+  summarise(rf = sum(.data[[FORCING_COLUMN]]), outside = any(outside), .groups = 'drop') %>%
   group_by(period, cell_id, x, y) %>%
   summarise(rf = mean(rf, na.rm = TRUE), outside = any(outside), .groups = 'drop') %>%
   filter(!is.na(rf))

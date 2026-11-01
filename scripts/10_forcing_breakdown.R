@@ -75,7 +75,7 @@ band_labels = latitude_band_labels(band_edges)
 
 # Step 1.
 forcing_by_cell = read_input(run, path_file(paths, 'forcing'))
-forcing_by_cell = assign_forcing_periods(forcing_by_cell, cfg$analysis$coarse$ages)
+forcing_by_cell = assign_forcing_periods(forcing_by_cell, cfg$analysis$coarse$ages, cfg$analysis$ages)
 
 # Step 3: the band of each cell, by its centre.
 forcing_by_cell$lat_band = cut(forcing_by_cell$lat, breaks = band_edges, labels = band_labels, include.lowest = TRUE)

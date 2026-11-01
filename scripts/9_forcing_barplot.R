@@ -159,7 +159,7 @@ forcing_by_cell = read_input(run, path_file(paths, 'forcing'))
 
 # --- A4, A5, A10: the slice-pairs grouped into periods, complete cells only --------
 # R/forcing_periods.R (shared with script 10, so its breakdown adds up to these totals).
-forcing_by_cell = assign_forcing_periods(forcing_by_cell, ages_sub)
+forcing_by_cell = assign_forcing_periods(forcing_by_cell, ages_sub, cfg$analysis$ages)
 
 # --- aggregate ---------------------------------------------------------------
 # A5 sum over slice-pairs -> A6 mean over months -> A7 area-weighted over cells.
