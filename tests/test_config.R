@@ -77,6 +77,15 @@ stopifnot(
   rejects("run\\$dir must not be inside the repository's output/", 'dir = NULL', 'dir = "output/alt"'),
   rejects("run\\$dir must not contain '..'", 'dir = NULL', 'dir = "../elsewhere"'),
   rejects("run\\$dir must be NULL or one directory path", 'dir = NULL', 'dir = c("a", "b")'),
+  # the same places spelled absolutely or through a link are refused too (finding 1 of the
+  # review of 1 November 2026): an absolute repository path once passed and wrote into the baseline
+  rejects("run\\$dir must not be the repository itself", 'dir = NULL', sprintf('dir = "%s"', getwd())),
+  rejects("run\\$dir must not be the repository itself", 'dir = NULL', 'dir = "./"'),
+  rejects("run\\$dir must not be inside the repository's output/", 'dir = NULL', sprintf('dir = "%s/output/alt"', getwd())),
+  rejects("run\\$dir must not be inside the repository's data/", 'dir = NULL', 'dir = "./data"'),
+  { link_to_repo <- file.path(tempdir(), "link_to_repo"); file.symlink(getwd(), link_to_repo)
+    rejects("run\\$dir must not be inside the repository's figures/", 'dir = NULL', sprintf('dir = "%s/figures/alt"', link_to_repo)) },
+  identical(load_variant('dir = NULL', sprintf('dir = "%s/alt_run"', tempdir()))$run$dir, file.path(tempdir(), "alt_run")),
   rejects("run is missing key\\(s\\) dir", 'dir = NULL,', ''),
   # the model, draw and reduction settings (issue I04a)
   identical(cfg$analysis$land_cover$reduction, "mean"),

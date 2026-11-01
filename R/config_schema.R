@@ -69,19 +69,36 @@ MAP_WINDOW_SCHEMA = list(x = function(v) check_numbers(v, len = 2, increasing = 
                          y = function(v) check_numbers(v, len = 2, increasing = TRUE, range = c(-90, 90)))
 
 # The run directory: NULL for the repository's own locations, or one relative or absolute
-# directory path that is not itself one of the baseline locations.
+# directory path that is neither the repository nor inside one of its baseline or code
+# directories. The path is resolved first (relative to the repository, the working
+# directory every script runs from; links followed), so an absolute spelling such as
+# getwd() is refused as surely as "." or "output/alt" (review of 1 November 2026, finding 1).
+RUN_DIR_FORBIDDEN = c('data', 'output', 'figures', 'runs', 'scripts', 'R', 'tests')
 check_run_dir = function(v) {
   if (is.null(v)) return(NULL)
   if (!is.character(v) || length(v) != 1 || is.na(v) || !nzchar(v)) return('must be NULL or one directory path')
   if (!is.null(names(v))) return('must not have names')
-  path_components = strsplit(gsub('\\\\', '/', v), '/', fixed = TRUE)[[1]]
-  path_components = path_components[nzchar(path_components) & path_components != '.']
-  if (!length(path_components)) return('must not be the repository itself; use NULL for the baseline locations')
-  absolute = grepl('^(/|\\\\|[A-Za-z]:)', v)
-  if (!absolute && path_components[1] %in% c('data', 'output', 'figures', 'runs', 'scripts', 'R', 'tests'))
-    return(sprintf("must not be inside the repository's %s/ directory", path_components[1]))
-  if ('..' %in% path_components) return("must not contain '..'")
+  if ('..' %in% strsplit(gsub('\\\\', '/', v), '/', fixed = TRUE)[[1]]) return("must not contain '..'")
+  repository = normalizePath('.', winslash = '/')
+  run_dir = resolved_dir(v)
+  if (run_dir == repository) return('must not be the repository itself; use NULL for the baseline locations')
+  for (forbidden in file.path(repository, RUN_DIR_FORBIDDEN))
+    if (run_dir == forbidden || startsWith(run_dir, paste0(forbidden, '/')))
+      return(sprintf("must not be inside the repository's %s/ directory", basename(forbidden)))
   NULL
+}
+
+# A directory path made absolute, with links and '.' resolved. A run directory usually does
+# not exist yet, so its deepest existing parent is resolved and the rest appended as written.
+resolved_dir = function(path) {
+  path = gsub('\\\\', '/', path.expand(path))
+  if (!grepl('^(/|[A-Za-z]:)', path)) path = file.path(getwd(), path)
+  not_yet_made = character()
+  while (!dir.exists(path) && dirname(path) != path) {
+    not_yet_made = c(basename(path), not_yet_made)
+    path = dirname(path)
+  }
+  paste(c(normalizePath(path, winslash = '/'), not_yet_made[not_yet_made != '.']), collapse = '/')
 }
 
 # A count of draws: one whole number, at least 2 (a standard deviation needs two).
