@@ -31,7 +31,8 @@
 #      limits (analysis$domain), e.g. 27-30, 30-40, ..., 70-74 N for 10 degrees.
 #   4. For each period, month and band, five columns, defined exactly in R/forcing_breakdown.R:
 #      global_equiv_month (that month's global-equivalent forcing), contribution_to_annual
-#      (its part of script 9's annual figure; these add up to script 9), band_mean (how
+#      (its part of script 9's figure, the mean over the analysis months: annual only when
+#      all twelve run; these add up to script 9), band_mean (how
 #      strong the forcing is there), area_m2 and valid_area_m2 (the band's area, and the part
 #      of it with a forcing value that month: a missing month is not a zero).
 #   Positive = warming (albedo fell), as in scripts 8 and 9.
@@ -75,7 +76,7 @@ band_labels = latitude_band_labels(band_edges)
 
 # Step 1.
 forcing_by_cell = read_input(run, path_file(paths, 'forcing'))
-forcing_by_cell = assign_forcing_periods(forcing_by_cell, cfg$analysis$coarse$ages)
+forcing_by_cell = assign_forcing_periods(forcing_by_cell, cfg$analysis$coarse$ages, cfg$analysis$ages)
 
 # Step 3: the band of each cell, by its centre.
 forcing_by_cell$lat_band = cut(forcing_by_cell$lat, breaks = band_edges, labels = band_labels, include.lowest = TRUE)
@@ -101,17 +102,20 @@ worst = max(abs(totals$sum_of_parts - totals$global_equiv))
 cat('largest gap between the sum of the parts and script 9:', signif(worst, 3), 'W/m2\n')
 if (worst > 1e-9) stop('the breakdown does not add up to script 9 (largest gap ', signif(worst, 3), ' W/m2)')
 
-# Two summaries printed for the record: each month's and each band's share of the annual
-# forcing, HadGEM3, per period (shares can exceed 100% or be negative where parts cancel).
+# Two summaries printed for the record: each month's and each band's share of script 9's
+# forcing (annual, or the mean of the analysis months when not all twelve run: MONTHS_LABEL),
+# HadGEM3, per period (shares can exceed 100% or be negative where parts cancel). The
+# column keeps its name, contribution_to_annual, so the table does not change.
+MONTHS_LABEL = months_label(months)
 hadgem = breakdown %>% filter(kernel == 'hadgem')
-cat('\n', KERNEL_LABELS[['hadgem']], ', variant ', VARIANT, ': contribution to the annual global-equivalent forcing by month (W/m2):\n', sep = '')
+cat('\n', KERNEL_LABELS[['hadgem']], ', variant ', VARIANT, ': contribution to the ', MONTHS_LABEL, ' global-equivalent forcing by month (W/m2):\n', sep = '')
 print(as.data.frame(hadgem %>% group_by(period, month) %>% summarise(w = sum(contribution_to_annual), .groups = 'drop') %>%
   tidyr::pivot_wider(names_from = month, values_from = w)), digits = 2)
 cat('\n', KERNEL_LABELS[['hadgem']], ', variant ', VARIANT, ': contribution by latitude band (W/m2):\n', sep = '')
 print(as.data.frame(hadgem %>% group_by(period, lat_band) %>% summarise(w = sum(contribution_to_annual), .groups = 'drop') %>%
   tidyr::pivot_wider(names_from = lat_band, values_from = w)), digits = 2)
 
-# The figure: HadGEM3 contribution to the annual figure, month x band, one panel per period.
+# The figure: HadGEM3 contribution to script 9's figure, month x band, one panel per period.
 p = ggplot(hadgem, aes(x = month, y = lat_band, fill = contribution_to_annual)) +
   geom_tile() +
   scale_fill_gradient2(low = '#00BFC4', mid = 'white', high = '#F8766D', midpoint = 0,
@@ -120,7 +124,8 @@ p = ggplot(hadgem, aes(x = month, y = lat_band, fill = contribution_to_annual)) 
   labs(x = NULL, y = NULL,
        title = paste0('Where the Holocene forcing comes from: ', KERNEL_LABELS[['hadgem']],
                       ', variant ', VARIANT, ', global equivalent'),
-       subtitle = 'Each panel sums to that period\'s bar in script 9; positive = warming') +
+       subtitle = paste0('Each panel sums to that period\'s bar in script 9 (', MONTHS_LABEL,
+                         if (MONTHS_LABEL == 'annual') ' mean' else ' mean only, not annual', '); positive = warming')) +
   theme_bw(base_size = 11) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ggsave(path_figure(paths, 'forcing_by_month_latitude.pdf'), p, width = 11, height = 8)

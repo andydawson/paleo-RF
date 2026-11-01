@@ -77,6 +77,17 @@ stopifnot(
   rejects("run\\$dir must not be inside the repository's output/", 'dir = NULL', 'dir = "output/alt"'),
   rejects("run\\$dir must not contain '..'", 'dir = NULL', 'dir = "../elsewhere"'),
   rejects("run\\$dir must be NULL or one directory path", 'dir = NULL', 'dir = c("a", "b")'),
+  # the same places spelled absolutely or through a link are refused too (finding 1 of the
+  # review of 1 November 2026): an absolute repository path once passed and wrote into the baseline
+  rejects("run\\$dir must not be the repository itself", 'dir = NULL', sprintf('dir = "%s"', getwd())),
+  rejects("run\\$dir must not be the repository itself", 'dir = NULL', 'dir = "./"'),
+  rejects("run\\$dir must not be inside the repository's output/", 'dir = NULL', sprintf('dir = "%s/output/alt"', getwd())),
+  rejects("run\\$dir must not be inside the repository's data/", 'dir = NULL', 'dir = "./data"'),
+  { link_to_repo <- file.path(tempfile(), "link_to_repo"); dir.create(dirname(link_to_repo))
+    linked <- isTRUE(suppressWarnings(file.symlink(getwd(), link_to_repo)))   # FALSE where symlinks cannot be made: skipped
+    ok <- !linked || rejects("run\\$dir must not be inside the repository's figures/", 'dir = NULL', sprintf('dir = "%s/figures/alt"', link_to_repo))
+    unlink(link_to_repo); unlink(dirname(link_to_repo), recursive = TRUE); ok },   # the link first: never recurse into the repository
+  identical(load_variant('dir = NULL', sprintf('dir = "%s/alt_run"', tempdir()))$run$dir, file.path(tempdir(), "alt_run")),
   rejects("run is missing key\\(s\\) dir", 'dir = NULL,', ''),
   # the model, draw and reduction settings (issue I04a)
   identical(cfg$analysis$land_cover$reduction, "mean"),
@@ -203,4 +214,15 @@ stopifnot(
   fails(config_path(c("--config"))),
   fails(config_path(c("--config", "a.R", "--config=b.R")))
 )
+# A repository whose output/ is a link elsewhere: the run directory is refused in either
+# spelling, at the link or at its target, and an unrelated folder is accepted.
+local({
+  repo <- file.path(tempfile("linked_repo_"), "repo"); storage <- file.path(dirname(repo), "storage")
+  dir.create(repo, recursive = TRUE); dir.create(storage)
+  if (!isTRUE(suppressWarnings(file.symlink(storage, file.path(repo, "output"))))) return(cat("linked output/: skipped (no symlinks here)\n"))
+  old <- setwd(repo); on.exit({ setwd(old); unlink(dirname(repo), recursive = TRUE) })
+  refused <- function(v) isTRUE(grepl("inside the repository's output/", check_run_dir(v)))
+  stopifnot(refused("output/alt"), refused(file.path(storage, "alt")), is.null(check_run_dir("elsewhere")))
+})
+
 cat("test_config: all tests passed\n")

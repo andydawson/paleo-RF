@@ -1512,3 +1512,40 @@ Not applied: Fable's suggestion to wrap script 2's last `cor()` in `print()`. As
 - For Andria:
   - Should a cell-month supported by a few per cent of its land pixels enter the calibration at full weight, or should a minimum or weights apply? The code applies none.
   - How should winter "snow-free" retrievals under conifer canopy be read?
+
+## Drift fixes from the whole-code review, 2026-11-01
+
+Branch `drift-fixes`, made from `feature/single-config` at 7d65bb5; merged 1 November.
+
+**Purpose.** Astra's drift and conciseness review of the whole code (`docs/cc/2026-11-01_drift_conciseness_review_codex_gpt6astra.md`)
+found 24 issues, none changing a forcing number. Chris chose to fix findings 1-8, 10, 15, 20, 21 and 23 now and to
+leave the larger restructures (11-14, 16-19, 22, 24) until after the refit runs.
+
+**Changes.**
+- Verification tools say only what they checked: a run folder may not resolve onto the repository or its baseline
+  folders, however spelled or linked (protected folders resolved too); `tools/compare_tables.R` says "NOT CHECKED
+  numerically" or "identifiers identical; no numbers to check" instead of "within tolerance" when no number had a
+  tolerance (exit status unchanged, Chris's choice); `tools/verify_change.R` refuses a spec with no scripts, checks or
+  anchors; a file copied into a run stays marked "seeded" only until the run writes it (and `verify_change`'s copy
+  list no longer carries a trailing space that made copied files invisible to the anchor check).
+- Diagnostics: one shared reader of the training-support inputs (`R/training_support.R`); the support figures say the
+  support is May's and stop when May is not run; the northeast figure requires prediction model 8, and its panel c
+  (Chris's decision) has a neutral title, leads with each model's predicted 6 to 4.5 ka change and shows separately
+  the net contrast across today's evergreen range, with no claim of one direction; the forcing periods take the
+  configured slice ages (an age list ending before 11.5 ka no longer pairs its last slice with 11.5 ka); the pollen
+  coverage median counts slices with no pollen as zero.
+- Labels and documentation: scripts 9 and 10 name the months instead of "annual" when fewer than twelve run, and state
+  each kernel's sky from the settings; script 1 no longer prints an unsupported claim; the README, AGENTS pointer and
+  source headers describe the MODIS refit; history narratives in script 9 trimmed.
+
+**Reviews.** Fable and Astra independently, one reconciliation round each (`docs/cc/2026-11-01_drift_fixes_review/`);
+no blocker; their agreed fixes applied (Chris, 1 November).
+
+**Verification** (all PASS): legacy scripts 9-10 reproduce the whole forcing anchor (`2026-11-01_drift-legacy-forcing`,
+with every test file); legacy scripts 1-2 reproduce their anchors (`drift-legacy-prep`); legacy scripts 5-6 at seed 1
+reproduce the whole seed-1 anchor (`drift-legacy-seed1`); under the current configuration, scripts 9-10 on the
+18 October forcing table write byte-identical tables before (837f2d3) and after (`drift-current-forcing-base`/`-head`);
+the four diagnostic tools on the 18 October products print the same numbers as on 27-28 October, plus the new
+net-contrast line (`drift-diagnostics`).
+
+**Effect on outputs.** None on any table; figure titles and wording only.

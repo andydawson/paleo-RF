@@ -1,3 +1,4 @@
+# Record of 19 October; assign_forcing_periods() has since taken a third argument (the configured ages).
 # Check for the switch of the headline forcing to partial ice (2026-10-19), current
 # configuration: scripts 9 and 10 rerun on the per-cell forcing table of the full run of
 # 2026-10-18. Run from the worktree root:

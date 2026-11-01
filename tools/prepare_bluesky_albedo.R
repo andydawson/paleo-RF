@@ -10,9 +10,9 @@
 #   Rscript tools/prepare_bluesky_albedo.R cells                      # the cell table, at the end
 #   Rscript tools/prepare_bluesky_albedo.R test all                   # July 2005 check (see below)
 #
-# It writes data/albedo_modis_cells.csv (committed), for script 2 to read when config.R chooses
-# the rebuilt albedo (not wired into script 2 yet); Andria's raster
-# data/blue_sky_monthly_2000-2009.tif stays the legacy setting. Settings decided by Chris on
+# It writes data/albedo_modis_cells.csv (committed), which script 2 reads when config.R chooses
+# the rebuilt albedo (analysis$albedo$source = "modis_cells", the current setting since
+# 2026-10-29); Andria's raster data/blue_sky_monthly_2000-2009.tif stays the legacy setting. Settings decided by Chris on
 # 2026-10-15 (questions B2c, B5) and revised on 2026-10-20 after two independent reviews of the
 # build. Where a setting is our own judgement rather than published practice, it says so:
 #
@@ -185,7 +185,11 @@ ACCEPTED_OLDER_SHAS = c(
   # The version of commit 1a041d1 (made no monthly files). The next version only wrapped the
   # comment above; verified 2026-10-30 by code_of() of tools/check_comments_only.R: both
   # versions parse to the same 78 expressions.
-  '9ecaf7f15ba54cfd0c70df3ac8d170cc70291042855a9c7e01839bf1ab19633e'
+  '9ecaf7f15ba54cfd0c70df3ac8d170cc70291042855a9c7e01839bf1ab19633e',
+  # The version of commit 1af6502 (made no monthly files). The next version only updated the
+  # header's note on script 2 (the cell table is now read by it); verified 2026-11-01 by
+  # code_of() of tools/check_comments_only.R: both versions parse to the same 78 expressions.
+  '85353d3b1176cf4ec3606d339507a0e1484323070782a12d18328876cfd5edb0'
 )
 
 APPEEARS_DIR = file.path(WORK_DIR, 'appeears')  # collected months, one folder each

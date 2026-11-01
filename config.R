@@ -12,9 +12,8 @@
 #   presentation  settings that change only how figures look
 #   run           where this run writes its files, and whether stale inputs are allowed
 #
-# A key appears here only once a script reads it. The remaining migration issues move code
-# into functions without adding keys; the method options decided on
-# 2026-10-14 will be added by their own issue. Where a value is a choice nobody has yet
+# A key appears here only once a script reads it. The method options decided on 2026-10-14
+# and the albedo choice of 2026-10-29 are here. Where a value is a choice nobody has yet
 # confirmed, the comment gives its question id in docs/cc/questions_for_andria_scientific.md (C*) or
 # questions_for_andria_general.md (section number). Created 2026-10-13.
 

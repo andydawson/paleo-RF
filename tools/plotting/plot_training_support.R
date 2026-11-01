@@ -1,4 +1,4 @@
-# plot_training_support.R: which past land-cover mixes lie outside the range of the
+# plot_training_support.R: which past land-cover mixes lie outside the range of May's
 # calibration (training) data, how often, where, and how far outside.
 #
 # WHY (Chris, 2026-10-20, for Andria). The calibration model is fitted on today's cover
@@ -10,8 +10,9 @@
 #
 # WHAT COMES IN
 #   output/calibration/calibration_prediction_fit_may_bluesky.RDS   script 4: the May fit;
-#       its fitting data are the training mixes (May has the most cells; other months use
-#       the same cells or fewer)
+#       its fitting data are the training mixes. Other months are fitted to their own cells,
+#       which can differ, so this is support relative to May; the tool stops if May is not
+#       among the analysis months (R/training_support.R)
 #   output/prediction/paleo_interp_predict_gam_bluesky.RDS          script 6: the past
 #       cover of every cell at every time slice (mean of the reconstruction's draws)
 #   data/map-data/geographic/pbs_ll.RDS                             map boundaries
@@ -39,12 +40,11 @@ library(ggplot2)
 library(dplyr)
 library(patchwork)
 
-training = read_input(run, path_file(paths, 'calibration_prediction_fit', month = 'may'))$model[, c('x', 'y', 'OL', 'ET', 'ST')]
-hull = training_hull(training)
-
-# Cover does not depend on the month: one month's rows hold every cell and slice once.
-hindcast = read_input(run, path_file(paths, 'prediction_point'))
-hindcast = hindcast[hindcast$month == 'may' & hindcast$year != 50, c('year', 'x', 'y', 'OL', 'ET', 'ST')]   # 50 BP: today
+support_inputs = read_training_support_inputs(run)   # R/training_support.R
+training = support_inputs$fit$model[, c('x', 'y', 'OL', 'ET', 'ST')]
+hull     = support_inputs$hull
+hindcast = support_inputs$cover
+hindcast = hindcast[hindcast$year != 50, c('year', 'x', 'y', 'OL', 'ET', 'ST')]   # 50 BP: today
 hindcast = cbind(hindcast, training_support(hindcast, hull))
 n_slices = n_distinct(hindcast$year)
 
@@ -77,7 +77,7 @@ panel_triangle = ggplot() +
            label = c('open land', 'summergreen', 'evergreen')) +
   coord_equal(clip = 'off') + theme_void(base_size = 9) +
   labs(title = 'a. Cover mixes',
-       subtitle = sprintf(paste0('dark grey: training data (today, %s cells); black line: their outer range\n',
+       subtitle = sprintf(paste0('dark grey: May\'s training data (today, %s cells); black line: their outer range\n',
                                  'light blue: hindcast mixes inside that range; coloured: hindcast mixes outside it'),
                           format(nrow(training), big.mark = ',')))
 
@@ -88,8 +88,8 @@ print(as.data.frame(share_by_slice %>% mutate(share_outside = round(share_outsid
 
 panel_share = ggplot(share_by_slice, aes(year / 1000, share_outside)) + geom_col(fill = '#d95f02', width = 0.4) +
   scale_x_reverse(breaks = 0:12) + scale_y_continuous(labels = scales::percent, limits = c(0, NA)) +
-  labs(x = 'time slice (ka)', y = 'cells outside the training range',
-       title = 'b. Share of cells outside the training range, by time slice') +
+  labs(x = 'time slice (ka)', y = 'cells outside May\'s training range',
+       title = 'b. Share of cells outside May\'s training range, by time slice') +
   theme_bw(base_size = 9)
 
 # --- c. where: the number of time slices at which each cell is outside ---------------------
@@ -102,13 +102,14 @@ panel_map = ggplot() +
   boundary_layers(land, window, colour = 'grey60', linewidth = 0.15) +
   scale_fill_viridis_c(name = sprintf('time slices\noutside (of %d)', n_slices), option = 'rocket', direction = -1, end = 0.9) +
   theme_bw(base_size = 9) +
-  labs(x = NULL, y = NULL, title = 'c. Where: time slices at which each cell is outside the training range')
+  labs(x = NULL, y = NULL, title = 'c. Where: time slices at which each cell is outside May\'s training range')
 
 figure = panel_triangle + (panel_share / panel_map + plot_layout(heights = c(1, 1.6))) + plot_layout(widths = c(1.15, 1)) +
   plot_annotation(
-    title = 'Past land-cover mixes that lie outside the range of the calibration (training) data',
-    caption = paste0('Land cover: interpolated pollen-based reconstruction (mean of draws). Training range: convex hull of the modern mixes of the cells used to fit the calibration model.\n',
-                     '"Outside" means no modern cell has a comparable mix of the three cover types; predictions there are extrapolations.'),
+    title = 'Past land-cover mixes that lie outside the range of the May calibration (training) data',
+    caption = paste0('Land cover: interpolated pollen-based reconstruction (mean of draws). Training range: convex hull of the modern mixes of the cells used to fit the May calibration model.\n',
+                     'Other months are fitted to their own cells, which can differ, so this is support relative to May, not to every month.\n',
+                     '"Outside" means no modern cell of the May fit has a comparable mix of the three cover types; predictions there are extrapolations.'),
     theme = theme(plot.title = element_text(size = 12, face = 'bold'), plot.caption = element_text(size = 7, hjust = 0)))
 
 figure_file = path_figure(paths, 'diagnostics', 'training_support.png')

@@ -240,22 +240,39 @@ catalogue_paths = function(paths, months = MONTHS, include_spatial_eval = FALSE)
 # are baseline paths, e.g. path_file(baseline, 'calibration_selected', month = 'jan'). Each is
 # copied (never linked: a run writing to a linked file would write into the baseline), and
 # the copy is writable, as the run's own file; a file already in the run directory is
-# left alone. The seeded paths are listed in SEEDED.txt in the run directory once copied,
-# so checks can tell a reused file from one the run produced. Returns the run-directory
-# paths.
+# left alone and not marked as copied. Returns the run-directory paths.
 seed_run_dir = function(paths, files) {
   if (is.null(paths$root)) stop('seed_run_dir: the baseline profile has no run directory to seed')
+  copied = character()
   targets = vapply(files, function(source_file) {
     if (!file.exists(source_file)) stop('seed_run_dir: no baseline file ', source_file)
     target = file.path(paths$root, source_file)
     if (!file.exists(target)) {
       dir.create(dirname(target), recursive = TRUE, showWarnings = FALSE)
       if (!file.copy(source_file, target, copy.mode = FALSE)) stop('seed_run_dir: could not copy ', source_file)
+      copied <<- c(copied, source_file)
     }
     target
   }, character(1), USE.NAMES = FALSE)
-  record = file.path(paths$root, 'SEEDED.txt')
-  recorded_files = if (file.exists(record)) readLines(record) else character()
-  writeLines(sort(unique(c(recorded_files, files))), record)
+  mark_seeded(paths$root, copied)
   targets
+}
+
+# SEEDED.txt in a run directory lists, relative to the run directory, the files copied in
+# from the baseline that the run has not (yet) written itself, so checks can tell a reused
+# file from one the run produced (tools/check_anchors.R). A file is listed only when it is
+# actually copied in, and taken off the list when the run writes it (write_output()), so a
+# regenerated file is checked as the run's own (review of 1 November 2026, finding 4).
+seeded_files = function(root) {
+  record = file.path(root, 'SEEDED.txt')
+  if (file.exists(record)) readLines(record) else character()
+}
+mark_seeded = function(root, files) {
+  if (length(files)) writeLines(sort(unique(c(seeded_files(root), files))), file.path(root, 'SEEDED.txt'))
+}
+unmark_seeded = function(paths, path) {
+  if (is.null(paths$root)) return(invisible())
+  listed = seeded_files(paths$root)
+  written = root_relative(paths, path)
+  if (written %in% listed) writeLines(setdiff(listed, written), file.path(paths$root, 'SEEDED.txt'))
 }

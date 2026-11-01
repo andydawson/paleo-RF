@@ -9,9 +9,10 @@ to end as of 2026-09-21 and its outputs are frozen as regression anchors.
 Since 2026-09-24 the trunk carries the interp flavour only (see below).
 Every setting the scripts read is in `config.R`; `configs/legacy_config.R`
 holds the original analysis's settings and reproduces the anchors.
-This README was last brought up to date on 2026-10-15. The authoritative
-descriptions of the scripts and data are in `docs/cc/`; see the index at
-the end.
+This README was last brought up to date on 2026-11-01, after the
+calibration was moved to the rebuilt MODIS albedo (2026-10-29). Its script
+tables are the current map of the code; working documents are in
+`docs/cc/` (index at the end).
 
 ## What the pipeline does
 
@@ -21,10 +22,18 @@ the end.
    spatial interpolation with an ice mask, both done outside this
    repository (Dawson et al., Climate of the Past); the product is a
    fixed input here.
-2. A modern blue-sky albedo climatology (MODIS MCD43A3 + ERA5, 2000-2009,
-   monthly) is sampled at the modern cells.
-3. Twelve monthly calibration models (beta-regression GAMs, `mgcv::bam`)
-   relate albedo to location, elevation and the three cover fractions.
+2. A modern monthly blue-sky albedo (2000-2009) is attached to the modern
+   cells. By default (`analysis$albedo` in `config.R`) it is the MODIS
+   albedo rebuilt over each 1-degree cell's land pixels,
+   `data/albedo_modis_cells.csv`, made once by
+   `tools/prepare_bluesky_albedo.R` from MODIS MCD43A3/A2 and ERA5; the
+   legacy configuration reads the original 0.25-degree raster at each cell
+   centre.
+3. Calibration models (beta-regression GAMs, `mgcv::bam`), one per
+   analysis month, relate albedo to location, elevation and the three
+   cover fractions: a ladder of eight models compared by AIC (fitted by ML
+   by default), and the prediction model (model 8 by default) fitted again
+   by REML for the hindcast.
 4. The models hindcast albedo for every Holocene slice from the paleo
    cover fractions, with posterior draws.
 5. Albedo differences between consecutive slices are split into
@@ -86,12 +95,12 @@ into `data/`.
 | Script | Does |
 |---|---|
 | `1_veg_lct_prep.R` | mean over the 200 posterior draws; ET/ST/OL per cell and slice; elevation per cell, by default the land mean from `data/elev_land_mean_cells.csv` (made once by `tools/prepare_land_elevation.R`; the original centre point from a committed cache is the legacy setting); modern (age 50) vs paleo split. With `diagnostic = TRUE` in the run section of `config.R` it also reports on the discarded ice flag, the absent cell-slices and mean-versus-median, and maps the ice flag at every slice into `figures/diagnostics/`
-| `2_calibration_lct_bluesky.R` | monthly blue-sky albedo at the modern cells, native pixel and 1-degree mean |
+| `2_calibration_lct_bluesky.R` | monthly blue-sky albedo at the modern cells, all twelve months: by default from the MODIS cell table (config.R `albedo`: source, statistic, version); in the legacy configuration from the raster, at the native pixel and as a 1-degree mean (the coarse table). Leaves out of the calibration the modern cells under the 1 ka ice (`calibration$ice_mask`) |
 | `3_plot_cal_lct_albedo.R` | diagnostic plots of the calibration data (optional) |
-| `4_calibration_model.R` | model ladder mod1-mod8 for every month; AIC table; spatial-effects experiment |
-| `5_calibration_eval.R` | fit diagnostics; saves the selected model (config.R `calibration$model_id`, model 8 by default) per month |
+| `4_calibration_model.R` | model ladder mod1-mod8 for every month, by ML by default (`calibration$comparison_method`); AIC table; spatial-effects experiment; the prediction model (`calibration$model_id`, model 8 by default) fitted by REML into its own file per month |
+| `5_calibration_eval.R` | fit diagnostics; saves script 4's prediction fit as the selected model per month |
 | `6_prediction_model.R` | hindcast albedo per slice and month with 100 draws |
-| `6_prediction_model_spatial_eval.R` | sensitivity of hindcasts to model structure (optional) |
+| `6_prediction_model_spatial_eval.R` | **not migrated**: Andria's original sensitivity of hindcasts to model structure, untouched and never run by us. It reads and writes its own file names, does not read `config.R` and writes no run manifest; out of the migration's scope pending general question 7 |
 | `7_plot_preds.R` | albedo, uncertainty and difference maps with ice overlays; coarse (7-period) albedo differences |
 | `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts |
 | `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants |
@@ -103,25 +112,30 @@ What each script reads and writes (`script:line` is the load statement):
 | Script | Reads | Writes |
 |---|---|---|
 | `1_veg_lct_prep.R` | `data/veg_posts_interp_ice.RDS` (`1:12`) | `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` |
-| `2_calibration_lct_bluesky.R` | `data/blue_sky_monthly_2000-2009.tif` (`2:38`)<br>`data/grid.RDS` (`2:15`)<br>`data/lct_modern_reveals_interp.RDS` (`2:19`)<br>`pbs_ll.RDS` (`2:36-37`) | `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS`<br>albedo maps |
+| `2_calibration_lct_bluesky.R` | `data/albedo_modis_cells.csv` and its provenance note (current setting)<br>`data/blue_sky_monthly_2000-2009.tif` and `data/grid.RDS` (legacy setting)<br>`data/lct_modern_reveals_interp.RDS`<br>`glacier_shapefiles_21-1k.RDS` (the ice mask)<br>`pbs_ll.RDS` | `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS` (legacy setting only)<br>albedo maps |
 | `3_plot_cal_lct_albedo.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`3:38`)<br>`scripts/make_grid.R` (`3:51`, a reconstruction; the original is not in the repo) | figures (`figures/LCT_*_interp.*`); the albedo scatter plots print to `Rplots.pdf` |
-| `4_calibration_model.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:16`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits |
-| `5_calibration_eval.R` | the model files above (`5:19`) | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv`<br>figures |
+| `4_calibration_model.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:16`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits<br>`calibration_prediction_fit_<month>_bluesky.RDS` (the REML fit for prediction) |
+| `5_calibration_eval.R` | the fits above and the calibration table | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS` (a copy of the prediction fit)<br>`calibration_model_stats.csv`<br>figures |
 | `6_prediction_model.R` | selected models (`6:24`)<br>`data/lct_paleo_reveals_interp.RDS` (`6:17`) | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
-| `6_prediction_model_spatial_eval.R` | spatial-experiment fits<br>`data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`<br>figures |
+| `6_prediction_model_spatial_eval.R` (not migrated) | spatial-experiment fits, by its own file names<br>`data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`<br>figures |
 | `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7:84`)<br>`data/grid.RDS` (`7:148`)<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:46`)<br>`data/albedo_glacier_monthly.csv` (`7:163`)<br>`pbs_ll.RDS` (`7:23`) | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
 | `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:40`)<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:44`)<br>`data/albedo_glacier_monthly.csv` (`7a:121`)<br>`data/grid.RDS` (`7a:98`) | `data/ALB_diffs_bluesky.RDS` |
 | `8_radiative.R` | `data/ALB_diffs_bluesky.RDS`<br>kernels | `output/forcing/RF_holocene_all_cases.RDS` |
 | `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS` (`9:139`)<br>`data/alb_interp_preds_diffs_bluesky.RDS` (`9:311`)<br>`data/ipcc-ar6/*.csv` (`9:180-182`) | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
 | `10_forcing_breakdown.R` | `output/forcing/RF_holocene_all_cases.RDS` (`10:72`)<br>`output/forcing/forcing_by_period.csv` (`10:100`) | `output/forcing/forcing_by_month_latitude.csv`<br>`figures/forcing_by_month_latitude.pdf` |
 
+The new entries above carry no line numbers; the old ones date from 2026-09-24 and
+may have moved.
+
 Not part of the pipeline: `GCM_snow_prob.R`, `thornthwaite.R`,
 `beta_veg_lct_modern.R` and `scripts/archive/` (abandoned climate/snow
 branch and earlier versions).
 
-Run order is 1 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7a -> 8 -> 9 -> 10; 3 and
-6-spatial-eval are optional, and 7 and 7a are independent of each other.
-Every script logs a provenance manifest (see below).
+Run order is 1 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7a -> 8 -> 9 -> 10; 3 is
+optional, and 7 and 7a are independent of each other.
+`6_prediction_model_spatial_eval.R` is not part of the migrated pipeline
+(see the table). Every other numbered script logs a provenance manifest
+(see below).
 
 Diagnostics: script 1 has a diagnostic switch (`run$diagnostic` in
 `config.R`, off by default) that adds checks and plots without changing
@@ -151,7 +165,7 @@ input is missing as of 2026-09-21.
 | File | Used by | Status |
 |---|---|---|
 | `data/veg_posts_interp_ice.RDS` (334 MB, Git LFS) | input to 1 (`1:12`) | present |
-| `data/blue_sky_monthly_2000-2009.tif` | input to 2 (`2:38`) | present |
+| `data/blue_sky_monthly_2000-2009.tif` | input to 2 (legacy setting) | present |
 | `data/albedo_modis_cells.csv`, `albedo_modis_cells_provenance.txt` | input to 2 (current setting; the raster above is the legacy setting) | present (7.8 MB, committed; made by `tools/prepare_bluesky_albedo.R`) |
 | `data/grid.RDS` | input to 2, 7, 7a (`2:15`, `7:148`, `7a:98`) | present |
 | `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2 and 7 (`pbs_ll` only) and 3 | present |
@@ -219,21 +233,27 @@ the later scripts have to go looking for ice again at all.
 
 ### Derived files and results
 
-All produced on this machine between 2026-09-19 and 2026-09-21 and frozen
-in `tests/anchors/`; the copies in `data/` and `output/` are regenerable
-and git-ignored.
+The anchored versions were produced on this machine between 2026-09-19
+and 2026-10-14 under the original analysis's settings (now
+`configs/legacy_config.R`) and frozen in `tests/anchors/`, whose README
+says what each set covers. The current configuration (`config.R`: MODIS cell
+albedo, land-mean elevation, ML ladder, ice mask, partial-ice headline)
+gives different numbers by design. The copies in `data/` and `output/` are
+regenerable and git-ignored.
 
 | File | Written by | Read by | Anchor |
 |---|---|---|---|
 | `data/lct_modern_reveals_interp.RDS`<br>`data/lct_paleo_reveals_interp.RDS` | 1 | 2 (`2:19`), 6 (`6:17`) | `interp-allmonths-2026-09-20` |
-| `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS` | 2 | 3 (`3:323`), 4 (`4:16`), 5 (`5:19`) | `interp-allmonths-2026-09-20` |
-| `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits | 4 | 4, 5, 6-spatial-eval | AIC table and stats only (models are 3.6 GB) |
-| `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv` | 5 | 6 (`6:24`) | stats only |
+| `data/calibration_modern_lct_interp_bluesky.RDS`<br>`..._coarse.RDS` (legacy setting only) | 2 | 3, 4, 5 | `interp-allmonths-2026-09-20` |
+| `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits | 4 | 4, 5 | AIC table and stats only (models are 3.6 GB) |
+| `output/calibration/calibration_prediction_fit_<month>_bluesky.RDS` | 4 | 5; the diagnostic figures of `tools/plotting/` (May) | not anchored |
+| `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS`<br>`calibration_model_stats.csv` | 5 | 6 | stats only |
 | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS`; merged `..._bluesky.RDS`<br>`..._summary_bluesky.RDS` | 6 | 7 (`7:84`), 7a (`7a:40`) | summaries in `interp-allmonths-2026-09-20` |
-| `data/ice_fort.RDS`<br>`ice_fort_diff_young.RDS`<br>`ice_fort_diff_old.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` | 7 | 8 (`8:38-40`), 9 (`9:325`) | `interp-tail-2026-09-21` |
+| `data/ice_fort.RDS`<br>`ice_fort_diff_young.RDS`<br>`ice_fort_diff_old.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` | 7 | the coarse differences by 9 (the EGU 2024 recipe); the `ice_fort` files by no script | `interp-tail-2026-09-21` |
 | `data/ALB_diffs_bluesky.RDS` (result: albedo differences) | 7a | 8 (`8:59`) | `interp-tail-2026-09-21`, reproduced byte for byte on re-run |
-| `output/forcing/RF_holocene_all_cases.RDS` (result: forcing) | 8 | 9 (`9:141`) | `interp-tail-2026-09-21` (Git LFS) |
-| `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv` | 9 |  | tracked in git (small) |
+| `output/forcing/RF_holocene_all_cases.RDS` (result: forcing) | 8 | 9, 10, `tools/plotting/plot_forcing_vs_training_support.R` | `interp-tail-2026-09-21` (Git LFS) |
+| `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv` | 9 | 10 (`forcing_by_period.csv`) | `interp-forcing-2026-10-08`; tracked in git (small) |
+| `output/forcing/forcing_by_month_latitude.csv` | 10 |  | not anchored |
 
 ### Other files in `data/`
 
@@ -289,7 +309,7 @@ Rscript scripts/1_veg_lct_prep.R --config configs/legacy_config.R   # the origin
 
 or open the repository in RStudio with the repository root as the working directory and run
 or step through a script; it uses `config.R`. Scripts run in order 1, 2, 3, 4, 5, 6, 7, 7a,
-8, 9 (script 3 only draws figures; script 7 draws the maps and also writes the
+8, 9, 10 (script 3 only draws figures; script 7 draws the maps and also writes the
 coarse albedo differences that script 9 reads).
 
 On a many-core Linux machine, **cap the BLAS threads to the cores you give the job** or the
@@ -325,7 +345,8 @@ and lists what differs; rerun the earlier script, or set
 `run$allow_stale = TRUE` in the config to go on regardless (each such file
 is listed in the manifest). A script uses it with `run_begin()` at the top,
 `read_input()` and `write_output()` for its files, and `run_finish()` at
-the end; every numbered script has it (issues I05, I04a, I06), with
+the end; every numbered script except the unmigrated
+`6_prediction_model_spatial_eval.R` has it (issues I05, I04a, I06), with
 `run_begin()` before the packages are loaded so that a missing package is
 recorded as a failed run. Older manifests in `runs/` (flat, named by minute) are kept as they
 are; three were written by hand after the fact and are marked
@@ -335,11 +356,14 @@ are; three were written by hand after the fact and are marked
 
 Frozen outputs that a refactor must still reproduce, each set with its
 md5s and a README entry saying how it was made and what it does not
-cover. Four sets: `nointerp-mar-2026-09-16` and `nointerp-may-2026-09-17`
+cover. Six sets (`tests/anchors/README.md` lists them): `nointerp-mar-2026-09-16` and `nointerp-may-2026-09-17`
 (the point flavour; reproducible only from `v1-both-flavours` or earlier
-now that the trunk is interp only), `interp-allmonths-2026-09-20` (scripts 1 to 6) and
+now that the trunk is interp only), `interp-allmonths-2026-09-20` (scripts 1 to 6),
 `interp-tail-2026-09-21` (scripts 7, 7a, 8; 187 MB, determinism
-demonstrated by a byte-identical re-run of 7a). Andria's own outputs are
+demonstrated by a byte-identical re-run of 7a), `interp-forcing-2026-10-08`
+(script 9's four tables) and `interp-seed1-2026-10-14` (scripts 5 and 6
+with seed 1, checksums only). The interp sets were made under the
+original analysis's settings, now `configs/legacy_config.R`. Andria's own outputs are
 preserved at the `v0-legacy` tag rather than copied;
 `bash tools/restore_original_outputs.sh` brings them back.
 
@@ -351,7 +375,9 @@ Branches: `main` (upstream, merged only by pull request), `legacy`
 (frozen copy of the code as received, also tagged `v0-legacy`),
 `chris-dev` (working trunk, interp only since 2026-09-24; Andria reviews
 and edits here directly), `annotated-interp` (a teaching copy of the
-same code with a comment on every line; read it, do not merge it), and
+interp scripts of late September with a comment on every line, kept for
+its annotations only and no longer the same code as `chris-dev`; read it,
+do not merge it), and
 topic branches off `chris-dev` that are deleted when merged. Tags:
 `v0-legacy`, `v1-both-flavours`.
 

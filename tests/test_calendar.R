@@ -18,6 +18,11 @@ stopifnot(
   identical(period_labels(c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)),
             c("0.05 - 0.5 ka", "0.5 - 2 ka", "2 - 4 ka", "4 - 6 ka", "6 - 8 ka", "8 - 10 ka", "10 - 12 ka")),
   identical(ages_ka(c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)),
-            c("0.05", "0.5", "2", "4", "6", "8", "10", "12"))
+            c("0.05", "0.5", "2", "4", "6", "8", "10", "12")),
+  # a mean over the months is "annual" only when all twelve run
+  identical(months_label(MONTHS), "annual"),
+  identical(months_label(rev(MONTHS)), "annual"),
+  identical(months_label(c("dec", "jan", "feb", "mar")), "dec/jan/feb/mar"),
+  fails(months_label(c("jan", "January")))
 )
 cat("test_calendar: all tests passed\n")

@@ -109,10 +109,13 @@ read_input = function(run, path, reader = readRDS, ...) {
 
 # Write an output through the run: write `object` to `path` with the writer (extra
 # arguments go to it), then record the file's MD5. Only a write that succeeded is recorded.
+# A file the run directory had been seeded with is now the run's own, so it leaves the
+# seeded list (R/paths.R, unmark_seeded()).
 write_output = function(run, object, path, writer = saveRDS, ...) {
   writer(object, path, ...)
   if (!file.exists(path)) stop('write_output: nothing was written to ', path, call. = FALSE)
   message('wrote ', path)
+  unmark_seeded(run$paths, path)
   run$deferred = FALSE
   run$record$outputs = c(run$record$outputs,
                          list(list(path = path, md5 = unname(tools::md5sum(path)))))

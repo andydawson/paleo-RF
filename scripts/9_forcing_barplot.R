@@ -63,14 +63,12 @@
 #         whose ice changed (a signed change: ice retreat or advance);
 #         _veg_part + _ice_part = _veg_ice_parts.
 #     R/differences.R gives the threshold components NA where they do not apply (a
-#     vegetation step has no ice part and vice versa). Until 2026-10-19 those NAs
-#     reached the period sum (A5), so a cell with both kinds of step in one period
-#     dropped out of BOTH bars: at 8-10 ka, 343 cells carrying 99% of the total
-#     (found by Opus and confirmed by Astra on 2026-10-18,
-#     docs/cc/2026-10-18_forcing_code_check_codex_gpt6astra.md). Fixed by setting the
+#     vegetation step has no ice part and vice versa); R/forcing_components.R sets the
 #     part that does not apply to 0 before aggregating, the 'by kind of step'
-#     definition Chris chose on 2026-10-19 (R/forcing_components.R); genuinely missing
-#     pairs (total NA) stay NA. Under the legacy configuration ("legacy_components")
+#     definition Chris chose on 2026-10-19, so a cell with both kinds of step in a
+#     period counts in both bars; genuinely missing pairs (total NA) stay NA. Why: the
+#     changelog entry "Vegetation-only and ice-only bars add up", 2026-10-19
+#     (docs/cc/changelog_single_config_migration.md). Under the legacy configuration ("legacy_components")
 #     the split does not hold (question C2), and Chris chose (2026-10-19) to keep its
 #     outputs as they were: there the threshold parts still leave out cells with both
 #     kinds of step. The headline (A1) does not use these components and is unaffected.
@@ -92,7 +90,9 @@
 #     different question ("typical step") and would not be comparable with a
 #     modern 1750-to-2019 forcing.
 #
-# A6. Months. Averaged with equal weight to an annual mean, after the period sum.
+# A6. Months. Averaged with equal weight over the months of config.R (analysis$months),
+#     after the period sum: an annual mean only when all twelve run; otherwise a mean of
+#     those months alone, and the figures name them (R/calendar.R, months_label()).
 #     Equal weighting ignores that months differ in length and in insolation.
 #     NB months whose kernel is NA (CACK, Dec/Jan north of 69 N) drop out of the
 #     mean, whereas HadGEM3 and CAM5 store 0 there and stay in; the three kernels
@@ -126,10 +126,7 @@
 source('R/calendar.R')
 source('R/forcing_periods.R')
 source('R/forcing_components.R')
-# Settings, file locations and this run's manifest: run_begin() reads config.R (or the file
-# given with --config), sets up the paths of R/paths.R and starts the run's
-# manifest, which records the inputs with checksums and the whole configuration; files are
-# then read and written through it.
+# Settings, paths and the run manifest: R/run_manifest.R.
 source('R/run_manifest.R')
 run   = run_begin('9_forcing_barplot')
 cfg   = run$cfg
@@ -159,7 +156,7 @@ forcing_by_cell = read_input(run, path_file(paths, 'forcing'))
 
 # --- A4, A5, A10: the slice-pairs grouped into periods, complete cells only --------
 # R/forcing_periods.R (shared with script 10, so its breakdown adds up to these totals).
-forcing_by_cell = assign_forcing_periods(forcing_by_cell, ages_sub)
+forcing_by_cell = assign_forcing_periods(forcing_by_cell, ages_sub, cfg$analysis$ages)
 
 # --- aggregate ---------------------------------------------------------------
 # A5 sum over slice-pairs -> A6 mean over months -> A7 area-weighted over cells.
@@ -234,7 +231,10 @@ variant_labels = c(veg_ice_thresh   = 'total, all-or-nothing ice, fixed glacier 
                    ice_part         = 'ice part, partial ice',
                    veg_icesc_thresh = 'total, all-or-nothing ice, month-by-month glacier albedo',
                    veg_icesc_parts  = 'total, partial ice, month-by-month glacier albedo')
-headline_line = paste('Ice method:', variant_labels[[cfg$analysis$forcing$variant]])
+# The figures are means over the analysis months (A6); say which when they are not all twelve.
+months_note = if (months_label(cfg$analysis$months) == 'annual') '' else
+  paste0('; mean of ', months_label(cfg$analysis$months), ' only, not annual')
+headline_line = paste0('Ice method: ', variant_labels[[cfg$analysis$forcing$variant]], months_note)
 
 # Layout matched to slide 18 of dawson_EGU.pptx (ppt/media/image37.png):
 # horizontal bars, two stacked panels sharing one x axis, panel labels in strips
@@ -305,10 +305,13 @@ ggsave(path_figure(paths, 'forcing_barplot_slide18.png'), p_slide_lab, width = 8
 kernel_comparison = forcing_by_period %>%
   transmute(kernel, label = sub(' ka$', '', as.character(period)), value = global_equiv)
 kernel_comparison$label = factor(kernel_comparison$label, levels = rev(sub(' ka$', '', labels_period)))
-# Labels say which kernel variable was read (R/kernels.R). The 'factor of two'
-# title holds only when the kernels mix clear-sky and all-sky, as in the original analysis.
+# Labels say which kernel variable was read (R/kernels.R); the subtitle says, from the
+# settings, which reported kernels are clear-sky and which all-sky.
 kernel_rows = kernels_read(cfg)
-mixed_sky = length(unique(kernel_rows$sky)) > 1
+reported_rows = kernel_rows[names(FORCING_COLUMNS), ]
+kernel_names = sub(' \\(.*', '', reported_rows$label)   # 'HadGEM3 (clear, TOA)' -> 'HadGEM3'
+kernel_names_by_sky = tapply(kernel_names, reported_rows$sky, paste, collapse = ', ')
+sky_line = paste(sprintf('%s-sky: %s', names(kernel_names_by_sky), kernel_names_by_sky), collapse = '; ')
 p_kern = ggplot(kernel_comparison, aes(x = label, y = value, fill = kernel)) +
   geom_col(position = position_dodge(0.8), width = 0.7) +
   geom_hline(yintercept = 0, linewidth = 0.3) +
@@ -316,9 +319,8 @@ p_kern = ggplot(kernel_comparison, aes(x = label, y = value, fill = kernel)) +
   scale_fill_manual(values = c(hadgem='#1b6ca8', cam5='#5fa8d3', cack='#f2a65a'),
                     labels = c(cack=kernel_rows['cack', 'label'], cam5=kernel_rows['cam5', 'label'],
                                hadgem=kernel_rows['hadgem', 'label']), name = NULL) +
-  labs(title = if (mixed_sky) 'Kernel choice moves the answer by about a factor of two' else 'Forcing by kernel',
-       subtitle = paste0(if (mixed_sky) 'see C3 and C4; CACK is the only all-sky kernel of the three' else 'all three kernels all-sky; see C3 and C4',
-                         '\n', headline_line),
+  labs(title = 'Forcing by kernel',
+       subtitle = paste0(sky_line, '; see C3 and C4\n', headline_line),
        x = 'time period (k years)', y = expression('radiative forcing ('*W/m^2*')')) +
   theme_bw(base_size = 12) + theme(panel.grid.minor = element_blank())
 ggsave(path_figure(paths, 'forcing_barplot_kernel_spread.pdf'), p_kern, width = 8, height = 5)
@@ -346,7 +348,7 @@ p_sens = ggplot(sens_plot, aes(x = period, y = global_equiv, fill = label)) +
   geom_col(position = position_dodge(0.85), width = 0.8) +
   geom_hline(yintercept = 0, linewidth = 0.3) +
   labs(title = 'Forcing by ice method, and its vegetation and ice parts (HadGEM3 kernel)',
-       subtitle = sens_subtitle, fill = NULL,
+       subtitle = paste0(sens_subtitle, months_note), fill = NULL,
        x = NULL, y = expression('global-equivalent forcing ('*W~m^-2*')')) +
   theme_bw(base_size = 11) + theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ggsave(path_figure(paths, 'forcing_barplot_variant_sensitivity.pdf'), p_sens, width = 10, height = 5)

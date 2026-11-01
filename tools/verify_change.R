@@ -17,7 +17,7 @@
 #   seed      optional: catalogue ids of baseline products to copy into the run folder
 #   copy      optional: further files to copy in, list(c(from, to), ...), from relative to
 #             the main checkout, to relative to the run folder
-#   scripts   the scripts to run, in order
+#   scripts   the scripts to run, in order (may be empty only if there are checks or anchors)
 #   anchors   optional: anchor directories whose files must all MATCH (byte for byte)
 #   checks    optional: further commands to run in the worktree, each a character vector
 #             (an R script and its arguments); each must exit with status 0
@@ -57,6 +57,10 @@ read_spec = function(file) {
   missing = setdiff(c('name', 'commit', 'config', 'scripts'), names(spec))
   if (length(missing)) stop('verify_change: the spec lacks ', paste(missing, collapse = ', '))
   if (!grepl('^[A-Za-z0-9_.-]+$', spec$name)) stop('verify_change: name may use letters, digits, ., _ and - only')
+  # A spec that runs nothing and compares nothing would PASS without evidence (review of
+  # 1 November 2026, finding 3).
+  if (!length(spec$scripts) && !length(spec$checks) && !length(spec$anchors))
+    stop('verify_change: the spec has no scripts, no checks and no anchors; it would verify nothing')
   # The Rscript of the R running this tool, unless the spec names another runner.
   spec$rscript = if (is.null(spec$rscript)) file.path(R.home('bin'), 'Rscript') else spec$rscript
   spec
@@ -149,7 +153,8 @@ seed_run = function(worktree, spec, run_dir, config_file) {
     target = file.path(run_dir, pair[2])
     dir.create(dirname(target), recursive = TRUE, showWarnings = FALSE)
     if (!file.copy(pair[1], target, overwrite = TRUE)) stop('verify_change: could not copy ', pair[1])
-    cat(pair[2], '\n', file = file.path(run_dir, 'SEEDED.txt'), append = TRUE)
+    # One path per line, nothing else: check_anchors.R matches the lines exactly.
+    cat(pair[2], '\n', file = file.path(run_dir, 'SEEDED.txt'), append = TRUE, sep = '')
   }
   c(found$files, vapply(spec$copy, `[`, '', 1))
 }
