@@ -1,6 +1,7 @@
-# Tests for tools/frozen.R and tools/check_anchors.R. Run: Rscript tests/test_tools.R
+# Tests for tools/frozen.R, tools/check_anchors.R and tools/compare_tables.R. Run: Rscript tests/test_tools.R
 source("tools/frozen.R")
 source("tools/check_anchors.R")
+source("tools/compare_tables.R")
 source("R/config.R"); source("R/paths.R")
 
 # Locking: a locked file cannot be overwritten; unlocking restores it.
@@ -46,4 +47,21 @@ out <- capture.output(res <- check_anchors(anchor, file.path(tempdir(), "no_such
 stopifnot(all(res$result == "NOT PRODUCED"), !anchors_ok(res),
           status(anchor, file.path(tempdir(), "no_such_run_dir")) == 1)
 unlink(c(run, odd), recursive = TRUE)
+
+# compare_tables: "within tolerance" only when a number was held to a tolerance; a numeric
+# column without one is named as unchecked (finding 2 of the review of 1 November 2026).
+ref  <- data.frame(id = c("a", "b"), x = c(1, 2), y = c(10, 20))
+cand <- data.frame(id = c("a", "b"), x = c(1.001, 2), y = c(99, 20))   # y far off, x close
+report_only <- compare_tables(ref, cand)
+stopifnot(report_only$ok, !report_only$numbers_checked, identical(report_only$unchecked, c("x", "y")),
+          startsWith(comparison_verdict(report_only), "RESULT: NOT CHECKED numerically"),
+          !grepl("within tolerance", comparison_verdict(report_only)))
+tol_x <- data.frame(column = "x", statistic = "max_abs", tolerance = 0.01)
+partial <- compare_tables(ref, cand, tol_x)
+stopifnot(partial$ok, partial$numbers_checked, identical(partial$unchecked, "y"),
+          grepl("^RESULT: within tolerance; UNCHECKED .*: y$", comparison_verdict(partial)))
+both <- compare_tables(ref, cand, rbind(tol_x, data.frame(column = "y", statistic = "max_abs", tolerance = 1)))
+stopifnot(!both$ok, comparison_verdict(both) == "RESULT: OUTSIDE tolerance or structure differs")
+cand$x[1] <- NA                                                         # missing values must still agree
+stopifnot(!compare_tables(ref, cand)$ok)
 cat("test_tools: all tests passed\n")

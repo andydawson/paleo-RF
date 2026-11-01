@@ -20,6 +20,10 @@
 #                     apply (artefact defaults to the reference file's base name)
 #   Without a tolerance file it only reports. Exit status 1 if the structure differs, NA
 #   patterns differ, or any statistic exceeds its tolerance.
+# A numeric column with no tolerance is compared only for its missing values; the result
+# names it as unchecked, and when no numeric column had a tolerance the verdict says the
+# numbers were not checked rather than "within tolerance" (review of 1 November 2026,
+# finding 2: a report-only comparison had read as numerical agreement).
 
 STATS <- c("max_abs", "p999_abs", "mean_abs", "abs_bias")
 
@@ -49,6 +53,7 @@ compare_tables <- function(ref, cand, tol = NULL) {
     if (is.double(a) && is.double(b)) {
       na_same <- identical(is.na(a), is.na(b))
       st <- difference_stats(a, b)
+      # ok here means only that the missing values agree, until a tolerance is applied below.
       out <- data.frame(column = col, kind = "numeric", statistic = STATS, value = unname(st),
                         tolerance = NA_real_, ok = na_same)
       if (!is.null(tol)) for (i in seq_len(nrow(tol))) if (tol$column[i] == col) {
@@ -65,7 +70,21 @@ compare_tables <- function(ref, cand, tol = NULL) {
     }
   })
   columns <- do.call(rbind, rows)
-  list(ok = all(columns$ok), problems = character(), columns = columns)
+  numeric_columns <- unique(columns$column[columns$kind == "numeric"])
+  checked <- unique(columns$column[columns$kind == "numeric" & !is.na(columns$tolerance)])
+  list(ok = all(columns$ok), problems = character(), columns = columns,
+       unchecked = setdiff(numeric_columns, checked), numbers_checked = length(checked) > 0)
+}
+
+# The one-line verdict. "within tolerance" only when at least one numeric column was held to
+# a tolerance; numeric columns without one are named as unchecked.
+comparison_verdict <- function(res) {
+  if (!res$ok) return("RESULT: OUTSIDE tolerance or structure differs")
+  unchecked <- if (length(res$unchecked))
+    sprintf("; UNCHECKED (no tolerance, missing values compared only): %s", paste(res$unchecked, collapse = ", ")) else ""
+  if (length(res$unchecked) && !res$numbers_checked)
+    return(paste0("RESULT: NOT CHECKED numerically (report only): identifiers and missing values agree", unchecked))
+  paste0("RESULT: within tolerance", unchecked)
 }
 
 if (sys.nframe() == 0L) {
@@ -85,6 +104,6 @@ if (sys.nframe() == 0L) {
     if (!is.null(tol)) show <- show[show$kind == "identifier" | !is.na(show$tolerance) | !show$ok, ]
     print(show, row.names = FALSE, digits = 3)
   }
-  cat(if (res$ok) "RESULT: within tolerance\n" else "RESULT: OUTSIDE tolerance or structure differs\n")
+  cat(comparison_verdict(res), "\n", sep = "")
   quit(status = if (res$ok) 0 else 1)
 }
