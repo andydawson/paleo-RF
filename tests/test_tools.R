@@ -62,6 +62,8 @@ stopifnot(partial$ok, partial$numbers_checked, identical(partial$unchecked, "y")
           grepl("^RESULT: within tolerance; UNCHECKED .*: y$", comparison_verdict(partial)))
 both <- compare_tables(ref, cand, rbind(tol_x, data.frame(column = "y", statistic = "max_abs", tolerance = 1)))
 stopifnot(!both$ok, comparison_verdict(both) == "RESULT: OUTSIDE tolerance or structure differs")
+ids_only <- compare_tables(ref["id"], cand["id"])                       # no numeric column at all
+stopifnot(ids_only$ok, comparison_verdict(ids_only) == "RESULT: identifiers identical; no numbers to check")
 cand$x[1] <- NA                                                         # missing values must still agree
 stopifnot(!compare_tables(ref, cand)$ok)
 cat("test_tools: all tests passed\n")

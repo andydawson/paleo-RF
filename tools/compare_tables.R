@@ -76,15 +76,15 @@ compare_tables <- function(ref, cand, tol = NULL) {
        unchecked = setdiff(numeric_columns, checked), numbers_checked = length(checked) > 0)
 }
 
-# The one-line verdict. "within tolerance" only when at least one numeric column was held to
-# a tolerance; numeric columns without one are named as unchecked.
+# The one-line verdict: "within tolerance" only when a number was held to a tolerance;
+# numeric columns without one are named as unchecked.
 comparison_verdict <- function(res) {
   if (!res$ok) return("RESULT: OUTSIDE tolerance or structure differs")
   unchecked <- if (length(res$unchecked))
     sprintf("; UNCHECKED (no tolerance, missing values compared only): %s", paste(res$unchecked, collapse = ", ")) else ""
-  if (length(res$unchecked) && !res$numbers_checked)
-    return(paste0("RESULT: NOT CHECKED numerically (report only): identifiers and missing values agree", unchecked))
-  paste0("RESULT: within tolerance", unchecked)
+  if (res$numbers_checked) return(paste0("RESULT: within tolerance", unchecked))
+  if (length(res$unchecked)) return(paste0("RESULT: NOT CHECKED numerically (report only): identifiers and missing values agree", unchecked))
+  "RESULT: identifiers identical; no numbers to check"
 }
 
 if (sys.nframe() == 0L) {
