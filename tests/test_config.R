@@ -1,8 +1,10 @@
 # Tests for R/config.R and R/config_schema.R. Run from the repository root: Rscript tests/test_config.R
 source("R/config.R")
-base_text <- readLines("config.R")
+cfg    <- load_config()
+legacy <- load_config("configs/legacy_config.R")
 
-# Load a config made by applying one substitution to config.R (or from given text).
+# Loading the file is tested on text: config.R with one substitution (or the given text).
+base_text <- readLines("config.R")
 load_variant <- function(from = NULL, to = NULL, text = NULL) {
   if (is.null(text)) {
     stopifnot(sum(grepl(from, base_text, fixed = TRUE)) == 1)   # the edit hits exactly one line
@@ -17,8 +19,17 @@ rejects <- function(pattern, ...) {
   grepl(pattern, msg)
 }
 
-cfg <- load_config()
-legacy_text <- readLines("configs/legacy_config.R")
+# The schema is tested on settings lists, checked by config_errors() as load_config() checks
+# a file. with_setting() gives config.R's settings (or others) with one key set, named as in
+# the messages; assigning list(value) through [ ] keeps a NULL value as a setting.
+with_setting <- function(key, value, settings = cfg) {
+  path <- strsplit(key, "$", fixed = TRUE)[[1]]
+  settings[[path[-length(path)]]][path[length(path)]] <- list(value)
+  settings
+}
+refuses <- function(pattern, settings) grepl(pattern, paste(config_errors(settings), collapse = "\n"))
+accepts <- function(settings) !length(config_errors(settings))
+coarse_ages <- cfg$analysis$coarse$ages
 
 stopifnot(
   # the shipped config loads and holds today's script settings
@@ -49,143 +60,137 @@ stopifnot(
             5.101 * 10^14),
 
   # the schema: unknown, missing and duplicated keys
-  rejects("analysis\\$forcing has unknown key\\(s\\) kernel",  'earth_area_m2 = 5.101e14,', 'earth_area_m2 = 5.101e14, kernel = "cam5",'),
-  rejects("analysis\\$forcing is missing key\\(s\\) variant", 'variant = "veg_ice_parts",', ''),
-  rejects("has earth_area_m2 more than once", 'earth_area_m2 = 5.101e14,', 'earth_area_m2 = 5.101e14, earth_area_m2 = 1,'),
-  rejects("analysis\\$domain must be a list", 'domain = list(lon_min = -170, lat_min = 27, lat_max = 74, lon_max_coarse = -60),',
-          'domain = c(50, 500),'),
-  rejects("must be a value, not a list", 'earth_area_m2 = 5.101e14', 'earth_area_m2 = list(5.101e14)'),
+  refuses("analysis\\$forcing has unknown key\\(s\\) kernel", with_setting("analysis$forcing$kernel", "cam5")),
+  refuses("analysis\\$forcing is missing key\\(s\\) variant", { s <- cfg; s$analysis$forcing$variant <- NULL; s }),
+  refuses("has earth_area_m2 more than once", { s <- cfg; s$analysis$forcing <- c(s$analysis$forcing, list(earth_area_m2 = 1)); s }),
+  refuses("analysis\\$domain must be a list", with_setting("analysis$domain", c(50, 500))),
+  refuses("must be a value, not a list", with_setting("analysis$forcing$earth_area_m2", list(5.101e14))),
   # illegal values
-  rejects("variant has 'veg_ice'; legal values", 'variant = "veg_ice_parts"', 'variant = "veg_ice"'),
-  rejects("variant must be a single value", 'variant = "veg_ice_parts"', 'variant = c("veg_thresh", "ice_thresh")'),
-  rejects("report_kernels must not repeat", 'report_kernels = c("hadgem", "cam5", "cack")', 'report_kernels = c("hadgem", "cam5", "cam5")'),
-  rejects("report_kernels must be text, not empty", 'report_kernels = c("hadgem", "cam5", "cack")', 'report_kernels = c()'),
-  rejects("ages must be strictly increasing", '2000, 4000, 6000', '4000, 2000, 6000'),
-  rejects("ages must have at least 2 values", 'ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000),',
-          'ages = 50,'),
-  rejects("ages must be finite numbers", '2000, 4000, 6000', '2000, NA, 6000'),
-  rejects("ages must be finite numbers", '2000, 4000, 6000', '2000, "4000", 6000'),
-  rejects("ages must not have names", '2000, 4000, 6000', '2000, mid = 4000, 6000'),
-  rejects("latitude_band_width must lie between 1 and 90", 'latitude_band_width = 10', 'latitude_band_width = 0'),
-  rejects("latitude_band_width must be a whole number", 'latitude_band_width = 10', 'latitude_band_width = 2.5'),
-  rejects("earth_area_m2 must have exactly 1 values", 'earth_area_m2 = 5.101e14', 'earth_area_m2 = c(1, 2)'),
-  rejects("tail\\$x must be strictly increasing", 'list(x = c(-166, -50)', 'list(x = c(-50, -166)'),
-  rejects("tail\\$y must lie between -90 and 90", 'y = c(12, 82)', 'y = c(12, 95)'),
-  rejects("calibration\\$x must have exactly 2 values", 'list(x = c(-172, -50), y = c(15, 80))', 'list(x = c(-172), y = c(15, 80))'),
+  refuses("variant has 'veg_ice'; legal values", with_setting("analysis$forcing$variant", "veg_ice")),
+  refuses("variant must be a single value", with_setting("analysis$forcing$variant", c("veg_thresh", "ice_thresh"))),
+  refuses("report_kernels must not repeat", with_setting("analysis$forcing$report_kernels", c("hadgem", "cam5", "cam5"))),
+  refuses("report_kernels must be text, not empty", with_setting("analysis$forcing$report_kernels", NULL)),   # c() is NULL
+  refuses("ages must be strictly increasing", with_setting("analysis$coarse$ages", coarse_ages[c(1, 2, 4, 3, 5:8)])),
+  refuses("ages must have at least 2 values", with_setting("analysis$coarse$ages", 50)),
+  refuses("ages must be finite numbers", with_setting("analysis$coarse$ages", replace(coarse_ages, 4, NA))),
+  refuses("ages must be finite numbers", with_setting("analysis$coarse$ages", replace(coarse_ages, 4, "4000"))),
+  refuses("ages must not have names", with_setting("analysis$coarse$ages", setNames(coarse_ages, replace(character(8), 4, "mid")))),
+  refuses("latitude_band_width must lie between 1 and 90", with_setting("analysis$forcing$latitude_band_width", 0)),
+  refuses("latitude_band_width must be a whole number", with_setting("analysis$forcing$latitude_band_width", 2.5)),
+  refuses("earth_area_m2 must have exactly 1 values", with_setting("analysis$forcing$earth_area_m2", c(1, 2))),
+  refuses("tail\\$x must be strictly increasing", with_setting("presentation$map_windows$tail$x", c(-50, -166))),
+  refuses("tail\\$y must lie between -90 and 90", with_setting("presentation$map_windows$tail$y", c(12, 95))),
+  refuses("calibration\\$x must have exactly 2 values", with_setting("presentation$map_windows$calibration$x", -172)),
   # the run directory
-  identical(load_variant('dir = NULL', 'dir = ".rundirs/median_test"')$run$dir, ".rundirs/median_test"),
-  rejects("run\\$dir must not be inside the repository's output/", 'dir = NULL', 'dir = "output/alt"'),
-  rejects("run\\$dir must not contain '..'", 'dir = NULL', 'dir = "../elsewhere"'),
-  rejects("run\\$dir must be NULL or one directory path", 'dir = NULL', 'dir = c("a", "b")'),
+  accepts(with_setting("run$dir", ".rundirs/median_test")),
+  refuses("run\\$dir must not be inside the repository's output/", with_setting("run$dir", "output/alt")),
+  refuses("run\\$dir must not contain '..'", with_setting("run$dir", "../elsewhere")),
+  refuses("run\\$dir must be NULL or one directory path", with_setting("run$dir", c("a", "b"))),
   # the same places spelled absolutely or through a link are refused too (finding 1 of the
   # review of 1 November 2026): an absolute repository path once passed and wrote into the baseline
-  rejects("run\\$dir must not be the repository itself", 'dir = NULL', sprintf('dir = "%s"', getwd())),
-  rejects("run\\$dir must not be the repository itself", 'dir = NULL', 'dir = "./"'),
-  rejects("run\\$dir must not be inside the repository's output/", 'dir = NULL', sprintf('dir = "%s/output/alt"', getwd())),
-  rejects("run\\$dir must not be inside the repository's data/", 'dir = NULL', 'dir = "./data"'),
+  refuses("run\\$dir must not be the repository itself", with_setting("run$dir", getwd())),
+  refuses("run\\$dir must not be the repository itself", with_setting("run$dir", "./")),
+  refuses("run\\$dir must not be inside the repository's output/", with_setting("run$dir", file.path(getwd(), "output/alt"))),
+  refuses("run\\$dir must not be inside the repository's data/", with_setting("run$dir", "./data")),
   { link_to_repo <- file.path(tempdir(), "link_to_repo"); file.symlink(getwd(), link_to_repo)
-    rejects("run\\$dir must not be inside the repository's figures/", 'dir = NULL', sprintf('dir = "%s/figures/alt"', link_to_repo)) },
-  identical(load_variant('dir = NULL', sprintf('dir = "%s/alt_run"', tempdir()))$run$dir, file.path(tempdir(), "alt_run")),
-  rejects("run is missing key\\(s\\) dir", 'dir = NULL,', ''),
+    refuses("run\\$dir must not be inside the repository's figures/", with_setting("run$dir", file.path(link_to_repo, "figures/alt"))) },
+  accepts(with_setting("run$dir", file.path(tempdir(), "alt_run"))),
+  refuses("run is missing key\\(s\\) dir", { s <- cfg; s$run$dir <- NULL; s }),
   # the model, draw and reduction settings (issue I04a)
   identical(cfg$analysis$land_cover$reduction, "mean"),
   identical(cfg$analysis$calibration$model_id, "mod8"),
   identical(cfg$analysis$draws, list(evaluation = 100, prediction = 100, seed = "random")),
-  identical(load_variant('reduction = "mean"', 'reduction = "median"')$analysis$land_cover$reduction, "median"),
-  rejects("land_cover\\$reduction has 'trimmed'", 'reduction = "mean"', 'reduction = "trimmed"'),
-  identical(load_variant('model_id = "mod8"', 'model_id = "mod7"')$analysis$calibration$model_id, "mod7"),
-  rejects("model_id has 'spatial'", 'model_id = "mod8"', 'model_id = "spatial"'),
-  rejects("model_id must be a single value", 'model_id = "mod8"', 'model_id = c("mod7", "mod8")'),
-  rejects("draws\\$evaluation must lie between 2", 'evaluation = 100', 'evaluation = 1'),
-  rejects("draws\\$prediction must be a whole number", 'prediction = 100', 'prediction = 100.5'),
-  identical(load_variant('seed = "random"', 'seed = 20261014')$analysis$draws$seed, 20261014),
-  identical(load_variant('seed = "random"', 'seed = 0')$analysis$draws$seed, 0),
-  rejects("draws\\$seed must be \"random\" or one whole number", 'seed = "random"', 'seed = "fixed"'),
-  rejects("draws\\$seed must be \"random\" or one whole number", 'seed = "random"', 'seed = 1.5'),
-  rejects("draws\\$seed must be \"random\" or one whole number", 'seed = "random"', 'seed = 2^31'),
+  accepts(with_setting("analysis$land_cover$reduction", "median")),
+  refuses("land_cover\\$reduction has 'trimmed'", with_setting("analysis$land_cover$reduction", "trimmed")),
+  accepts(with_setting("analysis$calibration$model_id", "mod7")),
+  refuses("model_id has 'spatial'", with_setting("analysis$calibration$model_id", "spatial")),
+  refuses("model_id must be a single value", with_setting("analysis$calibration$model_id", c("mod7", "mod8"))),
+  refuses("draws\\$evaluation must lie between 2", with_setting("analysis$draws$evaluation", 1)),
+  refuses("draws\\$prediction must be a whole number", with_setting("analysis$draws$prediction", 100.5)),
+  accepts(with_setting("analysis$draws$seed", 20261014)),
+  accepts(with_setting("analysis$draws$seed", 0)),
+  refuses("draws\\$seed must be \"random\" or one whole number", with_setting("analysis$draws$seed", "fixed")),
+  refuses("draws\\$seed must be \"random\" or one whole number", with_setting("analysis$draws$seed", 1.5)),
+  refuses("draws\\$seed must be \"random\" or one whole number", with_setting("analysis$draws$seed", 2^31)),
   # months, ages, slice alias, domain, ice and kernels (issue I04b)
   identical(cfg$analysis$months, MONTHS),
   identical(cfg$analysis$ages, c(50, 200, seq(500, 11500, by = 500))),
   identical(cfg$analysis$coarse$slice_alias, c(11500, 12000)),
-  identical(load_variant('months = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")',
-                         'months = c("feb", "may", "aug", "nov")')$analysis$months, c("feb", "may", "aug", "nov")),
-  rejects("months.*unknown month name", 'months = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")', 'months = c("jan", "January")'),
-  rejects("months.*more than once", 'months = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")', 'months = c("jan", "jan")'),
-  rejects("analysis\\$ages must be strictly increasing", 'ages = c(50, 200, seq(500, 11500, by = 500))', 'ages = c(200, 50)'),
-  is.null(load_variant('slice_alias = c(11500, 12000)', 'slice_alias = NULL')$analysis$coarse$slice_alias),
-  rejects("slice_alias must have exactly 2 values", 'slice_alias = c(11500, 12000)', 'slice_alias = 11500'),
-  rejects("slice_alias: its first value must be one of analysis\\$ages", 'slice_alias = c(11500, 12000)', 'slice_alias = c(11600, 12000)'),
-  rejects("slice_alias: its second value must be one of analysis\\$coarse\\$ages", 'slice_alias = c(11500, 12000)', 'slice_alias = c(11500, 13000)'),
-  rejects("lat_min must be below lat_max", 'lat_min = 27, lat_max = 74', 'lat_min = 74, lat_max = 27'),
-  rejects("lon_min must be west of lon_max_coarse", 'lon_min = -170', 'lon_min = -50'),
-  rejects("domain\\$lat_max must lie between", 'lat_min = 27, lat_max = 74', 'lat_min = 27, lat_max = 95'),
-  identical(load_variant('threshold = 0.5', 'threshold = 0.6')$analysis$ice$threshold, 0.6),
-  rejects("ice\\$threshold must lie between 0 and 1", 'threshold = 0.5', 'threshold = 1.5'),
-  identical(load_variant('albedo_coarse = "ice_albedo"', 'albedo_coarse = "ice_albedo_sc"')$analysis$ice$albedo_coarse, "ice_albedo_sc"),
-  rejects("albedo_fixed has 'albedo'", 'albedo_fixed  = "ice_albedo_fixed"', 'albedo_fixed  = "albedo"'),
-  identical(load_variant('cack_year       = 2003', 'cack_year       = 2010')$analysis$kernels$cack_year, 2010),
-  rejects("cack_year must lie between 2001 and 2016", 'cack_year       = 2003', 'cack_year       = 2000'),
-  rejects("cack_year must be a whole number", 'cack_year       = 2003', 'cack_year       = 2003.5'),
+  accepts(with_setting("analysis$months", c("feb", "may", "aug", "nov"))),
+  refuses("months.*unknown month name", with_setting("analysis$months", c("jan", "January"))),
+  refuses("months.*more than once", with_setting("analysis$months", c("jan", "jan"))),
+  refuses("analysis\\$ages must be strictly increasing", with_setting("analysis$ages", c(200, 50))),
+  accepts(with_setting("analysis$coarse$slice_alias", NULL)),
+  refuses("slice_alias must have exactly 2 values", with_setting("analysis$coarse$slice_alias", 11500)),
+  refuses("slice_alias: its first value must be one of analysis\\$ages", with_setting("analysis$coarse$slice_alias", c(11600, 12000))),
+  refuses("slice_alias: its second value must be one of analysis\\$coarse\\$ages", with_setting("analysis$coarse$slice_alias", c(11500, 13000))),
+  refuses("lat_min must be below lat_max", with_setting("analysis$domain$lat_max", 27, with_setting("analysis$domain$lat_min", 74))),
+  refuses("lon_min must be west of lon_max_coarse", with_setting("analysis$domain$lon_min", -50)),
+  refuses("domain\\$lat_max must lie between", with_setting("analysis$domain$lat_max", 95)),
+  accepts(with_setting("analysis$ice$threshold", 0.6)),
+  refuses("ice\\$threshold must lie between 0 and 1", with_setting("analysis$ice$threshold", 1.5)),
+  accepts(with_setting("analysis$ice$albedo_coarse", "ice_albedo_sc")),
+  refuses("albedo_fixed has 'albedo'", with_setting("analysis$ice$albedo_fixed", "albedo")),
+  accepts(with_setting("analysis$kernels$cack_year", 2010)),
+  refuses("cack_year must lie between 2001 and 2016", with_setting("analysis$kernels$cack_year", 2000)),
+  refuses("cack_year must be a whole number", with_setting("analysis$kernels$cack_year", 2003.5)),
   # kernel variables and the difference method (issue I16); the legacy configuration loads
   identical(cfg$analysis$kernels[c("hadgem_variable", "cam5_variable", "cack_variable")],
             list(hadgem_variable = "albedo_sw", cam5_variable = "FSNT", cack_variable = "CACK CM")),
   identical(cfg$analysis$ice$difference_method, "endpoint"),
-  rejects("hadgem_variable has 'FSNT'", 'kernels = list(hadgem_variable = "albedo_sw",', 'kernels = list(hadgem_variable = "FSNT",'),
-  rejects("cam5_variable has 'albedo_sw'", 'cam5_variable   = "FSNT",', 'cam5_variable   = "albedo_sw",'),
-  rejects("difference_method has 'fancy'", 'difference_method = "endpoint",', 'difference_method = "fancy",'),
-  identical(load_config("configs/legacy_config.R")$analysis$kernels$cam5_variable, "FSNSC"),
-  identical(load_config("configs/legacy_config.R")$analysis$draws$seed, 1),
+  refuses("hadgem_variable has 'FSNT'", with_setting("analysis$kernels$hadgem_variable", "FSNT")),
+  refuses("cam5_variable has 'albedo_sw'", with_setting("analysis$kernels$cam5_variable", "albedo_sw")),
+  refuses("difference_method has 'fancy'", with_setting("analysis$ice$difference_method", "fancy")),
+  identical(legacy$analysis$kernels$cam5_variable, "FSNSC"),
+  identical(legacy$analysis$draws$seed, 1),
   # the ladder's comparison method (issue I16): ML, the original REML in the legacy file
   identical(cfg$analysis$calibration$comparison_method, "ML"),
-  identical(load_config("configs/legacy_config.R")$analysis$calibration$comparison_method, "REML"),
-  rejects("comparison_method has 'GCV'", 'comparison_method = "ML"', 'comparison_method = "GCV"'),
+  identical(legacy$analysis$calibration$comparison_method, "REML"),
+  refuses("comparison_method has 'GCV'", with_setting("analysis$calibration$comparison_method", "GCV")),
   identical(cfg$analysis$calibration$ice_mask, "centre_in_1ka_polygon"),
-  identical(load_config("configs/legacy_config.R")$analysis$calibration$ice_mask, "none"),
-  rejects("ice_mask has 'all'", 'ice_mask = "centre_in_1ka_polygon"', 'ice_mask = "all"'),
+  identical(legacy$analysis$calibration$ice_mask, "none"),
+  refuses("ice_mask has 'all'", with_setting("analysis$calibration$ice_mask", "all")),
   # the calibration albedo (Chris, 2026-10-29): the MODIS cell table in config.R, the raster
   # in the legacy file; with the raster, statistic and version must keep their defaults
   identical(cfg$analysis$albedo, list(source = "modis_cells", statistic = "all_days", version = "full_75")),
-  identical(load_config("configs/legacy_config.R")$analysis$albedo,
-            list(source = "legacy_raster", statistic = "all_days", version = "full_75")),
-  identical(load_variant('statistic = "all_days"', 'statistic = "snow_free"')$analysis$albedo$statistic, "snow_free"),
-  identical(load_variant('statistic = "all_days"', 'statistic = "snowy"')$analysis$albedo$statistic, "snowy"),
-  identical(load_variant('version = "full_75"', 'version = "any_75"')$analysis$albedo$version, "any_75"),
-  identical(load_variant('version = "full_75"', 'version = "full_70"')$analysis$albedo$version, "full_70"),
-  identical(load_variant('version = "full_75"', 'version = "full_nocut"')$analysis$albedo$version, "full_nocut"),
-  identical(load_variant('source = "modis_cells"', 'source = "legacy_raster"')$analysis$albedo$source, "legacy_raster"),
-  rejects("albedo\\$source has 'raster'", 'source = "modis_cells"', 'source = "raster"'),
-  rejects("albedo\\$statistic has 'snowless'", 'statistic = "all_days"', 'statistic = "snowless"'),
-  rejects("albedo\\$statistic must be a single value", 'statistic = "all_days"', 'statistic = c("all_days", "snowy")'),
-  rejects("albedo\\$version has 'full_80'", 'version = "full_75"', 'version = "full_80"'),
-  rejects("albedo is missing key\\(s\\) version", ', version = "full_75")', ')'),
-  rejects('with source "legacy_raster".*statistic must be "all_days"',
-          text = sub('statistic = "all_days"', 'statistic = "snow_free"', legacy_text, fixed = TRUE)),
-  rejects('with source "legacy_raster".*version "full_75"',
-          text = sub('version = "full_75"', 'version = "full_nocut"', legacy_text, fixed = TRUE)),
-  rejects('with source "legacy_raster"',
-          text = sub('source = "modis_cells", statistic = "all_days"', 'source = "legacy_raster", statistic = "snowy"', base_text, fixed = TRUE)),
+  identical(legacy$analysis$albedo, list(source = "legacy_raster", statistic = "all_days", version = "full_75")),
+  accepts(with_setting("analysis$albedo$statistic", "snow_free")),
+  accepts(with_setting("analysis$albedo$statistic", "snowy")),
+  accepts(with_setting("analysis$albedo$version", "any_75")),
+  accepts(with_setting("analysis$albedo$version", "full_70")),
+  accepts(with_setting("analysis$albedo$version", "full_nocut")),
+  accepts(with_setting("analysis$albedo$source", "legacy_raster")),
+  refuses("albedo\\$source has 'raster'", with_setting("analysis$albedo$source", "raster")),
+  refuses("albedo\\$statistic has 'snowless'", with_setting("analysis$albedo$statistic", "snowless")),
+  refuses("albedo\\$statistic must be a single value", with_setting("analysis$albedo$statistic", c("all_days", "snowy"))),
+  refuses("albedo\\$version has 'full_80'", with_setting("analysis$albedo$version", "full_80")),
+  refuses("albedo is missing key\\(s\\) version", { s <- cfg; s$analysis$albedo$version <- NULL; s }),
+  refuses('with source "legacy_raster".*statistic must be "all_days"', with_setting("analysis$albedo$statistic", "snow_free", legacy)),
+  refuses('with source "legacy_raster".*version "full_75"', with_setting("analysis$albedo$version", "full_nocut", legacy)),
+  refuses('with source "legacy_raster"',
+          with_setting("analysis$albedo$statistic", "snowy", with_setting("analysis$albedo$source", "legacy_raster"))),
   # the stale-input override (issue I05): off by default, TRUE or FALSE only
   identical(cfg$run$allow_stale, FALSE),
   # script 1's diagnostic switch (issue I06)
   identical(cfg$run$diagnostic, FALSE),
-  isTRUE(load_variant('diagnostic = FALSE', 'diagnostic = TRUE')$run$diagnostic),
-  rejects("run\\$diagnostic must be TRUE or FALSE", 'diagnostic = FALSE', 'diagnostic = "yes"'),
-  isTRUE(load_variant('allow_stale = FALSE', 'allow_stale = TRUE')$run$allow_stale),
-  rejects("run\\$allow_stale must be TRUE or FALSE", 'allow_stale = FALSE', 'allow_stale = 1'),
-  rejects("run\\$allow_stale must be TRUE or FALSE", 'allow_stale = FALSE', 'allow_stale = c(TRUE, FALSE)'),
-  rejects("run\\$allow_stale must be TRUE or FALSE", 'allow_stale = FALSE', 'allow_stale = NA'),
+  accepts(with_setting("run$diagnostic", TRUE)),
+  refuses("run\\$diagnostic must be TRUE or FALSE", with_setting("run$diagnostic", "yes")),
+  accepts(with_setting("run$allow_stale", TRUE)),
+  refuses("run\\$allow_stale must be TRUE or FALSE", with_setting("run$allow_stale", 1)),
+  refuses("run\\$allow_stale must be TRUE or FALSE", with_setting("run$allow_stale", c(TRUE, FALSE))),
+  refuses("run\\$allow_stale must be TRUE or FALSE", with_setting("run$allow_stale", NA)),
   # the headline forcing (Chris, 2026-10-19): partial ice, the original all-or-nothing in
   # the legacy file; only the four totals are accepted, never a vegetation or ice part
   identical(cfg$analysis$forcing$variant, "veg_ice_parts"),
-  identical(load_config("configs/legacy_config.R")$analysis$forcing$variant, "veg_ice_thresh"),
-  identical(load_variant('variant = "veg_ice_parts"', 'variant = "veg_icesc_thresh"')$analysis$forcing$variant, "veg_icesc_thresh"),
-  rejects("forcing\\$variant has 'veg_thresh'", 'variant = "veg_ice_parts"', 'variant = "veg_thresh"'),
-  rejects("forcing\\$variant has 'ice_part'", 'variant = "veg_ice_parts"', 'variant = "ice_part"'),
+  identical(legacy$analysis$forcing$variant, "veg_ice_thresh"),
+  accepts(with_setting("analysis$forcing$variant", "veg_icesc_thresh")),
+  refuses("forcing\\$variant has 'veg_thresh'", with_setting("analysis$forcing$variant", "veg_thresh")),
+  refuses("forcing\\$variant has 'ice_part'", with_setting("analysis$forcing$variant", "ice_part")),
   # unsupported combinations
-  rejects("report_kernels must include hadgem", 'report_kernels = c("hadgem", "cam5", "cack")', 'report_kernels = c("cam5", "cack")'),
+  refuses("report_kernels must include hadgem", with_setting("analysis$forcing$report_kernels", c("cam5", "cack"))),
   # every problem is reported at once, not just the first
-  rejects("variant has.*\n.*report_kernels must not repeat",
-          text = sub('"cam5", "cack")', '"cam5", "cam5")', sub('variant = "veg_ice_parts"', 'variant = "nope"', base_text, fixed = TRUE), fixed = TRUE))
+  refuses("variant has.*\n.*report_kernels must not repeat",
+          with_setting("analysis$forcing$report_kernels", c("hadgem", "cam5", "cam5"), with_setting("analysis$forcing$variant", "nope")))
 )
 
 # JSON for the manifests: full precision, one-element vectors kept as arrays, names kept,

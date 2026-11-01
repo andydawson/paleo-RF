@@ -6,16 +6,10 @@
 # (a kernel of 1), which is enough: script 8 multiplies all three columns by the same kernel.
 source("R/differences.R")
 source("R/forcing_components.R")
+source("tests/cell_fixture.R")   # cell(): a cell as script 7a builds it
 fails <- function(expr) inherits(try(expr, silent = TRUE), "try-error")
 same <- function(a, b) isTRUE(all.equal(a, b, tolerance = 1e-12))
 
-# A cell as script 7a builds it (as in tests/test_differences.R): glacier albedo 0.68 (fixed)
-# or 0.73 (month-by-month); the *_thresh glacier albedo is NA where the slice is vegetation.
-cell <- function(ice_frac, alb_veg, threshold = 0.5) {
-  is_veg <- !is.na(ice_frac) & ice_frac <= threshold
-  data.frame(ice_frac = ice_frac, alb_veg = alb_veg, ice_albedo_fixed = 0.68, ice_albedo_sc = 0.73,
-             alb_ice_thresh = ifelse(is_veg, NA, 0.68), alb_icesc_thresh = ifelse(is_veg, NA, 0.73))
-}
 # The pairs of several cells, with the three threshold columns renamed as script 8 names
 # them for a kernel ('test').
 pairs_of <- function(cells, method) {

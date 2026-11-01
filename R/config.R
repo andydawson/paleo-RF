@@ -57,10 +57,17 @@ load_config = function(path = config_path()) {
   if (!file.exists(path)) stop('config file not found: ', path, call. = FALSE)
   cfg = tryCatch(source(path, local = new.env(parent = baseenv()))$value,
                  error = function(e) stop('config file ', path, ' could not be read: ', conditionMessage(e), call. = FALSE))
-  errs = config_schema_errors(cfg, CONFIG_SCHEMA)
-  if (!length(errs)) errs = config_combination_errors(cfg)
+  errs = config_errors(cfg)
   if (length(errs)) stop('config file ', path, ':\n  ', paste(errs, collapse = '\n  '), call. = FALSE)
   cfg
+}
+
+# Every problem with a settings list: each key against the schema, then, once those pass,
+# the rules across keys. Empty if the settings are acceptable.
+config_errors = function(cfg) {
+  errs = config_schema_errors(cfg, CONFIG_SCHEMA)
+  if (!length(errs)) errs = config_combination_errors(cfg)
+  errs
 }
 
 # The configuration as one JSON string, for run manifests. Every number at full

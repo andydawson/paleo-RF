@@ -9,16 +9,10 @@
 # fixes the first two; the youngest-pair fault stays in both, because the readvance rule
 # itself is Andria's call (C2).
 source("R/differences.R")
+source("tests/cell_fixture.R")   # cell(): a cell as script 7a builds it
 fails <- function(expr) inherits(try(expr, silent = TRUE), "try-error")
 same <- function(a, b) isTRUE(all.equal(a, b, tolerance = 1e-12))
 
-# A cell as script 7a builds it: glacier albedo 0.68 (fixed) / 0.73 (scaled); the *_thresh
-# glacier albedo is NA where the slice counts as vegetation (ice fraction <= threshold).
-cell <- function(ice_frac, alb_veg, threshold = 0.5) {
-  is_veg <- !is.na(ice_frac) & ice_frac <= threshold
-  data.frame(ice_frac = ice_frac, alb_veg = alb_veg, ice_albedo_fixed = 0.68, ice_albedo_sc = 0.73,
-             alb_ice_thresh = ifelse(is_veg, NA, 0.68), alb_icesc_thresh = ifelse(is_veg, NA, 0.73))
-}
 diffs <- function(..., method = "legacy_components") { invisible(capture.output(r <- pair_albedo_differences(cell(...), 0.5, method))); r }
 
 # 1. Vegetation only: albedo 0.20 now, 0.25 before; younger minus older = -0.05.

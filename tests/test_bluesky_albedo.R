@@ -10,14 +10,16 @@ stopifnot(
   all(blue_sky(0.10, 0.30, seq(0, 1, 0.1)) >= 0.10 & blue_sky(0.10, 0.30, seq(0, 1, 0.1)) <= 0.30)
 )
 
-# Equation of time: about -6 min in mid-July and +16 min in early November; leap years use 366 days.
-eot_by_hand <- function(doy, n) { g <- 2 * pi / n * (doy - 1)
-  229.18 * (0.000075 + 0.001868 * cos(g) - 0.032077 * sin(g) - 0.014615 * cos(2 * g) - 0.040849 * sin(2 * g)) }
+# Equation of time: about -6 min in mid-July and +16 min in early November. Leap years use 366
+# days: on 31 December 2004 (day 366) the series gives -2.454694 min, where a 365-day year would
+# give -2.904169 (1 January's value); on 31 December 2005, -2.453458. These values were worked
+# outside R (Python) from the published Spencer series; NOAA's longer algorithm gives -3.19 and
+# -3.07 min, as close as the series is expected to be (within a minute).
 stopifnot(
   abs(equation_of_time(as.Date("2005-07-15")) - (-5.78)) < 0.01,
   abs(equation_of_time(as.Date("2005-11-03")) - 16.4) < 0.1,
-  near(equation_of_time(as.Date("2004-12-31")), eot_by_hand(366, 366)),
-  near(equation_of_time(as.Date("2005-12-31")), eot_by_hand(365, 365))
+  abs(equation_of_time(as.Date("2004-12-31")) - (-2.454694)) < 1e-6,
+  abs(equation_of_time(as.Date("2005-12-31")) - (-2.453458)) < 1e-6
 )
 
 # Diffuse fraction from made-up ERA5 values: everywhere f = 0.5 (ssrd 1000, fdir 500), except at
@@ -36,8 +38,7 @@ stopifnot(
   near(diffuse_fraction(era5, -100.1, 45.1, as.Date("2005-07-15")), 0.25),   # nearest quarter-degree point
   near(diffuse_fraction(era5, -100.2, 45.1, as.Date("2005-07-15")), 0.5),    # nearer to -100.25
   near(diffuse_fraction(era5, -172, 45, as.Date("2005-12-31")), 0.25),
-  is.na(diffuse_fraction(era5, -99.75, 45, as.Date("2005-07-15"))),
-  near((1000 - 750) / 1000, 0.25)
+  is.na(diffuse_fraction(era5, -99.75, 45, as.Date("2005-07-15")))
 )
 
 # Lost retrievals: a warning only for tiles where more than 0.1% found no diffuse fraction.
