@@ -291,7 +291,9 @@ cal_sims_quants = cal_sims %>%
             alb_hi = quantile(alb_pred, c(0.975), na.rm=TRUE),
             .groups = "keep")
 
-p = ggplot(data=cal_sims_quants) +
+# Model against data for the seven experiment fits, drawn three times: by month, by model,
+# and by month and model.
+p_experiments = ggplot(data=cal_sims_quants) +
   geom_point(aes(x=alb_data, y=alb_mean), size=2, alpha=0.3) +
   geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.3) +
   geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2, alpha=0.4) +
@@ -300,35 +302,10 @@ p = ggplot(data=cal_sims_quants) +
   coord_fixed() +
   theme_bw(18) +
   xlab('albedo (data)') +
-  ylab('albedo (model)') +
-  facet_wrap(~month)
-print(p)
-
-p = ggplot(data=cal_sims_quants) +
-  geom_point(aes(x=alb_data, y=alb_mean), size=2, alpha=0.3) +
-  geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.3) +
-  geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2, alpha=0.4) +
-  xlim(c(0,1)) +
-  ylim(c(0,1)) +
-  coord_fixed() +
-  theme_bw(18) +
-  xlab('albedo (data)') +
-  ylab('albedo (model)') +
-  facet_wrap(~model)
-print(p)
-
-p = ggplot(data=cal_sims_quants) +
-  geom_point(aes(x=alb_data, y=alb_mean), size=2, alpha=0.3) +
-  geom_linerange(aes(x=alb_data, ymin=alb_lo, ymax=alb_hi), alpha=0.3) +
-  geom_abline(slope=1, intercept=0, colour="red", lwd=1, lty=2, alpha=0.4) +
-  xlim(c(0,1)) +
-  ylim(c(0,1)) +
-  coord_fixed() +
-  theme_bw(18) +
-  xlab('albedo (data)') +
-  ylab('albedo (model)') +
-  facet_grid(month~model)
-print(p)
+  ylab('albedo (model)')
+print(p_experiments + facet_wrap(~month))
+print(p_experiments + facet_wrap(~model))
+print(p_experiments + facet_grid(month~model))
 
 cal_sims$alb_error = cal_sims$alb_pred - cal_sims$alb_data
 
