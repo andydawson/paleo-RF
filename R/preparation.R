@@ -4,7 +4,10 @@
 # note "not sure if should use median" (question A1). The summary is now a setting
 # (config.R, analysis$land_cover$reduction), and the reduction a function with a stated
 # contract, so the median can be run without editing the script.
-# Issue I08 adds the other preparation steps of scripts 1 to 3 here.
+# Also here: the checks of the fractions, the ice-cap cells left out of the calibration
+# (cells_in_polygons), and script 2's reading of the MODIS albedo cell table (config.R
+# analysis$albedo, the current setting since 2026-10-29). The rest of scripts 1 to 3 stays in
+# the scripts (the extraction issues were closed on 2026-10-13/14: scripts stay flat).
 
 # The month names (MONTHS), used by the albedo functions below.
 source('R/calendar.R')

@@ -10,9 +10,9 @@
 #   Rscript tools/prepare_bluesky_albedo.R cells                      # the cell table, at the end
 #   Rscript tools/prepare_bluesky_albedo.R test all                   # July 2005 check (see below)
 #
-# It writes data/albedo_modis_cells.csv (committed), for script 2 to read when config.R chooses
-# the rebuilt albedo (not wired into script 2 yet); Andria's raster
-# data/blue_sky_monthly_2000-2009.tif stays the legacy setting. Settings decided by Chris on
+# It writes data/albedo_modis_cells.csv (committed), which script 2 reads when config.R chooses
+# the rebuilt albedo (analysis$albedo$source = "modis_cells", the current setting since
+# 2026-10-29); Andria's raster data/blue_sky_monthly_2000-2009.tif stays the legacy setting. Settings decided by Chris on
 # 2026-10-15 (questions B2c, B5) and revised on 2026-10-20 after two independent reviews of the
 # build. Where a setting is our own judgement rather than published practice, it says so:
 #
