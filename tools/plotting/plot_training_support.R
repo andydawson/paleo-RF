@@ -39,12 +39,11 @@ library(ggplot2)
 library(dplyr)
 library(patchwork)
 
-training = read_input(run, path_file(paths, 'calibration_prediction_fit', month = 'may'))$model[, c('x', 'y', 'OL', 'ET', 'ST')]
-hull = training_hull(training)
-
-# Cover does not depend on the month: one month's rows hold every cell and slice once.
-hindcast = read_input(run, path_file(paths, 'prediction_point'))
-hindcast = hindcast[hindcast$month == 'may' & hindcast$year != 50, c('year', 'x', 'y', 'OL', 'ET', 'ST')]   # 50 BP: today
+support_inputs = read_training_support_inputs(run)   # R/training_support.R
+training = support_inputs$fit$model[, c('x', 'y', 'OL', 'ET', 'ST')]
+hull     = support_inputs$hull
+hindcast = support_inputs$cover
+hindcast = hindcast[hindcast$year != 50, c('year', 'x', 'y', 'OL', 'ET', 'ST')]   # 50 BP: today
 hindcast = cbind(hindcast, training_support(hindcast, hull))
 n_slices = n_distinct(hindcast$year)
 

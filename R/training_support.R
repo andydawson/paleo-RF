@@ -2,9 +2,10 @@
 # how far outside.
 #
 # Why a function: the calibration model is fitted on today's cover mixes, so a prediction
-# for a past mix unlike any modern one is an extrapolation. Two diagnostic figures
-# (tools/plotting/plot_training_support.R and plot_forcing_vs_training_support.R) flag such
-# mixes; they must flag the same cells, so the rule is defined once, here.
+# for a past mix unlike any modern one is an extrapolation. Three diagnostic figures
+# (tools/plotting/plot_training_support.R, plot_forcing_vs_training_support.R and
+# plot_northeast_cover_and_location.R) flag such mixes; they must flag the same cells, so
+# the rule, and the reading of the inputs it is applied to, are defined once, here.
 #
 # The rule. The three cover fractions (OL open land, ET evergreen, ST summergreen) sum to
 # one, so a mix is a point on the cover triangle. The training range is the convex hull of
@@ -48,4 +49,16 @@ training_support = function(cover, hull) {
   if (any(outside))
     distance_outside[outside] = as.numeric(st_distance(points[outside, ], st_cast(st_sfc(hull_polygon), 'LINESTRING')))
   data.frame(outside = outside, distance_outside = distance_outside)
+}
+
+# The inputs the three diagnostic figures share, read through the run (R/run_manifest.R) so
+# its manifest lists them: May's prediction fit (script 4), whose fitting data are the
+# training mixes; their hull; and the past cover of every cell and slice, May's rows of
+# script 6's merged prediction table (cover does not depend on the month, so one month's
+# rows hold every cell and slice once). Each figure filters and plots these itself. Written
+# once because the three tools had each copied it (review of 1 November 2026, finding 15).
+read_training_support_inputs = function(run) {
+  fit   = read_input(run, path_file(run$paths, 'calibration_prediction_fit', month = 'may'))
+  cover = read_input(run, path_file(run$paths, 'prediction_point'))
+  list(fit = fit, hull = training_hull(fit$model), cover = cover[cover$month == 'may', ])
 }

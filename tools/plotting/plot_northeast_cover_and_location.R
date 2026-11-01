@@ -54,7 +54,8 @@ REGION = 'Northeast (hemlock box)'
 # 0.50 in the 18 October run) on both sides, so the reader sees how each model behaves there.
 EVERGREEN_STEPS = seq(0.05, 0.65, by = 0.01)
 
-with_location    = read_input(run, path_file(paths, 'calibration_prediction_fit', month = 'may'))
+support_inputs   = read_training_support_inputs(run)   # R/training_support.R
+with_location    = support_inputs$fit
 without_location = read_input(run, path_file(paths, 'calibration_spatial', month = 'may', model = 'cover_elev'))
 # The caption says both fits use the same cells: compare the data, not only the row count.
 fitting_columns = c('may', 'elev', 'OL', 'ET', 'ST')
@@ -64,13 +65,11 @@ model_label = CALIBRATION_MODELS[[cfg$analysis$calibration$model_id]]$label
 
 today = with_location$model
 today$albedo = today$may
-hull = training_hull(today)
+hull = support_inputs$hull
 today_ne = today[region_of(today$x, today$y) == REGION, ]
 
-# Cover does not depend on the month: one month's rows hold every cell and slice once.
-hindcast = read_input(run, path_file(paths, 'prediction_point'))
-hindcast = hindcast[hindcast$month == 'may' & region_of(hindcast$x, hindcast$y) == REGION,
-                    c('year', 'x', 'y', 'elev', 'OL', 'ET', 'ST')]
+hindcast = support_inputs$cover
+hindcast = hindcast[region_of(hindcast$x, hindcast$y) == REGION, c('year', 'x', 'y', 'elev', 'OL', 'ET', 'ST')]
 at_6ka   = hindcast[hindcast$year == 6000, ]
 at_4.5ka = hindcast[hindcast$year == 4500, ]
 at_4.5ka = at_4.5ka[match(paste(at_6ka$x, at_6ka$y), paste(at_4.5ka$x, at_4.5ka$y)), ]

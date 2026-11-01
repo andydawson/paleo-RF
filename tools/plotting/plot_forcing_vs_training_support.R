@@ -45,13 +45,9 @@ library(dplyr)
 
 FORCING_COLUMN = 'rf_hadgem_veg_part'
 
-training = read_input(run, path_file(paths, 'calibration_prediction_fit', month = 'may'))$model
-hull = training_hull(training)
-
-# Cover does not depend on the month: one month's rows hold every cell and slice once.
-cover = read_input(run, path_file(paths, 'prediction_point'))
-cover = cover[cover$month == 'may', ]
-cover$outside = training_support(cover, hull)$outside
+support_inputs = read_training_support_inputs(run)   # R/training_support.R
+cover = support_inputs$cover
+cover$outside = training_support(cover, support_inputs$hull)$outside
 outside_at = setNames(cover$outside, paste(cover$year, cover$x, cover$y))
 
 forcing = assign_forcing_periods(read_input(run, path_file(paths, 'forcing')), cfg$analysis$coarse$ages, cfg$analysis$ages)
