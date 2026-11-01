@@ -20,10 +20,11 @@ latitude_band_labels <- function(edges) paste0(head(edges, -1), '-', edges[-1], 
 # with the months and bands kept apart. Output, one row per period, month and band:
 #   global_equiv_month     sum over the band's cells of rf x area / Earth's area: that
 #                          month's forcing as a global equivalent, W m-2. Summed over months
-#                          it is 12 times script 9's annual figure only where every cell has
-#                          all twelve months; use contribution_to_annual to add up.
-#   contribution_to_annual the month's part of script 9's annual figure, W m-2: script 9
-#                          averages each cell over its months with a forcing value (A6), so
+#                          it is n times script 9's figure (n months run) only where every
+#                          cell has all n; use contribution_to_annual to add up.
+#   contribution_to_annual the month's part of script 9's figure, W m-2 (the mean over the
+#                          analysis months: annual only when all twelve run; the name is
+#                          kept so the table does not change). Script 9 averages each cell over its months with a forcing value (A6), so
 #                          each cell-month counts rf x area / Earth's area / that number of
 #                          months. Summed over months and bands it gives script 9's
 #                          global_equiv exactly.

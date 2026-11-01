@@ -92,7 +92,9 @@
 #     different question ("typical step") and would not be comparable with a
 #     modern 1750-to-2019 forcing.
 #
-# A6. Months. Averaged with equal weight to an annual mean, after the period sum.
+# A6. Months. Averaged with equal weight over the months of config.R (analysis$months),
+#     after the period sum: an annual mean only when all twelve run; otherwise a mean of
+#     those months alone, and the figures name them (R/calendar.R, months_label()).
 #     Equal weighting ignores that months differ in length and in insolation.
 #     NB months whose kernel is NA (CACK, Dec/Jan north of 69 N) drop out of the
 #     mean, whereas HadGEM3 and CAM5 store 0 there and stay in; the three kernels
@@ -235,6 +237,9 @@ variant_labels = c(veg_ice_thresh   = 'total, all-or-nothing ice, fixed glacier 
                    veg_icesc_thresh = 'total, all-or-nothing ice, month-by-month glacier albedo',
                    veg_icesc_parts  = 'total, partial ice, month-by-month glacier albedo')
 headline_line = paste('Ice method:', variant_labels[[cfg$analysis$forcing$variant]])
+# The figures are means over the analysis months (A6); say which when they are not all twelve.
+if (months_label(cfg$analysis$months) != 'annual')
+  headline_line = paste0(headline_line, '; mean of ', months_label(cfg$analysis$months), ' only, not annual')
 
 # Layout matched to slide 18 of dawson_EGU.pptx (ppt/media/image37.png):
 # horizontal bars, two stacked panels sharing one x axis, panel labels in strips
@@ -305,10 +310,15 @@ ggsave(path_figure(paths, 'forcing_barplot_slide18.png'), p_slide_lab, width = 8
 kernel_comparison = forcing_by_period %>%
   transmute(kernel, label = sub(' ka$', '', as.character(period)), value = global_equiv)
 kernel_comparison$label = factor(kernel_comparison$label, levels = rev(sub(' ka$', '', labels_period)))
-# Labels say which kernel variable was read (R/kernels.R). The 'factor of two'
-# title holds only when the kernels mix clear-sky and all-sky, as in the original analysis.
+# Labels say which kernel variable was read (R/kernels.R). The subtitle states, from the
+# settings, which reported kernels are clear-sky and which all-sky; it no longer infers
+# "about a factor of two" or "CACK is the only all-sky kernel" from a mix of sky types,
+# which held only for the original choice of variables (review of 1 November 2026,
+# finding 8).
 kernel_rows = kernels_read(cfg)
-mixed_sky = length(unique(kernel_rows$sky)) > 1
+reported_rows = kernel_rows[names(FORCING_COLUMNS), ]
+kernel_names_by_sky = tapply(sub(' \\(.*', '', reported_rows$label), reported_rows$sky, paste, collapse = ', ')
+sky_line = paste(sprintf('%s-sky: %s', names(kernel_names_by_sky), kernel_names_by_sky), collapse = '; ')
 p_kern = ggplot(kernel_comparison, aes(x = label, y = value, fill = kernel)) +
   geom_col(position = position_dodge(0.8), width = 0.7) +
   geom_hline(yintercept = 0, linewidth = 0.3) +
@@ -316,9 +326,8 @@ p_kern = ggplot(kernel_comparison, aes(x = label, y = value, fill = kernel)) +
   scale_fill_manual(values = c(hadgem='#1b6ca8', cam5='#5fa8d3', cack='#f2a65a'),
                     labels = c(cack=kernel_rows['cack', 'label'], cam5=kernel_rows['cam5', 'label'],
                                hadgem=kernel_rows['hadgem', 'label']), name = NULL) +
-  labs(title = if (mixed_sky) 'Kernel choice moves the answer by about a factor of two' else 'Forcing by kernel',
-       subtitle = paste0(if (mixed_sky) 'see C3 and C4; CACK is the only all-sky kernel of the three' else 'all three kernels all-sky; see C3 and C4',
-                         '\n', headline_line),
+  labs(title = 'Forcing by kernel',
+       subtitle = paste0(sky_line, '; see C3 and C4\n', headline_line),
        x = 'time period (k years)', y = expression('radiative forcing ('*W/m^2*')')) +
   theme_bw(base_size = 12) + theme(panel.grid.minor = element_blank())
 ggsave(path_figure(paths, 'forcing_barplot_kernel_spread.pdf'), p_kern, width = 8, height = 5)

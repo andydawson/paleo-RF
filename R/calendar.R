@@ -28,6 +28,11 @@ check_months <- function(months) {
 # which would overwrite the function on the first iteration.
 month_to_number <- function(month) match(check_months(month), MONTHS)
 
+# What a mean over the analysis months is, for labels: "annual" only when all twelve months
+# run, otherwise the months themselves, e.g. "dec/jan/feb/mar". Scripts 9 and 10 called any
+# such mean "annual" (review of 1 November 2026, finding 8).
+months_label <- function(months) if (setequal(months, MONTHS)) "annual" else paste(check_months(months), collapse = "/")
+
 # Labels for the coarse time slices, built from their ages in years BP so a change of
 # ages cannot leave the labels behind. Scripts 7, 8 and 9 had the
 # same seven period labels typed out five times.
