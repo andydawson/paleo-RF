@@ -257,3 +257,26 @@ the any-quality and no-sun-angle-rule versions as sensitivities, and a control o
    cells it is about 0.92). It will count only observed cells, for both albedo sources.
 
 The cell mean over land pixels in place of the centre pixel is item 5 of section 2.
+
+## 6. Which interval brackets the hemlock decline in your reconstruction?
+
+*Raised 2 November 2026 by Chris's question whether forcing over 6 to 4.5 ka is right.*
+
+**What we do.** The pipeline computes forcing between consecutive 500-year slices and adds the
+steps within each reporting period (scripts 7a, 8 and 9), so the 4-6 ka bar is the change from 6 to
+4 ka. For the northeast we also look at 6 to 4.5 ka on its own (the diagnostic figure of 28 October,
+`tools/plotting/plot_northeast_cover_and_location.R`), chosen to bracket the decline at about 5.5 ka
+and the low that follows; section 1 above used 6 to 4 ka.
+
+**Why it matters.** The decline is abrupt and the slices are 500 years apart, so the interval we
+choose decides how much of the change, and of any recovery, the northeast result includes. The
+reporting period 4-6 ka also mixes the decline with other changes in those two thousand years.
+
+**What we need from you.** In your reconstruction, which slices bracket the decline and the low
+before any recovery: 6 to 4.5 ka, 6 to 5 ka, or another pair? (The binning of ages near slice
+boundaries, question D2 of the earlier file, bears on this too.)
+
+*Also for information (2 November):* Chris has asked for a cross-validation that chooses the albedo
+model on its accuracy for cover mixes outside today's range, the northeast's case among them; the
+design and protocol are on branch `cv-design` (`docs/cc/2026-11-02_cv_protocol.md`). The hemlock
+result is reported after the choice and is not used to make it.
