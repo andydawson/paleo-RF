@@ -48,3 +48,13 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   June and October, with July, converged in 86 steps, as the control).
 - Run 8's calibration table in all three parts has MD5 8119f5066dc82d79571e94f7a6e791e6, the 18 October run's, as
   required: the raster source is reproduced exactly by the refit code.
+
+## The queue for the remaining runs (Chris, 2 November: keep things running until all the jobs are done)
+- Order as decided: run 8's pipeline; runs 2, 3, 4 (fitting in three four-month parts each), 5 and 6
+  (November-February: two two-month parts), 7 (snowy, ten months: jan-apr, may/jun/sep, oct-dec). One run's
+  fitting at a time; up to four jobs at once; each run's pipeline (script 6 included) after the previous
+  run's pipeline. Each job runs on its own documentation-only commit below.
+- Settings checked with the configuration's own validation on 2 November (all valid). Calibration rows per
+  month, worked out with script 2's own function on run 1's cells (the main run's counts match run 1's log):
+  smallest are run 2 January 1227, run 6 January 1301, run 7 September 1091 (July and August left out);
+  every fitted month is above the largest model's 748 coefficients.
