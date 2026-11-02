@@ -80,3 +80,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - run7-snowy-fit-jan-apr: a documentation-only commit so that it gets its own worktree.
 - run7-snowy-fit-may-jun-sep: a documentation-only commit so that it gets its own worktree.
 - run7-snowy-fit-oct-dec: a documentation-only commit so that it gets its own worktree.
+- run7-snowy: a documentation-only commit so that it gets its own worktree.
