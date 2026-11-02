@@ -53,12 +53,16 @@ stage_holdouts = function(run_dir, paths) {
   diffs = readRDS(path_file(paths, 'albedo_differences'))
   slices = sort(unique(paleo$ages))
 
-  # Each past cell-slice's area and ice fraction: script 7a's pairs give the younger end, and the
-  # oldest slice is the older end of the last pair. Ice does not depend on the month.
+  # Each past cell-slice's area and ice fraction: a slice's own value is the younger end of its pair
+  # in script 7a's table, and the oldest slice's is the older end of the last pair. Ice does not
+  # depend on the month. Cell-slices without an ice fraction (script 7a leaves a few missing) get
+  # no weight, and are counted.
   d1 = diffs[diffs$month == diffs$month[1], ]
-  ice = unique(rbind(data.frame(x = d1$x, y = d1$y, ages = d1$year, area = as.numeric(d1$area), ice = d1$ice_frac_young),
-                     data.frame(x = d1$x, y = d1$y, ages = slices[match(d1$year, slices) + 1], area = as.numeric(d1$area), ice = d1$ice_frac_old)))
-  hindcast = merge(paleo[paleo$ages != min(slices), ], ice, by = c('x', 'y', 'ages'))
+  oldest = d1[d1$year == slices[length(slices) - 1], ]
+  ice = rbind(data.frame(x = d1$x, y = d1$y, ages = d1$year, area = as.numeric(d1$area), ice = d1$ice_frac_young),
+              data.frame(x = oldest$x, y = oldest$y, ages = max(slices), area = as.numeric(oldest$area), ice = oldest$ice_frac_old))
+  hindcast = merge(paleo[paleo$ages != min(slices), ], ice[!is.na(ice$ice), ], by = c('x', 'y', 'ages'))
+  if (anyDuplicated(hindcast[, c('x', 'y', 'ages')])) stop('a past cell-slice has two ice fractions')
   cat(sprintf('past cell-slices with an area and ice fraction (script 7a): %d of %d\n',
               nrow(hindcast), sum(paleo$ages != min(slices))))
   # Target weight (protocol, section 2): slices and months equally; within a slice, area x ice-free.
