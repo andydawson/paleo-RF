@@ -92,5 +92,5 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - Rerun from the start under new names (the verification tool refuses an existing run folder): specs
   `2026-11-02_run8-raster-fit-{jan-apr,may-aug,sep-dec}-2.R` and `2026-11-02_run1-model7-check-2.R`, identical
   to the first ones except the name; same commits, cores and settings. `run8-raster` now copies the fits from
-  the `-2` folders. Started about 12:45 UTC.
+  the `-2` folders. Started 12:26-12:33 UTC (cores 8-31 and 32-39 as before).
 - The queue scripts now live outside the temporary folder (`../refit-queue/`), so a reboot no longer loses them.
