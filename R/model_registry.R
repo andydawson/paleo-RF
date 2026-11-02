@@ -47,10 +47,30 @@ CALIBRATION_MODELS = list(
   cover         = list(label = 'model: tp(OL, ET, ST)',
                        rhs = ~ s(OL, ET, ST, bs = "tp", k = 200)),
   cover_elev    = list(label = 'model: tp(OL, ET, ST) + elev',
-                       rhs = ~ s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)))
+                       rhs = ~ s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)),
+  # Four more candidates for the cross-validation that chooses the model (protocol of
+  # 2 November 2026, docs/cc/2026-11-02_cv_protocol.md): cover as straight lines on the logit
+  # scale (OL is the reference fraction), with and without location; and model 8 with a
+  # coarser location term or a smaller cover term. The smaller cover term is a smooth of the
+  # position on the cover triangle (R/training_support.R), which treats the three cover
+  # exchanges alike; OL is left out because it is 1 - ET - ST.
+  lin_cover        = list(label = 'model: (x,y) + elevation + ET + ST',
+                          rhs = ~ s(x, y, bs = "gp", k = 500) + s(elev, k = 50) + ET + ST),
+  lin_cover_noloc  = list(label = 'model: elevation + ET + ST',
+                          rhs = ~ s(elev, k = 50) + ET + ST),
+  mod8_coarse_loc  = list(label = 'model 8 with a coarse location term (k = 30)',
+                          rhs = ~ s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)),
+  mod8_small_cover = list(label = 'model 8 with a smaller cover term (triangle position, k = 50)',
+                          rhs = ~ s(x, y, bs = "gp", k = 500) + s(elev, k = 50) +
+                                  s(I(ST + ET / 2), I(ET * sqrt(3) / 2), k = 50)))
 
 LADDER_MODELS  = paste0('mod', 1:8)
-SPATIAL_MODELS = setdiff(names(CALIBRATION_MODELS), LADDER_MODELS)
+# Written out, so that a model added for the cross-validation is not fitted by script 4.
+SPATIAL_MODELS = c('spatial_elev_cover', 'spatial', 'elev', 'spatial_elev', 'spatial_cover', 'cover', 'cover_elev')
+# The cross-validation's thirteen candidates; the baselines (no cover term) are scored but
+# never chosen, because they predict no change from vegetation by construction.
+CV_MODELS    = c(LADDER_MODELS, 'cover_elev', 'lin_cover', 'lin_cover_noloc', 'mod8_coarse_loc', 'mod8_small_cover')
+CV_BASELINES = c('mod1', 'mod2')
 
 # The predictors any calibration model uses (x, y, elev, OL, ET, ST).
 CALIBRATION_PREDICTORS = unique(unlist(lapply(CALIBRATION_MODELS, function(model) all.vars(model$rhs))))
