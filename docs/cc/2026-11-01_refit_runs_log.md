@@ -77,3 +77,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - run6-winter-snowfree-fit-jan-feb: a documentation-only commit so that it gets its own worktree.
 - run6-winter-snowfree-fit-nov-dec: a documentation-only commit so that it gets its own worktree.
 - run6-winter-snowfree: a documentation-only commit so that it gets its own worktree.
+- run7-snowy-fit-jan-apr: a documentation-only commit so that it gets its own worktree.
