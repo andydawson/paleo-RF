@@ -60,3 +60,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   every fitted month is above the largest model's 748 coefficients.
 - run8-raster: a documentation-only commit so that it gets its own worktree.
 - run2-snowfree-fit-jan-apr: a documentation-only commit so that it gets its own worktree.
+- run2-snowfree-fit-may-aug: a documentation-only commit so that it gets its own worktree.
