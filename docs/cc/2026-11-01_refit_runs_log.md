@@ -58,3 +58,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   month, worked out with script 2's own function on run 1's cells (the main run's counts match run 1's log):
   smallest are run 2 January 1227, run 6 January 1301, run 7 September 1091 (July and August left out);
   every fitted month is above the largest model's 748 coefficients.
+- run8-raster: a documentation-only commit so that it gets its own worktree.
