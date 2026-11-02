@@ -52,5 +52,5 @@ Only explicit choices are recorded as Chris's decisions.
 
 ## Next
 
-A dated protocol document, written before any code, stating every rule and number the reconciled design leaves
-to be fixed in advance; brought to Chris for approval.
+The protocol, approved by Chris on 2 November with its four open points (run 1 data; weights by area times
+the ice-free fraction; 5 x 5 degree blocks; fits after the refit queue): `2026-11-02_cv_protocol.md`.

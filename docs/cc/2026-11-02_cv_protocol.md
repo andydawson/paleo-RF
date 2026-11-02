@@ -1,25 +1,25 @@
-# Cross-validation protocol for choosing the albedo model: DRAFT for Chris's approval (2 November 2026)
+# Cross-validation protocol for choosing the albedo model: approved by Chris (2 November 2026)
 
 **Benefit to the paper:** the albedo model is chosen on measured accuracy for land-cover mixes beyond the modern
 range, which is where the hindcast extrapolates, so the paper can state that accuracy.
 
 Built from Chris's decisions (`2026-11-02_cv_design_decisions.md`) and Astra's reconciled design
-(`2026-11-02_cv_design_reconciliation_codex_gpt6astra.md`, "revised design"). Items marked **[to approve]** are
-not yet decided by Chris. Once approved, this protocol is frozen: nothing in it changes after the first model
+(`2026-11-02_cv_design_reconciliation_codex_gpt6astra.md`, "revised design"). Chris approved the four open points on
+2 November (data, weights, block size, scheduling). This protocol is frozen: nothing in it changes after the first model
 score is seen. Known before freezing, and stated here so no one can say it was hidden: on the 18 October raster
 run, the model without the location term (`cover_elev`) gave the opposite northeast sign to model 8 (changelog,
 northeast entry).
 
 ## 1. Inputs
 - Calibration table and settings of the main refit (run 1: MODIS cells, all days, full_75 version), code at
-  the commit the protocol is frozen on. **[to approve]**
+  the commit the protocol is frozen on.
 - Hindcast cover: the configured time slices except the modern 50 BP slice.
 
 ## 2. What the folds must imitate (the target)
 - The hindcast cell-slices whose cover mix lies outside that month's training range (outside the convex hull of
   the training mixes on the cover triangle, `R/training_support.R`).
 - Weights: each historical slice and each month equally; within a slice, by cell area times the ice-free
-  fraction (ice-covered cells carry little vegetation albedo). **[to approve]**
+  fraction (ice-covered cells carry little vegetation albedo).
 
 ## 3. Holdouts (made once, before any fit, by a seeded script)
 1. **Cover distance:** distance on the existing cover triangle (`cover_triangle_xy()`); 0.10 means ten
@@ -33,7 +33,7 @@ northeast entry).
    80th fails the feasibility rules below; that choice is made from the cover data alone.
 4. **No geographic buffers, no reserved blocks.**
 5. **Geographic blocks**, used only to measure uncertainty (not to separate training from validation): squares
-   of 5 x 5 one-degree cells. **[to approve: block size]**
+   of 5 x 5 one-degree cells.
 
 ## 4. Feasibility, declared before any fit
 - For each month and holdout: training rows at least the coefficient count of the largest candidate (script 4's
@@ -97,5 +97,5 @@ northeast entry).
 ## 9. Compute
 - At most 3 holdouts x 13 candidates x 12 months = 468 fits, plus 24 for the in-range holdout and 24 full-data
   refits, before retries. The first batch is measured before the rest is scheduled.
-- Shares the workstation with the refit queue: within the existing limit of four jobs at once. **[to approve:
-  after the refit queue, or interleaved]**
+- Shares the workstation with the refit queue: the cross-validation fits start after the refit queue has finished, within the
+  existing limit of four jobs at once.
