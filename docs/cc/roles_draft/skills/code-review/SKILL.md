@@ -18,7 +18,9 @@ herself after hand-over.
    from the worktree: `codex exec -m gpt-6-astra -c 'model_reasoning_effort="max"' --sandbox read-only -o <result> - < <prompt>`.
    Chris may ask for another effort, or for Fable (the science-reviewer role) as a second,
    independent reviewer; then one reconciliation round, as for change reviews.
-3. Read-only: the reviewer changes nothing and runs no pipeline script.
+3. Read-only: the reviewer changes nothing and runs no R or pipeline script. Astra reads files
+   through the shell, so its prompt must say that read-only commands (git log/diff/show, rg, grep,
+   cat, sed -n, ls, wc) are allowed; otherwise a role's "never run any command" stops it reading.
 
 ## Checklist (the reviewer covers every item)
 1. **Simple and concise.** Shortest plain code for each job. Bloat: comments that restate code
