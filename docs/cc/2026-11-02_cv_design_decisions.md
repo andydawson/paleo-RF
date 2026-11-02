@@ -1,0 +1,56 @@
+# Cross-validation design for the albedo model: Chris's decisions (2 November 2026)
+
+**Benefit to the paper:** the albedo model is chosen on measured skill where the hindcast needs it, on land-cover
+mixes beyond the modern range and on how albedo changes with cover, so the paper can state that skill (or its
+absence) instead of only flagging the extrapolated cells.
+
+Sources, all on branch `cv-design`: the brief (`2026-11-02_cv_design_brief.md`); Astra's design
+(`2026-11-02_cv_design_codex_gpt6astra.md`, GPT-6-Astra, ultra effort); Fable's independent review
+(`2026-11-02_cv_design_review_fable.md`); Astra's reconciliation
+(`2026-11-02_cv_design_reconciliation_codex_gpt6astra.md`); Astra on scoring change
+(`2026-11-02_cv_design_change_score_brief.md`, `2026-11-02_cv_design_change_score_codex_gpt6astra.md`).
+Only explicit choices are recorded as Chris's decisions.
+
+## Decided by Chris
+
+1. **Aim (brief).** Cross-validation that handles space correctly and makes each validation fold differ in land
+   cover from its training data, so that it imitates the hindcast's departure from the modern data; used to
+   choose the model and to show the effect on the hindcast.
+2. **The hemlock-decline sign is an outcome, not a target.** Folds, candidates and the selection rule are fixed
+   before any score is seen; the northeast 6 to 4.5 ka sign is reported afterwards and never used to choose.
+3. **Scope:** the folds and the model choice (candidates beyond today's eight allowed).
+4. **Web search** allowed for the design work.
+5. **Independent review:** Fable reviewed Astra's design; Astra answered in one reconciliation round.
+6. **Skill inside the training range is reported, not mixed into the selection score.**
+7. **Accepted, as agreed by both reviewers after reconciliation:** no geographic buffers (the hindcast predicts
+   at the training cells' own locations); models 1 and 2 (no cover term) are baselines only, never chosen; two
+   added candidates (model 8 with a coarser location term, and model 8 with a smaller two-dimensional cover
+   term); no reserved assessment blocks (the result is a selection score); simplicity order fixed in advance by
+   coefficient count; the one-standard-error rule only with at least 10 geographic blocks per direction;
+   testable months and directions declared from the data before any fit.
+8. **The score that chooses the model: error in predicted albedo** on the withheld cover-tail cells (Chris,
+   later on 2 November: "for simplicity at this stage, we should focus on getting accurate albedo predictions,
+   and then maybe discuss change and the literature around it in the discussion"). This replaces his earlier
+   choice the same day of Astra's paired-change rule (matched pairs of withheld cells, with albedo error as the
+   fallback); no pair score is built for now. For the paper's discussion: judging models on change rather than
+   state (Rapacciuolo et al. 2012, PLoS ONE, 10.1371/journal.pone.0040212; Rapacciuolo et al. 2014, Methods in
+   Ecology and Evolution, 10.1111/2041-210X.12181; Piirainen et al. 2023, Diversity and Distributions,
+   10.1111/ddi.13687), choosing models on matched held-out differences (Rolling and Yang 2014, JRSS B,
+   10.1111/rssb.12043) and judging albedo differences from spatial contrasts (Lejeune et al. 2020, Earth System
+   Dynamics, 10.5194/esd-11-1209-2020); identities checked by Astra, not yet by the reference audit.
+
+## Filed for future work (Chris: drop for now)
+
+- **Scoring predicted change with matched pairs of withheld cells** (Fable; Astra's revised rule), as above.
+- **Testing against real change in the satellite era.** Score the model on 1-degree cells whose land cover
+  really changed (harvest, fire, regrowth) during the MODIS years, against the observed albedo change
+  corrected with nearby unchanged cells (as in Wang, Yue and Luyssaert 2023). Needs new cover data mapped to the
+  pollen cover types (US annual NLCD, the Canadian annual forest series, or boreal canopy and deciduous
+  fractions; not MODIS's own land-cover labels, which their producers advise against differencing) and
+  before-and-after albedo. Not known whether enough cells changed enough. Astra's notes:
+  `2026-11-02_cv_design_change_score_codex_gpt6astra.md`, section 3.
+
+## Next
+
+A dated protocol document, written before any code, stating every rule and number the reconciled design leaves
+to be fixed in advance; brought to Chris for approval.
