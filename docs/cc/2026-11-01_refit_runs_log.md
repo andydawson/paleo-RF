@@ -81,3 +81,16 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - run7-snowy-fit-may-jun-sep: a documentation-only commit so that it gets its own worktree.
 - run7-snowy-fit-oct-dec: a documentation-only commit so that it gets its own worktree.
 - run7-snowy: a documentation-only commit so that it gets its own worktree.
+
+## Power cut, 2 November about 12:15 UTC
+- The power cut stopped the four running jobs part-way: run 8's fitting (January-February, May-July and
+  September-October done; March, August and November part-fitted) and the model 7 check (January and February
+  done). None finished, so none has a report; their folders are kept as they are, unused.
+- Partial model 7 check, from its log (`f44881b/.rundirs/run1-model7-check/checks.log`): at 2,000 steps
+  January's refit stopped after 753 steps with AIC 2.2 lower than the saved 500-step fit, and February's after
+  639 steps with the same AIC; fitted values moved by at most 4e-5. The rerun repeats every month.
+- Rerun from the start under new names (the verification tool refuses an existing run folder): specs
+  `2026-11-02_run8-raster-fit-{jan-apr,may-aug,sep-dec}-2.R` and `2026-11-02_run1-model7-check-2.R`, identical
+  to the first ones except the name; same commits, cores and settings. `run8-raster` now copies the fits from
+  the `-2` folders. Started about 12:45 UTC.
+- The queue scripts now live outside the temporary folder (`../refit-queue/`), so a reboot no longer loses them.
