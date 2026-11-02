@@ -1,0 +1,138 @@
+# Cross-validation that chooses the albedo model on its accuracy for land-cover mixes beyond the
+# modern range: the protocol Chris approved on 2 November 2026 (docs/cc/2026-11-02_cv_protocol.md).
+#
+# Why: the hindcast predicts albedo for past cover mixes, some of them outside the range of the
+# modern (training) mixes, the northeast's high evergreen cover most of all. Ordinary or spatial
+# cross-validation tests predictions for mixes like the training ones; here each holdout withholds,
+# everywhere, the far end of a direction in which past mixes leave the modern range, so the model is
+# scored on mixes outside its own training range, as the hindcast is. No geographic buffer: the
+# hindcast predicts at the training cells' own locations (protocol, section 3).
+#
+# Three steps, one function each, used by tools/cross_validate_albedo.R:
+#   cv_directions() and cv_holdouts()  which cells each holdout withholds;
+#   cv_score()                         the weighted error of each model, and its uncertainty;
+#   cv_choose()                        the protocol's rule for choosing the model.
+# Distances and the training range are those of R/training_support.R (the cover triangle).
+# Needs sf (through R/training_support.R).
+
+source('R/training_support.R')
+
+CV_CUTS           = c(0.8, 0.7, 0.9)            # percentile of the cut: the 80th, else the 70th or 90th if infeasible
+CV_DISTANCE_BANDS = c(0, 0.02, 0.05, 0.10, Inf) # distance outside the training range, cover-triangle units
+CV_BLOCK_DEGREES  = 5                           # geographic blocks for the uncertainty: 5 x 5 one-degree cells
+CV_MIN_BLOCKS     = 10                          # withheld cells must lie in at least this many blocks
+CV_MAX_DIRECTIONS = 3
+CV_RESAMPLES      = 1000
+
+# The direction (degrees on the cover triangle, 0 = towards more summergreen at fixed evergreen,
+# 90 = towards more evergreen) in which each mix lies outside the hull, from the nearest point of
+# the hull's edge. NA for a mix inside.
+departure_angle = function(cover, hull) {
+  angle = rep(NA_real_, nrow(cover))
+  out = training_support(cover, hull)$outside
+  if (!any(out)) return(angle)
+  points = sf::st_as_sf(cover_triangle_xy(cover[out, ]), coords = c('px', 'py'))
+  edge = sf::st_cast(sf::st_sfc(sf::st_polygon(list(as.matrix(hull[, c('px', 'py')])))), 'LINESTRING')
+  # Each nearest-point line runs from the mix to the edge, so the departure is its start minus its end.
+  ends = lapply(sf::st_nearest_points(points, edge), function(l) unclass(l)[c(1, 2), ])
+  angle[out] = sapply(ends, function(e) atan2(e[1, 2] - e[2, 2], e[1, 1] - e[2, 1]) * 180 / pi)
+  angle
+}
+
+angle_gap = function(a, b) { d = abs(a - b) %% 360; pmin(d, 360 - d) }
+
+# The broad directions in which the past leaves the modern range: the departure angles of the
+# outside hindcast mixes (any month), weighted by their target weights, grouped by hierarchical
+# clustering of whole-degree angles into at most three groups. Returns one row per direction:
+# its mean angle and its share of the outside target weight, largest share first.
+cv_directions = function(angle, weight, n = CV_MAX_DIRECTIONS) {
+  keep = !is.na(angle) & weight > 0
+  bins = tapply(weight[keep], round(angle[keep]) %% 360, sum)
+  degrees = as.numeric(names(bins))
+  groups = if (length(bins) <= n) seq_along(bins) else
+    cutree(hclust(as.dist(outer(degrees, degrees, angle_gap)), method = 'average', members = as.numeric(bins)), k = n)
+  out = do.call(rbind, lapply(split(seq_along(bins), groups), function(i)
+    data.frame(angle = atan2(sum(bins[i] * sinpi(degrees[i] / 180)), sum(bins[i] * cospi(degrees[i] / 180))) * 180 / pi,
+               share = sum(bins[i]) / sum(bins))))
+  out = out[order(-out$share), ]
+  out$direction = paste0('d', seq_len(nrow(out)))
+  rownames(out) = NULL
+  out
+}
+
+# The nearest of the directions to each departure angle (NA stays NA).
+nearest_direction = function(angle, directions) {
+  nearest = rep(NA_character_, length(angle))
+  known = !is.na(angle)
+  nearest[known] = directions$direction[apply(outer(angle[known], directions$angle, angle_gap), 1, which.min)]
+  nearest
+}
+
+# Which cells a direction's holdout withholds: those beyond the `cut` percentile of the modern
+# cells' positions along that direction on the cover triangle. Withheld from training in every
+# month, so a withheld mix can never be supplied by a training cell elsewhere.
+cv_holdouts = function(cover, angle, cut) {
+  xy = cover_triangle_xy(cover)
+  along = xy$px * cospi(angle / 180) + xy$py * sinpi(angle / 180)
+  along > stats::quantile(along, cut, names = FALSE)
+}
+
+# The geographic block of each cell (x = longitude, y = latitude of the one-degree cell centres).
+cv_block = function(x, y, size = CV_BLOCK_DEGREES) paste(floor(x / size), floor(y / size))
+
+distance_band = function(distance) cut(distance, CV_DISTANCE_BANDS, right = FALSE)
+
+# The score of each model: the mean squared error of predicted albedo on the withheld cells,
+# averaged within each group (month, direction, distance band) and combined across groups by the
+# hindcast's target weight in that group (protocol, section 6). Groups with no withheld cell are
+# not represented; their share is reported. Its uncertainty: the scores again on CV_RESAMPLES
+# resamples of the geographic blocks (a block keeps all its months and holdouts together).
+#   errors   one row per withheld cell, month and holdout: group, block and one column of
+#            squared error per model (named by model id);
+#   target   the target weight of each group: columns group and weight (all outside groups).
+# Returns the scores, the represented share of the target, and the resampled scores (a matrix,
+# one row per resample, one column per model).
+cv_score = function(errors, target, models, seed, resamples = CV_RESAMPLES) {
+  weight = target$weight[match(errors$group, target$group)]
+  if (anyNA(weight)) stop('cv_score: withheld cells in groups with no target weight')
+  score_of = function(multiplicity) {
+    sums = rowsum(as.matrix(errors[, models, drop = FALSE]) * multiplicity, errors$group)
+    counts = rowsum(multiplicity, errors$group)[, 1]
+    w = target$weight[match(rownames(sums), target$group)] * (counts > 0)
+    colSums(sums / pmax(counts, 1) * w) / sum(w)
+  }
+  blocks = unique(errors$block)
+  draws = withr_seed(seed, replicate(resamples, {
+    picked = table(factor(sample(blocks, replace = TRUE), levels = blocks))
+    score_of(as.numeric(picked[errors$block]))
+  }))
+  list(score = score_of(rep(1, nrow(errors))),
+       represented = sum(target$weight[target$group %in% errors$group]) / sum(target$weight),
+       resampled = t(matrix(draws, nrow = length(models), dimnames = list(models, NULL))))
+}
+
+# Evaluate `expr` with R's random numbers seeded, then restore the previous state, so the seed
+# acts on this call only (as gratia's simulate() does for the draws, R/random.R).
+withr_seed = function(seed, expr) {
+  old = if (exists('.Random.seed', globalenv())) get('.Random.seed', globalenv())
+  on.exit(if (is.null(old)) rm('.Random.seed', envir = globalenv()) else assign('.Random.seed', old, globalenv()))
+  set.seed(seed)
+  expr
+}
+
+# The protocol's choice: among the eligible models (not a baseline, every required fit
+# converged), the lowest score, unless a simpler model's score is within one standard error of
+# the paired difference (the resampled scores' standard deviation of the difference); simpler
+# means fewer coefficients, then earlier in CV_MODELS. Returns one row per model with its score,
+# the difference from the best and its standard error, whether it is comparable, and the choice.
+cv_choose = function(scored, coefficients, eligible) {
+  models = names(scored$score)
+  best = models[eligible][which.min(scored$score[eligible])]
+  difference = scored$score - scored$score[best]
+  se = apply(scored$resampled, 2, function(s) stats::sd(s - scored$resampled[, best]))
+  comparable = eligible & difference <= se
+  order_simple = order(!comparable, coefficients, match(models, CV_MODELS))
+  data.frame(model = models, score = scored$score, rmse = sqrt(scored$score), difference = difference,
+             se_difference = se, coefficients = coefficients, eligible = eligible, comparable = comparable,
+             chosen = models == models[order_simple[1]], row.names = NULL)
+}
