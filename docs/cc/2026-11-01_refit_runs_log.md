@@ -36,3 +36,15 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - Run 8 (raster control) fitting part 2: a documentation-only commit so that it gets its own worktree.
 - Run 8 (raster control) fitting part 3: a documentation-only commit so that it gets its own worktree.
 - Model 7 convergence check on run 1: a documentation-only commit so that it gets its own worktree.
+- Fitting part jan-mar finished 1 November about 22:50 UTC (about 14 hours; jul-sep took about 3, oct-dec 5, apr-jun
+  6.5). Model 7 also reached its limit in February and March, so the months at the limit are January-April, June
+  and October.
+- `run1-main` (scripts 1-3, 5-10 from the four parts' fits): PASS, 2 November about 01:40 UTC; about 2 hours 50
+  minutes, mostly scripts 7 (70 min) and 7a (76 min); script 6 took 11 minutes.
+
+## Run 8 (raster control) and run 1's model 7 check
+- Started 2 November about 07:24 UTC: run 8's fitting in three four-month parts (jan-apr b689642, may-aug 280a9a0,
+  sep-dec bd174cf; cores 8-31) and the model 7 check (`run1-model7-check`, f44881b, cores 32-39: January-April,
+  June and October, with July, converged in 86 steps, as the control).
+- Run 8's calibration table in all three parts has MD5 8119f5066dc82d79571e94f7a6e791e6, the 18 October run's, as
+  required: the raster source is reproduced exactly by the refit code.
