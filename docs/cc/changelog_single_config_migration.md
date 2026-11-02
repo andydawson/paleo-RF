@@ -1580,3 +1580,12 @@ by Chris as above.
 7's 17 outputs, are identical before and after (`comparisons.md` in the review folder).
 
 **Effect on outputs.** None.
+
+## Northeast figure: neutral overall title, 2026-11-02
+
+Branch `northeast-title`. The overall title of `tools/plotting/plot_northeast_cover_and_location.R` said "why the
+model's evergreen effect there is uncertain"; since panel c no longer draws that conclusion, Chris chose
+(1 November) a neutral title: "Northeast (80-66°W, 40-48°N): evergreen cover, location and May albedo".
+Verification: the figure redrawn from the 18 October products (`2026-11-02_northeast-title-2`, PASS; the first
+attempt lacked the predictions file the figure reads) prints the same numbers as `drift-diagnostics`.
+**Effect on outputs.** The title only.
