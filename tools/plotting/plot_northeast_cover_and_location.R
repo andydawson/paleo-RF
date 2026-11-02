@@ -206,7 +206,7 @@ panel_model = ggplot() +
 
 figure = (panel_latitude + panel_albedo) / panel_model + plot_layout(heights = c(1, 1.1)) +
   plot_annotation(
-    title = 'Northeast (80-66°W, 40-48°N): why the model\'s evergreen effect there is uncertain (May)',
+    title = 'Northeast (80-66°W, 40-48°N): evergreen cover, location and May albedo',
     caption = paste0('Calibration data: today\'s cover (interpolated pollen-based reconstruction, 50 BP) and satellite blue-sky albedo. ',
                      'Past cover: the reconstruction at 6 and 4.5 ka, the hemlock decline.\n',
                      'Both fits are by REML on the same cells. Points in c are the models\' predictions at the actual past mixes; ',
