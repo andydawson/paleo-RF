@@ -1,5 +1,7 @@
 # Cross-validation design for the albedo model: Chris's decisions (2 November 2026)
 
+GitHub issue: #24.
+
 **Benefit to the paper:** the albedo model is chosen on measured skill where the hindcast needs it, on land-cover
 mixes beyond the modern range and on how albedo changes with cover, so the paper can state that skill (or its
 absence) instead of only flagging the extrapolated cells.
