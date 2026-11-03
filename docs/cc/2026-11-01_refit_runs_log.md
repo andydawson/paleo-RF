@@ -94,3 +94,23 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   to the first ones except the name; same commits, cores and settings. `run8-raster` now copies the fits from
   the `-2` folders. Started 12:26-12:33 UTC (cores 8-31 and 32-39 as before).
 - The queue scripts now live outside the temporary folder (`../refit-queue/`), so a reboot no longer loses them.
+
+## Run 8 (raster control) and the model 7 check: finished
+- Run 8's fitting reruns finished 2 November (May-August 19:25 UTC; the other two by about 21:10 UTC); its
+  pipeline (`run8-raster`, 795792f) PASS, 3 November 00:10 UTC, about 3 hours.
+- **Run 8 against the 18 October run** (both on Andria's raster, seed 1549466984; same calibration table, MD5
+  as required): partial-ice study-area mean, HadGEM3 kernel, W/m2, 18 October / run 8: 0.05-0.5 ka -0.692 /
+  -0.696; 0.5-2 ka -0.668 / -0.684; 2-4 ka +0.489 / +0.494; 4-6 ka -0.575 / -0.573; 6-8 ka +1.102 / +1.101;
+  8-10 ka +4.547 / +4.553; 10-12 ka +4.429 / +4.442. Close but not identical (largest difference 0.016, in
+  0.5-2 ka): the code and fitting settings changed in between (one maths-library thread instead of 48, the
+  fixes since 18 October), and the simulated draws follow any small change in the fits. Run 1's differences
+  from the raster (0.1 to 0.4 W/m2 per period) are ten or more times larger, so they come from the albedo
+  source, not from the code.
+- **Model 7 check (`run1-model7-check-2`, PASS 2 November):** refitted at 2,000 steps, model 7 converges in
+  631-841 steps in every month where it had stopped at 500; AIC moves by at most 2.2 (January -2.2,
+  February 0.0, March 0.0, April -1.9, June -0.6, October -0.2); fitted values by at most 0.0002; July, the
+  control, unchanged. Against model 8 (run 1's AIC table) the ranking is unchanged: model 8 is lower in March,
+  June and October, the two tie within 1 in February and April, and model 7 leads by 3 in January (by 1
+  before). Model 8 stays the prediction model.
+- 2-3 November night: the queue runner stopped at each milestone and waited to be restarted, so run 2's
+  third fitting part did not start until 07:59 UTC. The runner now never stops for milestones.
