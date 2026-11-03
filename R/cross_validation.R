@@ -20,7 +20,7 @@ source('R/training_support.R')
 CV_CUTS           = c(0.8, 0.7, 0.9)            # percentile of the cut: the 80th, else the 70th or 90th if infeasible
 CV_DISTANCE_BANDS = c(0, 0.02, 0.05, 0.10, Inf) # distance outside the training range, cover-triangle units
 CV_BLOCK_DEGREES  = 5                           # geographic blocks for the uncertainty: 5 x 5 one-degree cells
-CV_MIN_BLOCKS     = 10                          # withheld cells must lie in at least this many blocks
+CV_MIN_BLOCKS     = 10                          # the scored withheld cells (positive target weight) must lie in at least this many blocks
 CV_MAX_DIRECTIONS = 3
 CV_RESAMPLES      = 1000
 
@@ -93,6 +93,18 @@ nearest_direction = function(angle, directions) {
   known = !is.na(angle)
   nearest[known] = directions$direction[apply(outer(angle[known], directions$angle, angle_gap), 1, which.min)]
   nearest
+}
+
+# Where each withheld cell lies outside its own fold's training range (`hull`), and the group its
+# error counts in: month, the nearest of the directions to its own departure, and its distance band;
+# the rule for the past mixes too (protocol, section 6, amended 3 November). One function, so that the
+# holdouts stage (which withheld cells the score uses) and the fit and score stages group alike.
+withheld_departure = function(valid, hull, directions, month) {
+  support = training_support(valid, hull)
+  angle = departure_angle(valid, hull)
+  own_direction = nearest_direction(angle, directions)
+  data.frame(outside = support$outside, distance = support$distance_outside, angle = angle, own_direction = own_direction,
+             group = paste(rep(month, nrow(valid)), own_direction, distance_band(support$distance_outside)))
 }
 
 # Which cells a direction's holdout withholds: those beyond the `cut` percentile of the modern

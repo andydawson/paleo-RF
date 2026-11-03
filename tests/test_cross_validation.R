@@ -12,6 +12,15 @@ angle    <- departure_angle(past, training_hull(training))
 stopifnot(isTRUE(all.equal(angle[1:3], c(-150, -30, 90))), is.na(angle[4]),
           angle_gap(-150, 170) == 40, angle_gap(10, 350) == 20)
 
+# The group a withheld cell's error counts in, by hand, on the same training range: pure open land lies
+# outside at -150 degrees, sqrt(0.375^2 + 3/64) = 0.433 away (band [0.1, Inf)); pure evergreen at 90
+# degrees, the same distance; the centroid is inside (no direction, distance 0). No cells, no rows.
+toward <- data.frame(direction = c("d1", "d2"), angle = c(-150, 90))
+dep <- withheld_departure(past[c(1, 3, 4), ], training_hull(training), toward, "jan")
+stopifnot(identical(dep$outside, c(TRUE, TRUE, FALSE)), isTRUE(all.equal(dep$distance, c(sqrt(0.1875), sqrt(0.1875), 0))),
+          identical(dep$group, c("jan d1 [0.1,Inf)", "jan d2 [0.1,Inf)", "jan NA [0,0.02)")),
+          nrow(suppressWarnings(withheld_departure(past[0, ], training_hull(training), toward, "jan"))) == 0)   # sf warns on no points
+
 # Directions: whole-degree angles grouped into at most n groups, weighted; largest share first.
 directions <- cv_directions(c(0, 2, 180, NA), c(1, 1, 1, 5), n = 2)
 stopifnot(identical(directions$direction, c("d1", "d2")),

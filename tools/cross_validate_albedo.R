@@ -119,14 +119,13 @@ stage_holdouts = function(run_dir, paths) {
     rows = complete_rows(cal, m)
     train = rows & !withheld
     valid = rows & withheld
-    hull = training_hull(cal[train, ])
-    support = training_support(cal[valid, ], hull)
-    if (any(valid) && !all(support$outside)) stop('a withheld cell lies inside its training range: ', holdout, ', ', m)
-    # The blocks are counted on the withheld cells the score uses: those in a group (month, own
-    # direction, distance band, as in the score stage) that carries target weight (Chris, 3 November).
-    group = paste(m, nearest_direction(departure_angle(cal[valid, ], hull), directions), distance_band(support$distance_outside))
-    scored = group %in% target$group[target$weight > 0]
-    blocks = length(unique(cv_block(cal$x[valid][scored], cal$y[valid][scored])))
+    withheld_cells = cal[valid, ]
+    departure = withheld_departure(withheld_cells, training_hull(cal[train, ]), directions, m)
+    if (!all(departure$outside)) stop('a withheld cell lies inside its training range: ', holdout, ', ', m)
+    # The blocks are counted on the withheld cells the score uses: those in a group with positive
+    # target weight (Chris, 3 November).
+    scored = departure$group %in% target$group[target$weight > 0]
+    blocks = length(unique(cv_block(withheld_cells$x[scored], withheld_cells$y[scored])))
     data.frame(holdout = holdout, cut = cut, month = m, training_rows = sum(train), largest_model = largest_model[[m]],
                withheld_cells = sum(valid), scored_cells = sum(scored), blocks = blocks,
                feasible = sum(train) >= largest_model[[m]] && blocks >= CV_MIN_BLOCKS)
@@ -230,12 +229,10 @@ stage_fit = function(run_dir, paths, holdout, months) {
     rows = complete_rows(cal, m)
     train = cal[rows & !withheld, ]
     valid = cal[rows & withheld, ]
-    hull = training_hull(train)
-    # Each withheld cell's own departure from its training range, kept beside its holdout.
-    angle = departure_angle(valid, hull)
+    # Each withheld cell's own departure from its training range and its group, kept beside its holdout.
+    departure = withheld_departure(valid, training_hull(train), holdouts$directions, m)
     cells = data.frame(holdout = holdout, month = m, x = valid$x, y = valid$y, OL = valid$OL, ET = valid$ET, ST = valid$ST,
-                       distance = training_support(valid, hull)$distance_outside, angle = angle,
-                       own_direction = nearest_direction(angle, holdouts$directions), observed = valid[[m]])
+                       departure[, c('distance', 'angle', 'own_direction', 'group')], observed = valid[[m]])
     file = cv_file(run_dir, sprintf('predictions_%s_%s.rds', holdout, m))
     predictions = NULL
     for (id in models) {   # saved after every candidate, so a later failure loses nothing
@@ -261,7 +258,6 @@ stage_score = function(run_dir, paths) {
   # as the past mixes do, not under its holdout's (Chris, 3 November, frozen before any score).
   cat(sprintf('withheld cell-months whose own direction differs from their holdout\'s: %d of %d\n',
               sum(predictions$own_direction != predictions$holdout, na.rm = TRUE) / length(CV_MODELS), nrow(predictions) / length(CV_MODELS)))
-  predictions$group = paste(predictions$month, predictions$own_direction, distance_band(predictions$distance))
   predictions$squared_error = (predictions$predicted - predictions$observed)^2
   errors = stats::reshape(predictions[, c('holdout', 'month', 'x', 'y', 'group', 'model', 'squared_error')],
                           idvar = c('holdout', 'month', 'x', 'y', 'group'), timevar = 'model', direction = 'wide')

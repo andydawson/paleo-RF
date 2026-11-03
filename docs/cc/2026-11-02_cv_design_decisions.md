@@ -61,7 +61,7 @@ score arithmetic, and asked for fixes before any fit, plus decisions:
     design, no withheld albedo enters its own fold's fit, and no past albedo or prediction is used. The number of
     cells whose direction differs from their holdout's is reported, never used to switch rules.
 13. **The 10-block feasibility rule counts only the withheld cells the score uses** (Chris, 3 November; Fable's
-    fix 9, agreed by both reviewers): those in a group (month, own direction, distance band) with target weight.
+    fix 9, agreed by both reviewers): those in a group (month, own direction, distance band) with positive target weight.
     A stricter rule; a month that then fails is untested, as before.
 
 ## Filed for future work (Chris: drop for now)
