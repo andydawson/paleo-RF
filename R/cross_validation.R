@@ -123,20 +123,25 @@ cv_block = function(x, y, size = CV_BLOCK_DEGREES) paste(floor(x / size), floor(
 distance_band = function(distance) cut(distance, CV_DISTANCE_BANDS, right = FALSE)
 
 # The withheld cells' errors by diagnostic region (R/regions.R), month and own direction, for each
-# model: how many withheld cells (once per holdout) and blocks support each, how many have low open
-# land, the RMSE and mean signed error, and how closely evergreen share follows latitude among them.
-# Shows what the pooled score hides for the northeast (Astra, 3 November; protocol, amendment of 3
-# November). Reported only, never used for the choice. `predictions`: the fit stage's rows with a
-# prediction (x, y, ET, OL, month, own_direction, model, predicted, observed). A cell with no own
-# direction (inside its training range) is left out; the holdouts stage ensures there is none.
+# model: how many withheld cells and blocks support each (a cell withheld by two holdouts counts once
+# in the cell counts and the correlation, twice in the errors, one prediction each), how many have
+# low open land, the RMSE and mean signed error, and how closely evergreen share follows latitude
+# among them. Shows what the pooled score hides for the northeast (Astra, 3 November; protocol,
+# amendment of 3 November). Reported only, never used for the choice. `predictions`: the fit stage's
+# rows with a prediction (x, y, ET, OL, month, own_direction, model, predicted, observed). A cell with
+# no own direction (inside its training range) is left out; the holdouts stage ensures there is none.
 cv_by_region = function(predictions, low_open_land) {
   predictions$region = region_of(predictions$x, predictions$y)
   parts = split(predictions, predictions[, c('model', 'region', 'month', 'own_direction')], drop = TRUE)
-  out = do.call(rbind, lapply(parts, function(r) data.frame(
-    model = r$model[1], region = r$region[1], month = r$month[1], own_direction = r$own_direction[1],
-    withheld_cell_holdouts = nrow(r), blocks = length(unique(cv_block(r$x, r$y))), low_open_land_cells = sum(r$OL <= low_open_land),
-    rmse = sqrt(mean((r$predicted - r$observed)^2)), signed_error = mean(r$predicted - r$observed),
-    cor_evergreen_latitude = if (nrow(r) > 2 && stats::sd(r$ET) > 0 && stats::sd(r$y) > 0) stats::cor(r$ET, r$y) else NA_real_)))
+  out = do.call(rbind, lapply(parts, function(r) {
+    cells = r[!duplicated(r[, c('x', 'y')]), ]
+    data.frame(model = r$model[1], region = r$region[1], month = r$month[1], own_direction = r$own_direction[1],
+               cells = nrow(cells), predictions = nrow(r), blocks = length(unique(cv_block(cells$x, cells$y))),
+               low_open_land_cells = sum(cells$OL <= low_open_land),
+               rmse = sqrt(mean((r$predicted - r$observed)^2)), signed_error = mean(r$predicted - r$observed),
+               cor_evergreen_latitude = if (nrow(cells) > 2 && stats::sd(cells$ET) > 0 && stats::sd(cells$y) > 0)
+                 stats::cor(cells$ET, cells$y) else NA_real_)
+  }))
   out = out[order(out$region, out$month, out$own_direction, out$model), ]
   rownames(out) = NULL
   out

@@ -138,3 +138,11 @@ on run 1's data:
 - **Reading the hindcast comparison** (section 7): persistent northeast warming under a competitive model argues
   against poor prediction on the modern conditions tested; it does not show the warming is real or rule out
   confounding. An independent local check of conifer versus deciduous albedo is being designed separately.
+- **Model 3** has open land but no evergreen-summergreen distinction, so it predicts no response to the exchange of
+  the two at fixed open land. It stays eligible (Chris, 3 November); if it is chosen, a weak or absent hemlock
+  signal reflects its specification, not evidence that the physical effect is negligible.
+- **The geographic hole** (d2 withholds almost the whole northeast, so a location-dependent model may lose partly
+  for having to predict across it): how to separate each candidate's geographic penalty from its cover-extrapolation
+  skill is being designed (Astra, then Fable; Chris decides before any fit).
+- The by-region table counts each withheld cell once in its cell, block and low-open-land counts and in the
+  correlation, and once per holdout in the errors; all descriptive tables use converged fits only.

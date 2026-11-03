@@ -277,8 +277,9 @@ stage_score = function(run_dir, paths) {
   choice$represented = scored$represented
   utils::write.csv(choice, cv_file(run_dir, 'scores.csv'), row.names = FALSE)
 
-  # Reported beside the choice, never used for it (protocol, section 6).
-  ok = !is.na(predictions$predicted)
+  # Reported beside the choice, never used for it (protocol, section 6); from converged fits only, as
+  # the choice trusts no other.
+  ok = !is.na(predictions$predicted) & predictions$converged
   by_month = aggregate(cbind(rmse = (predicted - observed)^2, signed_error = predicted - observed) ~ model + month, predictions[ok, ], mean)
   by_month$rmse = sqrt(by_month$rmse)
   low = predictions[ok & predictions$OL <= LOW_OPEN_LAND, ]
