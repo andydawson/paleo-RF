@@ -33,6 +33,7 @@ CV_RESAMPLES      = 1000
 # reports how many. `slices` are the run's configured ages, youngest (modern) first; the modern
 # slice is not part of the target.
 cv_target_weights = function(paleo, diffs, slices, n_months, lat_min, lat_max) {
+  slices = sort(slices)
   pairs = diffs[diffs$month == diffs$month[1], ]
   if (!setequal(unique(pairs$year), head(slices, -1)))
     stop('script 7a\'s pairs do not start at the configured slices (config.R analysis$ages) but the last')
@@ -67,7 +68,9 @@ angle_gap = function(a, b) { d = abs(a - b) %% 360; pmin(d, 360 - d) }
 # The broad directions in which the past leaves the modern range: the departure angles of the
 # outside hindcast mixes (any month), weighted by their target weights, grouped by hierarchical
 # clustering of whole-degree angles into at most three groups. Returns one row per direction:
-# its mean angle and its share of the outside target weight, largest share first.
+# its mean angle and its cluster's share of the outside target weight, largest first. (The
+# holdouts stage then assigns each mix to its nearest direction and reports those shares, the ones
+# the score uses; the names d1, d2, d3 keep the cluster order.)
 cv_directions = function(angle, weight, n = CV_MAX_DIRECTIONS) {
   keep = !is.na(angle) & weight > 0
   bins = tapply(weight[keep], round(angle[keep]) %% 360, sum)

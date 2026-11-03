@@ -83,8 +83,8 @@ stopifnot(nrow(w2) == 3, isTRUE(all.equal(w2$weight[w2$ages == 500], 0.5)),
 
 # A fit that fails outright is recorded, with missing predictions, not dropped (the data lack the
 # elevation the model needs).
-failed <- suppressMessages(capture.output(r <- fit_and_predict("elev", "jan", data.frame(jan = runif(60, 0.1, 0.9)), data.frame(jan = 0.5))))
-stopifnot(!r$converged, is.na(r$predicted), startsWith(r$status, "ERROR:"))
+failed <- suppressMessages(capture.output(r <- fit_and_predict("elev", "jan", data.frame(jan = runif(60, 0.1, 0.9)), data.frame(jan = c(0.5, 0.6)))))
+stopifnot(nrow(r) == 2, !any(r$converged), all(is.na(r$predicted)), all(startsWith(r$status, "ERROR:")))
 
 # Convergence: the loop stopped before its limit and the optimiser fully converged.
 ok <- list(iter = 37L, control = list(maxit = 500), outer.info = list(conv = "full convergence"))
