@@ -142,3 +142,14 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   name; runs 3-5's pipeline specs now copy from the `-2` folders. Restarted 16:43-16:46 UTC, six at once.
 - The restart also emptied the temporary folder holding the working copies; they now live in
   `../paleo-RF-wt/`.
+
+## Run 2 (snow-free days): finished
+- `run2-snowfree-2` PASS, 3 November 19:42 UTC (pipeline about 3 hours). Run 5's January-February fitting
+  (`-2`) PASS 19:09 UTC.
+- **Forcing, study-area mean, partial ice, W/m2, HadGEM3 kernel; run 8 (raster) / run 1 (all days) / run 2
+  (snow-free days):** 0.05-0.5 ka -0.696 / -0.556 / -0.312; 0.5-2 ka -0.684 / -0.567 / -0.289; 2-4 ka +0.493 /
+  +0.346 / -0.023; 4-6 ka -0.573 / -0.448 / +0.233; 6-8 ka +1.101 / +1.511 / +2.262; 8-10 ka +4.553 / +4.964 /
+  +7.038; 10-12 ka +4.441 / +4.125 / +4.464. CAM5 and CACK move the same way.
+- Snow-free albedo halves the late-Holocene cooling, reverses the sign at 2-4 and 4-6 ka, and raises the
+  early-Holocene warming by about 40% at 8-10 ka. Not yet explained; to be looked at with the diagnostic
+  figures before it is interpreted.
