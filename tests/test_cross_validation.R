@@ -110,8 +110,11 @@ p <- data.frame(x = c(-75, -69, -70, -120), y = c(41, 43, 46, 35), ET = c(0.4, 0
                 month = "jan", own_direction = "d2", model = "a", observed = 0.2, predicted = 0.2 + c(0.1, -0.1, 0.2, 0))
 by_region <- cv_by_region(p, low_open_land = 0.2)
 ne <- by_region[by_region$region == "Northeast (hemlock box)", ]
-stopifnot(nrow(by_region) == 2, ne$withheld_cells == 3, ne$blocks == 3, ne$low_open_land_cells == 1,
+stopifnot(nrow(by_region) == 2, ne$withheld_cell_holdouts == 3, ne$blocks == 3, ne$low_open_land_cells == 1,
           isTRUE(all.equal(ne$rmse, sqrt(0.02))), isTRUE(all.equal(ne$signed_error, 0.2 / 3)),
           isTRUE(all.equal(ne$cor_evergreen_latitude, cor(c(0.4, 0.5, 0.6), c(41, 43, 46)))),
           is.na(by_region$cor_evergreen_latitude[by_region$region == "elsewhere"]))
+# Cells all on one latitude row: no correlation, and no warning.
+flat <- transform(p[1:3, ], y = 45)
+stopifnot(is.na(withCallingHandlers(cv_by_region(flat, 0.2), warning = function(w) stop("unexpected warning: ", conditionMessage(w)))$cor_evergreen_latitude))
 cat("test_cross_validation: all tests passed\n")

@@ -127,17 +127,19 @@ distance_band = function(distance) cut(distance, CV_DISTANCE_BANDS, right = FALS
 # land, the RMSE and mean signed error, and how closely evergreen share follows latitude among them.
 # Shows what the pooled score hides for the northeast (Astra, 3 November; protocol, amendment of 3
 # November). Reported only, never used for the choice. `predictions`: the fit stage's rows with a
-# prediction (x, y, ET, OL, month, own_direction, model, predicted, observed).
+# prediction (x, y, ET, OL, month, own_direction, model, predicted, observed). A cell with no own
+# direction (inside its training range) is left out; the holdouts stage ensures there is none.
 cv_by_region = function(predictions, low_open_land) {
   predictions$region = region_of(predictions$x, predictions$y)
   parts = split(predictions, predictions[, c('model', 'region', 'month', 'own_direction')], drop = TRUE)
   out = do.call(rbind, lapply(parts, function(r) data.frame(
     model = r$model[1], region = r$region[1], month = r$month[1], own_direction = r$own_direction[1],
-    withheld_cells = nrow(r), blocks = length(unique(cv_block(r$x, r$y))), low_open_land_cells = sum(r$OL <= low_open_land),
+    withheld_cell_holdouts = nrow(r), blocks = length(unique(cv_block(r$x, r$y))), low_open_land_cells = sum(r$OL <= low_open_land),
     rmse = sqrt(mean((r$predicted - r$observed)^2)), signed_error = mean(r$predicted - r$observed),
-    cor_evergreen_latitude = if (nrow(r) > 2 && stats::sd(r$ET) > 0) stats::cor(r$ET, r$y) else NA_real_)))
+    cor_evergreen_latitude = if (nrow(r) > 2 && stats::sd(r$ET) > 0 && stats::sd(r$y) > 0) stats::cor(r$ET, r$y) else NA_real_)))
+  out = out[order(out$region, out$month, out$own_direction, out$model), ]
   rownames(out) = NULL
-  out[order(out$region, out$month, out$own_direction, out$model), ]
+  out
 }
 
 # The score of each model: the mean squared error of predicted albedo on the withheld cells,

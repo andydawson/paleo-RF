@@ -3,7 +3,8 @@
 #
 # Why here: two diagnostic scripts use the northeast box (plot_pollen_site_coverage.R counts
 # pollen cells in every region; plot_northeast_cover_and_location.R looks at the northeast
-# alone), and both must mean the same place. The boxes are approximate, for counting and
+# alone), and so does the cross-validation's by-region report (R/cross_validation.R); all must
+# mean the same place. The boxes are approximate, for counting and
 # for picking cells, not exact regional boundaries. The northeast box is the region of
 # figure 4a of Dawson et al. (2025), Climate of the Past, where the hemlock decline shows.
 #
