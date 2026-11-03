@@ -1,9 +1,9 @@
 # Refit run 4 (MODIS cells, snow-free days, any_75), 2 November 2026: the whole pipeline from the model fits of its month-split parts, as in run 1
 # (run1-main). Same configuration and fixed seed 1549466984. No anchors: new results by design.
 verify = '/home/expert/Documents/contracting/Andria/paleo-RF-verify'
-parts  = c('0df176d/.rundirs/run4-any75-snowfree-fit-jan-apr',
+parts  = c('0df176d/.rundirs/run4-any75-snowfree-fit-jan-apr-2',
            'f6ca119/.rundirs/run4-any75-snowfree-fit-may-aug',
-           '54decc7/.rundirs/run4-any75-snowfree-fit-sep-dec')
+           '54decc7/.rundirs/run4-any75-snowfree-fit-sep-dec-2')
 fits = unlist(lapply(parts, function(p) {
   f = list.files(file.path(verify, p, 'output/calibration'), pattern = '\\.RDS$', full.names = TRUE)
   if (!length(f)) stop('no fits in ', p)

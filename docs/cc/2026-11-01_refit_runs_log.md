@@ -133,3 +133,12 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - In all four parts every one of the 36 fits (9 models x 4 months) reached full convergence of the smoothing
   parameters within the 500-step loop: none stopped at the limit, model 7 included (on run 1's all-days
   albedo it stopped at 500 in six months).
+
+## Machine restart, 3 November
+- Run 3 September-December fitting PASS before the restart.
+- About 16:30 UTC the machine had to restart (a driver fault). It stopped six jobs: run 2's pipeline, run 3's
+  January-April and May-August fitting, run 4's January-April and September-December fitting, and run 5's
+  January-February fitting (started 16:13). Each is rerun under a `-2` name, its spec identical but for the
+  name; runs 3-5's pipeline specs now copy from the `-2` folders. Restarted 16:43-16:46 UTC, six at once.
+- The restart also emptied the temporary folder holding the working copies; they now live in
+  `../paleo-RF-wt/`.

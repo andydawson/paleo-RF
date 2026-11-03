@@ -1,7 +1,7 @@
 # Refit run 5 (MODIS cells, all days, full_nocut, November-February; reported month by month only), 2 November 2026: the whole pipeline from the model fits of its month-split parts, as in run 1
 # (run1-main). Same configuration and fixed seed 1549466984. No anchors: new results by design.
 verify = '/home/expert/Documents/contracting/Andria/paleo-RF-verify'
-parts  = c('9ea33e1/.rundirs/run5-winter-fit-jan-feb',
+parts  = c('9ea33e1/.rundirs/run5-winter-fit-jan-feb-2',
            '9a08244/.rundirs/run5-winter-fit-nov-dec')
 fits = unlist(lapply(parts, function(p) {
   f = list.files(file.path(verify, p, 'output/calibration'), pattern = '\\.RDS$', full.names = TRUE)
