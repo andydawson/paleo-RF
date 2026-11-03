@@ -9,4 +9,4 @@ list(
   scripts  = c('scripts/1_veg_lct_prep.R', 'scripts/2_calibration_lct_bluesky.R', 'scripts/4_calibration_model.R'),
   checks   = list('tests/test_config.R', 'tests/test_paths.R'),
   rscript  = 'tools/rscript.sh',
-  env      = c(THREADS = '1', CORES = '24-31'))
+  env      = c(THREADS = '1'))   # no core pinning: up to six jobs at once (Chris, 3 November)

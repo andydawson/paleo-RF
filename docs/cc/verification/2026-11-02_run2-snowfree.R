@@ -3,7 +3,7 @@
 verify = '/home/expert/Documents/contracting/Andria/paleo-RF-verify'
 parts  = c('74c4cf7/.rundirs/run2-snowfree-fit-jan-apr',
            '5164b91/.rundirs/run2-snowfree-fit-may-aug',
-           'e04de82/.rundirs/run2-snowfree-fit-sep-dec')
+           'e04de82/.rundirs/run2-snowfree-fit-sep-dec-2')
 fits = unlist(lapply(parts, function(p) {
   f = list.files(file.path(verify, p, 'output/calibration'), pattern = '\\.RDS$', full.names = TRUE)
   if (!length(f)) stop('no fits in ', p)

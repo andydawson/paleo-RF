@@ -114,3 +114,11 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   before). Model 8 stays the prediction model.
 - 2-3 November night: the queue runner stopped at each milestone and waited to be restarted, so run 2's
   third fitting part did not start until 07:59 UTC. The runner now never stops for milestones.
+- 3 November 07:59 UTC: replacing the runner killed run 2's September-December part one minute after it
+  started (stopping a background task kills everything it started). Rerun as `run2-snowfree-fit-sep-dec-2`
+  from 08:01 UTC; run 2's pipeline spec now copies from that folder. Jobs are now launched detached from the
+  runner.
+- **Chris, 3 November: up to six jobs at once, and the next runs' fitting no longer waits for the previous
+  run's fitting** ("don't let the machine sit idle"). Pipelines still run one after another. The queued
+  fitting specs of runs 3-7 no longer pin cores (a fit uses about one core); results do not depend on which
+  cores are used. From 08:18 UTC: run 2's two remaining parts, run 3's three and run 4's January-April part.
