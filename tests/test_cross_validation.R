@@ -102,4 +102,16 @@ stopifnot(fit_converged(ok), !fit_converged(modifyList(ok, list(iter = 500L))),
 
 # Distances: one degree of longitude at 45 degrees north is about 78.6 km; a cell is (to rounding) 0 km from itself.
 stopifnot(abs(nearest_km(-70, 45, c(-71, -60), c(45, 45)) - 78.6) < 0.1, nearest_km(-70, 45, -70, 45) < 0.001)
+
+# The by-region report, by hand: three northeast cells in three 5-degree blocks, errors 0.1, -0.1 and 0.2
+# (RMSE sqrt(0.02), mean 0.2/3), one with open land at or below 0.2; one cell elsewhere, too few for a
+# correlation.
+p <- data.frame(x = c(-75, -69, -70, -120), y = c(41, 43, 46, 35), ET = c(0.4, 0.5, 0.6, 0.3), OL = c(0.1, 0.3, 0.3, 0.5),
+                month = "jan", own_direction = "d2", model = "a", observed = 0.2, predicted = 0.2 + c(0.1, -0.1, 0.2, 0))
+by_region <- cv_by_region(p, low_open_land = 0.2)
+ne <- by_region[by_region$region == "Northeast (hemlock box)", ]
+stopifnot(nrow(by_region) == 2, ne$withheld_cells == 3, ne$blocks == 3, ne$low_open_land_cells == 1,
+          isTRUE(all.equal(ne$rmse, sqrt(0.02))), isTRUE(all.equal(ne$signed_error, 0.2 / 3)),
+          isTRUE(all.equal(ne$cor_evergreen_latitude, cor(c(0.4, 0.5, 0.6), c(41, 43, 46)))),
+          is.na(by_region$cor_evergreen_latitude[by_region$region == "elsewhere"]))
 cat("test_cross_validation: all tests passed\n")

@@ -63,6 +63,11 @@ score arithmetic, and asked for fixes before any fit, plus decisions:
 13. **The 10-block feasibility rule counts only the withheld cells the score uses** (Chris, 3 November; Fable's
     fix 9, agreed by both reviewers): those in a group (month, own direction, distance band) with positive target weight.
     A stricter rule; a month that then fails is untested, as before.
+14. **Record before any score what the cross-validation can say about the northeast, and report the errors by
+    region** (Chris, 3 November, after Astra's answer to "can the cross-validation fix the northeast problem?":
+    partly; `2026-11-03_cv_northeast_question_codex_gpt6astra.md`). The protocol's new section says what was found;
+    `by_region.csv` is reported only. Chris also asked for a design (only) of an independent local check of conifer
+    versus deciduous albedo in the northeast.
 
 ## Filed for future work (Chris: drop for now)
 

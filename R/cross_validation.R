@@ -16,6 +16,7 @@
 # Needs sf (through R/training_support.R).
 
 source('R/training_support.R')
+source('R/regions.R')   # the northeast box, for the by-region report
 
 CV_CUTS           = c(0.8, 0.7, 0.9)            # percentile of the cut: the 80th, else the 70th or 90th if infeasible
 CV_DISTANCE_BANDS = c(0, 0.02, 0.05, 0.10, Inf) # distance outside the training range, cover-triangle units
@@ -120,6 +121,24 @@ cv_holdouts = function(cover, angle, cut) {
 cv_block = function(x, y, size = CV_BLOCK_DEGREES) paste(floor(x / size), floor(y / size))
 
 distance_band = function(distance) cut(distance, CV_DISTANCE_BANDS, right = FALSE)
+
+# The withheld cells' errors by diagnostic region (R/regions.R), month and own direction, for each
+# model: how many withheld cells (once per holdout) and blocks support each, how many have low open
+# land, the RMSE and mean signed error, and how closely evergreen share follows latitude among them.
+# Shows what the pooled score hides for the northeast (Astra, 3 November; protocol, amendment of 3
+# November). Reported only, never used for the choice. `predictions`: the fit stage's rows with a
+# prediction (x, y, ET, OL, month, own_direction, model, predicted, observed).
+cv_by_region = function(predictions, low_open_land) {
+  predictions$region = region_of(predictions$x, predictions$y)
+  parts = split(predictions, predictions[, c('model', 'region', 'month', 'own_direction')], drop = TRUE)
+  out = do.call(rbind, lapply(parts, function(r) data.frame(
+    model = r$model[1], region = r$region[1], month = r$month[1], own_direction = r$own_direction[1],
+    withheld_cells = nrow(r), blocks = length(unique(cv_block(r$x, r$y))), low_open_land_cells = sum(r$OL <= low_open_land),
+    rmse = sqrt(mean((r$predicted - r$observed)^2)), signed_error = mean(r$predicted - r$observed),
+    cor_evergreen_latitude = if (nrow(r) > 2 && stats::sd(r$ET) > 0) stats::cor(r$ET, r$y) else NA_real_)))
+  rownames(out) = NULL
+  out[order(out$region, out$month, out$own_direction, out$model), ]
+}
 
 # The score of each model: the mean squared error of predicted albedo on the withheld cells,
 # averaged within each group (month, direction, distance band) and combined across groups by the

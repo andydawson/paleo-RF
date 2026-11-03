@@ -286,6 +286,7 @@ stage_score = function(run_dir, paths) {
   low_open_land = if (nrow(low)) aggregate(cbind(signed_error = predicted - observed) ~ model + evergreen, low, mean) else NULL
   utils::write.csv(by_month, cv_file(run_dir, 'scores_by_month.csv'), row.names = FALSE)
   if (!is.null(low_open_land)) utils::write.csv(low_open_land, cv_file(run_dir, 'low_open_land.csv'), row.names = FALSE)
+  utils::write.csv(cv_by_region(predictions[ok, ], LOW_OPEN_LAND), cv_file(run_dir, 'by_region.csv'), row.names = FALSE)
   write_record(run_dir, paths, 'score')
 
   cat(sprintf('holdout-months scored: %d; withheld cell-months: %d; geographic blocks: %d\n',

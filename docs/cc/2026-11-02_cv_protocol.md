@@ -115,3 +115,26 @@ Made after the code reviews, before any fold fit or score (`2026-11-02_cv_design
 - Section 6: each withheld cell's error is grouped by the direction in which it lies outside its own fold's
   training range (the same rule as for the past mixes), its holdout kept beside it; the number of cells whose
   direction differs from their holdout's is reported.
+
+## What the cross-validation can and cannot say about the northeast (Chris, 3 November 2026, before any score)
+
+Recorded before any fold is fitted, from Astra's review (`2026-11-03_cv_northeast_question_codex_gpt6astra.md`),
+on run 1's data:
+- The northeast's past mixes (6 to 4.5 ka) lie outside today's range in the **less-open-land direction** (d2,
+  +17.2 degrees), not in the direction of the evergreen-to-summergreen change itself (about -60 degrees).
+- That holdout withholds 82 of the 83 northeast cells. Among them evergreen share still follows latitude
+  (r = 0.914), so the holdout keeps the confounding of cover with location; their nearest training cells are
+  167 / 340 / 524 km away (10th / 50th / 90th percentiles), whereas the hindcast predicts at their own places.
+- The departures overlap in distance (northeast at 4.5 ka: median 0.085, at most 0.107; the holdout's withheld
+  cells: 90th percentile 0.076, at most 0.112), but the deepest May group (beyond 0.10) has 15 cells in five blocks,
+  with 44-61% summergreen against 73% in the northeast at 4.5 ka. The northeast's four slices carry about 5% of the
+  outside target weight.
+- So the score measures transfer to modern cover mixes like the northeast's; it can choose a model that predicts
+  them better, but it cannot establish the sign of the albedo effect of the hemlock decline at fixed northeastern
+  places. The winning score is a selection score.
+- **Added report** (section 6, reported only, never used to choose): the withheld cells' errors by diagnostic region
+  (`R/regions.R`), month and own direction for each model, with the number of cells and blocks behind each, the cells
+  with low open land, and the correlation of evergreen share with latitude among them (`by_region.csv`).
+- **Reading the hindcast comparison** (section 7): persistent northeast warming under a competitive model argues
+  against poor prediction on the modern conditions tested; it does not show the warming is real or rule out
+  confounding. An independent local check of conifer versus deciduous albedo is being designed separately.
