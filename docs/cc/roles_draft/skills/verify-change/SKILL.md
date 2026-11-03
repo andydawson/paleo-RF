@@ -24,6 +24,9 @@ and never switch branches in a checkout a run is reading.
    Load: at most six verification jobs at once on the 48-core machine (Chris, 3 November);
    count them first with `pgrep -fc -- '--file=tools/verify_change.R'`. Model fitting uses
    one thread (`THREADS = '1'`); pinning `CORES` is optional.
+   A change that must not alter outputs (a refactor): add a check that compares them with the
+   previous run's (for example their MD5 sums, failing on any difference), so the report itself
+   carries the evidence (Fable, 3 November).
 3. **Run** in the background from the repository root, the exit status taken from the tool:
    `tools/rscript.sh tools/verify_change.R docs/cc/verification/<date>_<name>.R`.
    Wait for the completion notice; do not poll.
