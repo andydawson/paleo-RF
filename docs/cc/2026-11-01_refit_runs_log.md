@@ -102,8 +102,8 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   pipeline (`run8-raster`, 795792f) PASS, 3 November 00:10 UTC, about 3 hours.
 - **Run 8 against the 18 October run** (both on Andria's raster, seed 1549466984; same calibration table, MD5
   as required): partial-ice study-area mean, HadGEM3 kernel, W/m2, 18 October / run 8: 0.05-0.5 ka -0.692 /
-  -0.696; 0.5-2 ka -0.668 / -0.684; 2-4 ka +0.489 / +0.494; 4-6 ka -0.575 / -0.573; 6-8 ka +1.102 / +1.101;
-  8-10 ka +4.547 / +4.553; 10-12 ka +4.429 / +4.442. Close but not identical (largest difference 0.016, in
+  -0.696; 0.5-2 ka -0.668 / -0.684; 2-4 ka +0.489 / +0.493; 4-6 ka -0.575 / -0.573; 6-8 ka +1.102 / +1.101;
+  8-10 ka +4.547 / +4.553; 10-12 ka +4.429 / +4.441. Close but not identical (largest difference 0.016, in
   0.5-2 ka): the code and fitting settings changed in between (one maths-library thread instead of 48, the
   fixes since 18 October), and the simulated draws follow any small change in the fits. Run 1's differences
   from the raster (0.1 to 0.4 W/m2 per period) are ten or more times larger, so they come from the albedo
@@ -130,7 +130,8 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   fitting), May-August 02:38 UTC (323 min), September-December (`-2`) 15:48 UTC (464 min). Run 2's pipeline
   started next.
 - Run 4 (any-quality 75 degrees, snow-free), May-August PASS, 14:24 UTC (345 min).
-- In all four parts every one of the 36 fits (9 models x 4 months) reached full convergence of the smoothing
+- In all four parts every fit whose convergence script 4 prints (the eight ladder models and the prediction fit,
+  nine a month, 36 a part; the seven spatial-experiment fits print none) reached full convergence of the smoothing
   parameters within the 500-step loop: none stopped at the limit, model 7 included (on run 1's all-days
   albedo it stopped at 500 in six months).
 
@@ -145,7 +146,7 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 
 ## Run 2 (snow-free days): finished
 - `run2-snowfree-2` PASS, 3 November 19:42 UTC (pipeline about 3 hours). Run 5's January-February fitting
-  (`-2`) PASS 19:09 UTC.
+  (`-2`) PASS 19:07 UTC.
 - **Forcing, study-area mean, partial ice, W/m2, HadGEM3 kernel; run 8 (raster) / run 1 (all days) / run 2
   (snow-free days):** 0.05-0.5 ka -0.696 / -0.556 / -0.312; 0.5-2 ka -0.684 / -0.567 / -0.289; 2-4 ka +0.493 /
   +0.346 / -0.023; 4-6 ka -0.573 / -0.448 / +0.233; 6-8 ka +1.101 / +1.511 / +2.262; 8-10 ka +4.553 / +4.964 /
@@ -153,3 +154,30 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - Snow-free albedo halves the late-Holocene cooling, reverses the sign at 2-4 and 4-6 ka, and raises the
   early-Holocene warming by about 40% at 8-10 ka. Not yet explained; to be looked at with the diagnostic
   figures before it is interpreted.
+
+## The northeast over the hemlock decline, month by month (3 November, corrected)
+- The annual figures given earlier (box 80-66 W, 40-48 N, 83 cells, 6 to 4.5 ka as the sum of the three 500-year
+  steps, area-weighted; HadGEM3: run 8 +5.5, run 1 +3.5, run 2 +2.5 W/m2) are right, but "every run darkens the
+  northeast" holds for the annual mean only (Fable's review of 3 November). By month, albedo change / HadGEM3 forcing
+  (W/m2), run 8 (raster) | run 1 (all days) | run 2 (snow-free):
+
+  | Month | Run 8 | Run 1 | Run 2 |
+  |---|---|---|---|
+  | Jan | +0.001 / -0.06 | +0.045 / -2.23 | -0.015 / +0.75 |
+  | Feb | +0.018 / -1.39 | +0.005 / -0.38 | -0.051 / +3.98 |
+  | Mar | -0.037 / +4.01 | -0.062 / +6.66 | -0.034 / +3.66 |
+  | Apr | -0.094 / +14.60 | -0.043 / +6.71 | -0.022 / +3.43 |
+  | May | -0.094 / +18.96 | -0.076 / +15.36 | -0.014 / +2.75 |
+  | Jun | -0.034 / +8.83 | -0.049 / +12.79 | -0.015 / +4.01 |
+  | Jul | -0.021 / +5.12 | -0.007 / +1.82 | -0.018 / +4.34 |
+  | Aug | -0.020 / +4.72 | -0.006 / +1.31 | -0.016 / +3.79 |
+  | Sep | -0.033 / +4.95 | -0.008 / +1.23 | -0.015 / +2.22 |
+  | Oct | -0.050 / +3.94 | -0.016 / +1.15 | -0.013 / +1.03 |
+  | Nov | -0.033 / +1.73 | +0.020 / -1.04 | +0.003 / -0.17 |
+  | Dec | -0.022 / +0.68 | +0.052 / -1.67 | 0.000 / +0.00 |
+
+- Run 1 brightens from November to February, the expected direction over snow, but those months carry little
+  sunlight; March to June darken strongly and dominate. Run 2 darkens in nearly every month, with no winter
+  brightening. Every box cell has all twelve months in each step, and the ice part is zero in every box row.
+  Columns: `alb_diff_veg_ice_parts` and `rf_hadgem_veg_ice_parts` of `output/forcing/RF_holocene_all_cases.RDS`.
+  To be made for each later run.
