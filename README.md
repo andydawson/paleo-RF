@@ -100,7 +100,6 @@ into `data/`.
 | `4_calibration_model.R` | model ladder mod1-mod8 for every month, by ML by default (`calibration$comparison_method`); AIC table; spatial-effects experiment; the prediction model (`calibration$model_id`, model 8 by default) fitted by REML into its own file per month |
 | `5_calibration_eval.R` | fit diagnostics; saves script 4's prediction fit as the selected model per month |
 | `6_prediction_model.R` | hindcast albedo per slice and month with 100 draws |
-| `6_prediction_model_spatial_eval.R` | **not migrated**: Andria's original sensitivity of hindcasts to model structure, untouched and never run by us. It reads and writes its own file names, does not read `config.R` and writes no run manifest; out of the migration's scope pending general question 7 |
 | `7_plot_preds.R` | albedo, uncertainty and difference maps with ice overlays; coarse (7-period) albedo differences |
 | `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts |
 | `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants |
@@ -117,7 +116,6 @@ What each script reads and writes (`script:line` is the load statement):
 | `4_calibration_model.R` | `data/calibration_modern_lct_interp_bluesky.RDS` (`4:16`) | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits<br>`calibration_prediction_fit_<month>_bluesky.RDS` (the REML fit for prediction) |
 | `5_calibration_eval.R` | the fits above and the calibration table | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS` (a copy of the prediction fit)<br>`calibration_model_stats.csv`<br>figures |
 | `6_prediction_model.R` | selected models (`6:24`)<br>`data/lct_paleo_reveals_interp.RDS` (`6:17`) | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
-| `6_prediction_model_spatial_eval.R` (not migrated) | spatial-experiment fits, by its own file names<br>`data/lct_paleo_reveals_interp.RDS` | `output/prediction/*spatial_eval*`<br>figures |
 | `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7:84`)<br>`data/grid.RDS` (`7:148`)<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`7:46`)<br>`data/albedo_glacier_monthly.csv` (`7:163`)<br>`pbs_ll.RDS` (`7:23`) | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
 | `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS` (`7a:40`)<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`7a:44`)<br>`data/albedo_glacier_monthly.csv` (`7a:121`)<br>`data/grid.RDS` (`7a:98`) | `data/ALB_diffs_bluesky.RDS` |
 | `8_radiative.R` | `data/ALB_diffs_bluesky.RDS`<br>kernels | `output/forcing/RF_holocene_all_cases.RDS` |
@@ -127,15 +125,13 @@ What each script reads and writes (`script:line` is the load statement):
 The new entries above carry no line numbers; the old ones date from 2026-09-24 and
 may have moved.
 
-Not part of the pipeline: `GCM_snow_prob.R`, `thornthwaite.R`,
-`beta_veg_lct_modern.R` and `scripts/archive/` (abandoned climate/snow
-branch and earlier versions).
+Scripts from earlier stages (the abandoned climate and snow branch, early
+pollen scripts and the model-structure check) are kept unchanged in
+`archive/`, which says what each did and what replaced it.
 
 Run order is 1 -> 2 -> 4 -> 5 -> 6 -> 7 -> 7a -> 8 -> 9 -> 10; 3 is
 optional, and 7 and 7a are independent of each other.
-`6_prediction_model_spatial_eval.R` is not part of the migrated pipeline
-(see the table). Every other numbered script logs a provenance manifest
-(see below).
+Every numbered script logs a provenance manifest (see below).
 
 Diagnostics: script 1 has a diagnostic switch (`run$diagnostic` in
 `config.R`, off by default) that adds checks and plots without changing
@@ -345,8 +341,7 @@ and lists what differs; rerun the earlier script, or set
 `run$allow_stale = TRUE` in the config to go on regardless (each such file
 is listed in the manifest). A script uses it with `run_begin()` at the top,
 `read_input()` and `write_output()` for its files, and `run_finish()` at
-the end; every numbered script except the unmigrated
-`6_prediction_model_spatial_eval.R` has it (issues I05, I04a, I06), with
+the end; every numbered script has it (issues I05, I04a, I06), with
 `run_begin()` before the packages are loaded so that a missing package is
 recorded as a failed run. Older manifests in `runs/` (flat, named by minute) are kept as they
 are; three were written by hand after the fact and are marked
