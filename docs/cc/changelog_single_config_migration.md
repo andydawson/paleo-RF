@@ -1623,3 +1623,13 @@ Astra's review of what they hold (`docs/cc/2026-11-03_old_scripts_review_codex_g
   under the legacy configuration, calibration table byte-identical to the anchor; the config and path
   tests pass.
 - **Left as it is:** `R/paths.R` still lists the four output files of the archived model-structure script.
+
+## Small cleanups (3 November 2026, Chris)
+
+- **Path catalogue:** the four output files of the archived model-structure script left `R/paths.R`;
+  `tests/test_paths.R` tests the whole catalogue instead of filtering them out. No pipeline path changes.
+  Verified (`docs/cc/verification/2026-11-03_cleanups-paths-3_report.md`, PASS; the first two runs failed,
+  the first because the main checkout's copy of the verification tool requires a script, the second on
+  the test's old count, fixed in 200b414).
+- **verify-change skill:** the load rule of 3 November (up to six verification jobs on the 48-core machine,
+  one thread per fit) replaces "at most 24 cores".
