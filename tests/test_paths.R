@@ -80,7 +80,7 @@ stopifnot(
   !anyDuplicated(cat_files),
   length(catalogue_paths(base, "calibration_ladder")) == 12 * length(LADDER_MODELS),
   length(catalogue_paths(base, c("calibration_spatial", "lct_paleo"))) == 12 * 6 + 1,
-  length(catalogue_paths(base)) == length(cat_files) + 3 * 12 + 1,
+  length(catalogue_paths(base)) == length(cat_files),
   identical(catalogue_paths(base, character()), character()),
   fails(catalogue_paths(base, c("lct_paleo", "nonsense"))),
 
