@@ -124,3 +124,12 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   run's fitting** ("don't let the machine sit idle"). Pipelines still run one after another. The queued
   fitting specs of runs 3-7 no longer pin cores (a fit uses about one core); results do not depend on which
   cores are used. From 08:18 UTC: run 2's two remaining parts, run 3's three and run 4's January-April part.
+
+## Run 2 fitting and run 4 May-August: finished
+- Run 2 (snow-free albedo), all three fitting parts PASS: January-April 08:36 UTC 3 November (681 min of
+  fitting), May-August 02:38 UTC (323 min), September-December (`-2`) 15:48 UTC (464 min). Run 2's pipeline
+  started next.
+- Run 4 (any-quality 75 degrees, snow-free), May-August PASS, 14:24 UTC (345 min).
+- In all four parts every one of the 36 fits (9 models x 4 months) reached full convergence of the smoothing
+  parameters within the 500-step loop: none stopped at the limit, model 7 included (on run 1's all-days
+  albedo it stopped at 500 in six months).
