@@ -110,14 +110,14 @@ Not needed from Chris: the elevation model (fetched without a login).
   and download quota count against the repo owner's GitHub account (free
   tier: 1 GB each). Is that acceptable, or should large files live
   elsewhere (e.g. Zenodo / OSF with a download script)?
-- **Scripts outside the pipeline.** `scripts/archive/`, `GCM_snow_prob.R`
-  and `thornthwaite.R` (the dropped snow / water-budget branch) and
-  `beta_veg_lct_modern.R` (an early modern-pollen script, out of the queue
-  since 2022) are not run by the pipeline and nothing reads their outputs.
-  Unless you want any of them kept, we will remove them from the working
-  tree in the readability cleanup (migration issue I15); every version stays
-  in git history and on the `legacy` branch. Any you keep will be tidied and
-  checked with the rest. (Default made explicit 2026-10-13, Chris.)
+- **Scripts outside the pipeline: answered (Chris, 3 November 2026).** Archived, not deleted: the 18
+  scripts (`scripts/archive/`, `GCM_snow_prob.R`, `thornthwaite.R`, `beta_veg_lct_modern.R` and
+  `6_prediction_model_spatial_eval.R`) are now unchanged in a root-level `archive/` folder, whose README
+  says what each did and what replaced it (issue #26; Astra's review,
+  `docs/cc/2026-11-03_old_scripts_review_codex_gpt6astra.md`). Still for you: did any figure or table
+  you have shown or kept depend on them, and do their inputs (the ABoVE and GlobAlbedo extracts, the
+  ClimateNA outputs) survive anywhere? The source of the custom ABoVE monthly albedo and snow rasters
+  (`data/ABOVE/snow/snow-month-%02d.tif`) is not recorded.
 
 ## 7. Small code questions raised by the configuration migration (2026-10-08)
 
@@ -139,13 +139,10 @@ answers let us delete code rather than carry it.
   for prediction, since the comparison is fitted by ML; issue I16.)
   (Checked 2026-10-16 on the original files: the two fits are identical, same formula and
   rows, fitted values differ by 0. Chris: leave it for now and record it.)
-- **The model-structure sensitivity check** (`6_prediction_model_spatial_eval.R`)
-  cannot run at present: it needs the `SemiPar` and `pwiser` packages, which
-  are not installed, uses an undefined variable at line 278, and its tail
-  from line 326 reads point-flavour files that no longer exist. Is this
-  analysis still wanted for the paper? If yes we will rebuild it on the
-  shared functions; unless you tell us it is wanted, we will retire it in
-  the readability cleanup (I15), as for the scripts in section 6.
+- **The model-structure sensitivity check** (`6_prediction_model_spatial_eval.R`): archived with the
+  scripts above (Chris, 3 November 2026). Its question, whether the location term changes the vegetation
+  effect, is now addressed by the northeast diagnostic (`tools/plotting/plot_northeast_cover_and_location.R`),
+  which could be extended to other months and regions if you want it for the paper.
 
 ## 8. Figure and code slips found in the readability review (2026-10-13)
 
