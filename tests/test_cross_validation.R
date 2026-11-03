@@ -122,4 +122,29 @@ stopifnot(ne2$cells == 3, ne2$predictions == 4, ne2$blocks == 3, ne2$low_open_la
 # Cells all on one latitude row: no correlation, and no warning.
 flat <- transform(p[1:3, ], y = 45)
 stopifnot(is.na(withCallingHandlers(cv_by_region(flat, 0.2), warning = function(w) stop("unexpected warning: ", conditionMessage(w)))$cor_evergreen_latitude))
+
+# Distance bands: 100, 250 and 500 km open the next band.
+stopifnot(identical(as.character(km_band(c(0, 99.9, 100, 250, 500))), c("[0,100)", "[0,100)", "[100,250)", "[250,500)", "[500,Inf)")))
+
+# Paired differences by band, by hand: band "near" a = (1, 3), mod8 = (2, 2): MSE 2 and 2, difference 0;
+# band "far" a = 5, mod8 = 1: difference 4 (one block, so no spread). A model identical to mod8 has
+# difference 0 and standard error 0.
+e <- data.frame(block = c("A", "B", "C"), a = c(1, 3, 5), mod8 = c(2, 2, 1), same = c(2, 2, 1))
+pb <- cv_paired_by_band(e, c("near", "near", "far"), c("a", "mod8", "same"), "mod8", seed = 1, resamples = 50)
+stopifnot(isTRUE(all.equal(pb$difference[pb$band == "near" & pb$model == "a"], 0)),
+          isTRUE(all.equal(pb$difference[pb$band == "far" & pb$model == "a"], 4)),
+          all(pb$difference[pb$model == "same"] == 0), all(pb$se_difference[pb$model == "same"] == 0),
+          identical(pb$cell_months[pb$model == "a"], c(1L, 2L)))
+
+# The in-range report, by hand: model 8 has squared errors 0.04 and 0 in January and 0.09 in February;
+# months weighted equally give 0.055 (not 0.0433 pooled). Cells outside their training range
+# (distance > 0) and fits that did not converge are left out.
+r <- data.frame(month = c("jan", "jan", "feb", "feb", "jan"), x = c(-75, -70, -75, -100, -90), y = c(41, 46, 41, 40, 45),
+                km = c(50, 120, 50, 300, 10), distance = c(0, 0, 0, 0.1, 0), model = "mod8",
+                predicted = c(0.4, 0.2, 0.5, 0.9, 0.9), observed = c(0.2, 0.2, 0.2, 0.2, 0.2),
+                converged = c(TRUE, TRUE, TRUE, TRUE, FALSE), OL = 0.1, ET = 0.4, own_direction = NA)
+out <- file.path(tempfile(), "run")
+invisible(capture.output(inrange_report(out, r)))
+ir <- utils::read.csv(file.path(out, "output", "cross_validation", "inrange_scores.csv"))
+stopifnot(isTRUE(all.equal(ir$score, 0.055)), ir$difference == 0, ir$months == 2)
 cat("test_cross_validation: all tests passed\n")

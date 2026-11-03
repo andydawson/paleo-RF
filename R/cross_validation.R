@@ -24,6 +24,10 @@ CV_BLOCK_DEGREES  = 5                           # geographic blocks for the unce
 CV_MIN_BLOCKS     = 10                          # the scored withheld cells (positive target weight) must lie in at least this many blocks
 CV_MAX_DIRECTIONS = 3
 CV_RESAMPLES      = 1000
+CV_KM_BANDS       = c(0, 100, 250, 500, Inf)    # distance to the nearest training cell (km), for the geographic report
+# The candidates fitted on the in-range holdout besides the chosen one: the pairs that differ only in
+# the location term (Chris, 3 November; protocol, geographic amendment).
+CV_INRANGE_MODELS = c('mod8', 'cover_elev', 'mod8_coarse_loc', 'lin_cover', 'lin_cover_noloc')
 
 # The target (protocol, section 2, as amended 3 November): the past cell-slices in the forcing's
 # latitude window (script 8 keeps lat_min < latitude < lat_max), each weighted so that every slice
@@ -121,6 +125,7 @@ cv_holdouts = function(cover, angle, cut) {
 cv_block = function(x, y, size = CV_BLOCK_DEGREES) paste(floor(x / size), floor(y / size))
 
 distance_band = function(distance) cut(distance, CV_DISTANCE_BANDS, right = FALSE)
+km_band = function(km) cut(km, CV_KM_BANDS, right = FALSE)
 
 # The withheld cells' errors by diagnostic region (R/regions.R), month and own direction, for each
 # model: how many withheld cells and blocks support each (a cell withheld by two holdouts counts once
@@ -129,9 +134,10 @@ distance_band = function(distance) cut(distance, CV_DISTANCE_BANDS, right = FALS
 # among them. Shows what the pooled score hides for the northeast (Astra, 3 November; protocol,
 # amendment of 3 November). Reported only, never used for the choice. `predictions`: the fit stage's
 # rows with a prediction (x, y, ET, OL, month, own_direction, model, predicted, observed). A cell with
-# no own direction (inside its training range) is left out; the holdouts stage ensures there is none.
+# no own direction (inside its training range: the in-range holdout's cells) is labelled "inside".
 cv_by_region = function(predictions, low_open_land) {
   predictions$region = region_of(predictions$x, predictions$y)
+  predictions$own_direction[is.na(predictions$own_direction)] = 'inside'
   parts = split(predictions, predictions[, c('model', 'region', 'month', 'own_direction')], drop = TRUE)
   out = do.call(rbind, lapply(parts, function(r) {
     cells = r[!duplicated(r[, c('x', 'y')]), ]
@@ -179,6 +185,20 @@ cv_score = function(errors, target, models, seed, resamples = CV_RESAMPLES) {
        represented = sum(target$weight[target$group %in% errors$group]) / sum(target$weight),
        resampled = t(matrix(draws[models, , drop = FALSE], nrow = length(models), dimnames = list(models, NULL))),
        resamples_missing_a_group = sum(draws['missed', ]))
+}
+
+# Each model's mean squared error and its paired difference from `baseline` within each `band`, with
+# the standard error of the difference from resampling the geographic blocks (cv_score, one group per
+# band). For the geographic report (protocol, amendment of 3 November): reported only, never used to
+# choose. `errors` as for cv_score (block and one squared-error column per model).
+cv_paired_by_band = function(errors, band, models, baseline, seed, resamples = CV_RESAMPLES) {
+  do.call(rbind, lapply(split(seq_len(nrow(errors)), band, drop = TRUE), function(i) {
+    one = transform(errors[i, ], group = 'all')
+    s = cv_score(one, data.frame(group = 'all', weight = 1), models, seed, resamples)
+    data.frame(band = band[i[1]], model = models, cell_months = length(i), blocks = length(unique(one$block)),
+               mse = s$score, difference = s$score - s$score[baseline],
+               se_difference = apply(s$resampled, 2, function(r) stats::sd(r - s$resampled[, baseline])), row.names = NULL)
+  }))
 }
 
 # Evaluate `expr` with R's random numbers seeded, then restore the previous state, so the seed

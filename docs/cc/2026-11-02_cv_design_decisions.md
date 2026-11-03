@@ -68,6 +68,12 @@ score arithmetic, and asked for fixes before any fit, plus decisions:
     partly; `2026-11-03_cv_northeast_question_codex_gpt6astra.md`). The protocol's new section says what was found;
     `by_region.csv` is reported only. Chris also asked for a design (only) of an independent local check of conifer
     versus deciduous albedo in the northeast.
+15. **The geographic hole is measured and reported, not corrected** (Chris, 3 November, after Astra's design and
+    Fable's review, `2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`): the selection rule is kept;
+    a zero-fit table of each candidate's advantage over model 8 by distance to training; the in-range holdout fitted
+    for the location pairs and the winner (more may be added later); the tie-break's tilt toward no-location models
+    stated; if the winner's advantage lies only in far cells, the choice stands and is reported with the two-model
+    hindcast. Model 3 stays eligible, with Astra's caution recorded.
 
 ## Filed for future work (Chris: drop for now)
 

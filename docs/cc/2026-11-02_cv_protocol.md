@@ -142,7 +142,37 @@ on run 1's data:
   the two at fixed open land. It stays eligible (Chris, 3 November); if it is chosen, a weak or absent hemlock
   signal reflects its specification, not evidence that the physical effect is negligible.
 - **The geographic hole** (d2 withholds almost the whole northeast, so a location-dependent model may lose partly
-  for having to predict across it): how to separate each candidate's geographic penalty from its cover-extrapolation
-  skill is being designed (Astra, then Fable; Chris decides before any fit).
+  for having to predict across it): measured and reported, not corrected; see the next section.
 - The by-region table counts each withheld cell once in its cell, block and low-open-land counts and in the
   correlation, and once per holdout in the errors; all descriptive tables use converged fits only.
+
+## Geographic sensitivity (Chris, 3 November 2026, before any fit)
+
+From Astra's design (`2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`) and Fable's review of it. The
+selection score and the choice rule are unchanged; everything here is reported beside them, never used to choose, and
+no diagnostic, nor the hemlock sign, triggers a new choice. It is not a geographic penalty that could be subtracted: a
+cell's error mixes cover and geographic error, and no additive split exists.
+- **Tail predictions, no extra fits:** each candidate's paired difference from model 8 (mean squared error, with its
+  block-resampled standard error) by distance to the nearest training cell, [0, 100), [100, 250), [250, 500) and
+  500 km or more, within each cover-distance band, with the cell-months and blocks behind each (`by_distance.csv`).
+- **The in-range holdout** (the seeded fifth of the 5 x 5 degree blocks, no cover cut) is fitted for the pairs that
+  differ only in the location term, model 8, `cover_elev`, `mod8_coarse_loc`, `lin_cover` and `lin_cover_noloc`, and
+  the chosen model, after the tail score (the order is immaterial, the rule being frozen). More candidates may be
+  added later (Chris); being reported only, that changes no choice. Before any fit, `inrange.csv` gives, for each
+  month, the training rows, the withheld cells, those inside the month's remaining training range, their blocks and
+  distances. Only cells inside that range are scored; a month without enough training rows for the largest model, or
+  with scored cells in fewer than 10 blocks, is untested.
+- **In-range reports:** each model's score with months weighted equally and its paired difference from model 8
+  (block-resampled standard error; a model missing a month has no score, reported as incomplete)
+  (`inrange_scores.csv`); the same by distance band (`inrange_by_distance.csv`; its 500 km band is empty, the
+  holdout's cells lying at most about 350 km from training); and by region (`inrange_by_region.csv`): the holdout
+  withholds 61 of the 83 northeast cells, about 51 of them inside the range, in four blocks, so the northeast's
+  in-range errors beside its d2 errors are the one near-matched comparison of ordinary against unusual cover, thinly
+  replicated.
+- **A known tilt, stated and not corrected:** the hole raises the location models' errors and widens the uncertainty
+  of the paired differences, so more candidates fall within one standard error, and the tie-break by fewest
+  coefficients then favours the two models without a location term (52 and 249 coefficients, against 551-748 for those
+  with the full location term).
+- **If the winner's advantage over model 8 lies only in cells far from training,** the choice stands; the paper
+  reports the distance tables beside it and the section 7 hindcast with both the winner and model 8.
+

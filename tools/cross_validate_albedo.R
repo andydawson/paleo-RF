@@ -8,8 +8,9 @@
 #       withheld cells' distances compare with the hindcast's (minutes; no model fitted).
 #   Rscript tools/cross_validate_albedo.R fit <run-dir> <holdout> <month> [<month> ...]
 #       fits the thirteen candidates (CV_MODELS, R/model_registry.R) without that holdout's cells and
-#       predicts them (hours). Holdout "inrange" (skill inside the range, reported only) fits only
-#       model 8 and the chosen model, after the score stage.
+#       predicts them (hours). Holdout "inrange" (skill inside the range, reported only) fits the
+#       location pairs (CV_INRANGE_MODELS) and the chosen model, after the score stage; run the score
+#       stage again afterwards for its reports.
 #   Rscript tools/cross_validate_albedo.R score <run-dir>
 #       the scores, their uncertainty and the choice, with the checks reported beside them.
 #
@@ -141,14 +142,28 @@ stage_holdouts = function(run_dir, paths) {
     membership[[directions$direction[i]]] = withheld
     feasibility = rbind(feasibility, cut_feasibility)
   }
+  q = function(v) paste(if (length(v)) signif(stats::quantile(v, c(0.1, 0.5, 0.9), names = FALSE), 2) else rep(NA, 3), collapse = ' / ')
   # Skill inside the range (reported only): a fifth of the geographic blocks, seeded.
   blocks = cv_block(cal$x, cal$y)
   picked = withr_seed(SEEDS$inrange, sample(sort(unique(blocks)), round(length(unique(blocks)) / 5)))
   membership$inrange = blocks %in% picked
+  # The in-range holdout's support, fixed before any fit (protocol, geographic amendment): its scored
+  # cells are the withheld cells inside their month's remaining training range; a month needs enough
+  # training rows for the largest model and scored cells in CV_MIN_BLOCKS blocks, else it is untested.
+  inrange = do.call(rbind, lapply(months, function(m) {
+    rows = complete_rows(cal, m)
+    train = rows & !membership$inrange
+    valid = rows & membership$inrange
+    inside = !training_support(cal[valid, ], training_hull(cal[train, ]))$outside
+    km = nearest_km(cal$x[valid][inside], cal$y[valid][inside], cal$x[train], cal$y[train])
+    blocks = length(unique(cv_block(cal$x[valid][inside], cal$y[valid][inside])))
+    data.frame(month = m, training_rows = sum(train), largest_model = largest_model[[m]], withheld_cells = sum(valid),
+               inside_cells = sum(inside), blocks = blocks, km_10_50_90 = q(round(km)), km_max = if (length(km)) round(max(km)) else NA,
+               feasible = sum(train) >= largest_model[[m]] && blocks >= CV_MIN_BLOCKS)
+  }))
 
   # How the withheld cells compare with the hindcast (protocol, section 4): distance outside the
   # training range (cover) and to the nearest training cell (km); 10th / 50th / 90th percentiles.
-  q = function(v) paste(if (length(v)) signif(stats::quantile(v, c(0.1, 0.5, 0.9), names = FALSE), 2) else rep(NA, 3), collapse = ' / ')
   comparison = do.call(rbind, lapply(directions$direction, function(d) do.call(rbind, lapply(months, function(m) {
     rows = complete_rows(cal, m)
     train = rows & !membership[[d]]
@@ -162,14 +177,15 @@ stage_holdouts = function(run_dir, paths) {
   }))))
 
   saveRDS(list(directions = directions, membership = membership, feasibility = feasibility, target = target,
-               months = months, md5 = input_md5(paths)), cv_file(run_dir, 'holdouts.rds'))
+               inrange = inrange, months = months, md5 = input_md5(paths)), cv_file(run_dir, 'holdouts.rds'))
   write_record(run_dir, paths, 'holdouts')
-  for (name in c('directions', 'feasibility', 'comparison', 'target'))
+  for (name in c('directions', 'feasibility', 'comparison', 'target', 'inrange'))
     utils::write.csv(get(name), cv_file(run_dir, paste0(name, '.csv')), row.names = FALSE)
   plot_directions(cal, outside, directions, membership, cv_file(run_dir, 'directions.pdf'))
   cat('\ndirections (angle on the cover triangle: 0 = more summergreen, 90 = more evergreen):\n'); print(directions)
   cat('\nfeasibility of each holdout and month:\n'); print(feasibility, row.names = FALSE)
   cat('\nwithheld cells against the past (10th / 50th / 90th percentiles):\n'); print(comparison, row.names = FALSE)
+  cat('\nthe in-range holdout (reported only):\n'); print(inrange, row.names = FALSE)
 }
 
 # The cover triangle: modern cells grey, past mixes outside the range coloured by direction, each
@@ -219,10 +235,12 @@ stage_fit = function(run_dir, paths, holdout, months) {
   withheld = membership_for(holdouts, cal, holdout)
   models = if (holdout == 'inrange') {
     scores = utils::read.csv(cv_file(run_dir, 'scores.csv'))
-    unique(c('mod8', scores$model[scores$chosen]))
+    unique(c(CV_INRANGE_MODELS, scores$model[scores$chosen]))
   } else CV_MODELS
   for (m in months) {
-    if (holdout != 'inrange' && !holdouts$feasibility$feasible[holdouts$feasibility$holdout == holdout & holdouts$feasibility$month == m]) {
+    feasible = if (holdout == 'inrange') holdouts$inrange$feasible[holdouts$inrange$month == m] else
+      holdouts$feasibility$feasible[holdouts$feasibility$holdout == holdout & holdouts$feasibility$month == m]
+    if (!feasible) {
       cat(holdout, m, ': not feasible (holdouts stage); not fitted\n')
       next
     }
@@ -232,7 +250,8 @@ stage_fit = function(run_dir, paths, holdout, months) {
     # Each withheld cell's own departure from its training range and its group, kept beside its holdout.
     departure = withheld_departure(valid, training_hull(train), holdouts$directions, m)
     cells = data.frame(holdout = holdout, month = m, x = valid$x, y = valid$y, OL = valid$OL, ET = valid$ET, ST = valid$ST,
-                       departure[, c('distance', 'angle', 'own_direction', 'group')], observed = valid[[m]])
+                       departure[, c('distance', 'angle', 'own_direction', 'group')],
+                       km = nearest_km(valid$x, valid$y, train$x, train$y), observed = valid[[m]])
     file = cv_file(run_dir, sprintf('predictions_%s_%s.rds', holdout, m))
     predictions = NULL
     for (id in models) {   # saved after every candidate, so a later failure loses nothing
@@ -244,6 +263,33 @@ stage_fit = function(run_dir, paths, holdout, months) {
 }
 
 # --- Stage 3: scores and the choice -------------------------------------------------------------
+
+# The in-range holdout's reports (protocol, geographic amendment; never used to choose): on withheld
+# cells inside their month's remaining training range, from converged fits, each model's score with
+# months weighted equally and its paired difference from model 8 (block-resampled standard error);
+# the same by distance to the nearest training cell; and by region. A model missing a month has no
+# score (incomplete), never a partial one.
+inrange_report = function(run_dir, r) {
+  r = r[r$converged & r$distance == 0, ]
+  r$squared_error = (r$predicted - r$observed)^2
+  models = unique(r$model)
+  errors = stats::reshape(r[, c('month', 'x', 'y', 'km', 'model', 'squared_error')], idvar = c('month', 'x', 'y', 'km'),
+                          timevar = 'model', direction = 'wide')
+  names(errors) = sub('^squared_error\\.', '', names(errors))
+  errors$block = cv_block(errors$x, errors$y)
+  errors$group = errors$month
+  months = unique(errors$month)
+  s = cv_score(errors, data.frame(group = months, weight = 1 / length(months)), models, SEEDS$resample)
+  scores = data.frame(model = models, score = s$score, rmse = sqrt(s$score), difference = s$score - s$score['mod8'],
+                      se_difference = apply(s$resampled, 2, function(v) stats::sd(v - s$resampled[, 'mod8'])),
+                      months = as.numeric(colSums(!is.na(rowsum(as.matrix(errors[, models]), errors$month)))), row.names = NULL)
+  utils::write.csv(scores, cv_file(run_dir, 'inrange_scores.csv'), row.names = FALSE)
+  utils::write.csv(cv_paired_by_band(errors, as.character(km_band(errors$km)), models, 'mod8', SEEDS$resample),
+                   cv_file(run_dir, 'inrange_by_distance.csv'), row.names = FALSE)
+  utils::write.csv(cv_by_region(r, LOW_OPEN_LAND), cv_file(run_dir, 'inrange_by_region.csv'), row.names = FALSE)
+  cat('\nskill inside the range (reported only; converged fits, cells inside their training range, months equal):\n')
+  print(scores, row.names = FALSE, digits = 4)
+}
 stage_score = function(run_dir, paths) {
   cal = readRDS(path_file(paths, 'calibration_table'))
   holdouts = readRDS(cv_file(run_dir, 'holdouts.rds'))
@@ -259,8 +305,8 @@ stage_score = function(run_dir, paths) {
   cat(sprintf('withheld cell-months whose own direction differs from their holdout\'s: %d of %d\n',
               sum(predictions$own_direction != predictions$holdout, na.rm = TRUE) / length(CV_MODELS), nrow(predictions) / length(CV_MODELS)))
   predictions$squared_error = (predictions$predicted - predictions$observed)^2
-  errors = stats::reshape(predictions[, c('holdout', 'month', 'x', 'y', 'group', 'model', 'squared_error')],
-                          idvar = c('holdout', 'month', 'x', 'y', 'group'), timevar = 'model', direction = 'wide')
+  errors = stats::reshape(predictions[, c('holdout', 'month', 'x', 'y', 'group', 'km', 'distance', 'model', 'squared_error')],
+                          idvar = c('holdout', 'month', 'x', 'y', 'group', 'km', 'distance'), timevar = 'model', direction = 'wide')
   names(errors) = sub('^squared_error\\.', '', names(errors))
   errors$block = cv_block(errors$x, errors$y)
 
@@ -288,6 +334,13 @@ stage_score = function(run_dir, paths) {
   utils::write.csv(by_month, cv_file(run_dir, 'scores_by_month.csv'), row.names = FALSE)
   if (!is.null(low_open_land)) utils::write.csv(low_open_land, cv_file(run_dir, 'low_open_land.csv'), row.names = FALSE)
   utils::write.csv(cv_by_region(predictions[ok, ], LOW_OPEN_LAND), cv_file(run_dir, 'by_region.csv'), row.names = FALSE)
+  # Whether a candidate's advantage over model 8 sits in the cells far from training: paired
+  # differences by distance to the nearest training cell, within cover-distance band (protocol,
+  # geographic amendment; no extra fits). Converged candidates only.
+  fine = CV_MODELS[converged]
+  if ('mod8' %in% fine)
+    utils::write.csv(cv_paired_by_band(errors, paste(km_band(errors$km), distance_band(errors$distance)), fine, 'mod8', SEEDS$resample),
+                     cv_file(run_dir, 'by_distance.csv'), row.names = FALSE)
   write_record(run_dir, paths, 'score')
 
   cat(sprintf('holdout-months scored: %d; withheld cell-months: %d; geographic blocks: %d\n',
@@ -300,15 +353,7 @@ stage_score = function(run_dir, paths) {
   if (!choice$eligible[choice$model == 'mod8']) cat('\nmodel 8 cannot be chosen: the comparison is incomplete\n')
   cat('\nchosen:', if (any(choice$chosen)) choice$model[choice$chosen] else 'none (the resampled uncertainty is not finite)', '\n')
   inrange = Sys.glob(cv_file(run_dir, 'predictions_inrange_*.rds'))
-  if (length(inrange)) {
-    r = do.call(rbind, lapply(inrange, readRDS))
-    r = r[r$converged, ]
-    cat('\nskill inside the range (reported only; converged fits), RMSE over all withheld cells and over those inside the range:\n')
-    rmse = function(rows) tapply((r$predicted[rows] - r$observed[rows])^2, r$model[rows], function(e) sqrt(mean(e)))
-    inside = r$distance == 0
-    print(cbind(all = rmse(TRUE), inside = rmse(inside)))
-    cat('withheld cell-months inside the range:', sum(r$distance == 0) / length(unique(r$model)), 'of', nrow(r) / length(unique(r$model)), '\n')
-  }
+  if (length(inrange)) inrange_report(run_dir, do.call(rbind, lapply(inrange, readRDS)))
 }
 
 if (sys.nframe() == 0L) {
