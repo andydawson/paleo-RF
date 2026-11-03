@@ -56,7 +56,7 @@ if (cfg$analysis$calibration$ice_mask == 'centre_in_1ka_polygon') {
 
 # The satellite albedo of each calibration cell and month, from the source config.R chooses
 # (analysis$albedo; Chris, 2026-10-29, docs/cc/2026-10-29_refit_plan_decisions.md). Either
-# branch fills bs_interp_df, one row per row of lct_interp_modern and one column per month,
+# branch fills albedo_by_cell, one row per row of lct_interp_modern and one column per month,
 # and albedo_record, what the run manifest says about the albedo.
 albedo_settings = cfg$analysis$albedo
 if (albedo_settings$source == 'legacy_raster') {
@@ -78,12 +78,12 @@ if (albedo_settings$source == 'legacy_raster') {
   # construct objects to hold albedo data
 
   # albedo native resolution
-  bs_interp_df = data.frame(matrix(NA, nrow=nrow(lct_interp_spat), ncol=12))
-  colnames(bs_interp_df) = MONTHS
+  albedo_by_cell = data.frame(matrix(NA, nrow=nrow(lct_interp_spat), ncol=12))
+  colnames(albedo_by_cell) = MONTHS
 
   # albedo coarser resolution (same as grid?)
-  bs_interp_df_coarse = data.frame(matrix(NA, nrow=nrow(lct_interp_spat), ncol=12))
-  colnames(bs_interp_df_coarse) = MONTHS
+  albedo_coarse_by_cell = data.frame(matrix(NA, nrow=nrow(lct_interp_spat), ncol=12))
+  colnames(albedo_coarse_by_cell) = MONTHS
 
   grid = rast(grid)
 
@@ -154,9 +154,9 @@ if (albedo_settings$source == 'legacy_raster') {
     ggsave(path_figure(paths, paste0('albedo_maps_', month, '_bluesky_coarse.pdf')))
     ggsave(path_figure(paths, paste0('albedo_maps_', month, '_bluesky_coarse.png')))
 
-    bs_interp_df_coarse[,month] <- terra::extract(blue_month_coarse, lct_interp_spat)[,month]
+    albedo_coarse_by_cell[,month] <- terra::extract(blue_month_coarse, lct_interp_spat)[,month]
 
-    bs_interp_df[,month] <- terra::extract(blue_month, lct_interp_spat)[,month]
+    albedo_by_cell[,month] <- terra::extract(blue_month, lct_interp_spat)[,month]
 
   }
 
@@ -172,7 +172,7 @@ if (albedo_settings$source == 'legacy_raster') {
   albedo_cells = read_input(run, cells_file, read.csv)
   cells_provenance = read_input(run, path_file(paths, 'albedo_modis_provenance'), readLines)
   attached = cell_albedo_by_month(albedo_cells, lct_interp_modern, albedo_settings$statistic, albedo_settings$version)
-  bs_interp_df = attached$albedo
+  albedo_by_cell = attached$albedo
   # The cell-table centres without a calibration cell are of two kinds: those the ice mask above
   # left out, and centres outside the modern land-cover table (the 17.5 N row).
   unmatched = attached$cells_without_predictor
@@ -195,10 +195,10 @@ if (albedo_settings$source == 'legacy_raster') {
                        albedo_cells_outside_the_modern_cells = unmatched[!left_out_by_ice_mask, ],
                        retrieval_support = list(meaning = support_meaning,
                                                 per_month = retrieval_support(albedo_cells, lct_interp_modern,
-                                                                              albedo_settings$version, bs_interp_df)))
+                                                                              albedo_settings$version, albedo_by_cell)))
 
   # Maps of the selected monthly albedo and of where it is missing, one panel per month.
-  albedo_long = melt(data.frame(lct_interp_modern[, c('x', 'y')], bs_interp_df), id.vars = c('x', 'y'),
+  albedo_long = melt(data.frame(lct_interp_modern[, c('x', 'y')], albedo_by_cell), id.vars = c('x', 'y'),
                      variable.name = 'month', value.name = 'albedo')
   map_title = sprintf('MODIS cell albedo: %s, version %s', albedo_settings$statistic, albedo_settings$version)
   p_albedo = ggplot(data = albedo_long) +
@@ -229,15 +229,15 @@ if (albedo_settings$source == 'legacy_raster') {
 
 # Per month, the cells with an albedo and those floored from exactly 0 just below.
 albedo_record$per_month = data.frame(month = MONTHS,
-                                     cells_with_albedo = unname(colSums(!is.na(bs_interp_df))),
-                                     floored_from_zero = unname(colSums(bs_interp_df == 0, na.rm = TRUE)))
+                                     cells_with_albedo = unname(colSums(!is.na(albedo_by_cell))),
+                                     floored_from_zero = unname(colSums(albedo_by_cell == 0, na.rm = TRUE)))
 run_record(run, 'calibration_albedo', albedo_record)
 
 # The calibration models (script 4) use a beta distribution, defined only strictly between
 # 0 and 1, so an albedo of exactly zero is set to a small positive value.
-bs_interp_df[bs_interp_df==0] = 1e-4
+albedo_by_cell[albedo_by_cell==0] = 1e-4
 
-lct_interp_bs = data.frame(lct_interp_modern, bs_interp_df)
+lct_interp_bs = data.frame(lct_interp_modern, albedo_by_cell)
 
 # One row per modern cell: land cover, elevation and the twelve monthly albedos.
 write_output(run, lct_interp_bs, path_file(paths, 'calibration_table'))
@@ -246,9 +246,9 @@ write_output(run, lct_interp_bs, path_file(paths, 'calibration_table'))
 # the two (the MODIS cell table has one resolution, the cells').
 if (albedo_settings$source == 'legacy_raster') {
 
-  bs_interp_df_coarse[bs_interp_df_coarse==0] = 1e-4
+  albedo_coarse_by_cell[albedo_coarse_by_cell==0] = 1e-4
 
-  lct_interp_bs_coarse = data.frame(lct_interp_modern, bs_interp_df_coarse)
+  lct_interp_bs_coarse = data.frame(lct_interp_modern, albedo_coarse_by_cell)
 
   write_output(run, lct_interp_bs_coarse, path_file(paths, 'calibration_table_coarse'))
 
