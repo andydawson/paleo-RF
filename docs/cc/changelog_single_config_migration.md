@@ -36,7 +36,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | I16b ML ladder; REML prediction fit; ice caps out of calibration; fraction check | #19 (second part) | merged 2026-10-15 | 8f6c9b9 |
 | I15a Readability: comments and indentation only | #21 | merged 2026-10-15 | f5a33e4 |
 | I15b Readability: names in the R/ helpers | #22 | merged 2026-10-15 | d8c32c0 |
-| I15c Readability: scripts, one branch per script | #18 | scripts merged 2026-10-15; two renames wait for I16c | |
+| I15c Readability: scripts, one branch per script | #18 | scripts merged 2026-10-15; last renames merged 2026-11-03; closed | |
 | I15 Readability cleanup | #18 | filed 2026-10-13; four figure slips marked in scripts 2 and 7 | df0d28f (comments only) |
 
 ---
@@ -1026,6 +1026,20 @@ new, and its outputs compared.
   code's; all 17 figure files identical (PDF apart from the embedded dates).
 - **Still to do in I15c:** the renames in scripts 1 and 2 that wait for I16c (inventory rows 2
   and 4), and the scripts outside the pipeline, which wait for Andria.
+
+**The last renames (3 November 2026, branch `i15c-script2-albedo-names`).**
+- Script 2: `bs_interp_df` becomes `albedo_by_cell` and `bs_interp_df_coarse` becomes
+  `albedo_coarse_by_cell` (inventory row 4). It had to wait for the land-only albedo work, which edits the
+  same block; that work became the rebuilt MODIS cell albedo (merged 31 October). The inventory's
+  `albedo_native_by_cell` was not used: the table now holds either the raster or the MODIS cell albedo.
+- Inventory row 2 (`ele_get_cells`, script 1) needed nothing: the code went when the elevation lookup moved
+  to a preparation tool (17bcaab).
+- Verified (`docs/cc/verification/2026-11-03_i15c-script2-names-{legacy,current,raster}_report.md`, all
+  PASS): under the legacy configuration the calibration table matches the anchor byte for byte; under the
+  current configuration the MODIS calibration table equals refit run 1's (every difference 0), and with
+  Andria's raster both the native and the coarse table are byte-identical to refit run 8's (MD5).
+- The scripts outside the pipeline move to their own issue, #26, which waits for Andria; #18 is closed
+  (Chris, 3 November).
 
 
 ## Simplicity review follow-ups (Astra, 2026-10-15), tooling and documentation
