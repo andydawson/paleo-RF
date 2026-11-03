@@ -1603,3 +1603,23 @@ model's evergreen effect there is uncertain"; since panel c no longer draws that
 Verification: the figure redrawn from the 18 October products (`2026-11-02_northeast-title-2`, PASS; the first
 attempt lacked the predictions file the figure reads) prints the same numbers as `drift-diagnostics`.
 **Effect on outputs.** The title only.
+
+## The scripts outside the pipeline archived (#26), merged 2026-11-03
+
+**Purpose.** The pipeline runs none of these 18 scripts and reads none of their outputs, but in `scripts/`
+they read as part of the analysis. Chris chose to archive rather than delete them (3 November), after
+Astra's review of what they hold (`docs/cc/2026-11-03_old_scripts_review_codex_gpt6astra.md`).
+
+- **Moved, unchanged,** to one root-level `archive/` folder: the 14 scripts of `scripts/archive/`,
+  `GCM_snow_prob.R`, `thornthwaite.R`, `beta_veg_lct_modern.R` and `6_prediction_model_spatial_eval.R`.
+  `scripts/make_grid.R` stays (script 3 uses it).
+- **Nothing the pipeline needs is lost** (Astra). The question the model-structure script asked, whether
+  location changes the vegetation effect, is answered by `tools/plotting/plot_northeast_cover_and_location.R`.
+  The old snow scripts give no usable snow-cover fraction; the planned MOD10CM mixing replaces them.
+- **`archive/README.md`** says what each script did, why it is not run and what replaces it, and records
+  what was written nowhere else: the CCSM3 climate source (Lorenz et al. 2016) and its time convention,
+  the hand-run ClimateNA step and the water-balance settings.
+- **Verified** (`docs/cc/verification/2026-11-03_old-scripts-archive_report.md`, PASS): scripts 2 and 3
+  under the legacy configuration, calibration table byte-identical to the anchor; the config and path
+  tests pass.
+- **Left as it is:** `R/paths.R` still lists the four output files of the archived model-structure script.
