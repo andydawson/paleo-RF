@@ -154,7 +154,10 @@ no diagnostic, nor the hemlock sign, triggers a new choice. It is not a geograph
 cell's error mixes cover and geographic error, and no additive split exists.
 - **Tail predictions, no extra fits:** each candidate's paired difference from model 8 (mean squared error, with its
   block-resampled standard error) by distance to the nearest training cell, [0, 100), [100, 250), [250, 500) and
-  500 km or more, within each cover-distance band, with the cell-months and blocks behind each (`by_distance.csv`).
+  500 km or more, within each cover-distance band, on the rows both models predicted (a failed fit drops that row
+  for that model only, Chris), with the cell-month-holdouts and blocks behind each and each band's share of the
+  selection score's weight (`by_distance.csv`). These tables pool cell-months within a band; a band with no cells has
+  no row.
 - **The in-range holdout** (the seeded fifth of the 5 x 5 degree blocks, no cover cut) is fitted for the pairs that
   differ only in the location term, model 8, `cover_elev`, `mod8_coarse_loc`, `lin_cover` and `lin_cover_noloc`, and
   the chosen model, after the tail score (the order is immaterial, the rule being frozen). More candidates may be
@@ -162,17 +165,20 @@ cell's error mixes cover and geographic error, and no additive split exists.
   month, the training rows, the withheld cells, those inside the month's remaining training range, their blocks and
   distances. Only cells inside that range are scored; a month without enough training rows for the largest model, or
   with scored cells in fewer than 10 blocks, is untested.
-- **In-range reports:** each model's score with months weighted equally and its paired difference from model 8
-  (block-resampled standard error; a model missing a month has no score, reported as incomplete)
+- **In-range reports:** each model's score with the testable months weighted equally and its paired difference from
+  model 8 (block-resampled standard error); a model whose fit failed or did not converge in any testable month has no
+  score and is reported as incomplete, never dropped
   (`inrange_scores.csv`); the same by distance band (`inrange_by_distance.csv`; its 500 km band is empty, the
   holdout's cells lying at most about 350 km from training); and by region (`inrange_by_region.csv`): the holdout
   withholds 61 of the 83 northeast cells, about 51 of them inside the range, in four blocks, so the northeast's
   in-range errors beside its d2 errors are the one near-matched comparison of ordinary against unusual cover, thinly
   replicated.
-- **A known tilt, stated and not corrected:** the hole raises the location models' errors and widens the uncertainty
-  of the paired differences, so more candidates fall within one standard error, and the tie-break by fewest
+- **A known tilt, stated and not corrected:** the hole can raise the location models' errors and widen the uncertainty
+  of the paired differences, so that more candidates fall within one standard error, and the tie-break by fewest
   coefficients then favours the two models without a location term (52 and 249 coefficients, against 551-748 for those
   with the full location term).
 - **If the winner's advantage over model 8 lies only in cells far from training,** the choice stands; the paper
   reports the distance tables beside it and the section 7 hindcast with both the winner and model 8.
+- **Before the fits,** the holdouts stage is rerun at the commit used for fitting, so `holdouts.rds` carries the
+  in-range support table (its other tables are unchanged, as the verification records show).
 

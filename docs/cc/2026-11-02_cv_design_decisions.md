@@ -74,6 +74,11 @@ score arithmetic, and asked for fixes before any fit, plus decisions:
     for the location pairs and the winner (more may be added later); the tie-break's tilt toward no-location models
     stated; if the winner's advantage lies only in far cells, the choice stands and is reported with the two-model
     hindcast. Model 3 stays eligible, with Astra's caution recorded.
+16. **Descriptive tables** (Chris, 3 November, after Fable's review of the day's work): a cell withheld by two holdouts
+    counts once in the by-region cell counts and correlation, and the descriptive tables use converged fits only;
+    in the by-distance table a failed fit drops only its own rows, not the whole model; each band carries its share of
+    the selection score's weight. Chris: "those were my decisions but they might be wrong"; both reviewers found them
+    sound, and they are open to revisiting.
 
 ## Filed for future work (Chris: drop for now)
 

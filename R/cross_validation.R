@@ -187,18 +187,38 @@ cv_score = function(errors, target, models, seed, resamples = CV_RESAMPLES) {
        resamples_missing_a_group = sum(draws['missed', ]))
 }
 
-# Each model's mean squared error and its paired difference from `baseline` within each `band`, with
-# the standard error of the difference from resampling the geographic blocks (cv_score, one group per
-# band). For the geographic report (protocol, amendment of 3 November): reported only, never used to
-# choose. `errors` as for cv_score (block and one squared-error column per model).
-cv_paired_by_band = function(errors, band, models, baseline, seed, resamples = CV_RESAMPLES) {
-  do.call(rbind, lapply(split(seq_len(nrow(errors)), band, drop = TRUE), function(i) {
-    one = transform(errors[i, ], group = 'all')
-    s = cv_score(one, data.frame(group = 'all', weight = 1), models, seed, resamples)
-    data.frame(band = band[i[1]], model = models, cell_months = length(i), blocks = length(unique(one$block)),
-               mse = s$score, difference = s$score - s$score[baseline],
-               se_difference = apply(s$resampled, 2, function(r) stats::sd(r - s$resampled[, baseline])), row.names = NULL)
-  }))
+# Each model's mean squared error and its paired difference from `baseline` within each band (the
+# columns of `bands`, one row per row of `errors`), on the rows where both have a prediction, with
+# the standard error of the difference from resampling the geographic blocks (cv_score, one group).
+# A failed fit is a missing value: it drops that row for that model only. A band with no row has no
+# output row; a model with no usable row in a band has missing values there. For the geographic report
+# (protocol, amendment of 3 November): reported only, never used to choose. `errors` as for cv_score
+# (block, one squared-error column per model, one row per cell, month and holdout).
+cv_paired_by_band = function(errors, bands, models, baseline, seed, resamples = CV_RESAMPLES) {
+  key = do.call(paste, c(bands, sep = ' | '))
+  do.call(rbind, lapply(split(seq_len(nrow(errors)), key, drop = TRUE), function(i) do.call(rbind, lapply(models, function(m) {
+    pair = unique(c(m, baseline))
+    ok = i[stats::complete.cases(errors[i, pair, drop = FALSE])]
+    out = data.frame(bands[i[1], , drop = FALSE], model = m, cell_month_holdouts = length(ok), blocks = length(unique(errors$block[ok])),
+                     mse = NA_real_, difference = NA_real_, se_difference = NA_real_, row.names = NULL)
+    if (length(ok)) {
+      s = cv_score(transform(errors[ok, ], group = 'all'), data.frame(group = 'all', weight = 1), pair, seed, resamples)
+      out$mse = s$score[[m]]
+      out$difference = s$score[[m]] - s$score[[baseline]]
+      out$se_difference = stats::sd(s$resampled[, m] - s$resampled[, baseline])
+    }
+    out
+  }))))
+}
+
+# One squared error (or other `value`) per row of `ids` and one column per model; a model with no row
+# at all gets a column of missing values, so it is reported, never dropped.
+wide_by_model = function(predictions, ids, value, models) {
+  w = stats::reshape(data.frame(predictions[, c(ids, 'model')], value = value), idvar = ids, timevar = 'model', direction = 'wide')
+  names(w) = sub('^value\\.', '', names(w))
+  for (m in setdiff(models, names(w))) w[[m]] = NA_real_
+  rownames(w) = NULL
+  w
 }
 
 # Evaluate `expr` with R's random numbers seeded, then restore the previous state, so the seed
