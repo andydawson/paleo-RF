@@ -99,3 +99,14 @@ northeast entry).
   refits, before retries. The first batch is measured before the rest is scheduled.
 - Shares the workstation with the refit queue: the cross-validation fits start after the refit queue has finished, within the
   existing limit of four jobs at once.
+
+## Amendments before any model is fitted (Chris, 3 November 2026)
+
+Made after the code reviews, before any fold fit or score (`2026-11-02_cv_design_decisions.md`, items 9-12):
+- Section 2: the target is the past cell-slices in the forcing's latitude window (27-74 N, script 8), with an area
+  and an ice fraction; weights are equal per slice and month before the restriction to mixes outside the range.
+- Section 3: the cut is the 80th percentile in every direction; the 70th, then the 90th, only for a direction that
+  fails the feasibility rules in every month. A month that fails is untested (as section 4 already said).
+- Section 5: a candidate whose fit fails outright, or does not converge after the retry, in any required fold cannot be
+  chosen; its failures are recorded, not dropped. If model 8 cannot be chosen, the comparison is reported incomplete.
+  If the resampled uncertainty is not finite, no automatic choice is made.

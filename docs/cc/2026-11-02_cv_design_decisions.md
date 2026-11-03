@@ -39,6 +39,23 @@ Only explicit choices are recorded as Chris's decisions.
    10.1111/rssb.12043) and judging albedo differences from spatial contrasts (Lejeune et al. 2020, Earth System
    Dynamics, 10.5194/esd-11-1209-2020); identities checked by Astra, not yet by the reference audit.
 
+## After the code reviews (Chris, 2-3 November)
+
+Both code reviews (`2026-11-02_cv_code_review/`) and Fable's reconciliation found no leakage and no error in the
+score arithmetic, and asked for fixes before any fit, plus decisions:
+
+9. **Target area: the forcing's cells only** (27-74 N, as script 8 uses), not every past cell.
+10. **Accepted as coded, with the reviewers' agreed fixes made:** weights equal per slice and month before
+    restricting to out-of-range mixes; the in-range holdout is one fifth of the blocks, withheld once; script 7a's
+    adjusted ice fractions, missing ones dropped and counted; no splitting of a cell's weight across holdouts;
+    convergence is the fitting loop stopping before its limit plus full convergence of the smoothing-parameter
+    optimiser.
+11. **Cut rule:** the 80th percentile everywhere; a month that fails is reported untested; the 70th, then the
+    90th, only for a direction that fails in every month.
+12. **Which direction a withheld cell counts under** (its holdout's, or the one in which it lies outside its own
+    training range): Chris asked whether the second leaks hindcast information into training; Astra asked at ultra
+    effort (pending).
+
 ## Filed for future work (Chris: drop for now)
 
 - **Scoring predicted change with matched pairs of withheld cells** (Fable; Astra's revised rule), as above.
