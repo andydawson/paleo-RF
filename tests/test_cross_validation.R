@@ -55,6 +55,37 @@ choice2 <- cv_choose(list(score = c(m_big = 1, m_far = 1.5), resampled = cbind(m
                      coefficients = c(700, 10), eligible = c(FALSE, TRUE))
 stopifnot(identical(choice2$chosen, c(FALSE, TRUE)))
 
+# The resampled uncertainty must be finite: one non-finite resample of an eligible model means no
+# automatic choice; an ineligible model's missing score is harmless; no eligible model stops.
+choice3 <- cv_choose(list(score = c(m_big = 1, m_small = 1.05), resampled = cbind(m_big = c(1, NaN), m_small = c(1.05, NaN))),
+                     coefficients = c(700, 60), eligible = c(TRUE, TRUE))
+choice4 <- cv_choose(list(score = c(base = 0.1, m_big = 1, m_fail = NA), resampled = cbind(base = c(0.1, 0.1), m_big = c(1, 1.1), m_fail = NA)),
+                     coefficients = c(50, 700, 10), eligible = c(FALSE, TRUE, FALSE))
+stopifnot(!any(choice3$chosen), identical(choice4$chosen, c(FALSE, TRUE, FALSE)),
+          inherits(try(cv_choose(list(score = c(a = 1), resampled = cbind(a = 1)), 1, FALSE), silent = TRUE), "try-error"))
+
+# Target weights, worked by hand (Fable's review): cells A (area 2) and B (area 1), slices 50, 500,
+# 1000; script 7a's pairs give A 0 / 0.5 / 1.0 and B 0 / 0 / 0 ice. Ice-free area: A500 = 1, A1000 = 0,
+# B500 = 1, B1000 = 1, so A500 = B500 = 1/2/2, A1000 = 0, B1000 = 1/2 (one month). A cell outside the
+# latitude window, and a cell-slice with a missing ice fraction, get no weight; the other cell of
+# that slice then carries the slice's whole share.
+paleo <- data.frame(ages = rep(c(50, 500, 1000), 3), x = rep(c(-70, -71, -72), each = 3), y = rep(c(45, 45, 80), each = 3),
+                    OL = 0.3, ET = 0.3, ST = 0.4)
+diffs <- data.frame(month = "jan", x = c(-70, -70, -71, -71, -72, -72), y = c(45, 45, 45, 45, 80, 80), year = c(50, 500),
+                    area = c(2, 2, 1, 1, 1, 1), ice_frac_young = c(0, 0.5, 0, 0, 0, 0), ice_frac_old = c(0.5, 1, 0, 0, 0, 0))
+w <- cv_target_weights(paleo, diffs, c(50, 500, 1000), n_months = 1, lat_min = 27, lat_max = 74)
+w <- w[order(w$ages, w$x), ]
+stopifnot(identical(w$x, c(-71, -70, -71, -70)), isTRUE(all.equal(w$weight, c(0.25, 0.25, 0.5, 0))), sum(w$weight) == 1)
+diffs$ice_frac_young[2] <- NA
+w2 <- cv_target_weights(paleo, diffs, c(50, 500, 1000), 1, 27, 74)
+stopifnot(nrow(w2) == 3, isTRUE(all.equal(w2$weight[w2$ages == 500], 0.5)),
+          inherits(try(cv_target_weights(paleo, diffs, c(50, 1000), 1, 27, 74), silent = TRUE), "try-error"))
+
+# A fit that fails outright is recorded, with missing predictions, not dropped (the data lack the
+# elevation the model needs).
+failed <- suppressMessages(capture.output(r <- fit_and_predict("elev", "jan", data.frame(jan = runif(60, 0.1, 0.9)), data.frame(jan = 0.5))))
+stopifnot(!r$converged, is.na(r$predicted), startsWith(r$status, "ERROR:"))
+
 # Convergence: the loop stopped before its limit and the optimiser fully converged.
 ok <- list(iter = 37L, control = list(maxit = 500), outer.info = list(conv = "full convergence"))
 stopifnot(fit_converged(ok), !fit_converged(modifyList(ok, list(iter = 500L))),

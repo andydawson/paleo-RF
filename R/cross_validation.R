@@ -24,6 +24,29 @@ CV_MIN_BLOCKS     = 10                          # withheld cells must lie in at 
 CV_MAX_DIRECTIONS = 3
 CV_RESAMPLES      = 1000
 
+# The target (protocol, section 2, as amended 3 November): the past cell-slices in the forcing's
+# latitude window (script 8 keeps lat_min < latitude < lat_max), each weighted so that every slice
+# and every month count equally and, within a slice, by area times the ice-free fraction. Each
+# slice's area and ice fraction come from script 7a's pairs: a slice is the younger end of its own
+# pair, and the oldest slice the older end of the last pair (ice does not depend on the month).
+# Cell-slices without an ice fraction (script 7a leaves a few missing) get no weight; the caller
+# reports how many. `slices` are the run's configured ages, youngest (modern) first; the modern
+# slice is not part of the target.
+cv_target_weights = function(paleo, diffs, slices, n_months, lat_min, lat_max) {
+  pairs = diffs[diffs$month == diffs$month[1], ]
+  if (!setequal(unique(pairs$year), head(slices, -1)))
+    stop('script 7a\'s pairs do not start at the configured slices (config.R analysis$ages) but the last')
+  oldest = pairs[pairs$year == slices[length(slices) - 1], ]
+  ice = rbind(data.frame(x = pairs$x, y = pairs$y, ages = pairs$year, area = as.numeric(pairs$area), ice = pairs$ice_frac_young),
+              data.frame(x = oldest$x, y = oldest$y, ages = max(slices), area = as.numeric(oldest$area), ice = oldest$ice_frac_old))
+  past = paleo[paleo$ages %in% slices[-1] & paleo$y > lat_min & paleo$y < lat_max, ]
+  past = merge(past, ice[!is.na(ice$ice), ], by = c('x', 'y', 'ages'))
+  if (anyDuplicated(past[, c('x', 'y', 'ages')])) stop('a past cell-slice has two ice fractions')
+  ice_free_area = past$area * (1 - past$ice)
+  past$weight = ice_free_area / ave(ice_free_area, past$ages, FUN = sum) / length(unique(past$ages)) / n_months
+  past
+}
+
 # The direction (degrees on the cover triangle, 0 = towards more summergreen at fixed evergreen,
 # 90 = towards more evergreen) in which each mix lies outside the hull, from the nearest point of
 # the hull's edge. NA for a mix inside.
@@ -49,6 +72,7 @@ cv_directions = function(angle, weight, n = CV_MAX_DIRECTIONS) {
   keep = !is.na(angle) & weight > 0
   bins = tapply(weight[keep], round(angle[keep]) %% 360, sum)
   degrees = as.numeric(names(bins))
+  # `members` gives each whole-degree bin its target weight, so the linkage weighs bins by it.
   groups = if (length(bins) <= n) seq_along(bins) else
     cutree(hclust(as.dist(outer(degrees, degrees, angle_gap)), method = 'average', members = as.numeric(bins)), k = n)
   out = do.call(rbind, lapply(split(seq_along(bins), groups), function(i)
@@ -102,13 +126,18 @@ cv_score = function(errors, target, models, seed, resamples = CV_RESAMPLES) {
     colSums(sums / pmax(counts, 1) * w) / sum(w)
   }
   blocks = unique(errors$block)
+  weighted_groups = intersect(errors$group, target$group[target$weight > 0])
   draws = withr_seed(seed, replicate(resamples, {
     picked = table(factor(sample(blocks, replace = TRUE), levels = blocks))
-    score_of(as.numeric(picked[errors$block]))
+    multiplicity = as.numeric(picked[errors$block])
+    c(score_of(multiplicity), missed = !all(weighted_groups %in% errors$group[multiplicity > 0]))
   }))
+  # A resample that misses a group renormalises over the groups it has (a block resample of the
+  # whole score); how many did so is reported.
   list(score = score_of(rep(1, nrow(errors))),
        represented = sum(target$weight[target$group %in% errors$group]) / sum(target$weight),
-       resampled = t(matrix(draws, nrow = length(models), dimnames = list(models, NULL))))
+       resampled = t(matrix(draws[models, , drop = FALSE], nrow = length(models), dimnames = list(models, NULL))),
+       resamples_missing_a_group = sum(draws['missed', ]))
 }
 
 # Evaluate `expr` with R's random numbers seeded, then restore the previous state, so the seed
@@ -121,18 +150,22 @@ withr_seed = function(seed, expr) {
 }
 
 # The protocol's choice: among the eligible models (not a baseline, every required fit
-# converged), the lowest score, unless a simpler model's score is within one standard error of
-# the paired difference (the resampled scores' standard deviation of the difference); simpler
-# means fewer coefficients, then earlier in CV_MODELS. Returns one row per model with its score,
-# the difference from the best and its standard error, whether it is comparable, and the choice.
+# converged), the lowest score, unless a simpler eligible model's score is within one standard
+# error of the paired difference (the resampled scores' standard deviation of the difference);
+# simpler means fewer coefficients, then earlier in CV_MODELS. No model is chosen if none is
+# eligible or the resampled scores of an eligible model are not all finite (the uncertainty is then
+# unsupported). Returns one row per model with its score, the difference from the best and its
+# standard error, whether it is comparable, and the choice.
 cv_choose = function(scored, coefficients, eligible) {
   models = names(scored$score)
+  if (!any(eligible)) stop('cv_choose: no eligible model')
   best = models[eligible][which.min(scored$score[eligible])]
   difference = scored$score - scored$score[best]
   se = apply(scored$resampled, 2, function(s) stats::sd(s - scored$resampled[, best]))
-  comparable = eligible & difference <= se
+  supported = all(is.finite(scored$resampled[, eligible]))
+  comparable = eligible & is.finite(se) & difference <= se
   order_simple = order(!comparable, coefficients, match(models, CV_MODELS))
   data.frame(model = models, score = scored$score, rmse = sqrt(scored$score), difference = difference,
              se_difference = se, coefficients = coefficients, eligible = eligible, comparable = comparable,
-             chosen = models == models[order_simple[1]], row.names = NULL)
+             chosen = supported & models == models[order_simple[1]], row.names = NULL)
 }

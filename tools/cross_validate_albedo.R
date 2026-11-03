@@ -14,17 +14,23 @@
 #       the scores, their uncertainty and the choice, with the checks reported beside them.
 #
 # <run-dir> is the directory a run wrote into (its config's run$dir). It needs that run's
+# configuration (config_used.R, as tools/verify_change.R writes it; else the repository's config.R),
 # calibration table (script 2), past cover (script 1) and albedo differences (script 7a, for each
-# cell's area and ice fraction). Results go to <run-dir>/output/cross_validation/.
+# cell's area and ice fraction). Results go to <run-dir>/output/cross_validation/, with a record of
+# the code version, the inputs' MD5 sums and the seeds.
 
 source('R/config.R')
 source('R/paths.R')                 # brings R/model_registry.R
 source('R/random.R')
+source('R/run_manifest.R')         # code_version(), for the record of each stage
 source('R/cross_validation.R')
 
 CV_SEED        = 1549466984         # the refit runs' fixed seed (Chris, 31 October 2026)
 CV_RETRY_MAXIT = 2000               # one retry for a fit that has not converged (protocol, section 5)
 LOW_OPEN_LAND  = 0.2                # "low open land" for the evergreen-share check (implementer's choice)
+CV_GROUP_BY    = 'holdout'          # a withheld cell's direction: its holdout's ('holdout') or its own departure ('own'); Chris to decide
+SEEDS = list(inrange = derive_seed(CV_SEED, 'cross_validation', 'inrange'),
+             resample = derive_seed(CV_SEED, 'cross_validation', 'resample'))
 
 cv_file = function(run_dir, name) {
   dir = file.path(run_dir, 'output', 'cross_validation')
@@ -35,8 +41,36 @@ cv_file = function(run_dir, name) {
 # The rows a month's models are fitted on or scored on: albedo and every predictor present.
 complete_rows = function(cal, month) stats::complete.cases(cal[, c(month, CALIBRATION_PREDICTORS)])
 
-# The months of the calibration table that have any albedo.
-calibration_months = function(cal) Filter(function(m) m %in% names(cal) && any(!is.na(cal[[m]])), MONTHS)
+# The run's configuration: the one the run was made with, if the run folder keeps it.
+run_config = function(run_dir) {
+  used = file.path(run_dir, 'config_used.R')
+  load_config(if (file.exists(used)) used else 'config.R')
+}
+
+# The holdout membership in the calibration table's row order, matched by cell (x, y), so a
+# reordered table cannot move a withheld cell into training.
+membership_for = function(holdouts, cal, holdout) {
+  row = match(paste(cal$x, cal$y), paste(holdouts$membership$x, holdouts$membership$y))
+  if (anyNA(row) || is.null(holdouts$membership[[holdout]])) stop('the calibration table does not match the holdouts (cells or holdout ', holdout, ')')
+  holdouts$membership[[holdout]][row]
+}
+
+# The MD5 sums of the inputs, and a stop if they changed since the holdouts were made.
+input_md5 = function(paths) tools::md5sum(c(path_file(paths, 'calibration_table'), path_file(paths, 'lct_paleo'),
+                                            path_file(paths, 'albedo_differences')))
+check_inputs = function(holdouts, paths) {
+  now = input_md5(paths)
+  if (!identical(unname(now[1]), unname(holdouts$md5[1]))) stop('the calibration table changed since the holdouts were made')
+}
+
+# One record per stage: when, the code version, the inputs' MD5 sums and the seeds.
+write_record = function(run_dir, paths, stage) {
+  v = code_version('config.R')
+  writeLines(c(paste('stage:', stage), paste('time:', format(Sys.time(), tz = 'UTC', usetz = TRUE)),
+               paste('commit:', v$commit), paste('branch:', v$branch), paste('uncommitted changes:', v$dirty),
+               paste('input', names(input_md5(paths)), input_md5(paths)),
+               paste('seed', names(SEEDS), unlist(SEEDS))), cv_file(run_dir, paste0('record_', stage, '.txt')))
+}
 
 # Great-circle distance (km) from each cell a to the nearest of the cells b (one-degree centres).
 nearest_km = function(ax, ay, bx, by) {
@@ -47,27 +81,15 @@ nearest_km = function(ax, ay, bx, by) {
 
 # --- Stage 1: holdouts --------------------------------------------------------------------------
 stage_holdouts = function(run_dir, paths) {
+  cfg = run_config(run_dir)
   cal = readRDS(path_file(paths, 'calibration_table'))
-  months = calibration_months(cal)
+  months = cfg$analysis$months
   paleo = readRDS(path_file(paths, 'lct_paleo'))
-  diffs = readRDS(path_file(paths, 'albedo_differences'))
-  slices = sort(unique(paleo$ages))
-
-  # Each past cell-slice's area and ice fraction: a slice's own value is the younger end of its pair
-  # in script 7a's table, and the oldest slice's is the older end of the last pair. Ice does not
-  # depend on the month. Cell-slices without an ice fraction (script 7a leaves a few missing) get
-  # no weight, and are counted.
-  d1 = diffs[diffs$month == diffs$month[1], ]
-  oldest = d1[d1$year == slices[length(slices) - 1], ]
-  ice = rbind(data.frame(x = d1$x, y = d1$y, ages = d1$year, area = as.numeric(d1$area), ice = d1$ice_frac_young),
-              data.frame(x = oldest$x, y = oldest$y, ages = max(slices), area = as.numeric(oldest$area), ice = oldest$ice_frac_old))
-  hindcast = merge(paleo[paleo$ages != min(slices), ], ice[!is.na(ice$ice), ], by = c('x', 'y', 'ages'))
-  if (anyDuplicated(hindcast[, c('x', 'y', 'ages')])) stop('a past cell-slice has two ice fractions')
-  cat(sprintf('past cell-slices with an area and ice fraction (script 7a): %d of %d\n',
-              nrow(hindcast), sum(paleo$ages != min(slices))))
-  # Target weight (protocol, section 2): slices and months equally; within a slice, area x ice-free.
-  ice_free_area = hindcast$area * (1 - hindcast$ice)
-  hindcast$weight = ice_free_area / ave(ice_free_area, hindcast$ages, FUN = sum) / length(unique(hindcast$ages)) / length(months)
+  domain = cfg$analysis$domain
+  hindcast = cv_target_weights(paleo, readRDS(path_file(paths, 'albedo_differences')), cfg$analysis$ages,
+                               length(months), domain$lat_min, domain$lat_max)
+  cat(sprintf('past cell-slices in the target (%g-%g N, with an area and ice fraction): %d of %d\n', domain$lat_min,
+              domain$lat_max, nrow(hindcast), sum(paleo$ages %in% cfg$analysis$ages[-1])))
 
   # Every past mix's distance outside each month's training range, and its direction.
   per_month = do.call(rbind, lapply(months, function(m) {
@@ -81,8 +103,16 @@ stage_holdouts = function(run_dir, paths) {
   outside$group = paste(outside$month, outside$direction, distance_band(outside$distance))
   target = aggregate(weight ~ group + month + direction, outside, sum)
   cat(sprintf('target weight outside the month\'s training range: %.1f%%\n', 100 * sum(outside$weight)))
+  # The shares the score uses (each mix in its nearest direction), and how much of each lies within
+  # 30 degrees of its direction's mean, so a small family of departures is not lost silently.
+  directions$share = as.numeric(tapply(outside$weight, outside$direction, sum)[directions$direction]) / sum(outside$weight)
+  directions$share_within_30 = sapply(seq_len(nrow(directions)), function(i) {
+    o = outside[outside$direction == directions$direction[i], ]
+    sum(o$weight[angle_gap(o$angle, directions$angle[i]) <= 30]) / sum(o$weight)
+  })
 
-  # One holdout per direction, at the first cut feasible in the most months (protocol, sections 3-4).
+  # One holdout per direction at the 80th percentile; the 70th, then the 90th, only for a direction
+  # that fails in every month (protocol, sections 3-4, amended 3 November).
   largest_model = sapply(months, function(m) max(sapply(CV_MODELS, model_coefficients, month = m, data = cal)))
   feasibility_of = function(withheld, holdout, cut) do.call(rbind, lapply(months, function(m) {
     rows = complete_rows(cal, m)
@@ -98,18 +128,17 @@ stage_holdouts = function(run_dir, paths) {
   membership = cal[, c('x', 'y')]
   feasibility = NULL
   for (i in seq_len(nrow(directions))) {
-    options = lapply(CV_CUTS, function(cut) {
+    for (cut in CV_CUTS) {
       withheld = cv_holdouts(cal, directions$angle[i], cut)
-      list(withheld = withheld, table = feasibility_of(withheld, directions$direction[i], cut))
-    })
-    best = options[[which.max(sapply(options, function(o) sum(o$table$feasible)))]]
-    membership[[directions$direction[i]]] = best$withheld
-    feasibility = rbind(feasibility, best$table)
+      table = feasibility_of(withheld, directions$direction[i], cut)
+      if (any(table$feasible)) break
+    }
+    membership[[directions$direction[i]]] = withheld
+    feasibility = rbind(feasibility, table)
   }
   # Skill inside the range (reported only): a fifth of the geographic blocks, seeded.
   blocks = cv_block(cal$x, cal$y)
-  picked = withr_seed(derive_seed(CV_SEED, 'cross_validation', 'inrange'),
-                      sample(sort(unique(blocks)), round(length(unique(blocks)) / 5)))
+  picked = withr_seed(SEEDS$inrange, sample(sort(unique(blocks)), round(length(unique(blocks)) / 5)))
   membership$inrange = blocks %in% picked
 
   # How the withheld cells compare with the hindcast (protocol, section 4): distance outside the
@@ -128,7 +157,8 @@ stage_holdouts = function(run_dir, paths) {
   }))))
 
   saveRDS(list(directions = directions, membership = membership, feasibility = feasibility, target = target,
-               months = months), cv_file(run_dir, 'holdouts.rds'))
+               months = months, md5 = input_md5(paths)), cv_file(run_dir, 'holdouts.rds'))
+  write_record(run_dir, paths, 'holdouts')
   for (name in c('directions', 'feasibility', 'comparison', 'target'))
     utils::write.csv(get(name), cv_file(run_dir, paste0(name, '.csv')), row.names = FALSE)
   plot_directions(cal, outside, directions, membership, cv_file(run_dir, 'directions.pdf'))
@@ -158,15 +188,30 @@ plot_directions = function(cal, outside, directions, membership, file) {
 
 # --- Stage 2: fits ------------------------------------------------------------------------------
 
-# Did a fit converge: the fitting loop stopped before its limit and the smoothing-parameter
-# optimiser reports full convergence (the checks of fit_convergence(), R/model_registry.R).
-fit_converged = function(fit) fit$iter < fit$control$maxit && identical(fit$outer.info$conv, 'full convergence')
+# One candidate in one holdout-month: fitted on the training rows (one retry at a higher step limit
+# if it has not converged), then its predictions for the withheld rows. A fit that fails outright is
+# recorded, not dropped: its predictions are missing and its status says why (protocol, section 5).
+fit_and_predict = function(id, month, train, valid) {
+  warnings = character()
+  started = Sys.time()
+  attempt = function(control) withCallingHandlers(fit_calibration_model(id, month, train, control = control),
+    warning = function(w) { warnings <<- c(warnings, conditionMessage(w)); invokeRestart('muffleWarning') })
+  result = tryCatch({
+    fit = attempt(CALIBRATION_CONTROL)
+    if (!fit_converged(fit)) fit = attempt(modifyList(CALIBRATION_CONTROL, list(maxit = CV_RETRY_MAXIT)))
+    list(predicted = as.numeric(stats::predict(fit, valid, type = 'response')), converged = fit_converged(fit),
+         status = fit_convergence(fit))
+  }, error = function(e) list(predicted = NA_real_, converged = FALSE, status = paste('ERROR:', conditionMessage(e))))
+  cat(sprintf('%s %s: %.1f min; %s\n', month, id, as.numeric(difftime(Sys.time(), started, units = 'mins')), result$status))
+  data.frame(model = id, predicted = result$predicted, converged = result$converged, status = result$status,
+             warnings = paste(unique(warnings), collapse = ' | '))
+}
 
 stage_fit = function(run_dir, paths, holdout, months) {
   cal = readRDS(path_file(paths, 'calibration_table'))
   holdouts = readRDS(cv_file(run_dir, 'holdouts.rds'))
-  withheld = holdouts$membership[[holdout]]
-  if (is.null(withheld)) stop('no holdout called ', holdout, '; holdouts: ', paste(setdiff(names(holdouts$membership), c('x', 'y')), collapse = ', '))
+  check_inputs(holdouts, paths)
+  withheld = membership_for(holdouts, cal, holdout)
   models = if (holdout == 'inrange') {
     scores = utils::read.csv(cv_file(run_dir, 'scores.csv'))
     unique(c('mod8', scores$model[scores$chosen]))
@@ -179,65 +224,85 @@ stage_fit = function(run_dir, paths, holdout, months) {
     rows = complete_rows(cal, m)
     train = cal[rows & !withheld, ]
     valid = cal[rows & withheld, ]
-    distance = training_support(valid, training_hull(train))$distance_outside
-    predictions = do.call(rbind, lapply(models, function(id) {
-      started = Sys.time()
-      fit = suppressWarnings(fit_calibration_model(id, m, train))
-      if (!fit_converged(fit))
-        fit = suppressWarnings(fit_calibration_model(id, m, train, control = modifyList(CALIBRATION_CONTROL, list(maxit = CV_RETRY_MAXIT))))
-      cat(sprintf('%s %s %s: %.1f min; %s\n', holdout, m, id, as.numeric(difftime(Sys.time(), started, units = 'mins')), fit_convergence(fit)))
-      data.frame(holdout = holdout, month = m, model = id, x = valid$x, y = valid$y, OL = valid$OL, ET = valid$ET, ST = valid$ST,
-                 distance = distance, observed = valid[[m]], predicted = as.numeric(stats::predict(fit, valid, type = 'response')),
-                 converged = fit_converged(fit))
-    }))
-    saveRDS(predictions, cv_file(run_dir, sprintf('predictions_%s_%s.rds', holdout, m)))
+    hull = training_hull(train)
+    # Each withheld cell's own departure from its training range, kept beside its holdout.
+    angle = departure_angle(valid, hull)
+    cells = data.frame(holdout = holdout, month = m, x = valid$x, y = valid$y, OL = valid$OL, ET = valid$ET, ST = valid$ST,
+                       distance = training_support(valid, hull)$distance_outside, angle = angle,
+                       own_direction = nearest_direction(angle, holdouts$directions), observed = valid[[m]])
+    file = cv_file(run_dir, sprintf('predictions_%s_%s.rds', holdout, m))
+    predictions = NULL
+    for (id in models) {   # saved after every candidate, so a later failure loses nothing
+      predictions = rbind(predictions, cbind(cells, fit_and_predict(id, m, train, valid)))
+      saveRDS(predictions, file)
+    }
   }
+  write_record(run_dir, paths, paste0('fit_', holdout))
 }
 
 # --- Stage 3: scores and the choice -------------------------------------------------------------
 stage_score = function(run_dir, paths) {
   cal = readRDS(path_file(paths, 'calibration_table'))
   holdouts = readRDS(cv_file(run_dir, 'holdouts.rds'))
+  check_inputs(holdouts, paths)
   needed = holdouts$feasibility[holdouts$feasibility$feasible, c('holdout', 'month')]
   files = cv_file(run_dir, sprintf('predictions_%s_%s.rds', needed$holdout, needed$month))
   if (!all(file.exists(files))) stop('missing fits (run the fit stage first): ', paste(basename(files[!file.exists(files)]), collapse = ', '))
   predictions = do.call(rbind, lapply(files, readRDS))
-  predictions$group = paste(predictions$month, predictions$holdout, distance_band(predictions$distance))
+  if (!all(table(predictions$model)[CV_MODELS] == nrow(predictions) / length(CV_MODELS)))
+    stop('the candidates were not all fitted on every holdout and month (rerun the fit stage)')
+  direction = if (CV_GROUP_BY == 'own') predictions$own_direction else predictions$holdout
+  cat(sprintf('withheld cell-months whose own direction differs from their holdout\'s: %d of %d\n',
+              sum(predictions$own_direction != predictions$holdout, na.rm = TRUE) / length(CV_MODELS), nrow(predictions) / length(CV_MODELS)))
+  predictions$group = paste(predictions$month, direction, distance_band(predictions$distance))
   predictions$squared_error = (predictions$predicted - predictions$observed)^2
   errors = stats::reshape(predictions[, c('holdout', 'month', 'x', 'y', 'group', 'model', 'squared_error')],
                           idvar = c('holdout', 'month', 'x', 'y', 'group'), timevar = 'model', direction = 'wide')
   names(errors) = sub('^squared_error\\.', '', names(errors))
-  if (!all(CV_MODELS %in% names(errors)) || anyNA(errors[CV_MODELS])) stop('a candidate lacks predictions for some withheld cells')
   errors$block = cv_block(errors$x, errors$y)
 
   # Every group the withheld cells fall in has a target weight (0 where no past mix lies there).
   target = merge(data.frame(group = unique(errors$group)), holdouts$target[, c('group', 'weight')], all = TRUE)
   target$weight[is.na(target$weight)] = 0
-  scored = cv_score(errors, target, CV_MODELS, seed = derive_seed(CV_SEED, 'cross_validation', 'resample'))
+  groups = merge(target, as.data.frame(table(group = errors$group), responseName = 'withheld_cell_months'), all.x = TRUE)
+  utils::write.csv(groups, cv_file(run_dir, 'groups.csv'), row.names = FALSE)
+  scored = cv_score(errors, target, CV_MODELS, seed = SEEDS$resample)
   coefficients = sapply(CV_MODELS, model_coefficients, month = needed$month[1], data = cal)
+  # A candidate with any fit that failed or did not converge cannot be chosen (its score may be missing).
   converged = tapply(predictions$converged, predictions$model, all)[CV_MODELS]
   choice = cv_choose(scored, coefficients, eligible = !(CV_MODELS %in% CV_BASELINES) & converged)
+  choice$represented = scored$represented
   utils::write.csv(choice, cv_file(run_dir, 'scores.csv'), row.names = FALSE)
 
   # Reported beside the choice, never used for it (protocol, section 6).
-  by_month = aggregate(cbind(rmse = (predicted - observed)^2, signed_error = predicted - observed) ~ model + month, predictions, mean)
+  ok = !is.na(predictions$predicted)
+  by_month = aggregate(cbind(rmse = (predicted - observed)^2, signed_error = predicted - observed) ~ model + month, predictions[ok, ], mean)
   by_month$rmse = sqrt(by_month$rmse)
-  low = predictions[predictions$OL <= LOW_OPEN_LAND, ]
+  low = predictions[ok & predictions$OL <= LOW_OPEN_LAND, ]
   low$evergreen = cut(low$ET, c(0, 0.2, 0.4, 0.6, 1), include.lowest = TRUE)
   low_open_land = if (nrow(low)) aggregate(cbind(signed_error = predicted - observed) ~ model + evergreen, low, mean) else NULL
   utils::write.csv(by_month, cv_file(run_dir, 'scores_by_month.csv'), row.names = FALSE)
   if (!is.null(low_open_land)) utils::write.csv(low_open_land, cv_file(run_dir, 'low_open_land.csv'), row.names = FALSE)
+  write_record(run_dir, paths, 'score')
 
   cat(sprintf('holdout-months scored: %d; withheld cell-months: %d; geographic blocks: %d\n',
               nrow(needed), nrow(errors), length(unique(errors$block))))
-  cat(sprintf('share of the outside target represented: %.1f%%\n\n', 100 * scored$represented))
+  cat(sprintf('share of the outside target represented: %.1f%%; resamples missing a weighted group: %d of %d\n\n',
+              100 * scored$represented, scored$resamples_missing_a_group, nrow(scored$resampled)))
   print(choice, row.names = FALSE, digits = 4)
-  cat('\nchosen:', choice$model[choice$chosen], '\n')
+  failed = unique(predictions[!predictions$converged, c('holdout', 'month', 'model', 'status')])
+  if (nrow(failed)) { cat('\nfits that failed or did not converge:\n'); print(failed, row.names = FALSE) }
+  if (!choice$eligible[choice$model == 'mod8']) cat('\nmodel 8 cannot be chosen: the comparison is incomplete\n')
+  cat('\nchosen:', if (any(choice$chosen)) choice$model[choice$chosen] else 'none (the resampled uncertainty is not finite)', '\n')
   inrange = Sys.glob(cv_file(run_dir, 'predictions_inrange_*.rds'))
   if (length(inrange)) {
     r = do.call(rbind, lapply(inrange, readRDS))
-    cat('\nskill inside the range (reported only), RMSE:\n')
-    print(aggregate(cbind(rmse = (predicted - observed)^2) ~ model, r, function(e) sqrt(mean(e))), row.names = FALSE)
+    r = r[r$converged, ]
+    cat('\nskill inside the range (reported only; converged fits), RMSE over all withheld cells and over those inside the range:\n')
+    rmse = function(rows) tapply((r$predicted[rows] - r$observed[rows])^2, r$model[rows], function(e) sqrt(mean(e)))
+    inside = r$distance == 0
+    print(cbind(all = rmse(TRUE), inside = rmse(inside)))
+    cat('withheld cell-months inside the range:', sum(r$distance == 0) / length(unique(r$model)), 'of', nrow(r) / length(unique(r$model)), '\n')
   }
 }
 
