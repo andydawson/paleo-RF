@@ -1634,3 +1634,21 @@ Astra's review of what they hold (`docs/cc/2026-11-03_old_scripts_review_codex_g
   the test's old count, fixed in 200b414).
 - **verify-change skill:** the load rule of 3 November (up to six verification jobs on the 48-core machine,
   one thread per fit) replaces "at most 24 cores".
+
+## Cross-validation that chooses the albedo model (#24), on branch cv-design (no model fitted yet)
+
+**Purpose.** Choose the calibration model by how well it predicts modern cells whose cover mixes lie outside the range
+of the cells it was fitted on, as the hindcast must (Chris, 2 November). Design, reviews, decisions and the frozen
+protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amendments), decisions 1-16.
+
+- **Code:** `R/cross_validation.R` (holdouts, departure and grouping, score and its block bootstrap, the choice, the
+  descriptive and geographic reports), `tools/cross_validate_albedo.R` (three stages: holdouts, fit, score),
+  four new candidates in `R/model_registry.R`, tests in `tests/test_cross_validation.R` and
+  `tests/test_cross_validation_stages.R` (the stages end to end with a stand-in for the fits).
+- **3 November:** blocks counted on the scored cells (decision 13); one tested function for a withheld cell's group;
+  the northeast limits recorded and a by-region report (decision 14); the geographic sensitivity reports, measured and
+  not corrected (decision 15: errors by distance to training, the in-range holdout for the location pairs and the
+  winner); the descriptive-table rules (decision 16). Each change verified (`docs/cc/verification/2026-11-03_cv-holdouts-*`,
+  all PASS; from run 8 the reports themselves show the older holdout tables unchanged) and reviewed by Fable and Astra
+  (`2026-11-02_cv_code_review/`, `2026-11-03_cv_geographic_code_review/`).
+- **Not yet:** the fits (after the refit queue) and the scores; nothing here has used a score.

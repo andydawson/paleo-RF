@@ -152,7 +152,8 @@ CONFIG_SCHEMA = list(
       statistic = function(v) check_choice(v, names(ALBEDO_STATISTICS), single = TRUE),
       version   = function(v) check_choice(v, ALBEDO_VERSIONS, single = TRUE)),
     calibration = list(
-      model_id = function(v) check_choice(v, LADDER_MODELS, single = TRUE),
+      # The ladder, or a candidate the cross-validation may choose (R/model_registry.R, CV_MODELS).
+      model_id = function(v) check_choice(v, union(LADDER_MODELS, CV_MODELS), single = TRUE),
       comparison_method = function(v) check_choice(v, c('ML', 'REML'), single = TRUE),
       ice_mask = function(v) check_choice(v, c('centre_in_1ka_polygon', 'none'), single = TRUE)),
     draws = list(
