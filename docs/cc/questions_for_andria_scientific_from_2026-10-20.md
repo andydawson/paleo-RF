@@ -307,6 +307,11 @@ the fitted model implies the opposite sign in spring and summer. Nothing has bee
    against hardwood albedo?
 5. Already open (section 2, item 1): should the vegetation forcing represent cover effects under today's snow, or
    something else? It decides which of the check's panels (all days, snow-free, snowy) is the one to compare.
+6. **Which MODIS retrievals did your albedo raster use?** The rebuilt albedo uses full inversions only (`full_75`;
+   NASA's recommended quality), keeping the backup "magnitude" inversions as a comparison (`any_75`). In the northeast
+   in winter, full inversions are rare at 500 m, so the check's winter result will come from the backup retrievals,
+   labelled lower quality. Did your raster keep all qualities, or only the full inversions? (Its winter values reach
+   as far north as a noon sun 80-85 degrees from overhead, so it kept at least some low-sun retrievals.)
 
 ## 8. What the cross-validation's score can and cannot show (3 November)
 
