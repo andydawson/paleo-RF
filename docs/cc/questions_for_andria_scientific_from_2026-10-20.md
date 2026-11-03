@@ -280,3 +280,30 @@ boundaries, question D2 of the earlier file, bears on this too.)
 model on its accuracy for cover mixes outside today's range, the northeast's case among them; the
 design and protocol are on branch `cv-design` (`docs/cc/2026-11-02_cv_protocol.md`). The hemlock
 result is reported after the choice and is not used to make it.
+
+## 7. A local check of conifer against deciduous albedo in the northeast (3 November)
+
+*From Astra's design (`docs/cc/2026-11-03_northeast_forest_albedo_design_v2_codex_gpt6astra.md`, branch
+`northeast-benchmark`, issue #27) and Fable's review of it.*
+
+**Why.** The cross-validation cannot settle which way the hemlock decline moved albedo in the northeast, because
+today's evergreen share there follows latitude. So, beside the model, we plan a modern local check: nearby pure
+evergreen-needleleaf and deciduous-broadleaf 500 m pixels (within 5 km), from the rebuilt MODIS albedo, month by
+month, with snow states apart. Published work leads us to expect deciduous forest brighter in every season checked
+(about +0.02 to +0.07 without snow, more with snow: Jin et al. 2002; Hollinger et al. 2010; Zhao and Jackson 2014);
+the fitted model implies the opposite sign in spring and summer. Nothing has been run yet.
+
+**Questions.**
+1. **Which modern stands stand in for hemlock?** Pure evergreen pixels in the box are mostly spruce-fir and pine
+   north of about 45 N; hemlock grows mainly in mixed stands further south, which the check leaves out. Is spruce-fir
+   and pine against hardwoods an acceptable analogue for the sign, and where in the box was the decline strongest?
+2. **Mapping satellite classes onto your classes.** The check compares satellite forest classes; your reconstruction's
+   evergreen and summergreen include shrubs, and larch sits in summergreen. Is comparing the model's evergreen-for-
+   summergreen swap with an evergreen-needleleaf against deciduous-broadleaf contrast acceptable for magnitude, or
+   only for sign?
+3. **If the sign varies** by latitude, wetland or month, what conclusion would you draw for the paper?
+4. **Flux towers** (Harvard Forest's hemlock and hardwood towers, Howland, Bartlett) could give a hemlock-specific
+   comparison later. Do you know of published tower albedos for these, or other local observations of hemlock
+   against hardwood albedo?
+5. Already open (section 2, item 1): should the vegetation forcing represent cover effects under today's snow, or
+   something else? It decides which of the check's panels (all days, snow-free, snowy) is the one to compare.
