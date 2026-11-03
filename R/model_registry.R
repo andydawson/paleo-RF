@@ -129,6 +129,11 @@ fit_convergence = function(fit) {
   paste0(loop_and_optimiser(fit), rows)
 }
 
+# Whether a fit converged, by the two tests of fit_convergence()'s line: the fitting loop stopped
+# before its step limit, and the smoothing-parameter optimiser reports full convergence (the
+# cross-validation's rule, protocol of 2 November 2026, section 5).
+fit_converged = function(fit) fit$iter < fit$control$maxit && identical(fit$outer.info$conv, 'full convergence')
+
 # The convergence part of fit_convergence()'s line.
 loop_and_optimiser = function(fit) {
   # A loop that converged on exactly its last step looks the same in the saved fit as one
