@@ -307,3 +307,22 @@ the fitted model implies the opposite sign in spring and summer. Nothing has bee
    against hardwood albedo?
 5. Already open (section 2, item 1): should the vegetation forcing represent cover effects under today's snow, or
    something else? It decides which of the check's panels (all days, snow-free, snowy) is the one to compare.
+
+## 8. What the cross-validation's score can and cannot show (3 November)
+
+*From Astra's answer on the northeast and its design for the geographic gap, and Fable's reviews (branch
+`cv-design`: `docs/cc/2026-11-03_cv_northeast_question_codex_gpt6astra.md`,
+`2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`; issue #24). No model has been fitted yet.*
+
+The cross-validation chooses the calibration model by how well it predicts modern cells whose cover mixes lie outside
+the range of the cells it was fitted on. Because unusual mixes are clustered in space, withholding them also leaves a
+geographic gap: in the northeast, the matching holdout withholds 82 of the 83 cells, so every model must predict
+170-520 km from its nearest training cell. The hindcast, by contrast, predicts new cover at places the model was fitted
+on. So the score measures transfer to unfamiliar cover across a geographic gap, not "new cover at the same place",
+which today's data cannot observe directly (one albedo per cell and month). Chris decided to keep the choice rule and
+report beside it how each model's advantage depends on distance from training, and a geographic-only holdout for the
+models that differ only in their location term; the rule's tie-break leans towards models without a location term, and
+that is stated rather than corrected.
+
+**Question.** Do you accept this as the basis for choosing the model (with its limits reported), or would you rather
+the paper keep model 8 and show the cross-validation's choice as a sensitivity?
