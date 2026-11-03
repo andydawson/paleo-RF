@@ -107,6 +107,8 @@ Made after the code reviews, before any fold fit or score (`2026-11-02_cv_design
   and an ice fraction; weights are equal per slice and month before the restriction to mixes outside the range.
 - Section 3: the cut is the 80th percentile in every direction; the 70th, then the 90th, only for a direction that
   fails the feasibility rules in every month. A month that fails is untested (as section 4 already said).
+- Section 4: the 10 blocks are counted on the withheld cells the score uses, those in a group (month, own
+  direction, distance band) with target weight, not on all withheld cells (Fable's review; Chris, 3 November).
 - Section 5: a candidate whose fit fails outright, or does not converge after the retry, in any required fold cannot be
   chosen; its failures are recorded, not dropped. If model 8 cannot be chosen, the comparison is reported incomplete.
   If the resampled uncertainty is not finite, no automatic choice is made.

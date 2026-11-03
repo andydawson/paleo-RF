@@ -119,11 +119,16 @@ stage_holdouts = function(run_dir, paths) {
     rows = complete_rows(cal, m)
     train = rows & !withheld
     valid = rows & withheld
-    if (any(valid) && !all(training_support(cal[valid, ], training_hull(cal[train, ]))$outside))
-      stop('a withheld cell lies inside its training range: ', holdout, ', ', m)
-    blocks = length(unique(cv_block(cal$x[valid], cal$y[valid])))
+    hull = training_hull(cal[train, ])
+    support = training_support(cal[valid, ], hull)
+    if (any(valid) && !all(support$outside)) stop('a withheld cell lies inside its training range: ', holdout, ', ', m)
+    # The blocks are counted on the withheld cells the score uses: those in a group (month, own
+    # direction, distance band, as in the score stage) that carries target weight (Chris, 3 November).
+    group = paste(m, nearest_direction(departure_angle(cal[valid, ], hull), directions), distance_band(support$distance_outside))
+    scored = group %in% target$group[target$weight > 0]
+    blocks = length(unique(cv_block(cal$x[valid][scored], cal$y[valid][scored])))
     data.frame(holdout = holdout, cut = cut, month = m, training_rows = sum(train), largest_model = largest_model[[m]],
-               withheld_cells = sum(valid), blocks = blocks,
+               withheld_cells = sum(valid), scored_cells = sum(scored), blocks = blocks,
                feasible = sum(train) >= largest_model[[m]] && blocks >= CV_MIN_BLOCKS)
   }))
   membership = cal[, c('x', 'y')]
