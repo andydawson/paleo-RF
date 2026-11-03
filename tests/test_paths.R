@@ -11,10 +11,7 @@ alt  <- suppressMessages(pipeline_paths(cfg, redirected_paths(tmp)))
 # The baseline catalogue against the files on disk when the migration began (I01): every
 # catalogued file of the pipeline is one of them, under exactly the name it had.
 frozen <- sub("^[0-9a-f]+ +", "", readLines("tests/frozen_inputs.md5"))
-# Not the outputs of the model-structure sensitivity script, which is outside the migration
-# (question for Andria, general 7) and has not been run here.
-pipeline_ids <- PATH_CATALOGUE$id[!startsWith(PATH_CATALOGUE$id, "spatial_eval")]
-cat_files <- catalogue_paths(base, pipeline_ids)
+cat_files <- catalogue_paths(base, PATH_CATALOGUE$id)
 # Products added to the pipeline since then: the REML fit used for prediction, one file
 # per month, in its own file once the ladder could be fitted by ML (issue I16).
 # And script 10's breakdown of the forcing by month and latitude (question B2d).
@@ -37,7 +34,7 @@ live <- read.delim("tests/anchors/live_paths.tsv", comment.char = "#", header = 
 # of every one of them (producer() stops on a path it does not know).
 input_ids     <- PATH_CATALOGUE$id[PATH_CATALOGUE$kind == "input"]
 input_files   <- vapply(input_ids, function(id) path_file(base, id), "", USE.NAMES = FALSE)
-alt_files     <- catalogue_paths(alt, pipeline_ids)
+alt_files     <- catalogue_paths(alt, PATH_CATALOGUE$id)
 alt_inputs    <- alt_files[alt_files %in% input_files]
 alt_products  <- setdiff(alt_files, input_files)
 base_producers <- vapply(cat_files, function(p) producer(base, p), "", USE.NAMES = FALSE)
@@ -83,7 +80,7 @@ stopifnot(
   !anyDuplicated(cat_files),
   length(catalogue_paths(base, "calibration_ladder")) == 12 * length(LADDER_MODELS),
   length(catalogue_paths(base, c("calibration_spatial", "lct_paleo"))) == 12 * 6 + 1,
-  length(catalogue_paths(base)) == length(cat_files) + 3 * 12 + 1,
+  length(catalogue_paths(base)) == length(cat_files),
   identical(catalogue_paths(base, character()), character()),
   fails(catalogue_paths(base, c("lct_paleo", "nonsense"))),
 

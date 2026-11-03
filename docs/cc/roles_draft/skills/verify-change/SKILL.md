@@ -20,8 +20,10 @@ and never switch branches in a checkout a run is reading.
    - tools or tests only: no scripts; the test files as checks.
 2. **Write the spec** `docs/cc/verification/<YYYY-MM-DD>_<name>.R` (format and example in
    that folder's README): commit (the branch tip), config, settings, seed/copy, scripts,
-   anchors, checks, `rscript = 'tools/rscript.sh'`, `env = c(THREADS = '8', CORES = ...)`.
-   Cores: at most 24 across all running jobs; check `pgrep -fa Rscript` first.
+   anchors, checks, `rscript = 'tools/rscript.sh'`, `env = c(THREADS = ...)`.
+   Load: at most six verification jobs at once on the 48-core machine (Chris, 3 November);
+   count them first with `pgrep -fc -- '--file=tools/verify_change.R'`. Model fitting uses
+   one thread (`THREADS = '1'`); pinning `CORES` is optional.
 3. **Run** in the background from the repository root, the exit status taken from the tool:
    `tools/rscript.sh tools/verify_change.R docs/cc/verification/<date>_<name>.R`.
    Wait for the completion notice; do not poll.
