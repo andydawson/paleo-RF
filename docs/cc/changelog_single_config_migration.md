@@ -1614,7 +1614,8 @@ Astra's review of what they hold (`docs/cc/2026-11-03_old_scripts_review_codex_g
   `GCM_snow_prob.R`, `thornthwaite.R`, `beta_veg_lct_modern.R` and `6_prediction_model_spatial_eval.R`.
   `scripts/make_grid.R` stays (script 3 uses it).
 - **Nothing the pipeline needs is lost** (Astra). The question the model-structure script asked, whether
-  location changes the vegetation effect, is answered by `tools/plotting/plot_northeast_cover_and_location.R`.
+  location changes the vegetation effect, is taken up, for May in the northeast, by
+  `tools/plotting/plot_northeast_cover_and_location.R`.
   The old snow scripts give no usable snow-cover fraction; the planned MOD10CM mixing replaces them.
 - **`archive/README.md`** says what each script did, why it is not run and what replaces it, and records
   what was written nowhere else: the CCSM3 climate source (Lorenz et al. 2016) and its time convention,
