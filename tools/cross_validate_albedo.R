@@ -28,7 +28,7 @@ source('R/cross_validation.R')
 CV_SEED        = 1549466984         # the refit runs' fixed seed (Chris, 31 October 2026)
 CV_RETRY_MAXIT = 2000               # one retry for a fit that has not converged (protocol, section 5)
 LOW_OPEN_LAND  = 0.2                # "low open land" for the evergreen-share check (implementer's choice)
-CV_GROUP_BY    = 'holdout'          # a withheld cell's direction: its holdout's ('holdout') or its own departure ('own'); Chris to decide
+CV_GROUP_BY    = 'own'              # a withheld cell counts under its own departure direction, not its holdout's (Chris, 3 November)
 SEEDS = list(inrange = derive_seed(CV_SEED, 'cross_validation', 'inrange'),
              resample = derive_seed(CV_SEED, 'cross_validation', 'resample'))
 

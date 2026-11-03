@@ -52,9 +52,12 @@ score arithmetic, and asked for fixes before any fit, plus decisions:
     optimiser.
 11. **Cut rule:** the 80th percentile everywhere; a month that fails is reported untested; the 70th, then the
     90th, only for a direction that fails in every month.
-12. **Which direction a withheld cell counts under** (its holdout's, or the one in which it lies outside its own
-    training range): Chris asked whether the second leaks hindcast information into training; Astra asked at ultra
-    effort (pending).
+12. **A withheld cell's error counts under the direction in which it lies outside its own fold's training range**
+    (as the past mixes are grouped), not its holdout's (Chris, 3 November, frozen before any score). Chris asked
+    whether this leaks hindcast information into training; Astra (ultra effort,
+    `2026-11-02_cv_code_review/direction_astra.md`): no, neither option is leakage; past cover shapes the folds by
+    design, no withheld albedo enters its own fold's fit, and no past albedo or prediction is used. The number of
+    cells whose direction differs from their holdout's is reported, never used to switch rules.
 
 ## Filed for future work (Chris: drop for now)
 

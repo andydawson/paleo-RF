@@ -110,3 +110,6 @@ Made after the code reviews, before any fold fit or score (`2026-11-02_cv_design
 - Section 5: a candidate whose fit fails outright, or does not converge after the retry, in any required fold cannot be
   chosen; its failures are recorded, not dropped. If model 8 cannot be chosen, the comparison is reported incomplete.
   If the resampled uncertainty is not finite, no automatic choice is made.
+- Section 6: each withheld cell's error is grouped by the direction in which it lies outside its own fold's
+  training range (the same rule as for the past mixes), its holdout kept beside it; the number of cells whose
+  direction differs from their holdout's is reported.
