@@ -164,4 +164,18 @@ stopifnot(isTRUE(all.equal(ir$score[ir$model == "mod8"], 0.055)), ir$difference[
           all(is.na(ir$score[ir$model != "mod8"])))
 ir8 <- run_report(transform(r, converged = ifelse(model == "mod8", FALSE, converged)))
 stopifnot(ir8$status[ir8$model == "mod8"] == "incomplete", all(is.na(ir8$difference)))
+# Every in-range fit failed: the report still runs, with every model incomplete and an empty region table.
+irx <- run_report(transform(r, converged = FALSE, predicted = NA))
+stopifnot(all(irx$status == "incomplete"), all(is.na(irx$score)))
+# A month nobody predicted (no February rows at all) makes every model incomplete, not scored on January.
+irj <- run_report(r[r$month == "jan", ])
+stopifnot(all(irj$status == "incomplete"), all(irj$months_complete <= 1))
+# A baseline that varies from row to row, with a constant paired difference: standard error 0.
+e3 <- data.frame(block = c("A", "B", "C"), a = c(1.5, 2.5, 4.5), mod8 = c(1, 2, 4))
+pb3 <- cv_paired_by_band(e3, data.frame(km_band = rep("x", 3)), c("a", "mod8"), "mod8", seed = 3, resamples = 100)
+stopifnot(isTRUE(all.equal(pb3$difference[pb3$model == "a"], 0.5)), pb3$se_difference[pb3$model == "a"] < 1e-12)
+# Weight shares, by hand (Fable): rows 1 and 2 in group g1 (weight 3), row 3 in g2 (weight 1); bands A, B, B.
+# Row weights 1.5, 1.5, 1 of 4: band A 0.375, band B 0.625.
+ws <- cv_weight_share(c("g1", "g1", "g2"), data.frame(group = c("g1", "g2"), weight = c(3, 1)), data.frame(km_band = c("A", "B", "B")))
+stopifnot(isTRUE(all.equal(ws$score_weight_share[ws$km_band == "A"], 0.375)), isTRUE(all.equal(ws$score_weight_share[ws$km_band == "B"], 0.625)))
 cat("test_cross_validation: all tests passed\n")

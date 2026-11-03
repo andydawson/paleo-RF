@@ -138,6 +138,10 @@ km_band = function(km) cut(km, CV_KM_BANDS, right = FALSE)
 cv_by_region = function(predictions, low_open_land) {
   predictions$region = region_of(predictions$x, predictions$y)
   predictions$own_direction[is.na(predictions$own_direction)] = 'inside'
+  if (!nrow(predictions))
+    return(data.frame(model = character(), region = character(), month = character(), own_direction = character(),
+                      cells = integer(), predictions = integer(), blocks = integer(), low_open_land_cells = integer(),
+                      rmse = numeric(), signed_error = numeric(), cor_evergreen_latitude = numeric()))
   parts = split(predictions, predictions[, c('model', 'region', 'month', 'own_direction')], drop = TRUE)
   out = do.call(rbind, lapply(parts, function(r) {
     cells = r[!duplicated(r[, c('x', 'y')]), ]
@@ -209,6 +213,13 @@ cv_paired_by_band = function(errors, bands, models, baseline, seed, resamples = 
     }
     out
   }))))
+}
+
+# Each band's share of the selection score's weight: a row's weight is its group's target weight shared
+# equally among the group's rows (as in cv_score), summed within the band and divided by the total.
+cv_weight_share = function(group, target, bands) {
+  row_weight = target$weight[match(group, target$group)] / ave(rep(1, length(group)), group, FUN = sum)
+  aggregate(list(score_weight_share = row_weight / sum(row_weight)), bands, sum)
 }
 
 # One squared error (or other `value`) per row of `ids` and one column per model; a model with no row

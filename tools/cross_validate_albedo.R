@@ -341,9 +341,8 @@ stage_score = function(run_dir, paths) {
   converged_errors = wide_by_model(predictions, ids, ifelse(predictions$converged, (predictions$predicted - predictions$observed)^2, NA), CV_MODELS)
   converged_errors$block = errors$block
   bands = data.frame(km_band = as.character(km_band(errors$km)), cover_band = as.character(distance_band(errors$distance)))
-  row_weight = target$weight[match(errors$group, target$group)] / ave(rep(1, nrow(errors)), errors$group, FUN = sum)
-  share = aggregate(list(score_weight_share = row_weight / sum(row_weight)), bands, sum)
-  by_distance = merge(cv_paired_by_band(converged_errors, bands, CV_MODELS, 'mod8', SEEDS$resample), share, sort = FALSE)
+  by_distance = merge(cv_paired_by_band(converged_errors, bands, CV_MODELS, 'mod8', SEEDS$resample),
+                      cv_weight_share(errors$group, target, bands), sort = FALSE)
   utils::write.csv(by_distance, cv_file(run_dir, 'by_distance.csv'), row.names = FALSE)
   write_record(run_dir, paths, 'score')
 

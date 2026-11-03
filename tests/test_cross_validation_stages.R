@@ -26,6 +26,26 @@ invisible(capture.output({
 }))
 out <- function(name) utils::read.csv(cv_file(run_dir, name))
 scores_before <- readLines(cv_file(run_dir, "scores.csv"))
+
+# The selection is what the code before the geographic reports (b7a5772's stats::reshape table) gives:
+# the choice did not move when the error table was rebuilt with wide_by_model().
+holdouts <- readRDS(cv_file(run_dir, "holdouts.rds"))
+needed <- holdouts$feasibility[holdouts$feasibility$feasible, c("holdout", "month")]
+p <- do.call(rbind, lapply(cv_file(run_dir, sprintf("predictions_%s_%s.rds", needed$holdout, needed$month)), readRDS))
+p$squared_error <- (p$predicted - p$observed)^2
+old <- stats::reshape(p[, c("holdout", "month", "x", "y", "group", "model", "squared_error")],
+                      idvar = c("holdout", "month", "x", "y", "group"), timevar = "model", direction = "wide")
+names(old) <- sub("^squared_error\\.", "", names(old))
+old$block <- cv_block(old$x, old$y)
+target <- merge(data.frame(group = unique(old$group)), holdouts$target[, c("group", "weight")], all = TRUE)
+target$weight[is.na(target$weight)] <- 0
+old_scored <- cv_score(old, target, CV_MODELS, seed = SEEDS$resample)
+now <- out("scores.csv")
+old_choice <- cv_choose(old_scored, now$coefficients, now$eligible)
+stopifnot(isTRUE(all.equal(old_choice$score, now$score)), isTRUE(all.equal(old_choice$se_difference, now$se_difference)),
+          identical(old_choice$chosen, now$chosen))
+# Each band's weight share is the selection score's row weights summed (a row's weight: its group's
+# target weight shared among the group's rows), so the shares add to one.
 by_distance <- out("by_distance.csv")
 shares <- unique(by_distance[, c("km_band", "cover_band", "score_weight_share")])
 stopifnot(setequal(by_distance$model, CV_MODELS), isTRUE(all.equal(sum(shares$score_weight_share), 1)),
