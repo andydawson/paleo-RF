@@ -28,13 +28,19 @@ stopifnot(nrow(f) == 24 * 4,                                   # 24 pairs x 2 ce
 
 # Slices that stop at 10,000 BP (finding 7 of the review of 1 November 2026): the last pair
 # is 8,000 to 10,000 BP, not 8,000 to 11,500 BP as the fixed 11,500 used to make it.
-short_ages <- c(50, 2000, 4000, 6000, 8000, 10000)
+short_ages <- c(50, 500, 2000, 4000, 6000, 8000, 10000)
 f <- quietly(assign_forcing_periods(forcing_table(short_ages), coarse_ages, short_ages))
-stopifnot(nrow(f) == 5 * 4,                                    # 5 pairs x 2 cells x 2 months, all kept
-          identical(pairs_per_period(f), c(1L, 0L, 1L, 1L, 1L, 1L, 0L)),
-          identical(pair_of(f, 50), list("0.05 - 0.5 ka", 2000)),
+stopifnot(nrow(f) == 6 * 4,                                    # 6 pairs x 2 cells x 2 months, all kept
+          identical(pairs_per_period(f), c(1L, 1L, 1L, 1L, 1L, 1L, 0L)),
+          identical(pair_of(f, 500), list("0.5 - 2 ka", 2000)),
           identical(pair_of(f, 8000), list("8 - 10 ka", 10000)),     # the terminal pair
           !anyNA(f$age_old))
+
+# A pair spanning a period boundary is refused (code review of 4 November 2026): 50 to 2,000 BP
+# crosses 500 BP and used to be filed under 0.05 - 0.5 ka.
+crossing_ages <- c(50, 2000, 4000)
+stopifnot(inherits(try(quietly(assign_forcing_periods(forcing_table(crossing_ages), coarse_ages, crossing_ages)),
+                       silent = TRUE), "try-error"))
 
 # A forcing row whose year is not the younger end of a configured pair is refused.
 stopifnot(inherits(try(quietly(assign_forcing_periods(forcing_table(default_ages), coarse_ages, short_ages)),

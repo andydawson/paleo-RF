@@ -27,6 +27,13 @@ assign_forcing_periods <- function(forcing_by_cell, ages_sub, slice_ages) {
     stop('assign_forcing_periods: forcing rows at ', paste(sort(unpaired), collapse = ', '),
          ' BP are not the younger end of a pair of the configured slices (config.R analysis$ages)', call. = FALSE)
   forcing_by_cell$age_old = slice_ages[match(forcing_by_cell$year, slice_ages) + 1]
+  # A pair is filed under the period of its younger end; one that spans a period boundary would put
+  # change from the next period under this one's label, so it stops (code review of 4 November).
+  pairs = unique(forcing_by_cell[, c('year', 'age_old')])
+  crossing = pairs$year[vapply(seq_len(nrow(pairs)), function(i) any(ages_sub > pairs$year[i] & ages_sub < pairs$age_old[i]), TRUE)]
+  if (length(crossing))
+    stop('assign_forcing_periods: the slice pairs from ', paste(sort(crossing), collapse = ', '),
+         ' BP span a period boundary (config.R analysis$coarse$ages); choose slices that meet each boundary', call. = FALSE)
   forcing_by_cell$period  = cut(forcing_by_cell$year, breaks = ages_sub, right = FALSE, labels = labels_period)
   forcing_by_cell         = forcing_by_cell[!is.na(forcing_by_cell$period), ]
 

@@ -64,6 +64,17 @@ check_inputs = function(holdouts, paths) {
   if (!identical(unname(now[1]), unname(holdouts$md5[1]))) stop('the calibration table changed since the holdouts were made')
 }
 
+# Each predictions file carries the MD5 of the holdouts.rds it was fitted against; the score stage
+# reads only files whose MD5 matches the current holdouts.rds, so predictions made for holdouts that
+# have since been rebuilt can never be scored against the new ones (code review of 4 November).
+holdouts_md5 = function(run_dir) unname(tools::md5sum(cv_file(run_dir, 'holdouts.rds')))
+read_predictions = function(run_dir, files) {
+  now = holdouts_md5(run_dir)
+  stale = files[vapply(files, function(f) !identical(attr(readRDS(f), 'holdouts_md5'), now), TRUE)]
+  if (length(stale)) stop('predictions made for other holdouts (rerun the fit stage): ', paste(basename(stale), collapse = ', '))
+  do.call(rbind, lapply(files, readRDS))
+}
+
 # One record per stage: when, the code version, the inputs' MD5 sums and the seeds.
 write_record = function(run_dir, paths, stage) {
   v = code_version('config.R')
@@ -257,10 +268,10 @@ stage_fit = function(run_dir, paths, holdout, months) {
     predictions = NULL
     for (id in models) {   # saved after every candidate, so a later failure loses nothing
       predictions = rbind(predictions, cbind(cells, fit_and_predict(id, m, train, valid)))
-      saveRDS(predictions, file)
+      saveRDS(structure(predictions, holdouts_md5 = holdouts_md5(run_dir)), file)
     }
+    write_record(run_dir, paths, sprintf('fit_%s_%s', holdout, m))   # one record per fitted month
   }
-  write_record(run_dir, paths, paste0('fit_', holdout))
 }
 
 # --- Stage 3: scores and the choice -------------------------------------------------------------
@@ -299,7 +310,7 @@ stage_score = function(run_dir, paths) {
   needed = holdouts$feasibility[holdouts$feasibility$feasible, c('holdout', 'month')]
   files = cv_file(run_dir, sprintf('predictions_%s_%s.rds', needed$holdout, needed$month))
   if (!all(file.exists(files))) stop('missing fits (run the fit stage first): ', paste(basename(files[!file.exists(files)]), collapse = ', '))
-  predictions = do.call(rbind, lapply(files, readRDS))
+  predictions = read_predictions(run_dir, files)
   if (!all(CV_MODELS %in% predictions$model) || !all(table(predictions$model)[CV_MODELS] == nrow(predictions) / length(CV_MODELS)))
     stop('the candidates were not all fitted on every holdout and month (rerun the fit stage)')
   # A withheld cell counts under the direction in which it lies outside its own fold's training range,
@@ -357,7 +368,7 @@ stage_score = function(run_dir, paths) {
   cat('\nchosen:', if (any(choice$chosen)) choice$model[choice$chosen] else 'none (the resampled uncertainty is not finite)', '\n')
   inrange = Sys.glob(cv_file(run_dir, 'predictions_inrange_*.rds'))
   if (length(inrange))
-    inrange_report(run_dir, do.call(rbind, lapply(inrange, readRDS)), models = unique(c(CV_INRANGE_MODELS, choice$model[choice$chosen])),
+    inrange_report(run_dir, read_predictions(run_dir, inrange), models = unique(c(CV_INRANGE_MODELS, choice$model[choice$chosen])),
                    months = holdouts$inrange$month[holdouts$inrange$feasible])
 }
 

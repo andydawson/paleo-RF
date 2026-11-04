@@ -178,4 +178,13 @@ stopifnot(isTRUE(all.equal(pb3$difference[pb3$model == "a"], 0.5)), pb3$se_diffe
 # Row weights 1.5, 1.5, 1 of 4: band A 0.375, band B 0.625.
 ws <- cv_weight_share(c("g1", "g1", "g2"), data.frame(group = c("g1", "g2"), weight = c(3, 1)), data.frame(km_band = c("A", "B", "B")))
 stopifnot(isTRUE(all.equal(ws$score_weight_share[ws$km_band == "A"], 0.375)), isTRUE(all.equal(ws$score_weight_share[ws$km_band == "B"], 0.625)))
+# Predictions are scored only against the holdouts they were made for: a file fitted against an older
+# holdouts.rds is refused (code review of 4 November 2026).
+run <- file.path(tempfile(), "run")
+saveRDS(list(version = 1), cv_file(run, "holdouts.rds"))
+fresh <- cv_file(run, "predictions_d1_jan.rds")
+saveRDS(structure(data.frame(model = "a", predicted = 0.1), holdouts_md5 = holdouts_md5(run)), fresh)
+stopifnot(nrow(read_predictions(run, fresh)) == 1)
+saveRDS(list(version = 2), cv_file(run, "holdouts.rds"))      # the holdouts rebuilt
+stopifnot(inherits(try(read_predictions(run, fresh), silent = TRUE), "try-error"))
 cat("test_cross_validation: all tests passed\n")

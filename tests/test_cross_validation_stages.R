@@ -63,4 +63,8 @@ stopifnot(identical(readLines(cv_file(run_dir, "scores.csv")), scores_before),
           all(CV_INRANGE_MODELS %in% inrange$model), inrange$difference[inrange$model == "mod8"] == 0,
           file.exists(cv_file(run_dir, "inrange_by_distance.csv")), file.exists(cv_file(run_dir, "inrange_by_region.csv")),
           identical(readRDS(cv_file(run_dir, "holdouts.rds"))$inrange[, c("month", "feasible")], out("inrange.csv")[, c("month", "feasible")]))
+# Rebuilding the holdouts makes the old predictions unscorable: the score stage stops instead of mixing them.
+saveRDS(modifyList(readRDS(cv_file(run_dir, "holdouts.rds")), list(rebuilt = TRUE)), cv_file(run_dir, "holdouts.rds"))
+stopifnot(inherits(try(invisible(capture.output(stage_score(run_dir, paths))), silent = TRUE), "try-error"),
+          all(file.exists(cv_file(run_dir, sprintf("record_fit_d1_%s.txt", c("jan", "jul"))))))   # one record per month
 cat("test_cross_validation_stages: all tests passed\n")
