@@ -75,9 +75,10 @@ CV_BASELINES = c('mod1', 'mod2')
 # The predictors any calibration model uses (x, y, elev, OL, ET, ST).
 CALIBRATION_PREDICTORS = unique(unlist(lapply(CALIBRATION_MODELS, function(model) all.vars(model$rhs))))
 
-# The rows a month's models are fitted on: the cells with that month's albedo and every
-# predictor (fit_calibration_model drops the others, na.omit).
-complete_model_rows = function(data, month) sum(stats::complete.cases(data[, c(month, CALIBRATION_PREDICTORS)]))
+# The rows a month's models are fitted on, and their number: the cells with that month's
+# albedo and every predictor (fit_calibration_model drops the others, na.omit).
+complete_rows = function(data, month) stats::complete.cases(data[, c(month, CALIBRATION_PREDICTORS)])
+complete_model_rows = function(data, month) sum(complete_rows(data, month))
 
 # The number of coefficients of a model, from mgcv's model setup without fitting (seconds).
 # The family is left at mgcv's default: it does not change the model matrix.

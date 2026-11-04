@@ -199,8 +199,8 @@ cv_score = function(errors, target, models, seed, resamples = CV_RESAMPLES) {
 # (protocol, amendment of 3 November): reported only, never used to choose. `errors` as for cv_score
 # (block, one squared-error column per model, one row per cell, month and holdout).
 cv_paired_by_band = function(errors, bands, models, baseline, seed, resamples = CV_RESAMPLES) {
-  key = do.call(paste, c(bands, sep = ' | '))
-  do.call(rbind, lapply(split(seq_len(nrow(errors)), key, drop = TRUE), function(i) do.call(rbind, lapply(models, function(m) {
+  # One band's rows `i` and one model: the comparison with the baseline on their common rows.
+  compare = function(i, m) {
     pair = unique(c(m, baseline))
     ok = i[stats::complete.cases(errors[i, pair, drop = FALSE])]
     out = data.frame(bands[i[1], , drop = FALSE], model = m, cell_month_holdouts = length(ok), blocks = length(unique(errors$block[ok])),
@@ -212,7 +212,11 @@ cv_paired_by_band = function(errors, bands, models, baseline, seed, resamples = 
       out$se_difference = stats::sd(s$resampled[, m] - s$resampled[, baseline])
     }
     out
-  }))))
+  }
+  rows = list()
+  for (i in split(seq_len(nrow(errors)), do.call(paste, c(bands, sep = ' | ')), drop = TRUE))
+    for (m in models) rows[[length(rows) + 1]] = compare(i, m)
+  do.call(rbind, rows)
 }
 
 # Each band's share of the selection score's weight: a row's weight is its group's target weight shared
