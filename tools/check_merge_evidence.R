@@ -55,9 +55,9 @@ check_merge = function(merged, base) {
       return(TRUE)
     }
   }
-  cat('merge check: REFUSED. This merge changes code (', paste(CODE_PATHS, collapse = ', '), ') but no PASS\n',
-      'report in docs/cc/verification/ covers the merged code. Run tools/verify_change.R on the\n',
-      'branch, commit its report, and merge again; or, as a recorded exception, git merge --no-verify.\n', sep = '')
+  cat('merge check: REFUSED. This changes the code (', paste(CODE_PATHS, collapse = ', '), ') of a trunk, but no\n',
+      'PASS report in docs/cc/verification/ covers it. Make the change on a topic branch, verify it with\n',
+      'tools/verify_change.R, commit the report and merge; or, as a recorded exception, use --no-verify.\n', sep = '')
   FALSE
 }
 
@@ -79,15 +79,15 @@ if (sys.nframe() == 0L) {
   a = commandArgs(TRUE)
   if (identical(a[1], 'install')) {
     install_hook()
-  } else if (identical(a[1], 'check') && length(a) != 2) {
+  } else if (identical(a, 'check')) {             # the hook: the staged result against HEAD
     branch = git_lines('symbolic-ref', '--short', 'HEAD')
-    if (length(a) < 2 && !(length(branch) && branch %in% TRUNKS)) {
-      cat('merge check: merging into', if (length(branch)) branch else 'a detached HEAD', '(not a trunk); no report needed\n')
+    if (!(length(branch) && branch %in% TRUNKS)) {
+      cat('merge check:', if (length(branch)) branch else 'a detached HEAD', 'is not a trunk; no report needed\n')
       quit(status = 0)
     }
-    merged = if (length(a) >= 2) a[2] else git_lines('write-tree')   # the merge result in the index
-    base   = if (length(a) >= 3) a[3] else 'HEAD'   # by hand, both are given: after a merge HEAD is the merge itself
-    quit(status = if (check_merge(merged, base)) 0 else 1)
+    quit(status = if (check_merge(git_lines('write-tree'), 'HEAD')) 0 else 1)
+  } else if (identical(a[1], 'check') && length(a) == 3) {   # by hand: both commits, as after a merge HEAD is the merge itself
+    quit(status = if (check_merge(a[2], a[3])) 0 else 1)
   } else {
     cat('usage: Rscript tools/check_merge_evidence.R install | check [<commit> <base>]\n'); quit(status = 2)
   }

@@ -47,7 +47,8 @@ repository is branched, committed, merged and backed up. Agent sessions read
   its spec are committed under `docs/cc/verification/` (README there). Git
   refuses a merge into a trunk, or a commit on one, that changes code without a
   PASS report for that code (the pre-merge-commit and pre-commit hooks; install
-  once per clone with `Rscript tools/check_merge_evidence.R install`). It does
+  once per clone with `Rscript tools/check_merge_evidence.R install`; a clone
+  made before 4 November 2026 runs it again, to add the pre-commit hook). It does
   not see fast-forward merges, so never fast-forward a trunk. `git merge
   --no-verify` is a recorded exception, with the reason in the merge message.
 - Everything Claude Code generates that is not a script, a result or a data
