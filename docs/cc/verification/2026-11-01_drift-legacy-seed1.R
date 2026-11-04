@@ -3,7 +3,7 @@
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 list(
   name    = 'drift-legacy-seed1',
-  commit  = 'drift-fixes',
+  commit  = 'ac90729527f5965184c6e7abcaefab80129b86e5',
   config  = 'configs/legacy_config.R',
   seed    = c('calibration_table', 'calibration_ladder', 'calibration_spatial',
               'calibration_spatial_elev_cover', 'aic_table', 'lct_paleo'),

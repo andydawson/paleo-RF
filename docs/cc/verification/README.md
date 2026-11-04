@@ -2,8 +2,13 @@
 
 Every change to the code is verified with `tools/verify_change.R` before it is merged
 (decided by Chris, 2026-10-15). Git enforces it: `tools/check_merge_evidence.R` runs as the
-pre-merge-commit hook and refuses a merge that changes code (`R/`, `scripts/`, `tools/`,
-`tests/`, `config.R`, `configs/`) unless a PASS report here covers the merged code.
+pre-merge-commit and pre-commit hooks and refuses a merge into a trunk, or a commit on one,
+that changes code (`R/`, `scripts/`, `tools/`, `tests/`, `config.R`, `configs/`) unless a
+PASS report here covers that code. It does not see fast-forward merges, `--no-verify`, or
+clones where the hook was never installed.
+
+The tested commit is the one in the report; a spec written before 4 November 2026 may name
+a branch that has since moved or been deleted. New specs give the full commit.
 
 - **Spec:** `<date>_<name>.R`, a short R file whose value is a list: what to run and what
   must hold. Written for each verification, committed with its report.
@@ -27,7 +32,7 @@ Example spec:
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 list(
   name    = 'i16b-legacy-seed1',
-  commit  = 'i16b-calibration',                 # resolved to a SHA when the tool starts
+  commit  = '5deabac7df11daa289698a41ec85373a7ab72ef3',   # the full commit, not a branch
   config  = 'configs/legacy_config.R',
   settings = NULL,                              # e.g. list(analysis = list(months = 'jan'))
   seed    = c('calibration_table', 'calibration_ladder', 'calibration_spatial',

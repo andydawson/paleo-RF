@@ -3,7 +3,7 @@
 # figures are compared with the other version's.
 list(
   name    = 'i15c-scripts7-before',
-  commit  = 'origin/feature/single-config',
+  commit  = 'f756cd3557b8c2020b6ccea1735331419569f33b',
   config  = 'configs/legacy_config.R',
   seed    = c('prediction_point', 'prediction_summary'),
   scripts = c('scripts/7_plot_preds.R', 'scripts/7a_alb_diff_full.R'),

@@ -4,7 +4,7 @@
 # column changed and the land-cover columns identical.
 list(
   name    = 'i16c-elevation-current-2',
-  commit  = 'i16c-elevation',
+  commit  = '95fedfa1874d231db7a0c031cad618d48de5c5d6',
   config  = 'config.R',
   scripts = 'scripts/1_veg_lct_prep.R',
   checks  = list(c('tools/compare_tables.R', 'tests/anchors/interp-allmonths-2026-09-20/lct_modern_reveals_interp.RDS', '.rundirs/i16c-elevation-current-2/data/lct_modern_reveals_interp.RDS'),

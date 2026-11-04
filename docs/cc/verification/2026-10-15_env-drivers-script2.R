@@ -2,7 +2,7 @@
 # script 2 under the legacy configuration must still match its regression anchors.
 list(
   name    = 'env-drivers-script2',
-  commit  = 'origin/feature/single-config',
+  commit  = '79f1491b38d21c18e2bffc4fac21507a1177c301',
   config  = 'configs/legacy_config.R',
   seed    = c('lct_modern'),
   scripts = 'scripts/2_calibration_lct_bluesky.R',

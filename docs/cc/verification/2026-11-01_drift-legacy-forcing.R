@@ -3,7 +3,7 @@
 # labels changed); plus every test file that runs in a fresh worktree.
 list(
   name    = 'drift-legacy-forcing',
-  commit  = 'drift-fixes',
+  commit  = 'ac90729527f5965184c6e7abcaefab80129b86e5',
   config  = 'configs/legacy_config.R',
   seed    = c('forcing', 'coarse_differences'),
   scripts = c('scripts/9_forcing_barplot.R', 'scripts/10_forcing_breakdown.R'),

@@ -6,7 +6,7 @@
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 list(
   name    = 'refit-legacy-seed1-3',
-  commit  = 'refit-modis',
+  commit  = '3d6a05ae2c5dad62aaa7e335daae173c6c2260ee',
   config  = 'configs/legacy_config.R',
   seed    = c('calibration_table', 'calibration_ladder', 'calibration_spatial',
               'calibration_spatial_elev_cover', 'aic_table', 'lct_paleo'),

@@ -4,7 +4,7 @@
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 list(
   name    = 'i16b-merged-legacy-seed1',
-  commit  = 'i16b-calibration',
+  commit  = '4d2c1b1e9069c69fd3a6ebc4ad5659eca2d4b637',
   config  = 'configs/legacy_config.R',
   seed    = c('calibration_table', 'calibration_ladder', 'calibration_spatial',
               'calibration_spatial_elev_cover', 'aic_table', 'lct_paleo'),

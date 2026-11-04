@@ -1,7 +1,7 @@
 # I15c script 8 (after): script 8 under the legacy configuration from the frozen albedo differences.
 list(
   name    = 'i15c-script8-after',
-  commit  = 'i15c-script8',
+  commit  = 'b835c95a89db44d295d65e38c6e79bc8dc8dfe0e',
   config  = 'configs/legacy_config.R',
   seed    = c('albedo_differences'),
   scripts = 'scripts/8_radiative.R',

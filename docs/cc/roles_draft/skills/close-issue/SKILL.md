@@ -14,7 +14,9 @@ Follow CONTRIBUTING.md. In order:
    `git merge --no-ff`, from a checkout no run is reading; a why-focused merge message.
    The merge check must pass; `--no-verify` only as a recorded exception Chris approved.
 4. Update the changelog status row with the merge sha; commit.
-5. Push the trunk and the branch to `origin`.
+5. Push the trunk to `origin`.
+   Then delete the topic branch, locally and on `origin`, unless a worktree has it checked
+   out or a spec names it; remove its worktree if no job reads it (`git worktree remove <path>`).
 6. Comment on the GitHub issue (`gh issue comment`): what changed, effect on outputs, how
    verified, link to the report; close it if finished (`gh issue close`), or say what is
    left.

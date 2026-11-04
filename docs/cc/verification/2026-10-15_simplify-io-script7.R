@@ -2,7 +2,7 @@
 # summary only (not the point predictions it no longer reads, which proves it does not need them).
 list(
   name    = 'simplify-io-script7',
-  commit  = 'simplify-redundant-io',
+  commit  = 'dbff5bd917a823113e6856cdb44371eb4ea38534',
   config  = 'configs/legacy_config.R',
   seed    = c('prediction_summary'),
   scripts = 'scripts/7_plot_preds.R',

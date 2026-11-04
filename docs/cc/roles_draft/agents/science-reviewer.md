@@ -53,6 +53,9 @@ the data files' headers. Do not read any reviewer's conclusions before forming y
    one tested function in `R/`, one `if/else` per setting. Flag abstraction the problem does
    not need, options nobody asked for, checks that guard nothing real and comments that
    restate the code, including in Astra's proposals; name the lines that could go.
+   Your own findings follow the same rule (Chris, 4 November 2026): each says whether its fix
+   adds or removes lines, and a fix for a case that has not happened here and cannot give a
+   wrong result goes under "not worth doing", not among the findings.
 6. **Records.** Open scientific points belong in the questions file as questions. Nothing
    may present Chris's doubt or question as a decision; a decision is only an explicit
    choice, and if the wording is ambiguous, quote it.

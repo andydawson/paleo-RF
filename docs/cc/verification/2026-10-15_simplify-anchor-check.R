@@ -2,7 +2,7 @@
 # real run (script 8 under the legacy configuration) checked through the command line.
 list(
   name    = 'simplify-anchor-check',
-  commit  = 'simplify-anchor-check',
+  commit  = '88356cffc23169d2027b2d678e5fcd0d0ba3a3b5',
   config  = 'configs/legacy_config.R',
   seed    = c('albedo_differences'),
   scripts = 'scripts/8_radiative.R',

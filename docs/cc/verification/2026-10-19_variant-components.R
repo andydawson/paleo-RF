@@ -3,7 +3,7 @@
 # docs/cc/verification/2026-10-19_variant-components_check.R.
 list(
   name    = 'variant-components',
-  commit  = 'fix-variant-components',
+  commit  = '22330cd0356f772bb2db9f289b3f90d0022a4209',
   config  = 'config.R',
   copy    = list(c('/home/expert/Documents/contracting/Andria/paleo-RF-verify/4ba4d2a/.rundirs/full-current-2026-10-18/output/forcing/RF_holocene_all_cases.RDS',
                    'output/forcing/RF_holocene_all_cases.RDS')),

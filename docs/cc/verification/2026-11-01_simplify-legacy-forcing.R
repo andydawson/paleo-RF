@@ -3,7 +3,7 @@
 # scripts 9 and 10 under the original configuration, seeded, against the whole interp-forcing anchor.
 list(
   name    = 'simplify-legacy-forcing',
-  commit  = 'simplify-2026-11-01',
+  commit  = '51888b4742b949ec4a26f33f56643508a7e73b69',
   config  = 'configs/legacy_config.R',
   seed    = c('forcing', 'coarse_differences'),
   scripts = c('scripts/9_forcing_barplot.R', 'scripts/10_forcing_breakdown.R'),

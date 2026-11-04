@@ -1,7 +1,7 @@
 # I15c script 1 (after): script 1 in diagnostic mode under the legacy configuration.
 list(
   name     = 'i15c-script1-after',
-  commit   = 'i15c-script1',
+  commit   = 'cca9ece23c2f6bb114abe4f51247b91cf6fa90d9',
   config   = 'configs/legacy_config.R',
   settings = list(run = list(diagnostic = TRUE)),
   scripts  = 'scripts/1_veg_lct_prep.R',

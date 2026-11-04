@@ -2,7 +2,7 @@
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 list(
   name    = 'i15c-script5-before',
-  commit  = 'origin/feature/single-config',
+  commit  = 'f756cd3557b8c2020b6ccea1735331419569f33b',
   config  = 'configs/legacy_config.R',
   seed    = c('calibration_table', 'calibration_ladder', 'calibration_spatial', 'calibration_spatial_elev_cover'),
   copy    = lapply(months, function(m) c(sprintf('output/calibration/calibration_mod8_interp_%s_bluesky.RDS', m),

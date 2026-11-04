@@ -4,7 +4,7 @@
 # the helper's test on made-up fits.
 list(
   name    = 'convergence-report',
-  commit  = 'convergence-report',
+  commit  = '2eda936113c6a067c9498243ba90ea8add295701',
   config  = 'config.R',
   scripts = character(0),
   checks  = list(c('docs/cc/verification/2026-10-22_convergence-report_check.R',

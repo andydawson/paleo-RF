@@ -1,7 +1,7 @@
 # I15c script 3 (after): script 3 (diagnostic plots, no anchor) under the legacy configuration.
 list(
   name    = 'i15c-script3-after',
-  commit  = 'i15c-script3',
+  commit  = 'a3cfe683f23d5d35aeb85c7454b06d4ec7b7e51e',
   config  = 'configs/legacy_config.R',
   seed    = c('calibration_table'),
   scripts = 'scripts/3_plot_cal_lct_albedo.R',

@@ -3,7 +3,7 @@
 run18 = '/home/expert/Documents/contracting/Andria/paleo-RF-verify/4ba4d2a/.rundirs/full-current-2026-10-18'
 list(
   name     = 'northeast-title',
-  commit   = 'northeast-title',
+  commit   = '1ce2ca1693cba87522d247d223d81b0a50e2aace',
   config   = 'config.R',
   copy     = list(c(file.path(run18, 'output/calibration/calibration_prediction_fit_may_bluesky.RDS'),
                     'output/calibration/calibration_prediction_fit_may_bluesky.RDS'),

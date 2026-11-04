@@ -3,7 +3,7 @@
 # all-months anchor.
 list(
   name    = 'i15c-script6-after',
-  commit  = 'i15c-script6',
+  commit  = '019ec982d1755eaf38206821d1576c4b833078a4',
   config  = 'configs/legacy_config.R',
   seed    = c('calibration_selected', 'lct_paleo'),
   scripts = 'scripts/6_prediction_model.R',

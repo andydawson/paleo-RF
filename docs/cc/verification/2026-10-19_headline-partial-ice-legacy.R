@@ -4,7 +4,7 @@
 # script 9 tables must be byte-identical to the anchors.
 list(
   name    = 'headline-partial-ice-legacy',
-  commit  = 'headline-partial-ice',
+  commit  = '9ca2ed8b9f7779fed8214b5c3b7fd2e8765fa5b5',
   config  = 'configs/legacy_config.R',
   seed    = c('forcing', 'coarse_differences'),
   scripts = c('scripts/9_forcing_barplot.R', 'scripts/10_forcing_breakdown.R'),

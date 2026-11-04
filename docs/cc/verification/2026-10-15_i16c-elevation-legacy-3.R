@@ -2,7 +2,7 @@
 # must reproduce its anchors exactly; plus the path and config tests.
 list(
   name    = 'i16c-elevation-legacy-3',
-  commit  = 'i16c-elevation',
+  commit  = 'e15faedb15ff775fbfcbe3b1eeb807a16d38228b',
   config  = 'configs/legacy_config.R',
   scripts = 'scripts/1_veg_lct_prep.R',
   checks  = list(c('tools/check_anchors.R', 'tests/anchors/interp-allmonths-2026-09-20', '.rundirs/i16c-elevation-legacy-3'),

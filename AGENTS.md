@@ -7,6 +7,8 @@ goes and closed at merge; never touch `legacy` (frozen snapshot of the original 
 `main`; commit each atomic change with a why-focused message; push to
 `origin` at checkpoints and session end; `main` changes only via a PR that
 Andria approves.
+At session end, after the push, list the unmerged branches and occupied worktrees and say
+what each one waits on.
 
 The script tables of `README.md` are the current map of the code: what each script does
 and the files it reads and writes. (The original code map,
@@ -17,7 +19,7 @@ Two living documents must be kept current in every session:
 `docs/cc/questions_for_andria_general.md` (simple and logistical) and
 `docs/cc/questions_for_andria_scientific_from_2026-10-20.md` (technical and
 scientific; the earlier `questions_for_andria_scientific.md` is frozen, as it
-went to Andria in a Word document on 20 October 2026).
+went to Andria in a Word document on 20 October 2026, with one addition of 22 October).
 Whenever a question for the PI arises during the work, add it to the
 relevant file at once with a one-line note of where it came from; remove
 questions once answered, recording the answer in the relevant document.
@@ -78,7 +80,10 @@ plainly, label the choice a judgement, and put it to Chris before building.
 | Arithmetic, units, signs, stochastic behaviour, scientific options | Independent reviews by Fable (`science-reviewer`) and Astra (Codex), each given the same code and requirements before seeing the other's view; one reconciliation pass; open scientific questions go to Chris or Andria as questions, not forced consensus |
 | Final integration (end of the migration) | Astra's review of all the migration code, and the full-run gate |
 
-Findings carry file and line, consequence, evidence and a proposed check. Before designing
+Findings carry file and line, consequence, evidence and a proposed check. A reviewer's prompt
+states the change's goal and the simplicity rule first and does not list edge cases to hunt;
+before findings go to Chris, drop those whose fix adds code or text without fixing a real
+defect, and say how many were dropped and why (Chris, 4 November 2026). Before designing
 anything, one sentence on its benefit to the paper or to Andria's use of the code; drop
 speculative generality early. Verification of every code change: `tools/verify_change.R`
 (see CONTRIBUTING.md).

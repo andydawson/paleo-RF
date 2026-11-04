@@ -3,7 +3,7 @@
 # 8 needs from 7a, which 7a must produce here); outputs against the tail anchor.
 list(
   name    = 'simplify-io-2-scripts78',
-  commit  = 'simplify-redundant-io',
+  commit  = '4f7e8db6102d0b36f947c30a77bc332c7e2346aa',
   config  = 'configs/legacy_config.R',
   seed    = c('prediction_summary'),
   scripts = c('scripts/7_plot_preds.R', 'scripts/7a_alb_diff_full.R', 'scripts/8_radiative.R'),

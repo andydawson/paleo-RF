@@ -4,7 +4,7 @@
 # with the frozen data/calibration_modern_lct_interp_bluesky_coarse.RDS by MD5 after the run.
 list(
   name    = 'refit-legacy-prep',
-  commit  = 'refit-modis',
+  commit  = '527ea1c9b4819cd82711e3a514c2a9304c8f3a56',
   config  = 'configs/legacy_config.R',
   scripts = c('scripts/1_veg_lct_prep.R', 'scripts/2_calibration_lct_bluesky.R'),
   checks  = list(c('tools/check_anchors.R', 'tests/anchors/interp-allmonths-2026-09-20', '.rundirs/refit-legacy-prep'),

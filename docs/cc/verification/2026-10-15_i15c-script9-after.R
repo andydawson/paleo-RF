@@ -1,7 +1,7 @@
 # I15c script 9 (after): script 9 under the legacy configuration from the frozen forcing tables.
 list(
   name    = 'i15c-script9-after',
-  commit  = 'i15c-script9',
+  commit  = '0e73cb5cffb8ff9cb38fe6d606d558cbaf55e145',
   config  = 'configs/legacy_config.R',
   seed    = c('forcing', 'coarse_differences'),
   scripts = 'scripts/9_forcing_barplot.R',

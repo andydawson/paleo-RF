@@ -1,6 +1,6 @@
 Rplots.pdf
 figures/
-output/
+/output/
 writing/
 writing.zip
 .~lock*
@@ -28,7 +28,6 @@ data/calibration_modern_lct_bluesky_coarse.RDS
 data/ice_fort.RDS
 data/paleo_predict_gam_samps_bluesky.RDS
 data/paleo_predict_gam_samps_may_bluesky.RDS
-output/
 
 # [run-interp] 2026-09-21: the CACK distribution zip. Its contents are unpacked
 # and tracked under data/radiative-kernels/CACKv1.0/, so keeping the 126 MB
@@ -46,11 +45,6 @@ data/alb_interp_preds_diffs_bluesky.RDS
 data/ice_fort_diff_old.RDS
 data/ice_fort_diff_young.RDS
 
-# [run-interp] 2026-09-21: keep the small summary tables from script 9, which are
-# the numbers behind the slide 18 figure. The rest of output/ stays ignored.
-!output/forcing/
-!output/forcing/*.csv
-
 # 2026-09-23: remaining intermediates left on disk from the interp and May runs.
 # Five are duplicated in tests/anchors/; *_coarse.RDS is a script 2 intermediate
 # that is not. Ignored so `git add -A` cannot commit them; review at the config stage.
@@ -67,7 +61,9 @@ data/paleo_predict_gam_summary_may_bluesky.RDS
 # 2026-10-14 (issue I17, Chris): run manifests are not committed in general. The manifests
 # of the official runs (the I13b legacy run and the final run) are added deliberately with
 # `git add -f`, as the paper's provenance; the historical manifests already tracked stay.
-runs/
+# Anchored with a leading slash (here and /output/ above), so that copies kept under
+# results/<run>/ are not ignored (Chris, 4 November 2026).
+/runs/
 
 # 2026-10-17 (Chris): downloaded inputs for the albedo rebuild, large and re-obtainable with
 # tools/download_era5_radiation.R and the MODIS build; their provenance (requests, checksums)
