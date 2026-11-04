@@ -5,7 +5,7 @@
 # request and checksum handling, and deletion safeguards by hand on made-up data.
 list(
   name     = 'albedo-build',
-  commit   = 'albedo-build',
+  commit   = '7c2bec38dfbb3ba23ea9a73565240ebd4f93d06b',
   config   = 'config.R',
   settings = NULL,
   seed     = NULL,

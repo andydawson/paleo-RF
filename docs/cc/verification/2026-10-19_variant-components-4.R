@@ -5,7 +5,7 @@
 # and the unit tests of the split.
 list(
   name    = 'variant-components-4',
-  commit  = 'fix-variant-components',
+  commit  = '2bd4ab5e4a61b38a030ef8fed1b6eee39368724c',
   config  = 'config.R',
   copy    = list(c('/home/expert/Documents/contracting/Andria/paleo-RF-verify/4ba4d2a/.rundirs/full-current-2026-10-18/output/forcing/RF_holocene_all_cases.RDS',
                    'output/forcing/RF_holocene_all_cases.RDS'),

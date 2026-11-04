@@ -1,7 +1,7 @@
 # Elevation lookup moved to a preparation tool: script 1 under the legacy configuration must still match the anchors (and run without elevatr).
 list(
   name    = 'centre-elevation-tool',
-  commit  = 'centre-elevation-tool',
+  commit  = 'eee9a2cfbf2cd1fb242422eaeb71609ca963bb6b',
   config  = 'configs/legacy_config.R',
   scripts = 'scripts/1_veg_lct_prep.R',
   checks  = list(c('tools/check_anchors.R', 'tests/anchors/interp-allmonths-2026-09-20', '.rundirs/centre-elevation-tool'),

@@ -2,7 +2,7 @@
 # diagnostic claim removed; run-directory and seeded-marker plumbing changed).
 list(
   name    = 'drift-legacy-prep',
-  commit  = 'drift-fixes',
+  commit  = 'ac90729527f5965184c6e7abcaefab80129b86e5',
   config  = 'configs/legacy_config.R',
   scripts = c('scripts/1_veg_lct_prep.R', 'scripts/2_calibration_lct_bluesky.R'),
   checks  = list(c('tools/check_anchors.R', 'tests/anchors/interp-allmonths-2026-09-20', '.rundirs/drift-legacy-prep')),

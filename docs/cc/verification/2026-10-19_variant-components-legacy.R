@@ -4,7 +4,7 @@
 # byte-identical to the anchors.
 list(
   name    = 'variant-components-legacy',
-  commit  = 'fix-variant-components',
+  commit  = '70a30aaf74aca52ad20014e41cbbd7c1151156a5',
   config  = 'configs/legacy_config.R',
   seed    = c('forcing', 'coarse_differences'),
   scripts = 'scripts/9_forcing_barplot.R',

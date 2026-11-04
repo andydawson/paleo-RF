@@ -4,7 +4,7 @@
 # parts add up to script 9's totals); with the config and path tests.
 list(
   name    = 'forcing-breakdown',
-  commit  = 'forcing-breakdown',
+  commit  = 'd7662609633659cec4ea9b3a50773e4a89abe361',
   config  = 'configs/legacy_config.R',
   seed    = c('forcing', 'coarse_differences'),
   scripts = c('scripts/9_forcing_barplot.R', 'scripts/10_forcing_breakdown.R'),

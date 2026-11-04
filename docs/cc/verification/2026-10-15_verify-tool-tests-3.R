@@ -2,7 +2,7 @@
 # no pipeline script runs; every test file must pass, including the tool's own tests.
 list(
   name    = 'verify-tool-tests-3',
-  commit  = 'verify-tool',
+  commit  = '44b4b8470835f8dc333e729add9ca11eee933ad7',
   config  = 'config.R',
   scripts = character(0),
   checks  = list('tests/test_calendar.R', 'tests/test_check_merge_evidence.R', 'tests/test_config.R', 'tests/test_differences.R', 'tests/test_paths.R', 'tests/test_preparation.R', 'tests/test_random.R', 'tests/test_run_manifest.R', 'tests/test_tools.R', 'tests/test_verify_change.R'),

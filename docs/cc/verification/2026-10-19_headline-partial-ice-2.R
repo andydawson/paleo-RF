@@ -6,7 +6,7 @@
 # rerun), checked by 2026-10-19_headline-partial-ice_check.R and the unit tests.
 list(
   name    = 'headline-partial-ice-2',
-  commit  = 'headline-partial-ice',
+  commit  = '44d6a06eb1dd42394d41e8720cf7b7e0d1b8a970',
   config  = 'config.R',
   copy    = list(c('/home/expert/Documents/contracting/Andria/paleo-RF-verify/4ba4d2a/.rundirs/full-current-2026-10-18/output/forcing/RF_holocene_all_cases.RDS',
                    'output/forcing/RF_holocene_all_cases.RDS'),

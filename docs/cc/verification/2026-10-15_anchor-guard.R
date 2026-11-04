@@ -4,7 +4,7 @@
 # PRODUCED), which must still pass.
 list(
   name    = 'anchor-guard',
-  commit  = 'anchor-guard',
+  commit  = '5895f97a00113f0ca05f9fbd53244fb10a7c3ab8',
   config  = 'configs/legacy_config.R',
   seed    = c('albedo_differences'),
   scripts = 'scripts/8_radiative.R',

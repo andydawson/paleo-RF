@@ -3,7 +3,7 @@
 # The ML fits are exercised by the full current-configuration run.
 list(
   name    = 'spatial-ml',
-  commit  = 'spatial-ml',
+  commit  = '52a62376a55db04e5740df61cfd0b10c46077a8b',
   config  = 'config.R',
   scripts = character(0),
   checks  = list('tests/test_config.R', 'tests/test_paths.R', 'tests/test_preparation.R', 'tests/test_run_manifest.R'),

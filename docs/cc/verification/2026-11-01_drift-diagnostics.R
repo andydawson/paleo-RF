@@ -3,7 +3,7 @@
 run18 = '/home/expert/Documents/contracting/Andria/paleo-RF-verify/4ba4d2a/.rundirs/full-current-2026-10-18'
 list(
   name     = 'drift-diagnostics',
-  commit   = 'drift-fixes',
+  commit   = 'ac90729527f5965184c6e7abcaefab80129b86e5',
   config   = 'config.R',
   copy     = list(c(file.path(run18, 'output/calibration/calibration_prediction_fit_may_bluesky.RDS'),
                     'output/calibration/calibration_prediction_fit_may_bluesky.RDS'),

@@ -3,7 +3,7 @@
 # checker), and every test file must pass.
 list(
   name    = 'i15a-comments-only-2',
-  commit  = 'i15a-comments',
+  commit  = '61b544762e49509aa283bc74cceef1f3e82911f1',
   config  = 'config.R',
   scripts = character(0),
   checks  = list(c('tools/check_comments_only.R', '99042c9'), 'tests/test_calendar.R', 'tests/test_check_comments_only.R', 'tests/test_check_merge_evidence.R', 'tests/test_config.R', 'tests/test_differences.R', 'tests/test_paths.R', 'tests/test_preparation_ice.R', 'tests/test_preparation.R', 'tests/test_random.R', 'tests/test_run_manifest.R', 'tests/test_tools.R', 'tests/test_verify_change.R'),

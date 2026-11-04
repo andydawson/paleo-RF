@@ -1,7 +1,7 @@
 # I15c script 2 (after): script 2 under the legacy configuration from the frozen modern land cover.
 list(
   name    = 'i15c-script2-after',
-  commit  = 'i15c-script2',
+  commit  = 'a83d9d5e9cb9f4af4ac30b215f31c12a938fb0d1',
   config  = 'configs/legacy_config.R',
   seed    = c('lct_modern'),
   scripts = 'scripts/2_calibration_lct_bluesky.R',

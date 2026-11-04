@@ -2,7 +2,7 @@
 # (the path, configuration, calendar, preparation and run-manifest helpers are the renamed ones).
 list(
   name    = 'i15b-helper-names',
-  commit  = 'i15b-helpers',
+  commit  = '2664599488e928ca6220cf653a09d3d3f3917102',
   config  = 'config.R',
   scripts = character(0),
   checks  = list('tests/test_calendar.R', 'tests/test_check_comments_only.R', 'tests/test_check_merge_evidence.R', 'tests/test_config.R', 'tests/test_differences.R', 'tests/test_paths.R', 'tests/test_preparation_ice.R', 'tests/test_preparation.R', 'tests/test_random.R', 'tests/test_run_manifest.R', 'tests/test_tools.R', 'tests/test_verify_change.R'),

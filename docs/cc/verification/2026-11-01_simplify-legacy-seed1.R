@@ -3,7 +3,7 @@
 months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
 list(
   name    = 'simplify-legacy-seed1',
-  commit  = 'simplify-2026-11-01',
+  commit  = '51888b4742b949ec4a26f33f56643508a7e73b69',
   config  = 'configs/legacy_config.R',
   seed    = c('calibration_table', 'calibration_ladder', 'calibration_spatial',
               'calibration_spatial_elev_cover', 'aic_table', 'lct_paleo'),

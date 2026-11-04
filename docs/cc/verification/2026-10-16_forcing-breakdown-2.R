@@ -1,7 +1,7 @@
 # Script 10 after review (band edges, exact columns, labels, unit test): script 9's four tables identical to their anchor (--all), script 10 runs (it stops unless its parts add up to script 9), with the config, path and breakdown tests; 8 threads as the regression contract requires.
 list(
   name    = 'forcing-breakdown-2',
-  commit  = 'forcing-breakdown',
+  commit  = 'c0098cb0b780fb48a6fabf7b9e885dc576238202',
   config  = 'configs/legacy_config.R',
   seed    = c('forcing', 'coarse_differences'),
   scripts = c('scripts/9_forcing_barplot.R', 'scripts/10_forcing_breakdown.R'),

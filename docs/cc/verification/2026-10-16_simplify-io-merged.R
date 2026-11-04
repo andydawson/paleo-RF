@@ -2,7 +2,7 @@
 # trunk) and script 8 (changed by this branch) under the legacy configuration, with the tests.
 list(
   name    = 'simplify-io-merged',
-  commit  = 'simplify-redundant-io',
+  commit  = '300c2a680fd8c4cc8cf9daaee7236f5cf8420146',
   config  = 'configs/legacy_config.R',
   seed    = c('albedo_differences'),
   scripts = c('scripts/1_veg_lct_prep.R', 'scripts/8_radiative.R'),

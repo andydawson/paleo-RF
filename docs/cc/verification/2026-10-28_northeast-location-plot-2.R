@@ -3,7 +3,7 @@
 run18 = '/home/expert/Documents/contracting/Andria/paleo-RF-verify/4ba4d2a/.rundirs/full-current-2026-10-18'
 list(
   name     = 'northeast-location-plot-2',
-  commit   = 'northeast-location-plot',
+  commit   = '117bfdbb498799958504cd39a6a43bcfc7d056ce',
   config   = 'config.R',
   settings = NULL,
   seed     = NULL,
