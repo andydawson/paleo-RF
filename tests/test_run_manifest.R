@@ -218,6 +218,18 @@ figs_of <- function(s) vapply(latest(s)$figures, `[[`, "", "path")
 check("two runs writing figures side by side each list only their own (and Rplots.pdf only if they used it)",
       setequal(figs_of("toy_fig_a"), c("Rplots.pdf", "figures/a.png")) && identical(figs_of("toy_fig_b"), "figures/b.png"))
 
+# --- a run directory: plots with no device open go to its own Rplots.pdf, in a batch run only
+plot_cfg <- config_variant(tempfile(fileext = ".R"), "dir = NULL", 'dir = "plot_run"')
+r <- run_toy("toy_plot_batch", c("run = run_begin('toy_plot_batch'); plot(1); run_finish(run)"), c("--config", plot_cfg))
+check("a batch run in a run directory sends plots to that directory's Rplots.pdf",
+      r$status == 0 && file.exists("plot_run/Rplots.pdf"))
+r <- run_toy("toy_plot_session", c("before = getOption('device')",
+                                   "run = run_begin('toy_plot_session', interactive_session = TRUE)",
+                                   "stopifnot(identical(getOption('device'), before)); cat('DEVICE KEPT')"),
+             c("--config", plot_cfg))
+check("an interactive run in a run directory leaves the screen device as it is",
+      r$status == 0 && any(grepl("DEVICE KEPT", r$out)))
+
 # --- two runs started together ------------------------------------------------------------
 writeLines(c("source('R/run_manifest.R')", "run = run_begin('toy_parallel')", "Sys.sleep(2)", "run_finish(run)"),
            "scripts/toy_parallel.R")

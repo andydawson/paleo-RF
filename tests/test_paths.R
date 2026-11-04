@@ -112,12 +112,6 @@ TEMPLATE_MODELS$calibration_spatial <- NULL
 stopifnot(fails(catalogue_paths(base, "calibration_spatial")))
 TEMPLATE_MODELS <- saved_models
 
-# In a run directory, plots printed with no device open go to its own Rplots.pdf.
-local({
-  plot(1); dev.off()
-  stopifnot(file.exists(file.path(tmp, "Rplots.pdf")))
-})
-
 # seed_run_dir copies baseline products into a run directory, once: a real, writable file
 # (a link would let the run write into the baseline), listed in SEEDED.txt.
 seeded <- seed_run_dir(alt, path_file(base, "calibration_stats"))
