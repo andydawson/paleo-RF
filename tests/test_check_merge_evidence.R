@@ -59,5 +59,26 @@ stopifnot(!merge('unverified'), merge('verified'))
 git('checkout', '-q', '-b', 'topic', base)
 stopifnot(merge('unverified'))
 
+# The same hook runs before a commit (pre-commit), which covers a merge finished by `git commit`
+# after a conflict and a direct commit on a trunk: code is refused there, documentation is not,
+# and a topic branch is unaffected.
+try_commit = function(path, lines) {
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE); writeLines(lines, path); git('add', path)
+  status = system2('git', shQuote(c('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'c')),
+                   stdout = FALSE, stderr = FALSE)
+  if (status != 0) git('reset', '-q', '--hard')
+  status == 0
+}
+git('checkout', '-q', 'feature/single-config')
+stopifnot(!try_commit('R/a.R', 'x = 3'), try_commit('docs/more.md', 'text'))
+git('checkout', '-q', 'topic')
+stopifnot(try_commit('R/a.R', 'x = 4'))
+
+# A check by hand needs both commits: with one, the base would be HEAD, which after a merge is
+# the merge itself, and the check would compare the merge with itself.
+status = system2(file.path(R.home('bin'), 'Rscript'), c('tools/check_merge_evidence.R', 'check', 'HEAD'),
+                 stdout = FALSE, stderr = FALSE)
+stopifnot(status == 2)
+
 setwd(old)
 cat('test_check_merge_evidence: all tests passed\n')

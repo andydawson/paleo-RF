@@ -2,8 +2,10 @@
 #
 # Why: Chris asked how the verification rules would actually be followed (2026-10-14); this
 # check makes git enforce one of them (decided 2026-10-15). It runs as git's
-# pre-merge-commit hook, so it applies to every merge that makes a merge commit (the project
-# merges with --no-ff).
+# pre-merge-commit hook (a merge that makes a merge commit; the project merges with --no-ff)
+# and as its pre-commit hook (a merge finished by `git commit` after a conflict, or a direct
+# commit on a trunk). Not covered: a fast-forward merge, `--no-verify`, and a clone where the
+# hook was never installed.
 #
 # The rule applies to merges into a trunk (TRUNKS below): if the merge changes the code (R/, scripts/, tools/, tests/, config.R or
 # configs/) of the branch merged into, the merged result must contain a report
@@ -18,8 +20,8 @@
 # Usage, from the repository root:
 #   Rscript tools/check_merge_evidence.R install   install the git hook (once per clone)
 #   Rscript tools/check_merge_evidence.R check     what the hook runs during a merge
-#   Rscript tools/check_merge_evidence.R check <commit> [<base>]   check a commit by hand
-#                                   (as if merged into <base>, default the current branch)
+#   Rscript tools/check_merge_evidence.R check <commit> <base>   check a commit by hand
+#                                   (as if merged into <base>, e.g. the trunk before the merge)
 # To merge without the check (a deliberate exception, to be recorded in the merge
 # message): git merge --no-verify.
 
@@ -61,31 +63,32 @@ check_merge = function(merged, base) {
 
 install_hook = function() {
   hooks = git_lines('rev-parse', '--git-path', 'hooks')
-  file = file.path(hooks, 'pre-merge-commit')
   rscript = file.path(R.home('bin'), 'Rscript')
-  # A branch that predates the check (e.g. the trunk before this tool is merged into it) has
-  # no checker in its tree: the hook then lets the merge go ahead and says so.
-  writeLines(c('#!/bin/sh', '# Installed by tools/check_merge_evidence.R install: the merge check (see that file).',
-               'if [ ! -f tools/check_merge_evidence.R ]; then echo "merge check: not in this branch yet; skipped"; exit 0; fi',
-               sprintf('exec "%s" tools/check_merge_evidence.R check', rscript)), file)
-  Sys.chmod(file, '755')
-  cat('installed', file, '\n')
+  for (file in file.path(hooks, c('pre-merge-commit', 'pre-commit'))) {
+    # A branch that predates the check (e.g. the trunk before this tool is merged into it) has
+    # no checker in its tree: the hook then lets the merge go ahead and says so.
+    writeLines(c('#!/bin/sh', '# Installed by tools/check_merge_evidence.R install: the merge check (see that file).',
+                 'if [ ! -f tools/check_merge_evidence.R ]; then echo "merge check: not in this branch yet; skipped"; exit 0; fi',
+                 sprintf('exec "%s" tools/check_merge_evidence.R check', rscript)), file)
+    Sys.chmod(file, '755')
+    cat('installed', file, '\n')
+  }
 }
 
 if (sys.nframe() == 0L) {
   a = commandArgs(TRUE)
   if (identical(a[1], 'install')) {
     install_hook()
-  } else if (identical(a[1], 'check')) {
+  } else if (identical(a[1], 'check') && length(a) != 2) {
     branch = git_lines('symbolic-ref', '--short', 'HEAD')
     if (length(a) < 2 && !(length(branch) && branch %in% TRUNKS)) {
       cat('merge check: merging into', if (length(branch)) branch else 'a detached HEAD', '(not a trunk); no report needed\n')
       quit(status = 0)
     }
     merged = if (length(a) >= 2) a[2] else git_lines('write-tree')   # the merge result in the index
-    base   = if (length(a) >= 3) a[3] else 'HEAD'
+    base   = if (length(a) >= 3) a[3] else 'HEAD'   # by hand, both are given: after a merge HEAD is the merge itself
     quit(status = if (check_merge(merged, base)) 0 else 1)
   } else {
-    cat('usage: Rscript tools/check_merge_evidence.R install | check [<commit> [<base>]]\n'); quit(status = 2)
+    cat('usage: Rscript tools/check_merge_evidence.R install | check [<commit> <base>]\n'); quit(status = 2)
   }
 }
