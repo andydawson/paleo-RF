@@ -1651,7 +1651,12 @@ protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amend
   winner); the descriptive-table rules (decision 16). Each change verified (`docs/cc/verification/2026-11-03_cv-holdouts-*`,
   all PASS; from run 8 the reports themselves show the older holdout tables unchanged) and reviewed by Fable and Astra
   (`2026-11-02_cv_code_review/`, `2026-11-03_cv_geographic_code_review/`).
-- **Not yet:** the fits (after the refit queue) and the scores; nothing here has used a score.
+- **Not yet:** the fits (after the refit queue) and the scores; nothing here has used a score. The section 7
+  comparison of the chosen model with model 8 is not written yet (the northeast location figure compares model 8's
+  location term only).
+- **Published basis** of the geographic reports (Brenning 2023; Roberts et al. 2017; Milà et al. 2022; Linnenbrink et
+  al. 2024; Yates et al. 2023, with DOIs, checked against Crossref on 4 November) and what is this project's own
+  adaptation: the protocol's section "Published basis of the geographic sensitivity reports".
 - **4 November, two guards** (whole-code review of 4 November, findings 1 and 2; reviewed by Fable and Astra): each
   predictions file carries the MD5 of the holdouts it was fitted against, taken when the holdouts are loaded, and the
   score stage refuses any file without a matching MD5 (so predictions for rebuilt holdouts are never scored); one fit
