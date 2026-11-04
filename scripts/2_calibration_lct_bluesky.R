@@ -19,8 +19,7 @@ library(reshape2)
 library(tidyterra)
 
 # All twelve months from the shared calendar (R/calendar.R). Deliberately not
-# config.R's month selection: the calibration table keeps every month, so scripts 4 onward
-# can run on any selection without rebuilding it.
+# config.R's month selection: the calibration table keeps every month.
 source('R/calendar.R')
 months = MONTHS
 
