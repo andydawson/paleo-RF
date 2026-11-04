@@ -20,6 +20,12 @@ repository is branched, committed, merged and backed up. Agent sessions read
 - Commit each atomic (single logical) change, frequently. Concise imperative
   subject line plus a body explaining *what* changed and *why*. Do not squash
   granular history unless asked.
+- Every plan gets a GitHub issue on `andydawson/paleo-RF` before work
+  starts: the plan, or a link to its design document, and Chris's decisions.
+  Progress and verification evidence are added as comments, and the issue is
+  closed when the work is merged, with links to the merge, the changelog entry
+  and the verification reports (close-issue skill). Chris, 2026-11-02, after
+  issues lapsed from 15 October to 2 November.
 - Never commit to `legacy` or `main`. Work reaches `main` only via a pull
   request on GitHub reviewed and approved by Andria; agent sessions never
   merge to `main` themselves.
@@ -61,8 +67,10 @@ repository is branched, committed, merged and backed up. Agent sessions read
   `tools/`.
 - Questions for Andria are collected continuously in
   `docs/cc/questions_for_andria_general.md` and
-  `docs/cc/questions_for_andria_scientific.md`; add to them as questions
-  arise, remove them when answered.
+  `docs/cc/questions_for_andria_scientific_from_2026-10-20.md`; add to them
+  as questions arise, remove them when answered. The earlier
+  `docs/cc/questions_for_andria_scientific.md` is frozen: it went to Andria
+  in a Word document on 20 October 2026.
 
 ## Coding practice
 

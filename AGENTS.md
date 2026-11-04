@@ -2,7 +2,8 @@
 
 Read `CONTRIBUTING.md` for the version-control protocol before making changes.
 Summary: trunk is `chris-dev`; one topic branch per task off it, merged back
-when done; never touch `legacy` (frozen snapshot of the original code) or
+when done; every plan gets a GitHub issue before work starts, updated as it
+goes and closed at merge; never touch `legacy` (frozen snapshot of the original code) or
 `main`; commit each atomic change with a why-focused message; push to
 `origin` at checkpoints and session end; `main` changes only via a PR that
 Andria approves.
@@ -14,7 +15,9 @@ git history.)
 
 Two living documents must be kept current in every session:
 `docs/cc/questions_for_andria_general.md` (simple and logistical) and
-`docs/cc/questions_for_andria_scientific.md` (technical and scientific).
+`docs/cc/questions_for_andria_scientific_from_2026-10-20.md` (technical and
+scientific; the earlier `questions_for_andria_scientific.md` is frozen, as it
+went to Andria in a Word document on 20 October 2026).
 Whenever a question for the PI arises during the work, add it to the
 relevant file at once with a one-line note of where it came from; remove
 questions once answered, recording the answer in the relevant document.
@@ -28,6 +31,14 @@ files) carry no date.
 
 This is a research project, but it is written to good software practice, and
 that includes version control:
+
+- **Readability comes before elegance (Chris, 2026-10-14).** The code must be
+  easy for Andria and her colleagues to read, understand and change: R users
+  and scientists, not software engineers. Where a simpler, more explicit
+  design (a plain `if`, a separate clearly named function, a little
+  repetition in a script's flow) is easier to follow than a more general or
+  clever one, choose the simpler one. Generality is added when it is needed,
+  not in anticipation.
 
 - **Do not duplicate code.** A fix or a routine needed in more than one place
   becomes a function, in `R/` if more than one script uses it (e.g.

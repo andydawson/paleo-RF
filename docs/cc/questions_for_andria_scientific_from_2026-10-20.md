@@ -1,0 +1,333 @@
+# Open questions for Andria: scientific and technical (from 20 October 2026)
+
+Maintained by Chris with Claude Code; kept current as work proceeds (see
+AGENTS.md). This file holds the scientific questions raised **from
+20 October 2026 onwards**. The earlier questions are in
+`questions_for_andria_scientific.md`, which is frozen as of that date: its
+content went into the Word document Chris shared with Andria on Google
+Drive, and her answers are being collected there. Keeping the new
+questions in a separate file lets Chris copy them across by hand.
+
+Each entry says what we found, why it matters, what we propose to check,
+and what we need from you.
+
+## 1. The model predicts a darker surface where hemlock collapsed (northeast, 6 to 4 ka)
+
+*Raised on the 19 October call (Chris: check against figure 4a of the
+Climate of the Past paper, Dawson et al. 2025); analysis 20 October.*
+
+**What we found.** In the northeastern US and southeastern Canada (box
+80-66°W, 40-48°N, the region of figure 4a), the land-cover reconstruction
+shows evergreen cover falling from 0.40 at 6 ka to 0.23 at 4 ka, and
+summergreen rising from 0.54 to 0.71: the hemlock decline. Replacing
+conifers with deciduous trees would normally make the surface brighter,
+especially over spring snow, which should give cooling. Instead the
+calibration model predicts a darker surface in almost every month, by up
+to 0.09 in April and May, so our 4-6 ka bar shows warming in that region
+(18 October headline run, partial ice, HadGEM3 kernel). Eastern Canada
+shows the same pattern where evergreen cover expanded.
+
+**Why it matters.** The predicted values look implausible. At 4 ka the
+median May albedo in the box is 0.068 and some cells reach 0.040, while
+the satellite albedo today in the same cells is 0.116. If the model is
+wrong here, the sign of a regional signal your paper highlights is wrong
+in our forcing, and the same may happen wherever the past cover mix lies
+outside the range of today's mixes.
+
+**Possible causes (not yet confirmed).**
+- The cover term is confounded with location: in the box, evergreen share rises
+  northwards with latitude, so the fitted cover surface can take a steep slope that the
+  location term offsets today but not when the cover changes in the past.
+- The model is extrapolating: past cover mixes in this region lie outside
+  the mixes it was fitted on today, and the fitted smooth bends the wrong
+  way there.
+- Water in the calibration albedo: lakes and coastline mixed into your
+  0.25° albedo raster may have taught the model that some cover mixes are
+  very dark.
+
+**Further evidence (20 October, same run).**
+- The forcing in the box is vegetation only after 9.5 ka; the ice part is zero there in
+  every period from 8 ka onwards.
+- The forcing follows the evergreen curve with no lag. Evergreen falls from 6 to 4.5 ka
+  (0.40 to 0.22), giving warming (+5.2 W/m2 over the box for 4-6 ka). It then recovers
+  from 4 to 0.5 ka (0.23 to 0.37), giving cooling (-2.9 for 2-4 ka, -1.7 for 0.5-2 ka).
+  The cooling after 4 ka is the same effect in reverse.
+- At a fixed place in the box, the May model gives albedo 0.06 for 10% evergreen and
+  0.49 for 60% evergreen (open land fixed at 6%). Both ends are implausible for forest.
+- Today's data in the box cannot tell which way evergreen cover moves the albedo. Across the
+  83 box cells, May albedo falls as evergreen share rises (correlation -0.63), but evergreen
+  share rises almost in step with latitude there (correlation 0.92), and albedo also falls
+  northwards. With latitude held fixed, the evergreen effect is close to zero (+0.003, standard
+  error 0.003, per 0.1 of evergreen share), so these cells cannot sign it. The link between
+  evergreen share and latitude is local: across all 2,792 fitting cells its correlation is
+  0.06. So the location term and the cover term can trade off against each other here, a
+  known difficulty in spatial regression (spatial confounding; Hodges and Reich 2010,
+  Paciorek 2010), related to the question in the earlier file on the spatial term absorbing
+  the cover effect. *(Corrected 28 October: this bullet first said the fitting data "point
+  the other way", taking the correlation of -0.63 as the evergreen effect; with latitude held
+  fixed they do not.)*
+- The 4.5 ka cover mixes lie outside the mixes the model was fitted on: the median distance
+  to the nearest modern mix is 0.12 in cover fraction, against 0.04 at 6 ka.
+- Checked for May with the selected model only; other months are not yet checked.
+
+**Three checks, 20 October (fits the hindcast uses).**
+- *No modern counterpart for most of the Holocene.* On the cover triangle, nearly every box cell
+  lies outside the range of all of today's North American cover mixes from 1 ka to 8 ka (99% at
+  1 ka, 100% at 4.5 ka, 98% at 6 ka; 15% at 0.2 ka). The past forest there had little open land
+  (about 6%); every modern cell with that much summergreen has more open land. The evergreen
+  share itself stays within today's range in the box (0.09 to 0.50 today; 0.40 at 6 ka, 0.22 at
+  4.5 ka): what has no modern counterpart is the low open land (lowest today 7%, median 15%).
+  Across the whole study area, 10-15% of past cells lie outside today's range at each time slice.
+- *It is the conifer-to-deciduous swap.* Replacing evergreen by summergreen alone, with open land
+  held fixed, reproduces almost the whole modelled 6 to 4.5 ka change in every month (May -0.094
+  against -0.095).
+- *The sign depends on the location term.* Refitting May on the same data without the location
+  term turns the box's 6 to 4.5 ka change from -0.095 (darker) to +0.042 (brighter), but the fit to
+  today's albedo falls from 97% to 67% of deviance explained. The data cannot pin down the
+  evergreen effect here.
+
+**Diagnostic figures (made 20 October; scripts in `tools/plotting/` on the migration branch).**
+- `plot_training_support.R`: the cover triangle with today's mixes, their outer range and the past
+  mixes outside it; the share outside at each time slice; and a map of how often each cell is
+  outside. The log gives the share outside by more than 0.02, 0.05 and 0.10, since the outer range
+  is a strict test.
+- `plot_forcing_vs_training_support.R`: the vegetation forcing of each period with the cells
+  outside the range outlined, showing which regional signals rest on extrapolation.
+- `plot_northeast_cover_and_location.R` (added 28 October): for May in the box, today's
+  evergreen share against latitude; today's albedo against evergreen share, coloured by
+  latitude, with the evergreen effect at fixed latitude; and the model's albedo as evergreen
+  replaces summergreen, with and without the location term. It shows the evidence for the first
+  possible cause above, which the other figures do not.
+- `plot_pollen_site_coverage.R`: the cells with a pollen-based cover estimate before
+  interpolation. It bears also on question B2 of the earlier file (calibration on the interpolated
+  field): the northeast is well sampled, the southern Plains very sparsely.
+
+**What we propose to check.**
+- The model's fitted albedo for pure evergreen and pure summergreen cover,
+  month by month, against published values for conifer and deciduous
+  forest.
+- Whether the past cover mixes in the box fall outside the range of
+  today's mixes used in the fitting.
+- Whether the effect disappears with the land-only satellite albedo now
+  being rebuilt.
+- Spatially blocked cross-validation (already proposed on 16 October),
+  which measures how well the model predicts places and mixes it has not
+  seen.
+
+**What we need from you.** Have you seen dark predicted albedo for
+mixed conifer-deciduous cover before? Do you know whether your albedo
+raster excluded water? And do you agree that the hemlock decline should
+give a brighter surface, and so cooling, in this region?
+
+## 2. Questions raised by the independent review of the hemlock result
+
+*From Astra's interpretation of the northeast result, 20 October
+(`2026-10-20_northeast_cover_effect_interpretation_codex_gpt6astra.md`). Its leading explanation:
+in today's data, evergreen share follows latitude so closely that the model cannot tell the effect
+of evergreen cover apart from the effect of being further north (colder, snowier); and the 4.5 ka
+cover mixes have no close modern counterparts. Checks are under way.*
+
+1. **What should the vegetation forcing represent?** The effect of past vegetation under today's
+   climate and snow, or the total albedo change including past changes in snow? The model has no
+   input for past snow.
+2. **Which modern observations best show hemlock being replaced by deciduous forest in the
+   northeast?** We would use them to test the direction of the model's effect.
+3. **What do the pollen-based cover fractions measure:** share of land area, of vegetated area, or
+   canopy cover? And how should shrubs map onto satellite land-cover classes?
+4. **Which years does the "modern" (50 BP) vegetation slice represent,** and is it a fair match for
+   satellite albedo from 2000-2009?
+5. **Was taking the albedo at the cell centre deliberate?** Could the rebuilt land-only cell averages
+   become the calibration albedo instead?
+6. **Past cover mixes with no modern counterpart:** should their forcing be left out, given as a
+   bounded range, or shown separately as unsupported?
+7. **Would a snow-aware estimate built from albedo per cover class** (evergreen, deciduous, open;
+   snowy and snow-free) be enough as a comparison for the paper, or should it replace the model if
+   the model's cover effect stays unstable?
+
+## 3. The rebuilt satellite albedo: choices made, and questions still open
+
+*From the two independent reviews of the rebuilt MODIS albedo (20 October). Chris decided the
+following on 20 October; they replace the wording in the earlier file (question on snow in the
+satellite albedo), which said the land rule follows NASA's processing and that "no minimum" follows
+published climatologies; both reviews found those statements wrong.*
+
+**Decided (for your review).**
+- A pixel counts as land if the product labels it land on more than half of the days it has a
+  reading (2000-2009). Days without a retrieval are blank and are ignored. Keeping only land pixels is
+  our choice: NASA also processes coastlines and shallow water.
+- Days when the noon sun is more than 75 degrees from overhead are left out (as Jia et al. 2022 do);
+  versions with 70 degrees (NASA's guidance that values beyond 70 are suspect) and with no cut-off are
+  kept for comparison. Your raster shows no such cut-off: its winter values reach the north as far as a
+  noon sun 80-85 degrees from overhead.
+- Snow: the product's own daily snow flag. The build keeps snowy, snow-free and unknown-snow day
+  totals; together with the unknown-snow part they mix back exactly to the all-days value.
+- Averaging: within each year, the mean over all usable land pixel-days of the cell; then the years
+  weighted equally. A mean, not a median, because forcing is linear in albedo (our judgement).
+
+**Shoreline pixels: land only (Chris, 22 October, from the four test months; your view welcome).**
+The product labels pixels touching a lake shore or coastline as a separate class. They are not
+counted as land: the cell albedo is meant to describe the land surface the vegetation
+reconstruction stands for, and these pixels mix in water. They matter in lake country and on coasts:
+in the test months (March 2000, March 2005, July 2005, December 2005) the median cell has 15% of its
+land-or-shoreline pixels on shorelines, and 44% of cell-months have more than 20%. Counting them would
+make such cells darker by about 0.006 on average (5-95% range -0.04 to +0.03 where shoreline is over
+half), mostly in summer (open water; July -0.005 overall) and hardly in December (-0.001). It would
+add an albedo to only 52 of 7,078 cell-months. The build keeps the shoreline days per pixel, so this
+can be changed later without rebuilding.
+
+**Northern winter gap: the 75-degree rule stays, with a check without it (Chris, 29 October, from
+the full build; your view welcome).** In winter the noon sun in the north is more than 75 degrees from
+overhead, so the rebuilt albedo has no value there, and the calibration model leaves those cells out of
+that month's fit. Your raster has the same gap, but a smaller one. Over the full 2000-2009 build, the
+cells with an albedo in your calibration table but none in the rebuilt one are: November 581,
+December 333, January 436, February 344 (March 6), of 2,860. The northernmost December value is at
+53.5 N in the rebuild and 59.5 N in your raster. Without the sun-angle rule the gap shrinks to 106-167
+cells a month (December to 57.5 N), but that keeps the low-sun values the product team calls least
+reliable, over snow especially. Ten years barely helped (December: 1,327 cells from one year, 1,418
+from ten), so the sun-angle rule sets the gap, not missing data. Where both have a value they agree:
+median difference within 0.02, correlation 0.84-0.92 (November to February). The refit will also fit
+November to February with the no-rule version, to show whether the forcing depends on this choice.
+
+**Current defaults (Chris, 20 October). They can be changed later without rebuilding; tell us only if
+you disagree.**
+- *Today's snow share* (changed by Chris on 29 October, after reading the published precedents in
+  full): NASA's monthly snow-cover product (MOD10CM), averaged per cell over 2000-2009, with the share
+  of usable satellite retrievals flagged snowy compared beside it. The two published studies that mix
+  snowy and snow-free MODIS albedo by a snow fraction, Barnes and Roy 2010 (JGR 115, G04033, eq. 3) and
+  Ghimire et al. 2014 (GRL 41, 9087, eq. 1), both take the fraction from that product; the flag share
+  depends on cloud, quality and sun-angle screening and has no precedent as a snow fraction.
+- *No minimum coverage:* every cell-month with any usable retrieval is used, and the counts (years,
+  days, share of land observed) are kept beside each value. In July 2005, 30% of cells had
+  full-quality retrievals for under 90% of their land (mostly Alaska and south of 30 N); there the
+  full-quality and any-quality values differ by 0.014-0.020 on average.
+  In late winter the full-quality requirement removes much more in the north: north of 60 N, the land
+  pixels with at least one full-quality day in March 2005 were about half those with any usable day
+  (5.9 against 12.1 million; July 2005: 10.3 against 12.7 million). Both versions are kept with their
+  coverage, so the choice can be revisited once the whole decade is built (Chris, 22 October).
+- *Days with unknown snow status* stay in the all-days value; their share and mean are reported, so
+  the snowy, snow-free and unknown parts mix back exactly.
+
+**Also decided (Chris, 20 October, for your review).**
+- *Noon albedo.* The calibration albedo is the blue-sky albedo at local solar noon, which is what the
+  MODIS albedo product provides (its direct-light albedo is defined for the noon sun; a
+  sunlight-weighted daily albedo would need a different product). This is common practice: Bright et
+  al. 2015 (Biogeosciences) use the MODIS direct-light albedo at local solar noon, Duveiller et al.
+  2018 use the same noon-based product, and the Copernicus albedo product also defines its
+  direct-light albedo at local noon. Your raster was very probably noon-based too, if it was made from
+  the MODIS albedo product. Caveat for the methods: the radiative kernels respond to a monthly albedo
+  that is in effect weighted by the day's sunlight; at low sun (snow, high latitudes) noon albedo is
+  somewhat lower. Because the forcing uses differences between time slices, much of that offset
+  should cancel (our reasoning, not yet checked).
+
+## 4. Model 7 does not converge in January and May (follow-up to B4 in the earlier file)
+
+In the headline 19 October run, model 7 stopped at the 500-step limit in January and May
+(500 iterations in the saved fits), although it converged in those months in the 18 October run
+(the table under B4), so neither month's 7-against-8
+comparison there rests on a converged fit. A check refitting model 7 for those two months with
+a 2000-step limit (started 22 October) was stopped unfinished on 26 October (Chris's decision):
+it was not needed for any regression test, and with the machine shared by other jobs it had run
+almost four days, against about two and a half hours for 500 steps on 19 October. The check
+moves to the refit on the rebuilt MODIS albedo, where every model is fitted again; there, run
+R's maths library (OpenBLAS) at one thread, because 48 threads per R process waiting on each
+other was what made it slow.
+
+## 5. The refit on the rebuilt albedo (from the plan and its review, 29 October)
+
+*From Astra's plan for the refit and Fable's review of it (feature/single-config,
+docs/cc/2026-10-29_refit_plan_*.md). Chris's decisions are in the decisions file there; in short, the
+model is fitted again on the rebuilt land-only albedo for all-days, snow-free and snowy albedo, with
+the any-quality and no-sun-angle-rule versions as sensitivities, and a control on your raster.*
+
+1. **Is a snow-free winter albedo meaningful under a conifer canopy?** The product's snow flag
+   describes the retrieval, not the ground: where a dense evergreen canopy hides snow on the forest
+   floor, the day can be flagged snow-free, while open land is flagged snow-free only when it is
+   bare. A calibration on snow-free days would then carry a bias that depends on cover type, in the
+   very contrast the forcing rests on (evergreen against open land). Should the snow-free and snowy
+   calibrations be limited to months or regions where this matters less, or is it a caveat to state?
+2. **Should the snow-free and snowy calibrations use a minimum share or weights?** A cell whose
+   snow-free days are 2% of its usable days enters the snow-free fit with the same weight as one at
+   100%. The "no minimum coverage" default (section 3) was set for the all-days albedo. Fewer cells
+   also enter the snow-free fits: on provisional counts, 1,764 of 2,808 cells have a snow-free value in
+   March and 2,039 in April, the months of the largest northeast changes.
+3. **If the northeast result stays unstable after the refit,** what further model or independent
+   comparison would you accept for the paper (see also section 1 and item 7 of section 2)?
+4. **For information (decided by Chris, 29 October):** script 5's share of observations inside the
+   credible interval counted cells with no observation as misses (December read 0.56; on observed
+   cells it is about 0.92). It will count only observed cells, for both albedo sources.
+
+The cell mean over land pixels in place of the centre pixel is item 5 of section 2.
+
+## 6. Which interval brackets the hemlock decline in your reconstruction?
+
+*Raised 2 November 2026 by Chris's question whether forcing over 6 to 4.5 ka is right.*
+
+**What we do.** The pipeline computes forcing between consecutive 500-year slices and adds the
+steps within each reporting period (scripts 7a, 8 and 9), so the 4-6 ka bar is the change from 6 to
+4 ka. For the northeast we also look at 6 to 4.5 ka on its own (the diagnostic figure of 28 October,
+`tools/plotting/plot_northeast_cover_and_location.R`), chosen to bracket the decline at about 5.5 ka
+and the low that follows; section 1 above used 6 to 4 ka.
+
+**Why it matters.** The decline is abrupt and the slices are 500 years apart, so the interval we
+choose decides how much of the change, and of any recovery, the northeast result includes. The
+reporting period 4-6 ka also mixes the decline with other changes in those two thousand years.
+
+**What we need from you.** In your reconstruction, which slices bracket the decline and the low
+before any recovery: 6 to 4.5 ka, 6 to 5 ka, or another pair? (The binning of ages near slice
+boundaries, question D2 of the earlier file, bears on this too.)
+
+*Also for information (2 November):* Chris has asked for a cross-validation that chooses the albedo
+model on its accuracy for cover mixes outside today's range, the northeast's case among them; the
+design and protocol are on branch `cv-design` (`docs/cc/2026-11-02_cv_protocol.md`). The hemlock
+result is reported after the choice and is not used to make it.
+
+## 7. A local check of conifer against deciduous albedo in the northeast (3 November)
+
+*From Astra's design (`docs/cc/2026-11-03_northeast_forest_albedo_design_v2_codex_gpt6astra.md`, branch
+`northeast-benchmark`, issue #27) and Fable's review of it.*
+
+**Why.** The cross-validation cannot settle which way the hemlock decline moved albedo in the northeast, because
+today's evergreen share there follows latitude. So, beside the model, we plan a modern local check: nearby pure
+evergreen-needleleaf and deciduous-broadleaf 500 m pixels (within 5 km), from the rebuilt MODIS albedo, month by
+month, with snow states apart. Published work leads us to expect deciduous forest brighter in every season checked
+(about +0.02 to +0.07 without snow, more with snow: Jin et al. 2002; Hollinger et al. 2010; Zhao and Jackson 2014);
+the fitted model implies the opposite sign in spring and summer. Nothing has been run yet.
+
+**Questions.**
+1. **Which modern stands stand in for hemlock?** Pure evergreen pixels in the box are mostly spruce-fir and pine
+   north of about 45 N; hemlock grows mainly in mixed stands further south, which the check leaves out. Is spruce-fir
+   and pine against hardwoods an acceptable analogue for the sign, and where in the box was the decline strongest?
+2. **Mapping satellite classes onto your classes.** The check compares satellite forest classes; your reconstruction's
+   evergreen and summergreen include shrubs, and larch sits in summergreen. Is comparing the model's evergreen-for-
+   summergreen swap with an evergreen-needleleaf against deciduous-broadleaf contrast acceptable for magnitude, or
+   only for sign?
+3. **If the sign varies** by latitude, wetland or month, what conclusion would you draw for the paper?
+4. **Flux towers** (Harvard Forest's hemlock and hardwood towers, Howland, Bartlett) could give a hemlock-specific
+   comparison later. Do you know of published tower albedos for these, or other local observations of hemlock
+   against hardwood albedo?
+5. Already open (section 2, item 1): should the vegetation forcing represent cover effects under today's snow, or
+   something else? It decides which of the check's panels (all days, snow-free, snowy) is the one to compare.
+6. **Which MODIS retrievals did your albedo raster use?** The rebuilt albedo uses full inversions only (`full_75`;
+   NASA's recommended quality), keeping the backup "magnitude" inversions as a comparison (`any_75`). In the northeast
+   in winter, full inversions are rare at 500 m, so the check's winter result will come from the backup retrievals,
+   labelled lower quality. Did your raster keep all qualities, or only the full inversions? (Its winter values reach
+   as far north as a noon sun 80-85 degrees from overhead, so it kept at least some low-sun retrievals.)
+
+## 8. What the cross-validation's score can and cannot show (3 November)
+
+*From Astra's answer on the northeast and its design for the geographic gap, and Fable's reviews (branch
+`cv-design`: `docs/cc/2026-11-03_cv_northeast_question_codex_gpt6astra.md`,
+`2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`; issue #24). No model has been fitted yet.*
+
+The cross-validation chooses the calibration model by how well it predicts modern cells whose cover mixes lie outside
+the range of the cells it was fitted on. Because unusual mixes are clustered in space, withholding them also leaves a
+geographic gap: in the northeast, the matching holdout withholds 82 of the 83 cells, so every model must predict
+170-520 km from its nearest training cell. The hindcast, by contrast, predicts new cover at places the model was fitted
+on. So the score measures transfer to unfamiliar cover across a geographic gap, not "new cover at the same place",
+which today's data cannot observe directly (one albedo per cell and month). Chris decided to keep the choice rule and
+report beside it how each model's advantage depends on distance from training, and a geographic-only holdout for the
+models that differ only in their location term; the rule's tie-break leans towards models without a location term, and
+that is stated rather than corrected.
+
+**Question.** Do you accept this as the basis for choosing the model (with its limits reported), or would you rather
+the paper keep model 8 and show the cross-validation's choice as a sensitivity?

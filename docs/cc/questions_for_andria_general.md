@@ -51,6 +51,36 @@ centre or a bin edge?
   human-verification check, so it needs a manual download. Do you still
   have the file? Also: did you preprocess any of the three, or use them
   as downloaded? And which CACK band is band 3?
+- *Added 2026-10-15, from Astra's snow and water review:* the code (or the Earth Engine
+  script) that built `data/blue_sky_monthly_2000-2009.tif` from MCD43A3. Its band labels
+  say `median` where the README says mean, and how it treated snow, quality flags and
+  water decides whether the land-only albedo can be done exactly. See B2c and B5.
+- *Added 2026-10-15:* monthly snow fields (cover or water equivalent) from the Holocene
+  HadCM3 simulations of Hopcroft et al. (2026), if they can be shared. See B2d.
+
+### 3a. For Chris: downloading the MODIS water mask (MOD44W) for the land-mean albedo (2026-10-15)
+
+Needed before the land-support part of issue I16 (i16c). It needs a NASA Earthdata login,
+so Chris downloads it. The version and year are still a proposal for Andria to confirm
+(scientific question B5): version 6.1, the 2015 annual layer. Another year is one more
+request of the same kind.
+
+1. Go to AppEEARS, https://appeears.earthdatacloud.nasa.gov/, and sign in with Earthdata.
+2. Extract > Area > Start a new request.
+3. Name: `paleo-rf-mod44w-2015`.
+4. Area: draw or upload a rectangle covering the grid: west -172, east -52, south 17, north
+   79 (degrees; the 1-degree grid's cells span lon -172 to -53, lat 17 to 79).
+5. Dates: 2015-01-01 to 2015-12-31 (one annual layer).
+6. Layers: product `MOD44W.061` (Terra Land Water Mask, 250 m, yearly); layers
+   `water_mask` and `water_mask_QA`.
+7. Output: file format GeoTIFF; projection **Native Projection** (sinusoidal), so that the
+   250 m pixels are not resampled.
+8. Submit. When the e-mail arrives, download every file of the request (the .tif files,
+   and the README and `*-request.json` it includes).
+9. Put them, unrenamed, in `data/mod44w/2015/` of the repository checkout (not committed:
+   the pipeline records their checksums), and tell Claude.
+
+Not needed from Chris: the elevation model (fetched without a login).
 
 ## 4. Provenance to record in the data documentation
 
@@ -65,7 +95,9 @@ centre or a bin edge?
 ## 5. Method choices to confirm for the write-up
 
 - The manuscript says 1,000 posterior samples per cell and month; the
-  scripts draw 100. Which is intended?
+  scripts draw 100. Which is intended? **Chris, 2026-10-14: 100 for both scripts 5
+  and 6 during development; 1,000 for both possible for the final results,
+  not decided** (scientific A3).
 - Snow is never modelled: the 2000-2009 snow climatology enters through
   the location and elevation terms and is held fixed for every slice. You
   said the snow / water-budget branch was dropped deliberately. Should the
@@ -78,9 +110,14 @@ centre or a bin edge?
   and download quota count against the repo owner's GitHub account (free
   tier: 1 GB each). Is that acceptable, or should large files live
   elsewhere (e.g. Zenodo / OSF with a download script)?
-- Are the archived scripts (`scripts/archive/`, the Thornthwaite,
-  ClimateNA and GCM snow work) safe to remove from the working tree and
-  keep only in git history?
+- **Scripts outside the pipeline: answered (Chris, 3 November 2026).** Archived, not deleted: the 18
+  scripts (`scripts/archive/`, `GCM_snow_prob.R`, `thornthwaite.R`, `beta_veg_lct_modern.R` and
+  `6_prediction_model_spatial_eval.R`) are now unchanged in a root-level `archive/` folder, whose README
+  says what each did and what replaced it (issue #26; Astra's review,
+  `docs/cc/2026-11-03_old_scripts_review_codex_gpt6astra.md`). Still for you: did any figure or table
+  you have shown or kept depend on them, and do their inputs (the ABoVE and GlobAlbedo extracts, the
+  ClimateNA outputs) survive anywhere? The source of the custom ABoVE monthly albedo and snow rasters
+  (`data/ABOVE/snow/snow-month-%02d.tif`) is not recorded.
 
 ## 7. Small code questions raised by the configuration migration (2026-10-08)
 
@@ -94,12 +131,63 @@ answers let us delete code rather than carry it.
   Inherited, not chosen; on the migration branch they are now the three
   `presentation$map_windows` in config.R. One window for the paper, or keep
   the two?
-- **Model 8 is fitted three times** in script 4 (lines 98, 154 and 234, the
-  same formula each time, saved under three names). Can the second and
-  third fits go, with the selected model read from one file everywhere?
-- **The model-structure sensitivity check** (`6_prediction_model_spatial_eval.R`)
-  cannot run at present: it needs the `SemiPar` and `pwiser` packages, which
-  are not installed, uses an undefined variable at line 278, and its tail
-  from line 326 reads point-flavour files that no longer exist. Is this
-  analysis still wanted for the paper? If yes we will rebuild it on the
-  shared functions; if no we will retire it.
+- **Model 8 is fitted twice with the same formula** in script 4: once in the
+  model comparison and once as the spatial experiment "elevation and cover
+  with location" (`spatial_elev_cover`). Can the second go, with script 5
+  reading model 8 from the comparison? (Updated 2026-10-15: the third fit,
+  which overwrote the comparison's copy, is now the separate REML fit used
+  for prediction, since the comparison is fitted by ML; issue I16.)
+  (Checked 2026-10-16 on the original files: the two fits are identical, same formula and
+  rows, fitted values differ by 0. Chris: leave it for now and record it.)
+- **The model-structure sensitivity check** (`6_prediction_model_spatial_eval.R`): archived with the
+  scripts above (Chris, 3 November 2026). Its question, whether the location term changes the vegetation
+  effect, is now addressed by the northeast diagnostic (`tools/plotting/plot_northeast_cover_and_location.R`),
+  which could be extended to other months and regions if you want it for the paper.
+
+## 8. Figure and code slips found in the readability review (2026-10-13)
+
+Found by the design review for the readability cleanup (migration issue
+I15, Codex `gpt-6-astra`), checked against the code by Claude Code. Each
+fix changes a figure or a printed number, so none is made silently: the
+first four are marked with a comment beside the figure code on the
+migration branch. Line numbers are for `chris-dev`. Shall we fix them?
+
+- **Script 7's per-age tile pages plot every age on every page**
+  (`7_plot_preds.R:303`). Inside the loop `for (year in ages_sub)`,
+  `subset(alb_grid_sub, year==year)` compares the `year` column with
+  itself, so every row is kept and each page of
+  `alb_interp_preds_month_binned_tile_pages_bluesky.pdf` overplots all
+  ages; only the ice outline changes from page to page.
+- **Script 2's native-vs-coarse scatter has its axis labels swapped**
+  (`2_calibration_lct_bluesky.R:145-147`). After the merge, `value.x` is the
+  native albedo and `value.y` the coarse one, but the x axis is labelled
+  "albedo resampled coarse" and the y axis "albedo native".
+- **Script 7's CV map uses the SD legend labels** (`7_plot_preds.R:355`):
+  the CV bins are cut with `breaks_cv` but labelled with `labels_sd`, so
+  the legend shows SD ranges.
+- **Script 7's difference maps miss the ice outline for the two youngest
+  ages** (`7_plot_preds.R:430-432`). The outlines are looked up by
+  `ice_fort$ages == ice_years[...]`, i.e. by the requested age against the
+  nearest ice year (1, 2, ... 21 ka); 50 and 500 BP have no exact match,
+  so the 0.05-0.5 ka and 0.5-2 ka panels draw no young (and for 0.05-0.5 ka
+  no old) outline. Probably minor at those ages, but not intended.
+- **Calibration coverage counts missing rows in the denominator**
+  (`5_calibration_eval.R:183`, `:188`): `sum(in_credible, na.rm=TRUE)/n()`
+  lowers `frac_in` in `calibration_model_stats.csv` if any cell has a
+  missing observation or interval. Should missing rows be excluded?
+- **Script 7a's complete-age filter is built but not used**
+  (`7a_alb_diff_full.R:167-172`, loop from `:217`): the table without
+  incomplete cells is computed and then ignored, and the loop skips only
+  cells with a single age. Script 1's diagnostic warning that "script 7a
+  will drop them" (`1_veg_lct_prep.R:140`) is therefore not accurate. Today
+  this changes nothing (every incomplete cell lies outside 27-74 N and is
+  trimmed in script 8, see the scientific file), but should 7a drop them,
+  or should the filter and the warning go?
+
+*Added 2026-10-15, from the methods-from-code pilot on the calibration stage:*
+- Script 5 labels each month's panel with the correlation of the fitted mean, but the
+  statistics table reports the correlation of the median of the draws; they differ in April
+  (0.99 against 0.98). Which should the paper quote?
+- Script 5's November "model comparison" computes an AIC table and an analysis of deviance but
+  neither prints nor saves them (lines 348-354); script 4's analysis-of-deviance list (line 70)
+  is likewise computed and discarded. Keep and save them, or remove them?
