@@ -210,3 +210,16 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   +0.020 / -1.04 | +0.010 / -0.54 | -0.017 / +0.85 | +0.002 / -0.12; December +0.052 / -1.67 | +0.081 / -2.59 | +0.060 /
   -1.91 | -0.004 / +0.13. Every snow-free version darkens the northeast in winter; with snow days included the winter
   usually brightens, most strongly with any quality (run 3).
+
+## Run 7 (snowy days): finished (4 November)
+- `run7-snowy` PASS 16:32 UTC (pipeline about 2 hours, 74b5482). Run 7 fits every month but July and August, so its
+  sums leave out two summer months and are not directly comparable with the other runs; it is meant to be mixed with
+  run 2 by snow fraction (snow-mixing decision of 4 November), not read on its own.
+- **Study-area forcing, partial ice, HadGEM3, W/m2 (ten months):** 0.05-0.5 ka -0.557; 0.5-2 ka -0.186; 2-4 ka -0.410;
+  4-6 ka -0.033; 6-8 ka +1.292; 8-10 ka +2.658; 10-12 ka +2.680.
+- **Northeast over the hemlock decline (6 to 4.5 ka, box mean, 83 cells), albedo change / HadGEM3 forcing:** Jan +0.090
+  / -4.40; Feb -0.014 / +1.08; Mar -0.025 / +2.76; Apr -0.053 / +8.08; May -0.078 / +15.61; Jun -0.030 / +7.79; Sep
+  +0.127 / -19.20; Oct -0.039 / +3.03; Nov +0.229 / -12.15; Dec +0.115 / -3.71. Snowy days brighten the northeast in
+  winter, as expected over snow, and darken it in spring. The September (+0.127) and November (+0.229) brightening is
+  large and rests on few snowy cells (September has the fewest, 1091); it is to be checked before the mixing uses it,
+  since in the mix those months carry small snow fractions.
