@@ -216,7 +216,7 @@ References
 - **Section 8:** `R/cross_validation.R` now holds more than three functions: the holdouts, each withheld cell's
   departure and group, the score and its block bootstrap, the choice, and the descriptive and geographic reports. The
   tool has three stages (holdouts, fit, score).
-- **Section 9:** the in-range holdout fits the five location-pair models and the chosen model for each month: 60 fits
+- **Section 9:** the in-range holdout fits the five location-pair models and the chosen model for each testable month: up to 60 fits
   if the chosen model is one of the five, 72 otherwise, not 24. The fits run up to six jobs at once on the workstation
   (load rule of 3 November), not four.
 - **Section 7 is not built yet.** `tools/plotting/plot_northeast_cover_and_location.R` compares model 8 with and

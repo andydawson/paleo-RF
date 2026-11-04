@@ -41,7 +41,8 @@ land_cover_diagnostics = function(lct_interp, lct_interp_wide, lct_interp_all, d
   print(table(factor(ice_flags$ages[!is.na(ice_flags$ice)], levels = sort(unique(ice_flags$ages)))))
   cat('\nNote the zeros at 50, 200 and 500 BP against', sum(!is.na(ice_flags$ice) & ice_flags$ages == 1000),
       'at 1,000 BP: the flag is applied only from 1,000 BP back, so present-day\n',
-      'ice caps are unflagged and enter the modern calibration table as vegetated cells (question B8).\n')
+      'ice caps are unflagged and enter the modern calibration table as vegetated cells unless\n',
+      'script 2\'s ice mask leaves them out (question B8).\n')
   cat('\nFlagged cell-slices still carry land-cover values (first three at 10,000 BP):\n')
   print(ice_example, row.names = FALSE)
 
