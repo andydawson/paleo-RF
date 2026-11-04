@@ -195,3 +195,18 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   with the backup retrievals filling the winter months) and darkens from March to October (May -0.063, +12.75 W/m2);
   spring carries the sunlight, so the year still warms. Monthly HadGEM3 forcing Jan-Dec: -6.94, -1.16, +3.34, +8.48,
   +12.75, +12.39, +2.82, +1.64, +1.56, +1.54, -0.54, -2.59.
+
+## Runs 4, 5 and 6: finished (4 November)
+- `run4-any75-snowfree` PASS 09:06 UTC; `run5-winter` PASS 09:47; `run6-winter-snowfree` PASS 10:27 (runs 5 and 6 fit
+  only January, February, November and December, with no low-sun rule, `full_nocut`). Run 7's fitting is running.
+- **Run 4 (any quality, snow-free days), study-area forcing, HadGEM3, W/m2:** 0.05-0.5 ka -0.352; 0.5-2 ka -0.381;
+  2-4 ka +0.069; 4-6 ka +0.059; 6-8 ka +1.982; 8-10 ka +6.451; 10-12 ka +4.310: like run 2 (snow-free, full
+  inversions), weaker late-Holocene cooling and stronger early warming than the all-days runs.
+- **Northeast over the hemlock decline, run 4:** annual albedo -0.021, forcing +2.96 W/m2; darker in every month but
+  November.
+- **Northeast winter months** (albedo change / HadGEM3 forcing, W/m2), run 1 (full_75, all days) | run 3 (any_75, all
+  days) | run 5 (no sun rule, all days) | run 6 (no sun rule, snow-free): January +0.045 / -2.23 | +0.142 / -6.94 |
+  -0.008 / +0.40 | -0.037 / +1.80; February +0.005 / -0.38 | +0.016 / -1.16 | -0.007 / +0.56 | -0.046 / +3.55; November
+  +0.020 / -1.04 | +0.010 / -0.54 | -0.017 / +0.85 | +0.002 / -0.12; December +0.052 / -1.67 | +0.081 / -2.59 | +0.060 /
+  -1.91 | -0.004 / +0.13. Every snow-free version darkens the northeast in winter; with snow days included the winter
+  usually brightens, most strongly with any quality (run 3).
