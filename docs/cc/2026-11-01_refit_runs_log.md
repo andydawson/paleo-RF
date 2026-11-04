@@ -181,3 +181,17 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   brightening. Every box cell has all twelve months in each step, and the ice part is zero in every box row.
   Columns: `alb_diff_veg_ice_parts` and `rf_hadgem_veg_ice_parts` of `output/forcing/RF_holocene_all_cases.RDS`.
   To be made for each later run.
+
+## Run 3 (any retrieval quality, all days): finished
+- `run3-any75` PASS, 4 November 04:37 UTC (pipeline about 3 hours, 7850d46). Its three fitting parts finished before:
+  September-December (2 November, first attempt) and the `-2` reruns of January-April and May-August. Runs 4-6's
+  fitting parts finished overnight except run 4's January-April `-2`; run 7's three fitting parts are running.
+- **Forcing, study-area mean, partial ice, HadGEM3, W/m2; run 8 / run 1 / run 2 / run 3:** 0.05-0.5 ka -0.696 / -0.556
+  / -0.312 / -0.635; 0.5-2 ka -0.684 / -0.567 / -0.289 / -0.736; 2-4 ka +0.493 / +0.346 / -0.023 / +0.706; 4-6 ka
+  -0.573 / -0.448 / +0.233 / -0.668; 6-8 ka +1.101 / +1.511 / +2.262 / +1.425; 8-10 ka +4.553 / +4.964 / +7.038 /
+  +4.596; 10-12 ka +4.441 / +4.125 / +4.464 / +4.149. Run 3 is close to run 1 (and the raster) except at 2-4 ka.
+- **Northeast over the hemlock decline (6 to 4.5 ka, box mean):** annual albedo change about 0 (+0.0002) but forcing
+  still +2.77 W/m2. By month, run 3 brightens strongly in winter (January +0.142, December +0.081: deciduous over snow,
+  with the backup retrievals filling the winter months) and darkens from March to October (May -0.063, +12.75 W/m2);
+  spring carries the sunlight, so the year still warms. Monthly HadGEM3 forcing Jan-Dec: -6.94, -1.16, +3.34, +8.48,
+  +12.75, +12.39, +2.82, +1.64, +1.56, +1.54, -0.54, -2.59.
