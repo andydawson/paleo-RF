@@ -56,6 +56,8 @@ file and line, what is wrong, the consequence, the proposed change, lines saved,
 medium / large), risk to the anchored outputs and how to check nothing changed, marked "do now",
 "at hand-over" or "leave"; the five changes to make first; and what is already as simple as it
 should be.
+A change that adds lines for a case that has not happened here and cannot give a wrong result is
+marked "leave" (Chris, 4 November 2026).
 
 ## Afterwards
 1. File the result as `docs/cc/<date>_<subject>_codex_gpt6astra.md` (or `_fable.md`) on a topic

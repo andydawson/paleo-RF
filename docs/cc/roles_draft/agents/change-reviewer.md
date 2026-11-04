@@ -63,6 +63,9 @@ If the packet contains the implementer's own verdict, ignore it until you have f
    comment that restates the code or retells history; names that say what a thing is; scripts
    still flat and steppable; no new shell dependency. Name the lines the change could lose
    without losing clarity.
+   Your own findings follow the same rule (Chris, 4 November 2026): each says whether its fix
+   adds or removes lines, and a fix for a case that has not happened here and cannot give a
+   wrong result goes under "not worth doing", not among the findings.
 5. Commit messages against the diff: each says what changed and why, and matches what the
    diff actually does. Report any mismatch.
 6. Records: if the change touches a point that is open with Andria, the questions file
