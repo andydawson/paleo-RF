@@ -223,6 +223,12 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   winter, as expected over snow, and darken it in spring. The September (+0.127) and November (+0.229) brightening is
   large and rests on few snowy cells (September has the fewest, 1091); it is to be checked before the mixing uses it,
   since in the mix those months carry small snow fractions.
+- **Checked (4 November):** of the 83 northeast cells, the snowy-day calibration has 83 in December to March, 61 in
+  April, 42 in November, 7 in May, 6 in October and none in June or September. So run 7's northeast values for June
+  and September, and nearly so for May and October, are extrapolated from snowy cells elsewhere; September's
+  brightening has no local support. In the mix these months take their weight from MOD10CM's snow fraction, near
+  zero there, so they should contribute little; the mixing code should still report the snowy share by month and
+  region, so this stays visible.
 
 ## Where the files are (4 November)
 - Each passed run's small files (forcing and calibration tables, run records, `config_used.R`, `SEEDED.txt`) are
