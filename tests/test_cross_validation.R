@@ -185,6 +185,11 @@ saveRDS(list(version = 1), cv_file(run, "holdouts.rds"))
 fresh <- cv_file(run, "predictions_d1_jan.rds")
 saveRDS(structure(data.frame(model = "a", predicted = 0.1), holdouts_md5 = holdouts_md5(run)), fresh)
 stopifnot(nrow(read_predictions(run, fresh)) == 1)
+saveRDS(list(version = 1), cv_file(run, "holdouts.rds"))      # rewritten with identical content: still accepted
+stopifnot(nrow(read_predictions(run, fresh)) == 1)
+unstamped <- cv_file(run, "predictions_d1_feb.rds")             # as the tool wrote them before 4 November
+saveRDS(data.frame(model = "a", predicted = 0.1), unstamped)
+stopifnot(grepl("predictions_d1_feb.rds", tryCatch({ read_predictions(run, c(fresh, unstamped)); "" }, error = conditionMessage), fixed = TRUE))
 saveRDS(list(version = 2), cv_file(run, "holdouts.rds"))      # the holdouts rebuilt
 stopifnot(inherits(try(read_predictions(run, fresh), silent = TRUE), "try-error"))
 cat("test_cross_validation: all tests passed\n")

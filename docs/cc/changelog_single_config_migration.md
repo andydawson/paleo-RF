@@ -1652,3 +1652,10 @@ protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amend
   all PASS; from run 8 the reports themselves show the older holdout tables unchanged) and reviewed by Fable and Astra
   (`2026-11-02_cv_code_review/`, `2026-11-03_cv_geographic_code_review/`).
 - **Not yet:** the fits (after the refit queue) and the scores; nothing here has used a score.
+- **4 November, two guards** (whole-code review of 4 November, findings 1 and 2; reviewed by Fable and Astra): each
+  predictions file carries the MD5 of the holdouts it was fitted against, taken when the holdouts are loaded, and the
+  score stage refuses any file without a matching MD5 (so predictions for rebuilt holdouts are never scored); one fit
+  record per month; and `assign_forcing_periods()` stops on a slice pair spanning a period boundary (the configured
+  ages meet every boundary, so no output changes). Left out on purpose (Chris): the fitting code's version in each
+  predictions file, and `tools/` in the run records' uncommitted-change check (declined 3 November); scientific runs go
+  through the verification tool from clean committed worktrees.

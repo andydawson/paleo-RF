@@ -70,9 +70,10 @@ check_inputs = function(holdouts, paths) {
 holdouts_md5 = function(run_dir) unname(tools::md5sum(cv_file(run_dir, 'holdouts.rds')))
 read_predictions = function(run_dir, files) {
   now = holdouts_md5(run_dir)
-  stale = files[vapply(files, function(f) !identical(attr(readRDS(f), 'holdouts_md5'), now), TRUE)]
+  read = lapply(files, readRDS)
+  stale = files[!vapply(read, function(p) identical(attr(p, 'holdouts_md5'), now), TRUE)]
   if (length(stale)) stop('predictions made for other holdouts (rerun the fit stage): ', paste(basename(stale), collapse = ', '))
-  do.call(rbind, lapply(files, readRDS))
+  do.call(rbind, read)
 }
 
 # One record per stage: when, the code version, the inputs' MD5 sums and the seeds.
@@ -188,7 +189,7 @@ stage_holdouts = function(run_dir, paths) {
   }))))
 
   saveRDS(list(directions = directions, membership = membership, feasibility = feasibility, target = target,
-               inrange = inrange, months = months, md5 = input_md5(paths)), cv_file(run_dir, 'holdouts.rds'))
+               inrange = inrange, months = months, md5 = unname(input_md5(paths))), cv_file(run_dir, 'holdouts.rds'))   # unnamed: a moved run folder keeps the same holdouts
   write_record(run_dir, paths, 'holdouts')
   for (name in c('directions', 'feasibility', 'comparison', 'target', 'inrange'))
     utils::write.csv(get(name), cv_file(run_dir, paste0(name, '.csv')), row.names = FALSE)
@@ -241,6 +242,7 @@ fit_and_predict = function(id, month, train, valid) {
 
 stage_fit = function(run_dir, paths, holdout, months) {
   cal = readRDS(path_file(paths, 'calibration_table'))
+  fitted_against = holdouts_md5(run_dir)   # taken with the load, so a rebuild during the fits cannot relabel them
   holdouts = readRDS(cv_file(run_dir, 'holdouts.rds'))
   check_inputs(holdouts, paths)
   if (holdout == 'inrange' && is.null(holdouts$inrange)) stop('holdouts.rds has no in-range support table: rerun the holdouts stage')
@@ -268,7 +270,7 @@ stage_fit = function(run_dir, paths, holdout, months) {
     predictions = NULL
     for (id in models) {   # saved after every candidate, so a later failure loses nothing
       predictions = rbind(predictions, cbind(cells, fit_and_predict(id, m, train, valid)))
-      saveRDS(structure(predictions, holdouts_md5 = holdouts_md5(run_dir)), file)
+      saveRDS(structure(predictions, holdouts_md5 = fitted_against), file)
     }
     write_record(run_dir, paths, sprintf('fit_%s_%s', holdout, m))   # one record per fitted month
   }

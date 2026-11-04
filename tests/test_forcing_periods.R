@@ -39,8 +39,9 @@ stopifnot(nrow(f) == 6 * 4,                                    # 6 pairs x 2 cel
 # A pair spanning a period boundary is refused (code review of 4 November 2026): 50 to 2,000 BP
 # crosses 500 BP and used to be filed under 0.05 - 0.5 ka.
 crossing_ages <- c(50, 2000, 4000)
-stopifnot(inherits(try(quietly(assign_forcing_periods(forcing_table(crossing_ages), coarse_ages, crossing_ages)),
-                       silent = TRUE), "try-error"))
+crossed <- tryCatch({ quietly(assign_forcing_periods(forcing_table(crossing_ages), coarse_ages, crossing_ages)); "" },
+                    error = conditionMessage)
+stopifnot(grepl("span a period boundary", crossed, fixed = TRUE))
 
 # A forcing row whose year is not the younger end of a configured pair is refused.
 stopifnot(inherits(try(quietly(assign_forcing_periods(forcing_table(default_ages), coarse_ages, short_ages)),
