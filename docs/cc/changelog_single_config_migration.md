@@ -1664,3 +1664,17 @@ protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amend
   ages meet every boundary, so no output changes). Left out on purpose (Chris): the fitting code's version in each
   predictions file, and `tools/` in the run records' uncommitted-change check (declined 3 November); scientific runs go
   through the verification tool from clean committed worktrees.
+
+## Four fixes from the whole-code review of 4 November (Chris chose all four)
+
+- **Plots in RStudio:** the run folder's `Rplots.pdf` now replaces the default plot device in batch runs only
+  (`run_begin()`), so stepping through a script in RStudio with a run folder set keeps plots on the screen.
+- **Cross-validation reporting:** the comparison by distance band is two plain loops (identical table); the
+  complete-row rule is one function in `R/model_registry.R`, used by the tool too.
+- **Documentation drift:** comments on month selection and reruns, `model_id`, the kernels, the land-cover
+  diagnostics' ice and mean notes; the README's September line numbers removed and a pointer to the cross-validation.
+- **Cross-validation record:** the protocol's published basis of the geographic reports, with five references
+  checked against Crossref, and three corrected descriptions; the section 7 comparison marked as not yet built.
+- Reviewed by the change-reviewer (its two wording points made; the rest not worth doing). Verified:
+  `docs/cc/verification/2026-11-04_review-fixes-2_report.md` (PASS; scripts 1-3, the holdouts stage byte-identical to
+  earlier runs, all tests).
