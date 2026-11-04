@@ -223,3 +223,43 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   winter, as expected over snow, and darken it in spring. The September (+0.127) and November (+0.229) brightening is
   large and rests on few snowy cells (September has the fewest, 1091); it is to be checked before the mixing uses it,
   since in the mix those months carry small snow fractions.
+
+## Where the files are (4 November)
+- Each passed run's small files (forcing and calibration tables, run records, `config_used.R`, `SEEDED.txt`) are
+  copied byte for byte into `results/<run>/`, tracked. The full run folders stay in `paleo-RF-verify/<commit>/.rundirs/<run>/`
+  until they are moved to `../paleo-RF-results/` after the cross-validation fits.
+
+| Run | Commit | Full folder |
+|---|---|---|
+| `run1-main` | `d5d5df5` | `paleo-RF-verify/d5d5df5/.rundirs/run1-main` |
+| `run1-main-fit-apr-jun` | `be277d7` | `paleo-RF-verify/be277d7/.rundirs/run1-main-fit-apr-jun` |
+| `run1-main-fit-jan-mar` | `5ddcb94` | `paleo-RF-verify/5ddcb94/.rundirs/run1-main-fit-jan-mar` |
+| `run1-main-fit-jul-sep` | `f9f9e46` | `paleo-RF-verify/f9f9e46/.rundirs/run1-main-fit-jul-sep` |
+| `run1-main-fit-oct-dec` | `8db4a5e` | `paleo-RF-verify/8db4a5e/.rundirs/run1-main-fit-oct-dec` |
+| `run1-model7-check-2` | `f44881b` | `paleo-RF-verify/f44881b/.rundirs/run1-model7-check-2` |
+| `run2-snowfree-2` | `8e3f3a4` | `paleo-RF-verify/8e3f3a4/.rundirs/run2-snowfree-2` |
+| `run2-snowfree-fit-jan-apr` | `74c4cf7` | `paleo-RF-verify/74c4cf7/.rundirs/run2-snowfree-fit-jan-apr` |
+| `run2-snowfree-fit-may-aug` | `5164b91` | `paleo-RF-verify/5164b91/.rundirs/run2-snowfree-fit-may-aug` |
+| `run2-snowfree-fit-sep-dec-2` | `e04de82` | `paleo-RF-verify/e04de82/.rundirs/run2-snowfree-fit-sep-dec-2` |
+| `run3-any75` | `7850d46` | `paleo-RF-verify/7850d46/.rundirs/run3-any75` |
+| `run3-any75-fit-jan-apr-2` | `014e8a3` | `paleo-RF-verify/014e8a3/.rundirs/run3-any75-fit-jan-apr-2` |
+| `run3-any75-fit-may-aug-2` | `e71b6ee` | `paleo-RF-verify/e71b6ee/.rundirs/run3-any75-fit-may-aug-2` |
+| `run3-any75-fit-sep-dec` | `ac05239` | `paleo-RF-verify/ac05239/.rundirs/run3-any75-fit-sep-dec` |
+| `run4-any75-snowfree` | `c2ccdb1` | `paleo-RF-verify/c2ccdb1/.rundirs/run4-any75-snowfree` |
+| `run4-any75-snowfree-fit-jan-apr-2` | `0df176d` | `paleo-RF-verify/0df176d/.rundirs/run4-any75-snowfree-fit-jan-apr-2` |
+| `run4-any75-snowfree-fit-may-aug` | `f6ca119` | `paleo-RF-verify/f6ca119/.rundirs/run4-any75-snowfree-fit-may-aug` |
+| `run4-any75-snowfree-fit-sep-dec-2` | `54decc7` | `paleo-RF-verify/54decc7/.rundirs/run4-any75-snowfree-fit-sep-dec-2` |
+| `run5-winter` | `4946d09` | `paleo-RF-verify/4946d09/.rundirs/run5-winter` |
+| `run5-winter-fit-jan-feb-2` | `9ea33e1` | `paleo-RF-verify/9ea33e1/.rundirs/run5-winter-fit-jan-feb-2` |
+| `run5-winter-fit-nov-dec` | `9a08244` | `paleo-RF-verify/9a08244/.rundirs/run5-winter-fit-nov-dec` |
+| `run6-winter-snowfree` | `ba5e69a` | `paleo-RF-verify/ba5e69a/.rundirs/run6-winter-snowfree` |
+| `run6-winter-snowfree-fit-jan-feb` | `baa4ae2` | `paleo-RF-verify/baa4ae2/.rundirs/run6-winter-snowfree-fit-jan-feb` |
+| `run6-winter-snowfree-fit-nov-dec` | `31ac4d7` | `paleo-RF-verify/31ac4d7/.rundirs/run6-winter-snowfree-fit-nov-dec` |
+| `run7-snowy` | `74b5482` | `paleo-RF-verify/74b5482/.rundirs/run7-snowy` |
+| `run7-snowy-fit-jan-apr` | `7e6f30c` | `paleo-RF-verify/7e6f30c/.rundirs/run7-snowy-fit-jan-apr` |
+| `run7-snowy-fit-may-jun-sep` | `fce14d1` | `paleo-RF-verify/fce14d1/.rundirs/run7-snowy-fit-may-jun-sep` |
+| `run7-snowy-fit-oct-dec` | `58bd502` | `paleo-RF-verify/58bd502/.rundirs/run7-snowy-fit-oct-dec` |
+| `run8-raster` | `795792f` | `paleo-RF-verify/795792f/.rundirs/run8-raster` |
+| `run8-raster-fit-jan-apr-2` | `b689642` | `paleo-RF-verify/b689642/.rundirs/run8-raster-fit-jan-apr-2` |
+| `run8-raster-fit-may-aug-2` | `280a9a0` | `paleo-RF-verify/280a9a0/.rundirs/run8-raster-fit-may-aug-2` |
+| `run8-raster-fit-sep-dec-2` | `bd174cf` | `paleo-RF-verify/bd174cf/.rundirs/run8-raster-fit-sep-dec-2` |

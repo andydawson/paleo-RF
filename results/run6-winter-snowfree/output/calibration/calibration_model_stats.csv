@@ -1,0 +1,5 @@
+"month","correlation","data in credible interval","diff lower (model - data; 2.5%)","diff upper (model - data; 97.5%)"
+"jan",0.94,0.94,-0.03,0.02
+"feb",0.92,0.93,-0.03,0.02
+"nov",0.94,0.95,-0.02,0.02
+"dec",0.96,0.94,-0.02,0.02
