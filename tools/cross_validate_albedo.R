@@ -38,9 +38,6 @@ cv_file = function(run_dir, name) {
   file.path(dir, name)
 }
 
-# The rows a month's models are fitted on or scored on: albedo and every predictor present.
-complete_rows = function(cal, month) stats::complete.cases(cal[, c(month, CALIBRATION_PREDICTORS)])
-
 # The run's configuration: the one the run was made with, if the run folder keeps it.
 run_config = function(run_dir) {
   used = file.path(run_dir, 'config_used.R')

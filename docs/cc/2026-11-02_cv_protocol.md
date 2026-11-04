@@ -182,3 +182,43 @@ cell's error mixes cover and geographic error, and no additive split exists.
 - **Before the fits,** the holdouts stage is rerun at the commit used for fitting, so `holdouts.rds` carries the
   in-range support table (its other tables are unchanged, as the verification records show).
 
+
+## Published basis of the geographic sensitivity reports (4 November 2026)
+
+Carried over from the design (`2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`), which quotes the
+supporting passages. The five references were checked against Crossref on 4 November (DOI, title, authors, year,
+journal, volume, pages; no retraction or correction).
+- **Distance tables:** binning each candidate's existing predictions by distance to training is a lighter adaptation of
+  Brenning's distance-based prediction-error profiles; no error curve is extrapolated. The four distance bands and the
+  equal weighting of months are this project's reporting judgements.
+- **Blocking and extrapolation, and the in-range holdout:** Roberts et al. separate the error of blocked holdouts from
+  that of extrapolation; nearest-neighbour distance matching (Milà et al.; Linnenbrink et al.) compares holdout
+  distances with prediction distances. Using an in-range holdout only as a report beside the choice is this project's
+  adaptation.
+- **Paired differences with their uncertainty, and the simplest model within one standard error:** Yates et al. The
+  exact rule, block-resampled standard errors of the paired differences, is this project's adaptation.
+
+References
+- Brenning, A. (2023; online 2022). Spatial machine-learning model diagnostics: a model-agnostic distance-based approach.
+  *International Journal of Geographical Information Science*, 37, 584–606. doi:10.1080/13658816.2022.2131789
+- Linnenbrink, J., Milà, C., Ludwig, M., & Meyer, H. (2024). kNNDM CV: k-fold nearest-neighbour distance matching
+  cross-validation for map accuracy estimation. *Geoscientific Model Development*, 17, 5897–5912.
+  doi:10.5194/gmd-17-5897-2024
+- Milà, C., Mateu, J., Pebesma, E., & Meyer, H. (2022). Nearest neighbour distance matching Leave-One-Out
+  Cross-Validation for map validation. *Methods in Ecology and Evolution*, 13, 1304–1316. doi:10.1111/2041-210X.13851
+- Roberts, D. R., et al. (2017). Cross-validation strategies for data with temporal, spatial, hierarchical, or
+  phylogenetic structure. *Ecography*, 40, 913–929. doi:10.1111/ecog.02881
+- Yates, L. A., Aandahl, Z., Richards, S. A., & Brook, B. W. (2023). Cross validation for model selection: a review with
+  examples from ecology. *Ecological Monographs*, 93, e1557. doi:10.1002/ecm.1557
+
+## Corrections of 4 November 2026 (descriptions only; the method is unchanged)
+
+- **Section 8:** `R/cross_validation.R` now holds more than three functions: the holdouts, each withheld cell's
+  departure and group, the score and its block bootstrap, the choice, and the descriptive and geographic reports. The
+  tool has three stages (holdouts, fit, score).
+- **Section 9:** the in-range holdout fits the five location-pair models and the chosen model for each testable month: up to 60 fits
+  if the chosen model is one of the five, 72 otherwise, not 24. The fits run up to six jobs at once on the workstation
+  (load rule of 3 November), not four.
+- **Section 7 is not built yet.** `tools/plotting/plot_northeast_cover_and_location.R` compares model 8 with and
+  without its location term and rightly requires model 8; the comparison of the chosen model with model 8 is still to
+  be written, after the score.

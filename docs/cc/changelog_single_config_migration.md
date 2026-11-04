@@ -1651,7 +1651,12 @@ protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amend
   winner); the descriptive-table rules (decision 16). Each change verified (`docs/cc/verification/2026-11-03_cv-holdouts-*`,
   all PASS; from run 8 the reports themselves show the older holdout tables unchanged) and reviewed by Fable and Astra
   (`2026-11-02_cv_code_review/`, `2026-11-03_cv_geographic_code_review/`).
-- **Not yet:** the fits (after the refit queue) and the scores; nothing here has used a score.
+- **Not yet:** the fits (after the refit queue) and the scores; nothing here has used a score. The section 7
+  comparison of the chosen model with model 8 is not written yet (the northeast location figure compares model 8's
+  location term only).
+- **Published basis** of the geographic reports (Brenning 2023; Roberts et al. 2017; Milà et al. 2022; Linnenbrink et
+  al. 2024; Yates et al. 2023, with DOIs, checked against Crossref on 4 November) and what is this project's own
+  adaptation: the protocol's section "Published basis of the geographic sensitivity reports".
 - **4 November, two guards** (whole-code review of 4 November, findings 1 and 2; reviewed by Fable and Astra): each
   predictions file carries the MD5 of the holdouts it was fitted against, taken when the holdouts are loaded, and the
   score stage refuses any file without a matching MD5 (so predictions for rebuilt holdouts are never scored); one fit
@@ -1659,3 +1664,17 @@ protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amend
   ages meet every boundary, so no output changes). Left out on purpose (Chris): the fitting code's version in each
   predictions file, and `tools/` in the run records' uncommitted-change check (declined 3 November); scientific runs go
   through the verification tool from clean committed worktrees.
+
+## Four fixes from the whole-code review of 4 November (Chris chose all four)
+
+- **Plots in RStudio:** the run folder's `Rplots.pdf` now replaces the default plot device in batch runs only
+  (`run_begin()`), so stepping through a script in RStudio with a run folder set keeps plots on the screen.
+- **Cross-validation reporting:** the comparison by distance band is two plain loops (identical table); the
+  complete-row rule is one function in `R/model_registry.R`, used by the tool too.
+- **Documentation drift:** comments on month selection and reruns, `model_id`, the kernels, the land-cover
+  diagnostics' ice and mean notes; the README's September line numbers removed and a pointer to the cross-validation.
+- **Cross-validation record:** the protocol's published basis of the geographic reports, with five references
+  checked against Crossref, and three corrected descriptions; the section 7 comparison marked as not yet built.
+- Reviewed by the change-reviewer (its two wording points made; the rest not worth doing). Verified:
+  `docs/cc/verification/2026-11-04_review-fixes-2_report.md` (PASS; scripts 1-3, the holdouts stage byte-identical to
+  earlier runs, all tests).

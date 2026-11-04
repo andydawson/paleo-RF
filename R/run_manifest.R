@@ -70,15 +70,15 @@ run_begin = function(script, config_file = config_path(), interactive_session = 
   run$deferred = interactive_session
   write_manifest(run)
   FIGURES_REQUESTED$paths = character()
-  # Plots printed with no device open go to Rplots.pdf. Note whether this run did that, so
-  # the file is claimed only by a run that wrote to it. (Not in an interactive session,
-  # whose screen device must stay as it is.)
+  # Plots printed with no device open go to Rplots.pdf in the working directory (scripts 3
+  # and 5 rely on this), or to the run directory's own, so a redirected run writes nothing
+  # into the repository. Note whether this run did that, so the file is claimed only by a
+  # run that wrote to it. Not in an interactive session, whose screen device stays as it is.
   if (!interactive_session) {
     device = getOption('device')
     if (is.character(device)) device = get(device, mode = 'function')
+    if (!is.null(run$paths$root)) device = function(...) grDevices::pdf(file = under_root(run$paths, 'Rplots.pdf'), ...)
     options(device = function(...) { run$used_default_device = TRUE; device(...) })
-  }
-  if (!interactive_session) {
     options(error = function() {
       run_failed(run, geterrmessage())
       quit(save = 'no', status = 1)

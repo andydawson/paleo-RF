@@ -24,7 +24,8 @@ list(
 
     # The months analysed, by their three-letter names. Any subset, e.g.
     # c("feb", "may", "aug", "nov"), runs scripts 4 to 8 on those months only (script 2
-    # always builds the calibration table for all twelve, so it need not be rerun).
+    # always builds the calibration table for all twelve). A changed selection is still a
+    # new run from script 1: each script reads only products made with the same settings.
     months = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"),
 
     # The time slices of the land-cover reconstruction, years BP, used by script 7a to

@@ -22,7 +22,8 @@ list(
 
     # The months analysed, by their three-letter names. Any subset, e.g.
     # c("feb", "may", "aug", "nov"), runs scripts 4 to 8 on those months only (script 2
-    # always builds the calibration table for all twelve, so it need not be rerun).
+    # always builds the calibration table for all twelve). A changed selection is still a
+    # new run from script 1: each script reads only products made with the same settings.
     months = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"),
 
     # The time slices of the land-cover reconstruction, years BP, used by script 7a to
@@ -66,8 +67,9 @@ list(
     albedo = list(source = "modis_cells", statistic = "all_days", version = "full_75"),
 
     # Script 4 fits model_id by REML for prediction (the file script 5 saves as the selected
-    # model and script 6 uses). One of the ladder mod1 ... mod8; their formulas are in
-    # R/model_registry.R. Model 8 was chosen by hand (question B4).
+    # model and script 6 uses). One of the models in R/model_registry.R: the ladder mod1 ...
+    # mod8 or a cross-validation candidate. Model 8 was chosen by hand (question B4); the
+    # cross-validation (tools/cross_validate_albedo.R) is to choose it.
     # comparison_method: how script 4 fits the ladder that scripts 4 and 5 compare by AIC.
     # "ML" (decided by Chris on 2026-10-14, kept on 2026-10-16, question B4) or "REML" (the
     # original); both are to be compared. ML is the standard convention for comparing models

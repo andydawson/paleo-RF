@@ -31,7 +31,8 @@ land_cover_diagnostics = function(lct_interp, lct_interp_wide, lct_interp_all, d
   # ---- 1. The ice flag script 1 discards -------------------------------------------------
   # Shows that no cell is flagged at 50, 200 or 500 BP although 48 are at 1,000 BP: the flag
   # is applied only from 1,000 BP back, so present-day ice caps reach the calibration table
-  # as vegetated cells (question B8 in docs/cc/questions_for_andria_scientific.md).
+  # as vegetated cells unless script 2's ice mask leaves them out (config.R
+  # analysis$calibration$ice_mask; question B8).
   cat('\n==== Ice flag in veg_posts_interp_ice.RDS (dropped at the summarize step) ====\n')
   cat('Values taken by the flag:', paste(unique(ice_flags$ice), collapse = ' / '), '\n')
   cat('Cell-slices flagged ICE:', sum(!is.na(ice_flags$ice)), 'of', nrow(ice_flags),
@@ -40,7 +41,8 @@ land_cover_diagnostics = function(lct_interp, lct_interp_wide, lct_interp_all, d
   print(table(factor(ice_flags$ages[!is.na(ice_flags$ice)], levels = sort(unique(ice_flags$ages)))))
   cat('\nNote the zeros at 50, 200 and 500 BP against', sum(!is.na(ice_flags$ice) & ice_flags$ages == 1000),
       'at 1,000 BP: the flag is applied only from 1,000 BP back, so present-day\n',
-      'ice caps are unflagged and enter the modern calibration table as vegetated cells (question B8).\n')
+      'ice caps are unflagged and enter the modern calibration table as vegetated cells unless\n',
+      'script 2\'s ice mask leaves them out (question B8).\n')
   cat('\nFlagged cell-slices still carry land-cover values (first three at 10,000 BP):\n')
   print(ice_example, row.names = FALSE)
 
@@ -125,9 +127,9 @@ land_cover_diagnostics = function(lct_interp, lct_interp_wide, lct_interp_all, d
   cat('\nIce-extent maps written to figures/diagnostics/ (one per slice plus 1_ice_flag_all_slices.png)\n')
 
   # ---- 4. Mean or median of the 200 draws? ------------------------------------------------
-  # The pipeline summarises each cell-slice-class by the MEAN of its 200 posterior draws
-  # (Andria's note in script 1, above the reduction, asks whether the median would be
-  # better). This compares the two. Two things to look at: how large the difference is and
+  # The pipeline summarises each cell-slice-class by config.R's choice, the MEAN of its 200
+  # posterior draws by default (Andria's note in script 1, above the reduction, asks whether
+  # the median would be better). This compares the two. Two things to look at: how large the difference is and
   # where it sits (it grows with the posterior spread and with skew near 0 or 1), and
   # whether the median keeps the three classes summing to one. The mean does so by
   # construction; medians of three separate fractions need not.
