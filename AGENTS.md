@@ -7,6 +7,8 @@ goes and closed at merge; never touch `legacy` (frozen snapshot of the original 
 `main`; commit each atomic change with a why-focused message; push to
 `origin` at checkpoints and session end; `main` changes only via a PR that
 Andria approves.
+At session end, after the push, list the unmerged branches and occupied worktrees and say
+what each one waits on.
 
 The script tables of `README.md` are the current map of the code: what each script does
 and the files it reads and writes. (The original code map,
