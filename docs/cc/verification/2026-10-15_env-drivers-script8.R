@@ -2,7 +2,7 @@
 # script 8 under the legacy configuration must still match its regression anchors.
 list(
   name    = 'env-drivers-script8',
-  commit  = 'origin/feature/single-config',
+  commit  = '79f1491b38d21c18e2bffc4fac21507a1177c301',
   config  = 'configs/legacy_config.R',
   seed    = c('albedo_differences'),
   scripts = 'scripts/8_radiative.R',
