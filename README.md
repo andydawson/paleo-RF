@@ -378,7 +378,7 @@ topic branches off `chris-dev` that are deleted when merged. Tags:
 
 ## Documents (`docs/cc/`)
 
-- `questions_for_andria_scientific.md`, `questions_for_andria_general.md`: living lists of open questions, kept current.
+- `questions_for_andria_scientific_from_2026-10-20.md`, `questions_for_andria_general.md`: living lists of open questions, kept current. `questions_for_andria_scientific.md` is the earlier list, sent to Andria on 20 October 2026 (one addition of 22 October).
 - `2026-09-16_known_issues_missing_data_and_code.md`: defects, missing data, missing code (items 37-41 are the ones found in September 2026).
 - `README_nointerp.md`: the point flavour's scripts and data (line numbers as of `v1-both-flavours`).
 

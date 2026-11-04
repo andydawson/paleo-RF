@@ -45,10 +45,11 @@ repository is branched, committed, merged and backed up. Agent sessions read
   `tools/verify_change.R` before it is merged, from a separate worktree at the
   exact commit, never in a checkout a run is reading; the PASS/FAIL report and
   its spec are committed under `docs/cc/verification/` (README there). Git
-  refuses a merge that changes code without a PASS report for that code (the
-  pre-merge-commit hook; install once per clone with
-  `Rscript tools/check_merge_evidence.R install`). `git merge --no-verify` is a
-  recorded exception, with the reason in the merge message.
+  refuses a merge into a trunk, or a commit on one, that changes code without a
+  PASS report for that code (the pre-merge-commit and pre-commit hooks; install
+  once per clone with `Rscript tools/check_merge_evidence.R install`). It does
+  not see fast-forward merges, so never fast-forward a trunk. `git merge
+  --no-verify` is a recorded exception, with the reason in the merge message.
 - Everything Claude Code generates that is not a script, a result or a data
   file with its own home (code maps, issue lists, schematics, reports,
   generators) lives under `docs/cc/`, with dated, descriptive file names
@@ -58,8 +59,9 @@ repository is branched, committed, merged and backed up. Agent sessions read
   the single-config migration adds it), `scripts/` (the pipeline), `R/`
   (shared functions), `data/` (inputs and intermediates), `docs/`, `tools/`
   (helpers that are not pipeline), `tests/` (anchors and checks) and `runs/`
-  (run manifests) and `output/` (results; a few small tables are tracked,
-  the bulk is ignored). Not tracked, but present on a working machine:
+  (run manifests), `output/` (results; a few small tables are tracked,
+  the bulk is ignored) and `results/<run>/` (the small tables, manifests and
+  configuration of each kept run, copied in and tracked). Not tracked, but present on a working machine:
   `figures/`, `writing/` and `.rundirs/` (run directories of alternative
   and verification runs, set by `run$dir` in `config.R`).
 - `scripts/` is the R analysis pipeline and nothing else. Helper code that
@@ -70,7 +72,7 @@ repository is branched, committed, merged and backed up. Agent sessions read
   `docs/cc/questions_for_andria_scientific_from_2026-10-20.md`; add to them
   as questions arise, remove them when answered. The earlier
   `docs/cc/questions_for_andria_scientific.md` is frozen: it went to Andria
-  in a Word document on 20 October 2026.
+  in a Word document on 20 October 2026 (with one addition of 22 October).
 
 ## Coding practice
 
