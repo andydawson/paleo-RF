@@ -114,6 +114,9 @@
 library(terra)
 library(jsonlite)
 
+MODIS_HELPERS_FILE = 'R/modis_albedo_helpers.R'
+source(MODIS_HELPERS_FILE)
+
 # --- settings ------------------------------------------------------------------------------
 FIRST_DAY   = as.Date('2000-03-05')
 LAST_DAY    = as.Date('2009-12-31')
@@ -152,7 +155,7 @@ settings_tag = function(need_zenith = TRUE)
          if (need_zenith) '; noon zenith from the data' else '; noon zenith taken as 0 (July 2005 test only)')
 SETTINGS_TAG = settings_tag(TRUE)
 # The code that makes a file: this script's own SHA-256, written into every monthly file next to
-# the settings tag. A file is reused only if both match, so a corrected script never picks up
+# the settings tag and shared-helper SHA-256. A file is reused only if all match, so a corrected script never picks up
 # tiles made by an earlier version of itself. (Run with Rscript, the script is the --file
 # argument; sourced, e.g. by the tests, it is the file source() is reading.)
 SCRIPT_FILE = local({
@@ -162,12 +165,15 @@ SCRIPT_FILE = local({
 })
 SCRIPT_SHA = if (length(SCRIPT_FILE) == 1 && !is.na(SCRIPT_FILE) && file.exists(SCRIPT_FILE))
   as.vector(as.character(openssl::sha256(file(SCRIPT_FILE)))) else 'unknown'   # as.vector: drop the 'hash' class
+MODIS_HELPERS_SHA = as.vector(as.character(openssl::sha256(file(MODIS_HELPERS_FILE))))
 # Without its SHA-256 the build could not tell its own files from those of another version, so the
 # steps that write or combine monthly files stop first (Chris, 2026-10-21).
 require_script_sha = function() {
   if (!grepl('^[0-9a-f]{64}$', SCRIPT_SHA))
     stop('cannot tell which version of this script is running (its SHA-256 is "', SCRIPT_SHA,
          '"); run it with Rscript tools/prepare_bluesky_albedo.R from the repository root')
+  if (!grepl('^[0-9a-f]{64}$', MODIS_HELPERS_SHA))
+    stop('cannot tell which version of the shared MODIS helpers is running')
 }
 # Older versions of this script whose monthly files the cell step still accepts, because each was
 # checked to compute the same numbers as this version (Chris, 2026-10-21). Any other version's
@@ -189,7 +195,10 @@ ACCEPTED_OLDER_SHAS = c(
   # The version of commit 1af6502 (made no monthly files). The next version only updated the
   # header's note on script 2 (the cell table is now read by it); verified 2026-11-01 by
   # code_of() of tools/check_comments_only.R: both versions parse to the same 78 expressions.
-  '85353d3b1176cf4ec3606d339507a0e1484323070782a12d18328876cfd5edb0'
+  '85353d3b1176cf4ec3606d339507a0e1484323070782a12d18328876cfd5edb0',
+  # Before shared-helper extraction (5 November 2026): constants and function bodies unchanged;
+  # verified by parsed-expression comparison and the shared-helper and blue-sky fixture tests.
+  'cb2920f6357010ada20c311d31cc90fc7cee00cafbee9358dc2f1735e9684638'
 )
 
 APPEEARS_DIR = file.path(WORK_DIR, 'appeears')  # collected months, one folder each
@@ -204,26 +213,6 @@ LAYERS = data.frame(
             'MCD43A2.061_BRDF_Albedo_LocalSolarNoon', 'MCD43A2.061_BRDF_Albedo_LandWaterType'),
   scale = c(0.001, 0.001, 1, 1, 1, 1),
   fill  = c(32767, 32767, 255, 255, 255, 255))
-
-# --- the sinusoidal grid ------------------------------------------------------------------
-# MODIS tiles: 36 x 18 tiles of 2,400 x 2,400 pixels on a sphere of radius 6,371,007.181 m.
-SIN_CRS   = '+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +R=6371007.181 +units=m +no_defs'
-TILE_SIZE = 1111950.5196666666
-X0 = -20015109.354; Y0 = 10007554.677
-
-# Longitude and latitude of every pixel centre of a tile, from the sinusoidal formulas
-# (y = R lat, x = R lon cos lat).
-R_EARTH = 6371007.181
-tile_template = function(tile) {
-  h = as.integer(substr(tile, 2, 3)); v = as.integer(substr(tile, 5, 6))
-  rast(nrows = 2400, ncols = 2400, crs = SIN_CRS,
-       extent = ext(X0 + h * TILE_SIZE, X0 + (h + 1) * TILE_SIZE, Y0 - (v + 1) * TILE_SIZE, Y0 - v * TILE_SIZE))
-}
-pixel_lonlat = function(template) {
-  xy = xyFromCell(template, seq_len(ncell(template)))
-  lat = xy[, 2] / R_EARTH
-  cbind(lon = xy[, 1] / (R_EARTH * cos(lat)) * 180 / pi, lat = lat * 180 / pi)
-}
 
 # The tiles that hold any part of the cells: each cell's outline, densified, in sinusoidal.
 tiles_for_cells = function(cells) {
@@ -516,16 +505,6 @@ day_totals = function(keep, snow, blue) {
         s_all = ifelse(keep, blue, 0), s_snow = ifelse(snowy, blue, 0), s_free = ifelse(free, blue, 0))
 }
 
-# Land: a pixel whose land/water class says land (1) on more than half of the days it has one,
-# over the whole record (Chris, 2026-10-20); with rule 'land_or_shore', land or shoreline (2)
-# together. A blank class means no retrieval that day (checked on the July 2005 download: blank
-# class and no albedo coincide on every pixel-day), so blank days are not counted. A tie (exactly
-# half) is not land.
-is_land = function(land_days, shore_days, read_days, rule = LAND_RULE) {
-  yes = switch(rule, land = land_days, land_or_shore = land_days + shore_days, stop('unknown land rule ', rule))
-  read_days > 0 & yes > read_days / 2
-}
-
 # The climatology of one version for each group (a cell and calendar month), from its totals per
 # year. Within a year every qualifying land pixel-day counts once; then each year with data weighs
 # the same. The days split into snowy, snow-free and unknown snow status (no snow flag); their
@@ -561,6 +540,8 @@ process_tile_month = function(tile, month, day_dir, out_dir, need_zenith = TRUE)
     if (!identical(build_tag(out, 'paleoRF_script_sha256'), SCRIPT_SHA))
       stop(out, ' is stale: it was made by another version of this script (SHA-256 ',
            build_tag(out, 'paleoRF_script_sha256'), ', now ', SCRIPT_SHA, '); move it away first')
+    if (!identical(build_tag(out, 'paleoRF_modis_helpers_sha256'), MODIS_HELPERS_SHA))
+      stop(out, ' is stale: it was made by another version of the shared MODIS helpers')
     return(out)
   }
   days = month_days(month)
@@ -615,6 +596,7 @@ process_tile_month = function(tile, month, day_dir, out_dir, need_zenith = TRUE)
   names(r) = TILE_LAYERS
   # The tags travel with the file, so a later build that reuses it can still record how it was made.
   metags(r) = c(paleoRF_build = settings_tag(need_zenith), paleoRF_script_sha256 = SCRIPT_SHA,
+                paleoRF_modis_helpers_sha256 = MODIS_HELPERS_SHA,
                 paleoRF_created = format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z'),
                 paleoRF_out_of_range = as.character(out_of_range),
                 paleoRF_with_albedo = as.character(with_albedo), paleoRF_no_diffuse = as.character(no_diffuse))
@@ -659,12 +641,14 @@ days_of_file = function(file) {
   length(month_days(as.Date(sprintf('%s-%s-01', m[2], m[3]))))
 }
 output_problems = function(file, tag = SETTINGS_TAG, template = tile_template(tile_of(file)), max_days = days_of_file(file),
-                           script_sha = SCRIPT_SHA) {
+                           script_sha = SCRIPT_SHA, helper_sha = MODIS_HELPERS_SHA) {
   r = tryCatch(rast(file), error = function(e) NULL)
   if (is.null(r)) return('cannot be opened')
   if (!identical(names(r), TILE_LAYERS)) return('does not have the expected layers')
   if (!identical(build_tag(file), tag)) return('was made with other settings')
   if (!identical(build_tag(file, 'paleoRF_script_sha256'), script_sha)) return('was made by another version of the build script')
+  if (!identical(build_tag(file, 'paleoRF_modis_helpers_sha256'), helper_sha))
+    return('was made by another version of the shared MODIS helpers')
   if (!grepl('Sinusoidal', crs(r)) || !grepl('6371007.181', crs(r))) return('is not on the MODIS sinusoidal projection')
   if (nrow(r) != nrow(template) || ncol(r) != ncol(template) ||
       max(abs(as.vector(ext(r)) - as.vector(ext(template)))) > 0.01) return('is not on its tile grid')
@@ -752,6 +736,7 @@ write_build_record = function(month, record_dir, n_files, tiles, delivery, tile_
   con = file(file.path(record_dir, 'build.txt'), open = 'a'); on.exit(close(con))
   writeLines(c('', paste('=== built:', format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')),
                paste('code:', script, 'commit', commit[1], 'sha256', SCRIPT_SHA),
+               paste('shared code:', MODIS_HELPERS_FILE, 'sha256', MODIS_HELPERS_SHA),
                paste('settings:', SETTINGS_TAG),
                paste('day files checked against the SHA-256 list:', n_files),
                delivery,
@@ -823,7 +808,7 @@ tile_land = function(files) {
     v = values(rast(f)[[c('land_days', 'shore_days', 'read_days')]])
     land_days = land_days + v[, 1]; shore_days = shore_days + v[, 2]; read_days = read_days + v[, 3]
   }
-  is_land(land_days, shore_days, read_days)
+  is_land(land_days, shore_days, read_days, rule = LAND_RULE)
 }
 
 # Pass 2: for each cell, year and calendar month, the version totals summed over the cell's land
@@ -849,6 +834,13 @@ tile_cell_totals = function(tile, cell_keys, monthly_dir, months, tag, template 
     stop(length(stale), ' monthly files were made by another version of this script, not one listed in ACCEPTED_OLDER_SHAS, ',
          'or do not say which, e.g. ', stale[1], ' (SHA-256 ', if (is.na(stale_sha)) 'none recorded' else stale_sha, ', now ', SCRIPT_SHA, ')')
   }
+  # Historical accepted scripts contained the helpers themselves. Only files from the extracted
+  # version need the separate helper hash; a helper edit must not silently reuse current files.
+  wrong_helpers = tf$file[vapply(tf$file, function(f)
+    identical(build_tag(f, 'paleoRF_script_sha256'), SCRIPT_SHA) &&
+      !identical(build_tag(f, 'paleoRF_modis_helpers_sha256'), MODIS_HELPERS_SHA), TRUE)]
+  if (length(wrong_helpers)) stop(length(wrong_helpers), ' monthly files were made by another version of the shared MODIS helpers, e.g. ',
+                                 wrong_helpers[1])
   ll = pixel_lonlat(template)
   cell = paste(floor(ll[, 1]) + 0.5, floor(ll[, 2]) + 0.5)
   keep = tile_land(tf$file) & cell %in% cell_keys
@@ -978,6 +970,7 @@ if (sys.nframe() == 0) {
     writeLines(c(paste('cell table:', OUT_FILE, 'written', format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')),
                  paste('land rule:', LAND_RULE), paste('settings:', SETTINGS_TAG),
                  paste('cell step script sha256:', SCRIPT_SHA),
+                 paste('cell step shared helpers sha256:', MODIS_HELPERS_SHA),
                  script_versions(files)),
                sub('\\.csv$', '_provenance.txt', OUT_FILE))
 
