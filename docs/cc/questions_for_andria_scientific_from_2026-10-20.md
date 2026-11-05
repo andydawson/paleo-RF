@@ -281,37 +281,29 @@ model on its accuracy for cover mixes outside today's range, the northeast's cas
 design and protocol are on branch `cv-design` (`docs/cc/2026-11-02_cv_protocol.md`). The hemlock
 result is reported after the choice and is not used to make it.
 
-## 7. A local check of conifer against deciduous albedo in the northeast (3 November)
+## 7. A local check of conifer against deciduous albedo in the northeast: dropped (5 November)
 
-*From Astra's design (`docs/cc/2026-11-03_northeast_forest_albedo_design_v2_codex_gpt6astra.md`, branch
-`northeast-benchmark`, issue #27) and Fable's review of it.*
+*Issue #27, closed. Records: `docs/cc/2026-11-05_northeast_forest_albedo_dropped.md` (branch `northeast-forest-check`).*
 
-**Why.** The cross-validation cannot settle which way the hemlock decline moved albedo in the northeast, because
-today's evergreen share there follows latitude. So, beside the model, we plan a modern local check: nearby pure
-evergreen-needleleaf and deciduous-broadleaf 500 m pixels (within 5 km), from the rebuilt MODIS albedo, month by
-month, with snow states apart. Published work leads us to expect deciduous forest brighter in every season checked
-(about +0.02 to +0.07 without snow, more with snow: Jin et al. 2002; Hollinger et al. 2010; Zhao and Jackson 2014);
-the fitted model implies the opposite sign in spring and summer. Nothing has been run yet.
+**What happened.** We planned a modern local check: nearby pure evergreen-needleleaf and deciduous-broadleaf 500 m
+pixels in the northeast, compared month by month. Before reading any albedo, the pairs were counted: there were none.
+MODIS labels only 0.6% of the box pure evergreen needleleaf (most conifer is "mixed forest"), and the few clean
+conifer pixels are one patch in New Brunswick, far from any clean hardwood. Chris dropped the check (5 November) as
+overcomplicating the method. Instead: the published comparisons (deciduous forest is generally brighter than
+evergreen, by an amount that depends on season and snow: Jin et al. 2002; Hollinger et al. 2010; Zhao and Jackson
+2014; Burakowski et al. 2016), and a month-by-month table of what the two candidate models do when evergreen cover is
+swapped for summergreen, inside the cross-validation comparison.
 
-**Questions.**
-1. **Which modern stands stand in for hemlock?** Pure evergreen pixels in the box are mostly spruce-fir and pine
-   north of about 45 N; hemlock grows mainly in mixed stands further south, which the check leaves out. Is spruce-fir
-   and pine against hardwoods an acceptable analogue for the sign, and where in the box was the decline strongest?
-2. **Mapping satellite classes onto your classes.** The check compares satellite forest classes; your reconstruction's
-   evergreen and summergreen include shrubs, and larch sits in summergreen. Is comparing the model's evergreen-for-
-   summergreen swap with an evergreen-needleleaf against deciduous-broadleaf contrast acceptable for magnitude, or
-   only for sign?
-3. **If the sign varies** by latitude, wetland or month, what conclusion would you draw for the paper?
-4. **Flux towers** (Harvard Forest's hemlock and hardwood towers, Howland, Bartlett) could give a hemlock-specific
-   comparison later. Do you know of published tower albedos for these, or other local observations of hemlock
-   against hardwood albedo?
-5. Already open (section 2, item 1): should the vegetation forcing represent cover effects under today's snow, or
-   something else? It decides which of the check's panels (all days, snow-free, snowy) is the one to compare.
-6. **Which MODIS retrievals did your albedo raster use?** The rebuilt albedo uses full inversions only (`full_75`;
-   NASA's recommended quality), keeping the backup "magnitude" inversions as a comparison (`any_75`). In the northeast
-   in winter, full inversions are rare at 500 m, so the check's winter result will come from the backup retrievals,
-   labelled lower quality. Did your raster keep all qualities, or only the full inversions? (Its winter values reach
-   as far north as a noon sun 80-85 degrees from overhead, so it kept at least some low-sun retrievals.)
+**Questions that still matter.**
+1. **Which modern forests stand in for hemlock?** Published contrasts are mostly spruce-fir and pine against
+   hardwoods. Is that an acceptable guide to the sign for the hemlock decline, and where in the box was the decline
+   strongest?
+2. **Flux towers** (Harvard Forest's hemlock and hardwood towers, Howland, Bartlett): do you know of published tower
+   albedos for hemlock against hardwood?
+3. Already open (section 2, item 1): should the vegetation forcing represent cover effects under today's snow, or
+   something else?
+4. **Which MODIS retrievals did your albedo raster use** (full inversions only, or all qualities)? Also asked in the
+   email of 5 November.
 
 ## 8. What the cross-validation's score can and cannot show (3 November)
 
