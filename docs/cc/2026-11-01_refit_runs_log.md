@@ -277,3 +277,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - As the protocol's section 7 sets out, both are fitted on all the data and run through scripts 1-10 in separate run
   folders, on the same code (the tip of refit-runs), seed 1549466984, run 1's settings otherwise: `cv-chosen` (model_id
   `mod8_coarse_loc`) and `cv-mod8` (model_id `mod8`). Fitting in four month parts each, as run 1.
+- cv-chosen-fit-jan-mar: a documentation-only commit so that it gets its own worktree.
