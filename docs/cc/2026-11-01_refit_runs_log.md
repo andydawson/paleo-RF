@@ -279,3 +279,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
   `mod8_coarse_loc`) and `cv-mod8` (model_id `mod8`). Fitting in four month parts each, as run 1.
 - cv-chosen-fit-jan-mar: a documentation-only commit so that it gets its own worktree.
 - cv-chosen-fit-apr-jun: a documentation-only commit so that it gets its own worktree.
+- cv-chosen-fit-jul-sep: a documentation-only commit so that it gets its own worktree.
