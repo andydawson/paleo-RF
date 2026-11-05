@@ -11,11 +11,12 @@ if our model is getting the albedo sign right." He then chose "Drop it" after As
 needleleaf and 25% mixed forest; 56 conifer pixels survived the screens, all one New Brunswick patch at least 23 km
 from any eligible hardwood. Nothing was loosened after seeing coverage.
 
-**Instead (Chris, 5 November).** For which forest is brighter: the published comparisons (Astra's note
-`2026-11-05_northeast_simpler_routes_codex_gpt6astra.md`; numbers to be reference-checked before they enter the
-paper). For the model's sign: a 12-month by 2-model table, plus the April and May figure, built inside the CV
-protocol section 7 comparison, at today's open land and each month's own training support (Fable's review
-`2026-11-05_northeast_simpler_routes_review_fable.md`). Astra designs it, briefed for simplicity.
+**Instead (Chris, 5 November).** Chris chose the option "Table in the CV comparison", whose text read: "Part of
+the comparison of the chosen model and model 8 that's already planned. A 12-month by 2-model table, plus the figure
+for April and May. Uses today's open land and each month's own training data." He added: "please make sure we have
+proper designs from Astra for those things it just recommended, but do brief for simplicity as always." For which
+forest is brighter: the published comparisons (Astra's note `2026-11-05_northeast_simpler_routes_codex_gpt6astra.md`;
+numbers to be reference-checked before they enter the paper).
 
 **What stays.** This branch (stage-1 code, tests, reviews, coverage records) and the 27 MCD12Q1 files in
 `data/mcd12q1/`. The shared MODIS helpers moved to `R/modis_albedo_helpers.R` are general; whether to merge them
