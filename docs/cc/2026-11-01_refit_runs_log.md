@@ -269,3 +269,11 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 | `run8-raster-fit-jan-apr-2` | `b689642` | `paleo-RF-verify/b689642/.rundirs/run8-raster-fit-jan-apr-2` |
 | `run8-raster-fit-may-aug-2` | `280a9a0` | `paleo-RF-verify/280a9a0/.rundirs/run8-raster-fit-may-aug-2` |
 | `run8-raster-fit-sep-dec-2` | `bd174cf` | `paleo-RF-verify/bd174cf/.rundirs/run8-raster-fit-sep-dec-2` |
+
+## Cross-validation: the chosen model and model 8 through the pipeline (5 November)
+- The score stage (`cv-run1-score`, PASS) chose `mod8_coarse_loc` (model 8 with location k = 30): RMSE 0.084 on the
+  withheld cells against model 8's 0.100 (difference 0.0029 in squared error, standard error 0.0014). The in-range
+  check (`cv-run1-score-2`, PASS; reported only) gives model 8 0.046 and the chosen model 0.051.
+- As the protocol's section 7 sets out, both are fitted on all the data and run through scripts 1-10 in separate run
+  folders, on the same code (the tip of refit-runs), seed 1549466984, run 1's settings otherwise: `cv-chosen` (model_id
+  `mod8_coarse_loc`) and `cv-mod8` (model_id `mod8`). Fitting in four month parts each, as run 1.
