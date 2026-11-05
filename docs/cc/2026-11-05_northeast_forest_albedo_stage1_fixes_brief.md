@@ -31,5 +31,5 @@ Also update `docs/cc/2026-11-05_northeast_forest_albedo_stage1_implementation.md
 
 ## Report
 Files changed and why; lines before and after for each code file; test results; and a draft verification spec
-(`docs/cc/verification/` format, see existing `2026-11-05_*.R` specs) whose checks cover your review's final list,
+(`docs/cc/verification/` format, see `docs/cc/verification/README.md` here and, read-only, the specs `/home/expert/Documents/contracting/Andria/paleo-RF/docs/cc/verification/2026-11-05_*.R`) whose checks cover your review's final list,
 written to `docs/cc/verification/2026-11-05_northeast-coverage.R` with `commit = 'TO_FILL'`.
