@@ -211,9 +211,12 @@ northeast_candidates = function(inputs, cells, bundles, tiles, years, template, 
   candidates = setNames(lapply(bundles$bundle, function(b) list()), bundles$bundle)
   losses = list(); part = 0L
   # A bounding box for the largest search circle is enough to retain every partner.
+  lon_bounds = range(cells$x) + c(-0.5, 0.5)
+  lat_bounds = range(cells$y) + c(-0.5, 0.5)
   angle = max(bundles$distance_m) / R_EARTH
   lat_pad = angle * 180 / pi
-  lon_pad = asin(sin(angle) / cos((48 + lat_pad) * pi / 180)) * 180 / pi
+  lon_pad = asin(sin(angle) / cos((max(abs(lat_bounds)) + lat_pad) * pi / 180)) * 180 / pi
+  tile_width = ncol(template) / length(tiles)
   for (first in seq(1L, nrow(template), by = block_rows)) {
     last = min(nrow(template), first + block_rows - 1L)
     row = max(1L, first - 2L); end = min(nrow(template), last + 2L)
@@ -221,7 +224,8 @@ northeast_candidates = function(inputs, cells, bundles, tiles, years, template, 
                        xmin = terra::xmin(template), xmax = terra::xmax(template),
                        ymin = terra::ymax(template) - end * terra::res(template)[2],
                        ymax = terra::ymax(template) - (row - 1) * terra::res(template)[2])
-    if (terra::ymin(strip) / R_EARTH * 180 / pi > 48 + lat_pad) next
+    if (terra::ymin(strip) / R_EARTH * 180 / pi > lat_bounds[2] + lat_pad ||
+        terra::ymax(strip) / R_EARTH * 180 / pi < lat_bounds[1] - lat_pad) next
     message('Forest rows ', first, '-', last, ' of ', nrow(template))
     f = northeast_forest_strip(inputs$land_cover, tiles, years, row, nrow(strip))
     ll = pixel_lonlat(strip)
@@ -230,8 +234,8 @@ northeast_candidates = function(inputs, cells, bundles, tiles, years, template, 
     global_col = (index - 1L) %% ncol(strip) + 1L
     initial = as.vector(t(f$class))
     spatial = global_row >= first & global_row <= last &
-      ll[, 1] >= -80 - lon_pad & ll[, 1] <= -66 + lon_pad &
-      ll[, 2] >= 40 - lat_pad & ll[, 2] <= 48 + lat_pad
+      ll[, 1] >= lon_bounds[1] - lon_pad & ll[, 1] <= lon_bounds[2] + lon_pad &
+      ll[, 2] >= lat_bounds[1] - lat_pad & ll[, 2] <= lat_bounds[2] + lat_pad
     # Record the starting class screen, including mixed forest and missing labels.
     spatial_at = which(spatial)
     all_cells = northeast_cell(ll[spatial_at, 1], ll[spatial_at, 2])
@@ -242,13 +246,10 @@ northeast_candidates = function(inputs, cells, bundles, tiles, years, template, 
       part = part + 1L; losses[[part]] = classified$losses
     }
     at = which(spatial & initial %in% c(1, 4))
-    cell = northeast_cell(ll[at, 1], ll[at, 2])
-    domain = cell$cell_key %in% cells$key
-    at = at[initial[at] == 4 | domain]
     if (!length(at)) next
     cell = northeast_cell(ll[at, 1], ll[at, 2])
-    tile_number = (global_col[at] - 1L) %/% 2400L + 1L
-    pixel = (global_row[at] - 1L) * 2400L + (global_col[at] - 1L) %% 2400L + 1L
+    tile_number = (global_col[at] - 1L) %/% tile_width + 1L
+    pixel = (global_row[at] - 1L) * tile_width + (global_col[at] - 1L) %% tile_width + 1L
     x = data.frame(id = sprintf('%s_%07d', tiles[tile_number], pixel), tile = tiles[tile_number], pixel = pixel,
                    lon = ll[at, 1], lat = ll[at, 2], cell,
                    forest_class = ifelse(initial[at] == 1, 'ENF', 'DBF'),
@@ -264,7 +265,8 @@ northeast_candidates = function(inputs, cells, bundles, tiles, years, template, 
       s = bundles[b, ]; half = (s$width - 1) / 2
       complete = global_row[at] > half & global_row[at] <= nrow(template) - half &
         global_col[at] > half & global_col[at] <= ncol(template) - half
-      screens = list(stable_centre = values_at(f$stable), classification_qc = values_at(f$qc),
+      screens = list(enf_scope = x$forest_class == 'DBF' | x$in_domain,
+                     stable_centre = values_at(f$stable), classification_qc = values_at(f$qc),
                      neighbourhood_boundary = complete,
                      same_class_neighbourhood = values_at(if (s$width == 5) f$n5 else f$n3) >= s$neighbour_years,
                      water = if (s$water_width == 5) water5 else if (s$water_width == 3) water3 else values_at(land),
@@ -305,7 +307,7 @@ northeast_land = function(candidates, monthly_files) {
 # Record the build identity without reading any raster band. The production files
 # must all have the same settings; a July test file must not enter this record.
 northeast_monthly_metadata = function(files) {
-  tags = c('paleoRF_build', 'paleoRF_script_sha256', 'paleoRF_modis_helpers_sha256')
+  tags = c('paleoRF_build', 'paleoRF_script_sha256')
   metadata = do.call(rbind, lapply(files, function(file) {
     m = terra::metags(terra::rast(file))
     values = m$value[match(tags, m$name)]
@@ -380,95 +382,95 @@ northeast_write_tables = function(run, tables, directory) {
 # Coverage of the fixed forest pairs. These functions never use albedo sums or values.
 
 # Use cell latitude for every geographic summary, as for the later comparison.
-northeast_coverage_regions <- function() {
-  data.frame(region = c("all", paste0(40:47, "-", 41:48, "N"), "40-44N", "44-48N"),
+northeast_coverage_regions = function() {
+  data.frame(region = c('all', paste0(40:47, '-', 41:48, 'N'), '40-44N', '44-48N'),
              south = c(40, 40:47, 40, 44), north = c(48, 41:48, 44, 48))
 }
 
 # Separate diagnostics retain the stricter pairs; neither searches for a new partner.
-northeast_pair_subsets <- function(pairs, bundle) {
-  answer <- list(all = pairs)
-  if (bundle == "stricter") {
-    answer$reciprocal <- pairs[which(pairs$reciprocal), , drop = FALSE]
-    answer$unflagged3 <- pairs[which(pairs$unflagged3), , drop = FALSE]
+northeast_pair_subsets = function(pairs, bundle) {
+  answer = list(all = pairs)
+  if (bundle == 'stricter') {
+    answer$reciprocal = pairs[which(pairs$reciprocal), , drop = FALSE]
+    answer$unflagged3 = pairs[which(pairs$unflagged3), , drop = FALSE]
   }
   answer
 }
 
 # Empty strata keep explicit missing summaries, rather than suggesting zero distance.
 # Quantiles use R's default type 7; these are descriptions, not uncertainty intervals.
-northeast_number_summary <- function(x) {
-  x <- x[is.finite(x)]
+northeast_number_summary = function(x) {
+  x = x[is.finite(x)]
   if (!length(x)) return(c(n = 0, min = NA, q05 = NA, median = NA, mean = NA, q95 = NA, max = NA))
   c(n = length(x), min = min(x), q05 = unname(quantile(x, 0.05)),
     median = median(x), mean = mean(x), q95 = unname(quantile(x, 0.95)), max = max(x))
 }
 
 # Record eligible forest, fixed pairs, wetland strata, and every zero-pair pipeline cell.
-northeast_structural_coverage <- function(candidates, pairs, cells, losses) {
-  regions <- northeast_coverage_regions()
-  summary_rows <- cell_rows <- balance_rows <- reuse_rows <- wetland_rows <- list()
-  loss_rows <- feasibility_rows <- support_rows <- list()
+northeast_structural_coverage = function(candidates, pairs, cells, losses) {
+  regions = northeast_coverage_regions()
+  summary_rows = cell_rows = balance_rows = reuse_rows = wetland_rows = list()
+  loss_rows = feasibility_rows = support_rows = list()
   for (bundle in names(pairs)) {
-    eligible <- candidates[[bundle]]
-    for (forest in c("ENF", "DBF")) {
-      support <- eligible[which(!eligible$in_domain & eligible$forest_class == forest), , drop = FALSE]
-      support_rows[[length(support_rows) + 1L]] <- data.frame(bundle = bundle, forest_class = forest,
-        region = "outside_pipeline_support", eligible_pixels = nrow(support),
+    eligible = candidates[[bundle]]
+    for (forest in c('ENF', 'DBF')) {
+      support = eligible[which(!eligible$in_domain & eligible$forest_class == forest), , drop = FALSE]
+      support_rows[[length(support_rows) + 1L]] = data.frame(bundle = bundle, forest_class = forest,
+        region = 'outside_pipeline_support', eligible_pixels = nrow(support),
         wetland_flagged = sum(support$wetland, na.rm = TRUE), wetland_unknown = sum(is.na(support$wetland)))
     }
-    eligible <- eligible[which(eligible$in_domain), , drop = FALSE]
+    eligible = eligible[which(eligible$in_domain), , drop = FALSE]
     for (subset in names(northeast_pair_subsets(pairs[[bundle]], bundle))) {
-      selected <- northeast_pair_subsets(pairs[[bundle]], bundle)[[subset]]
+      selected = northeast_pair_subsets(pairs[[bundle]], bundle)[[subset]]
       for (i in seq_len(nrow(regions))) {
-        region <- regions[i, ]
-        cell_keys <- cells$key[cells$y >= region$south & cells$y < region$north]
-        p <- selected[selected$cell_key %in% cell_keys, , drop = FALSE]
-        c <- eligible[eligible$cell_key %in% cell_keys, , drop = FALSE]
-        cell_n <- table(factor(p$cell_key, levels = cell_keys))
-        reuse <- table(p$dbf_id)
-        prefix <- data.frame(bundle = bundle, subset = subset, region = region$region)
-        summary_rows[[length(summary_rows) + 1L]] <- cbind(prefix, data.frame(
-          eligible_enf = sum(c$forest_class == "ENF"), eligible_dbf = sum(c$forest_class == "DBF"),
-          eligible_enf_wetland = sum(c$forest_class == "ENF" & c$wetland, na.rm = TRUE),
-          eligible_dbf_wetland = sum(c$forest_class == "DBF" & c$wetland, na.rm = TRUE),
-          eligible_enf_wetland_unknown = sum(c$forest_class == "ENF" & is.na(c$wetland)),
-          eligible_dbf_wetland_unknown = sum(c$forest_class == "DBF" & is.na(c$wetland)),
+        region = regions[i, ]
+        cell_keys = cells$key[cells$y >= region$south & cells$y < region$north]
+        p = selected[selected$cell_key %in% cell_keys, , drop = FALSE]
+        cell_candidates = eligible[eligible$cell_key %in% cell_keys, , drop = FALSE]
+        cell_n = table(factor(p$cell_key, levels = cell_keys))
+        reuse = table(p$dbf_id)
+        prefix = data.frame(bundle = bundle, subset = subset, region = region$region)
+        summary_rows[[length(summary_rows) + 1L]] = cbind(prefix, data.frame(
+          eligible_enf = sum(cell_candidates$forest_class == 'ENF'), eligible_dbf = sum(cell_candidates$forest_class == 'DBF'),
+          eligible_enf_wetland = sum(cell_candidates$forest_class == 'ENF' & cell_candidates$wetland, na.rm = TRUE),
+          eligible_dbf_wetland = sum(cell_candidates$forest_class == 'DBF' & cell_candidates$wetland, na.rm = TRUE),
+          eligible_enf_wetland_unknown = sum(cell_candidates$forest_class == 'ENF' & is.na(cell_candidates$wetland)),
+          eligible_dbf_wetland_unknown = sum(cell_candidates$forest_class == 'DBF' & is.na(cell_candidates$wetland)),
           matched_enf = nrow(p), unique_dbf = length(reuse),
           reused_dbf = sum(reuse > 1), max_dbf_use = if (length(reuse)) max(reuse) else 0,
           pipeline_cells = length(cell_keys), cells_with_pairs = sum(cell_n > 0),
           cells_without_pairs = sum(cell_n == 0), cells_with_at_least_three_pairs = sum(cell_n >= 3)))
-        for (variable in c("distance_m", "elevation_difference_m")) {
-          balance_rows[[length(balance_rows) + 1L]] <- cbind(prefix, variable = variable,
+        for (variable in c('distance_m', 'elevation_difference_m')) {
+          balance_rows[[length(balance_rows) + 1L]] = cbind(prefix, variable = variable,
             as.data.frame(as.list(northeast_number_summary(p[[variable]]))))
         }
-        for (stratum in c("neither", "one", "both", "unknown")) {
-          use <- p$wetland_stratum == stratum
-          wetland_rows[[length(wetland_rows) + 1L]] <- cbind(prefix, data.frame(
+        for (stratum in c('neither', 'one', 'both', 'unknown')) {
+          use = p$wetland_stratum == stratum
+          wetland_rows[[length(wetland_rows) + 1L]] = cbind(prefix, data.frame(
             wetland_stratum = stratum, pairs = sum(use), unique_dbf = length(unique(p$dbf_id[use])),
             cells = length(unique(p$cell_key[use]))))
         }
         # A zero-use partner is not part of the pair table; an empty region has no reuse rows.
         if (length(reuse)) for (n in sort(unique(as.integer(reuse)))) {
-          reuse_rows[[length(reuse_rows) + 1L]] <- cbind(prefix,
+          reuse_rows[[length(reuse_rows) + 1L]] = cbind(prefix,
             data.frame(uses_per_dbf = n, dbf_partners = sum(reuse == n)))
         }
       }
       for (i in seq_len(nrow(cells))) {
-        p <- selected[selected$cell_key == cells$key[i], , drop = FALSE]
-        c <- eligible[eligible$cell_key == cells$key[i], , drop = FALSE]
-        cell_rows[[length(cell_rows) + 1L]] <- data.frame(bundle = bundle, subset = subset,
+        p = selected[selected$cell_key == cells$key[i], , drop = FALSE]
+        cell_candidates = eligible[eligible$cell_key == cells$key[i], , drop = FALSE]
+        cell_rows[[length(cell_rows) + 1L]] = data.frame(bundle = bundle, subset = subset,
           cell_key = cells$key[i], cell_x = cells$x[i], cell_y = cells$y[i],
-          eligible_enf = sum(c$forest_class == "ENF"), eligible_dbf = sum(c$forest_class == "DBF"),
+          eligible_enf = sum(cell_candidates$forest_class == 'ENF'), eligible_dbf = sum(cell_candidates$forest_class == 'DBF'),
           matched_enf = nrow(p), unique_dbf = length(unique(p$dbf_id)))
       }
     }
-    p <- pairs[[bundle]]
-    cell_n <- table(factor(p$cell_key, levels = cells$key))
+    p = pairs[[bundle]]
+    cell_n = table(factor(p$cell_key, levels = cells$key))
     # The settings do not attach a pair minimum to the southern warning: count cells
     # with any pair, and report the three-pair count alongside it.
-    southern <- sum(cell_n[cells$y < 44] > 0)
-    feasibility_rows[[length(feasibility_rows) + 1L]] <- data.frame(
+    southern = sum(cell_n[cells$y < 44] > 0)
+    feasibility_rows[[length(feasibility_rows) + 1L]] = data.frame(
       bundle = bundle, distinct_pairs = nrow(p), pair_target_met = nrow(p) >= 300,
       cells_with_at_least_three_pairs = sum(cell_n >= 3), cell_target_met = sum(cell_n >= 3) >= 30,
       southern_cells_with_pairs = southern, southern_cells_with_at_least_three_pairs = sum(cell_n[cells$y < 44] >= 3),
@@ -478,44 +480,46 @@ northeast_structural_coverage <- function(candidates, pairs, cells, losses) {
   # Losses describe the sequential screens, including boundary exclusions, not independent causes.
   if (nrow(losses)) for (i in seq_len(nrow(regions) + 1L)) {
     if (i <= nrow(regions)) {
-      region <- regions[i, ]
-      keys <- cells$key[cells$y >= region$south & cells$y < region$north]
-      l <- losses[losses$cell_key %in% keys, , drop = FALSE]
-      label <- region$region
+      region = regions[i, ]
+      keys = cells$key[cells$y >= region$south & cells$y < region$north]
+      l = losses[losses$cell_key %in% keys, , drop = FALSE]
+      label = region$region
     } else {
-      l <- losses[is.na(losses$cell_key), , drop = FALSE]
-      label <- "outside_pipeline_support"
+      l = losses[is.na(losses$cell_key), , drop = FALSE]
+      label = 'outside_pipeline_support'
     }
     if (nrow(l)) {
-      total <- aggregate(l[c("n_before", "n_after", "n_lost")],
-                         l[c("bundle", "forest_class", "screen")], sum)
-      total$region <- label
-      loss_rows[[length(loss_rows) + 1L]] <- total
+      total = aggregate(l[c('n_before', 'n_after', 'n_lost')],
+                         l[c('bundle', 'forest_class', 'screen')], sum)
+      total$region = label
+      loss_rows[[length(loss_rows) + 1L]] = total
     }
   }
-  bind <- function(x) if (length(x)) do.call(rbind, x) else data.frame()
+  # Cell losses retain strip-level rows; sum repeated bundle/class/cell/screen keys.
+  bind = function(x) if (length(x)) do.call(rbind, x) else data.frame()
   list(structural_coverage = bind(summary_rows), cell_coverage = bind(cell_rows),
        pair_balance = bind(balance_rows),
        dbf_reuse = if (length(reuse_rows)) bind(reuse_rows) else data.frame(
          bundle = character(), subset = character(), region = character(),
          uses_per_dbf = integer(), dbf_partners = integer()),
        wetland_coverage = bind(wetland_rows), screen_losses = bind(loss_rows),
+       screen_losses_cell = losses,
        candidate_support = bind(support_rows), feasibility = bind(feasibility_rows))
 }
 
 # Select bands before extracting: the raster's sum bands never enter R.
-northeast_read_counts <- function(file, pixels, layers) {
-  if (any(!grepl("^(full_75|any_75|full_70)_n_(all|free|snow)$", layers)))
-    stop("The coverage reader accepts count layers only")
-  raster <- terra::rast(file)
-  if (!all(layers %in% names(raster))) stop("Missing retrieval count layers in ", file)
+northeast_read_counts = function(file, pixels, layers) {
+  if (any(!grepl('^(full_75|any_75|full_70)_n_(all|free|snow)$', layers)))
+    stop('The coverage reader accepts count layers only')
+  raster = terra::rast(file)
+  if (!all(layers %in% names(raster))) stop('Missing retrieval count layers in ', file)
   as.data.frame(terra::extract(raster[[layers]], pixels))
 }
 
 # A missing or zero denominator never passes a balance rule.
-northeast_count_ratio <- function(enf, dbf) {
-  ratio <- pmin(enf, dbf) / pmax(enf, dbf)
-  ratio[!is.finite(ratio) | enf < 0 | dbf < 0] <- NA_real_
+northeast_count_ratio = function(enf, dbf) {
+  ratio = pmin(enf, dbf) / pmax(enf, dbf)
+  ratio[!is.finite(ratio) | enf < 0 | dbf < 0] = NA_real_
   ratio
 }
 
@@ -527,149 +531,113 @@ northeast_retrieval_settings = function() {
 }
 
 # Apply the frozen count rules to a panel, without touching or changing partner IDs.
-northeast_count_eligibility <- function(enf_all, dbf_all, enf_panel, dbf_panel, bundle, cell_key) {
-  settings <- northeast_retrieval_settings()
-  setting <- settings[settings$bundle == bundle, ]
-  all_ratio <- northeast_count_ratio(enf_all, dbf_all)
-  panel_ratio <- northeast_count_ratio(enf_panel, dbf_panel)
-  balanced <- is.finite(all_ratio) & enf_all > 0 & dbf_all > 0 & all_ratio >= setting$all_ratio
-  if (!is.na(setting$own_panel_ratio)) balanced <- balanced & is.finite(panel_ratio) & panel_ratio >= setting$own_panel_ratio
-  eligible <- balanced & is.finite(enf_panel) & is.finite(dbf_panel) &
+northeast_count_eligibility = function(enf_all, dbf_all, enf_panel, dbf_panel, bundle, cell_key) {
+  settings = northeast_retrieval_settings()
+  setting = settings[settings$bundle == bundle, ]
+  all_ratio = northeast_count_ratio(enf_all, dbf_all)
+  panel_ratio = northeast_count_ratio(enf_panel, dbf_panel)
+  balanced = is.finite(all_ratio) & enf_all > 0 & dbf_all > 0 & all_ratio >= setting$all_ratio
+  if (!is.na(setting$own_panel_ratio)) balanced = balanced & is.finite(panel_ratio) & panel_ratio >= setting$own_panel_ratio
+  eligible = balanced & is.finite(enf_panel) & is.finite(dbf_panel) &
     enf_panel >= setting$minimum_days & dbf_panel >= setting$minimum_days
-  eligible[is.na(eligible)] <- FALSE
-  before_cell <- eligible
+  eligible[is.na(eligible)] = FALSE
+  before_cell = eligible
   if (setting$cell_year_pairs > 1) {
-    cell_n <- table(cell_key[eligible])
-    eligible <- eligible & cell_key %in% names(cell_n)[cell_n >= setting$cell_year_pairs]
+    cell_n = table(cell_key[eligible])
+    eligible = eligible & cell_key %in% names(cell_n)[cell_n >= setting$cell_year_pairs]
   }
   list(eligible = eligible, before_cell = before_cell, balanced = balanced,
        all_ratio = all_ratio, panel_ratio = panel_ratio)
 }
 
-# Summarize counts before and after selection. Missing retrievals stay visible in the denominator.
-northeast_count_diagnostic <- function(enf, dbf, panel, selection, keep) {
-  all_ratio <- selection$all_ratio[keep]
-  own_ratio <- selection$panel_ratio[keep]
-  summary <- function(x, prefix) setNames(northeast_number_summary(x),
-                                         paste0(prefix, "_", names(northeast_number_summary(x))))
-  share <- function(x, part) ifelse(x$n_all > 0, x[[part]] / x$n_all, NA_real_)
-  data.frame(pairs = sum(keep), balance_failures = sum(keep & !selection$balanced),
-    fraction_failing_balance = if (sum(keep)) mean(!selection$balanced[keep]) else NA_real_,
-    pairs_lost_at_minimum_days = sum(keep & selection$balanced & !selection$before_cell),
-    pairs_lost_at_cell_year_screen = sum(keep & selection$before_cell & !selection$eligible),
-    as.list(c(summary(all_ratio, "all_ratio"), summary(own_ratio, "panel_ratio"),
-      summary((dbf$n_all - enf$n_all)[keep], "dbf_minus_enf_all_days"),
-      summary(enf[[panel]][keep], "enf_panel_days"), summary(dbf[[panel]][keep], "dbf_panel_days"),
-      summary(share(enf, "n_snow")[keep], "enf_snow_share"),
-      summary(share(dbf, "n_snow")[keep], "dbf_snow_share"),
-      summary((share(dbf, "n_snow") - share(enf, "n_snow"))[keep], "dbf_minus_enf_snow_share"),
-      summary((1 - share(enf, "n_snow") - share(enf, "n_free"))[keep], "enf_unknown_share"),
-      summary((1 - share(dbf, "n_snow") - share(dbf, "n_free"))[keep], "dbf_unknown_share"))),
-    check.names = FALSE)
-}
-
 # Count-only coverage over 2001–2009, retaining just nine Boolean masks per pair at a time.
-northeast_retrieval_coverage <- function(pairs, candidates, cells, monthly_files,
+northeast_retrieval_coverage = function(pairs, candidates, cells, monthly_files,
                                          read_counts = northeast_read_counts) {
-  regions <- northeast_coverage_regions()
-  years <- 2001:2009
-  layers <- as.vector(outer(c("full_75", "any_75", "full_70"),
-                            c("n_all", "n_free", "n_snow"), paste, sep = "_"))
-  pixels <- do.call(rbind, lapply(candidates, function(x) x[c("id", "tile", "pixel")]))
-  pixels <- pixels[!duplicated(pixels$id), , drop = FALSE]
-  needed <- unique(unlist(lapply(pairs, function(x) c(x$enf_id, x$dbf_id)), use.names = FALSE))
-  pixels <- pixels[match(needed, pixels$id), , drop = FALSE]
-  if (anyNA(pixels$id)) stop("A fixed pair refers to a missing candidate")
-  files <- monthly_files[monthly_files$tile %in% unique(pixels$tile) & monthly_files$year %in% years, ]
-  file_key <- paste(files$tile, files$year, files$month)
-  expected <- expand.grid(tile = unique(pixels$tile), year = years, month = 1:12)
+  regions = northeast_coverage_regions()
+  years = 2001:2009
+  layers = as.vector(outer(c('full_75', 'any_75', 'full_70'),
+                            c('n_all', 'n_free', 'n_snow'), paste, sep = '_'))
+  pixels = do.call(rbind, lapply(candidates, function(x) x[c('id', 'tile', 'pixel')]))
+  pixels = pixels[!duplicated(pixels$id), , drop = FALSE]
+  needed = unique(unlist(lapply(pairs, function(x) c(x$enf_id, x$dbf_id)), use.names = FALSE))
+  pixels = pixels[match(needed, pixels$id), , drop = FALSE]
+  if (anyNA(pixels$id)) stop('A fixed pair refers to a missing candidate')
+  files = monthly_files[monthly_files$tile %in% unique(pixels$tile) & monthly_files$year %in% years, ]
+  file_key = paste(files$tile, files$year, files$month)
+  expected = expand.grid(tile = unique(pixels$tile), year = years, month = 1:12)
   if (anyDuplicated(file_key) || !setequal(file_key, paste(expected$tile, expected$year, expected$month)))
-    stop("Retrieval coverage needs exactly 108 monthly files for each paired tile")
-  configurations <- list()
+    stop('Retrieval coverage needs exactly 108 monthly files for each paired tile')
+  configurations = list()
   for (bundle in names(pairs)) {
-    versions <- c("full_75", "any_75")
-    if (bundle == "stricter") versions <- c(versions, "full_70")
-    subsets <- northeast_pair_subsets(pairs[[bundle]], bundle)
-    for (subset in names(subsets)) for (version in versions) for (panel in c("all", "free", "snow")) {
-      configurations[[length(configurations) + 1L]] <- list(bundle = bundle, subset = subset,
+    versions = c('full_75', 'any_75')
+    if (bundle == 'stricter') versions = c(versions, 'full_70')
+    subsets = northeast_pair_subsets(pairs[[bundle]], bundle)
+    for (subset in names(subsets)) for (version in versions) for (panel in c('all', 'free', 'snow')) {
+      configurations[[length(configurations) + 1L]] = list(bundle = bundle, subset = subset,
         version = version, panel = panel, pairs = subsets[[subset]],
         enf = match(subsets[[subset]]$enf_id, pixels$id), dbf = match(subsets[[subset]]$dbf_id, pixels$id))
     }
   }
-  coverage_rows <- diagnostic_rows <- cell_year_rows <- list()
+  coverage_rows = list()
   for (month in 1:12) {
-    selected <- lapply(configurations, function(x) matrix(FALSE, nrow(x$pairs), length(years)))
+    selected = lapply(configurations, function(x) matrix(FALSE, nrow(x$pairs), length(years)))
     for (year_index in seq_along(years)) {
-      year <- years[year_index]
-      counts <- matrix(NA_real_, nrow(pixels), length(layers), dimnames = list(NULL, layers))
+      year = years[year_index]
+      counts = matrix(NA_real_, nrow(pixels), length(layers), dimnames = list(NULL, layers))
       for (tile in unique(pixels$tile)) {
-        i <- which(pixels$tile == tile)
-        file <- files$file[match(paste(tile, year, month), file_key)]
-        v <- read_counts(file, pixels$pixel[i], layers)
-        if (!identical(names(v), layers) || nrow(v) != length(i)) stop("Unexpected count-reader result")
-        counts[i, ] <- as.matrix(v)
+        i = which(pixels$tile == tile)
+        file = files$file[match(paste(tile, year, month), file_key)]
+        v = read_counts(file, pixels$pixel[i], layers)
+        if (!identical(names(v), layers) || nrow(v) != length(i)) stop('Unexpected count-reader result')
+        counts[i, ] = as.matrix(v)
       }
-      if (any(is.finite(counts) & (counts < 0 | counts != round(counts)))) stop("Invalid retrieval count")
-      for (version in c("full_75", "any_75", "full_70")) {
-        total <- counts[, paste0(version, "_n_all")]
-        parts <- counts[, paste0(version, "_n_free")] + counts[, paste0(version, "_n_snow")]
-        if (any(parts > total, na.rm = TRUE)) stop("Snow counts exceed all-days counts")
+      if (any(is.finite(counts) & (counts < 0 | counts != round(counts)))) stop('Invalid retrieval count')
+      for (version in c('full_75', 'any_75', 'full_70')) {
+        total = counts[, paste0(version, '_n_all')]
+        parts = counts[, paste0(version, '_n_free')] + counts[, paste0(version, '_n_snow')]
+        if (any(parts > total, na.rm = TRUE)) stop('Snow counts exceed all-days counts')
       }
       for (j in seq_along(configurations)) {
-        cfg <- configurations[[j]]
-        columns <- paste0(cfg$version, "_", c("n_all", "n_free", "n_snow"))
-        enf <- as.data.frame(counts[cfg$enf, columns, drop = FALSE])
-        dbf <- as.data.frame(counts[cfg$dbf, columns, drop = FALSE])
-        names(enf) <- names(dbf) <- c("n_all", "n_free", "n_snow")
-        panel <- paste0("n_", cfg$panel)
+        cfg = configurations[[j]]
+        columns = paste0(cfg$version, '_', c('n_all', 'n_free', 'n_snow'))
+        enf = as.data.frame(counts[cfg$enf, columns, drop = FALSE])
+        dbf = as.data.frame(counts[cfg$dbf, columns, drop = FALSE])
+        names(enf) = names(dbf) = c('n_all', 'n_free', 'n_snow')
+        panel = paste0('n_', cfg$panel)
         # The stricter cell-year gate is applied within each diagnostic subset;
         # wetland rows below then describe that eligible sample without rematching.
-        selection <- northeast_count_eligibility(enf$n_all, dbf$n_all, enf[[panel]], dbf[[panel]],
+        selection = northeast_count_eligibility(enf$n_all, dbf$n_all, enf[[panel]], dbf[[panel]],
                                                  cfg$bundle, cfg$pairs$cell_key)
-        selected[[j]][, year_index] <- selection$eligible
-        prefix <- data.frame(bundle = cfg$bundle, subset = cfg$subset, version = cfg$version,
-                             panel = cfg$panel, month = month, year = year)
-        for (stage in c("before", "after")) {
-          keep <- if (stage == "before") rep(TRUE, nrow(cfg$pairs)) else selection$eligible
-          diagnostic_rows[[length(diagnostic_rows) + 1L]] <- cbind(prefix, stage = stage,
-            northeast_count_diagnostic(enf, dbf, panel, selection, keep))
-        }
-        # Include zero-pair cells so a missing cell-year cannot be mistaken for absence from the domain.
-        cell_n <- table(factor(cfg$pairs$cell_key[selection$eligible], levels = cells$key))
-        cell_year_rows[[length(cell_year_rows) + 1L]] <- cbind(prefix,
-          data.frame(cell_key = cells$key, cell_x = cells$x, cell_y = cells$y,
-                     eligible_pairs = as.integer(cell_n)))
+        selected[[j]][, year_index] = selection$eligible
       }
     }
     for (j in seq_along(configurations)) {
-      cfg <- configurations[[j]]
-      settings <- northeast_retrieval_settings()
-      thresholds <- settings[settings$bundle == cfg$bundle, c('display_pairs', 'display_cells')]
+      cfg = configurations[[j]]
+      settings = northeast_retrieval_settings()
+      thresholds = settings[settings$bundle == cfg$bundle, c('display_pairs', 'display_cells')]
       for (i in seq_len(nrow(regions))) {
-        region <- regions[i, ]
-        keys <- cells$key[cells$y >= region$south & cells$y < region$north]
-        for (wetland in c("all", "neither", "one", "both", "unknown")) {
-          keep <- cfg$pairs$cell_key %in% keys
-          if (wetland != "all") keep <- keep & cfg$pairs$wetland_stratum == wetland
-          eligible <- selected[[j]][keep, , drop = FALSE]
-          p <- cfg$pairs[keep, , drop = FALSE]
-          represented <- rowSums(eligible) > 0
-          n_pairs <- sum(represented)
-          n_cells <- length(unique(p$cell_key[represented]))
-          years_used <- years[colSums(eligible) > 0]
-          coverage_rows[[length(coverage_rows) + 1L]] <- data.frame(bundle = cfg$bundle,
+        region = regions[i, ]
+        keys = cells$key[cells$y >= region$south & cells$y < region$north]
+        for (wetland in c('all', 'neither', 'one', 'both', 'unknown')) {
+          keep = cfg$pairs$cell_key %in% keys
+          if (wetland != 'all') keep = keep & cfg$pairs$wetland_stratum == wetland
+          eligible = selected[[j]][keep, , drop = FALSE]
+          p = cfg$pairs[keep, , drop = FALSE]
+          represented = rowSums(eligible) > 0
+          n_pairs = sum(represented)
+          n_cells = length(unique(p$cell_key[represented]))
+          years_used = years[colSums(eligible) > 0]
+          coverage_rows[[length(coverage_rows) + 1L]] = data.frame(bundle = cfg$bundle,
             subset = cfg$subset, version = cfg$version, panel = cfg$panel, month = month,
             region = region$region, wetland_stratum = wetland, distinct_pairs = n_pairs,
             unique_dbf = length(unique(p$dbf_id[represented])), cells_with_pairs = n_cells,
             cells_without_pairs = length(keys) - n_cells, pair_years = sum(eligible),
-            years = length(years_used), years_present = paste(years_used, collapse = ";"),
-            years_missing = paste(setdiff(years, years_used), collapse = ";"),
-            coverage = if (n_pairs >= thresholds$display_pairs && n_cells >= thresholds$display_cells) "coverage threshold met" else "thin")
+            years = length(years_used), years_present = paste(years_used, collapse = ';'),
+            years_missing = paste(setdiff(years, years_used), collapse = ';'),
+            coverage = if (n_pairs >= thresholds$display_pairs && n_cells >= thresholds$display_cells) 'coverage threshold met' else 'thin')
         }
       }
     }
   }
-  list(retrieval_coverage = do.call(rbind, coverage_rows),
-       retrieval_diagnostics = do.call(rbind, diagnostic_rows),
-       retrieval_cell_year = do.call(rbind, cell_year_rows))
+  list(retrieval_coverage = do.call(rbind, coverage_rows))
 }

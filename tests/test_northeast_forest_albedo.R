@@ -26,8 +26,13 @@ stopifnot(identical(northeast_wetland(c(TRUE, FALSE, FALSE), c(FALSE, FALSE, TRU
 joined = tile_template('h11v04')
 ext(joined) = ext(xmin(joined), xmax(tile_template('h13v04')), ymin(joined), ymax(joined))
 ncol(joined) = 7200
-stopifnot(!northeast_search_complete(-75, 40.01, 5000, 3, joined),
-          northeast_search_complete(-75, 40.1, 5000, 3, joined))
+boundary = data.frame(bundle = c('main', 'stricter', 'looser'), distance = c(5000, 3000, 10000),
+                      width = c(3, 5, 3), below = c(40.0510, 40.0372, 40.0960),
+                      above = c(40.0516, 40.0376, 40.0964))
+for (i in seq_len(nrow(boundary))) {
+  stopifnot(!northeast_search_complete(-75, boundary$below[i], boundary$distance[i], boundary$width[i], joined),
+            northeast_search_complete(-75, boundary$above[i], boundary$distance[i], boundary$width[i], joined))
+}
 join_lon = xmax(tile_template('h11v04')) / (R_EARTH * cos(45 * pi / 180)) * 180 / pi
 stopifnot(northeast_search_complete(join_lon, 45, 5000, 3, joined))
 
@@ -117,5 +122,76 @@ stopifnot(sum(mask) == 8, !mask[2, 2])
 values(water)[cellFromRowCol(water, 2, 2)] = NA
 writeRaster(water, water_file, overwrite = TRUE)
 stopifnot(!northeast_water_strip(rast(water_file), template, 1, 3)[1, 1])
+
+# A small map outside the production footprint exercises bounds derived from cells,
+# native pixel IDs, tile joins, strip halos and explicit outside-domain ENF losses.
+degree = R_EARTH * pi / 180
+template = rast(nrows = 36, ncols = 40, xmin = 0.8 * degree, xmax = 1.2 * degree,
+                ymin = 0.32 * degree, ymax = 0.68 * degree, crs = SIN_CRS)
+cells = data.frame(x = 0.5, y = 0.5, key = '0.5 0.5')
+bundles = data.frame(bundle = c('main', 'stricter', 'looser'), width = c(3L, 5L, 3L),
+                     neighbour_years = c(9L, 9L, 7L), water_width = c(3L, 5L, 1L),
+                     relief_m = c(100, 50, 200), distance_m = c(5000, 3000, 10000))
+classes = matrix(rep(c(1, 4), each = 18), nrow = 36, ncol = 40)
+classes[2, 3] = 5; classes[3, 4] = NA
+for (i in seq_len(nrow(files))) {
+  tile_number = match(files$tile[i], tiles)
+  r = rast(nrows = 36, ncols = 20, nlyrs = 3, crs = SIN_CRS,
+           xmin = xmin(template) + (tile_number - 1) * 0.2 * degree,
+           xmax = xmin(template) + tile_number * 0.2 * degree,
+           ymin = ymin(template), ymax = ymax(template))
+  names(r) = c('LC_Type1', 'QC', 'LC_Prop3')
+  columns = seq_len(20) + (tile_number - 1) * 20
+  values(r) = cbind(as.vector(t(classes[, columns])), 0, 10)
+  writeRaster(r, files$file[i], overwrite = TRUE)
+}
+water = disagg(template, fact = 2); values(water) = 0
+writeRaster(water, water_file, overwrite = TRUE)
+dem = rast(nrows = 20, ncols = 20, xmin = -0.5, xmax = 1.5, ymin = -0.5, ymax = 1.5, crs = 'EPSG:4326')
+values(dem) = 100
+dem_file = file.path(directory, 'dem.tif'); writeRaster(dem, dem_file)
+inputs = list(land_cover = files, water = water_file, dem = dem_file)
+selection = northeast_candidates(inputs, cells, bundles, tiles, years, template, block_rows = 8L)
+whole = northeast_candidates(inputs, cells, bundles, tiles, years, template, block_rows = nrow(template))
+close(selection$candidates, whole$candidates, tolerance = 1e-12)
+for (bundle in bundles$bundle) {
+  selected = selection$candidates[[bundle]]
+  stopifnot(identical(selected$id, whole$candidates[[bundle]]$id), !anyDuplicated(selected$id),
+            all(selected$in_domain | selected$forest_class == 'DBF'),
+            any(selected$forest_class == 'ENF'), any(!selected$in_domain))
+  decoded = do.call(rbind, strsplit(selected$id, '_', fixed = TRUE))
+  stopifnot(identical(decoded[, 1], selected$tile), all(as.integer(decoded[, 2]) == selected$pixel))
+  for (tile in tiles) {
+    at = which(decoded[, 1] == tile)
+    r = rast(files$file[match(tile, files$tile)])
+    xy = xyFromCell(r, as.integer(decoded[at, 2]))
+    latitude = xy[, 2] / R_EARTH
+    recovered = cbind(lon = xy[, 1] / (R_EARTH * cos(latitude)) * 180 / pi, lat = latitude * 180 / pi)
+    stopifnot(max(abs(recovered - as.matrix(selected[at, c('lon', 'lat')]))) <= 1e-9)
+    # These four centres straddle both the tile join and a strip join.
+    edge_column = if (tile == tiles[1]) 20L else 1L
+    stopifnot(all(((c(24L, 25L) - 1L) * 20L + edge_column) %in% selected$pixel[at]))
+  }
+  losses = selection$losses[selection$losses$bundle == bundle, ]
+  losses$cell_key[is.na(losses$cell_key)] = 'outside'
+  stopifnot(all(losses$n_before == losses$n_after + losses$n_lost),
+            sum(losses$n_lost[losses$screen == 'enf_scope']) > 0)
+  for (key in unique(losses$cell_key)) {
+    cell_losses = losses[losses$cell_key == key, ]
+    stopifnot(sum(cell_losses$n_after[cell_losses$screen == 'forest_class']) ==
+              sum(cell_losses$n_before[cell_losses$screen == 'enf_scope']))
+    for (forest in c('ENF', 'DBF')) {
+      by_class = cell_losses[cell_losses$forest_class == forest, ]
+      if (!nrow(by_class)) next
+      totals = aggregate(by_class[c('n_before', 'n_after', 'n_lost')],
+                         list(screen = by_class$screen), sum)
+      totals = totals[match(unique(by_class$screen), totals$screen), ]
+      retained = selected$forest_class == forest & ifelse(selected$in_domain, selected$cell_key, 'outside') == key
+      stopifnot(all(head(totals$n_after, -1) == tail(totals$n_before, -1)),
+                tail(totals$n_after, 1) == sum(retained),
+                totals$n_before[1] - sum(totals$n_lost) == sum(retained))
+    }
+  }
+}
 unlink(directory, recursive = TRUE)
 cat('test_northeast_forest_albedo: all tests passed\n')

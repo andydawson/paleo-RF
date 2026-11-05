@@ -154,26 +154,29 @@ settings_tag = function(need_zenith = TRUE)
          '; full inversions ', paste(FULL_QA, collapse = ' '), '; from ', FIRST_DAY,
          if (need_zenith) '; noon zenith from the data' else '; noon zenith taken as 0 (July 2005 test only)')
 SETTINGS_TAG = settings_tag(TRUE)
-# The code that makes a file: this script's own SHA-256, written into every monthly file next to
-# the settings tag and shared-helper SHA-256. A file is reused only if all match, so a corrected script never picks up
-# tiles made by an earlier version of itself. (Run with Rscript, the script is the --file
+# The code that makes a file: one SHA-256 over this script's bytes followed by the shared helpers'
+# bytes, written into every monthly file next to the settings tag. Both must match for reuse,
+# so a change in either code file cannot reuse earlier tiles. (Run with Rscript, the script is the --file
 # argument; sourced, e.g. by the tests, it is the file source() is reading.)
 SCRIPT_FILE = local({
   reading = Filter(function(f) exists('ofile', envir = f, inherits = FALSE), sys.frames())  # inside source()
   if (length(reading)) get('ofile', envir = reading[[length(reading)]])
   else sub('^--file=', '', grep('^--file=', commandArgs(FALSE), value = TRUE))
 })
+# Keep the byte order explicit: historical scripts contained the helpers in the same file.
+code_sha256 = function(script_file, helper_file = MODIS_HELPERS_FILE) {
+  bytes = c(readBin(script_file, 'raw', file.size(script_file)),
+            readBin(helper_file, 'raw', file.size(helper_file)))
+  as.vector(as.character(openssl::sha256(bytes)))   # as.vector: drop the 'hash' class
+}
 SCRIPT_SHA = if (length(SCRIPT_FILE) == 1 && !is.na(SCRIPT_FILE) && file.exists(SCRIPT_FILE))
-  as.vector(as.character(openssl::sha256(file(SCRIPT_FILE)))) else 'unknown'   # as.vector: drop the 'hash' class
-MODIS_HELPERS_SHA = as.vector(as.character(openssl::sha256(file(MODIS_HELPERS_FILE))))
+  code_sha256(SCRIPT_FILE) else 'unknown'
 # Without its SHA-256 the build could not tell its own files from those of another version, so the
 # steps that write or combine monthly files stop first (Chris, 2026-10-21).
 require_script_sha = function() {
   if (!grepl('^[0-9a-f]{64}$', SCRIPT_SHA))
     stop('cannot tell which version of this script is running (its SHA-256 is "', SCRIPT_SHA,
          '"); run it with Rscript tools/prepare_bluesky_albedo.R from the repository root')
-  if (!grepl('^[0-9a-f]{64}$', MODIS_HELPERS_SHA))
-    stop('cannot tell which version of the shared MODIS helpers is running')
 }
 # Older versions of this script whose monthly files the cell step still accepts, because each was
 # checked to compute the same numbers as this version (Chris, 2026-10-21). Any other version's
@@ -540,8 +543,6 @@ process_tile_month = function(tile, month, day_dir, out_dir, need_zenith = TRUE)
     if (!identical(build_tag(out, 'paleoRF_script_sha256'), SCRIPT_SHA))
       stop(out, ' is stale: it was made by another version of this script (SHA-256 ',
            build_tag(out, 'paleoRF_script_sha256'), ', now ', SCRIPT_SHA, '); move it away first')
-    if (!identical(build_tag(out, 'paleoRF_modis_helpers_sha256'), MODIS_HELPERS_SHA))
-      stop(out, ' is stale: it was made by another version of the shared MODIS helpers')
     return(out)
   }
   days = month_days(month)
@@ -596,7 +597,6 @@ process_tile_month = function(tile, month, day_dir, out_dir, need_zenith = TRUE)
   names(r) = TILE_LAYERS
   # The tags travel with the file, so a later build that reuses it can still record how it was made.
   metags(r) = c(paleoRF_build = settings_tag(need_zenith), paleoRF_script_sha256 = SCRIPT_SHA,
-                paleoRF_modis_helpers_sha256 = MODIS_HELPERS_SHA,
                 paleoRF_created = format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z'),
                 paleoRF_out_of_range = as.character(out_of_range),
                 paleoRF_with_albedo = as.character(with_albedo), paleoRF_no_diffuse = as.character(no_diffuse))
@@ -641,14 +641,12 @@ days_of_file = function(file) {
   length(month_days(as.Date(sprintf('%s-%s-01', m[2], m[3]))))
 }
 output_problems = function(file, tag = SETTINGS_TAG, template = tile_template(tile_of(file)), max_days = days_of_file(file),
-                           script_sha = SCRIPT_SHA, helper_sha = MODIS_HELPERS_SHA) {
+                           script_sha = SCRIPT_SHA) {
   r = tryCatch(rast(file), error = function(e) NULL)
   if (is.null(r)) return('cannot be opened')
   if (!identical(names(r), TILE_LAYERS)) return('does not have the expected layers')
   if (!identical(build_tag(file), tag)) return('was made with other settings')
   if (!identical(build_tag(file, 'paleoRF_script_sha256'), script_sha)) return('was made by another version of the build script')
-  if (!identical(build_tag(file, 'paleoRF_modis_helpers_sha256'), helper_sha))
-    return('was made by another version of the shared MODIS helpers')
   if (!grepl('Sinusoidal', crs(r)) || !grepl('6371007.181', crs(r))) return('is not on the MODIS sinusoidal projection')
   if (nrow(r) != nrow(template) || ncol(r) != ncol(template) ||
       max(abs(as.vector(ext(r)) - as.vector(ext(template)))) > 0.01) return('is not on its tile grid')
@@ -735,8 +733,7 @@ write_build_record = function(month, record_dir, n_files, tiles, delivery, tile_
   # section, so the record of the first build survives.
   con = file(file.path(record_dir, 'build.txt'), open = 'a'); on.exit(close(con))
   writeLines(c('', paste('=== built:', format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')),
-               paste('code:', script, 'commit', commit[1], 'sha256', SCRIPT_SHA),
-               paste('shared code:', MODIS_HELPERS_FILE, 'sha256', MODIS_HELPERS_SHA),
+               paste('code:', script, 'then', MODIS_HELPERS_FILE, 'commit', commit[1], 'combined sha256', SCRIPT_SHA),
                paste('settings:', SETTINGS_TAG),
                paste('day files checked against the SHA-256 list:', n_files),
                delivery,
@@ -834,13 +831,6 @@ tile_cell_totals = function(tile, cell_keys, monthly_dir, months, tag, template 
     stop(length(stale), ' monthly files were made by another version of this script, not one listed in ACCEPTED_OLDER_SHAS, ',
          'or do not say which, e.g. ', stale[1], ' (SHA-256 ', if (is.na(stale_sha)) 'none recorded' else stale_sha, ', now ', SCRIPT_SHA, ')')
   }
-  # Historical accepted scripts contained the helpers themselves. Only files from the extracted
-  # version need the separate helper hash; a helper edit must not silently reuse current files.
-  wrong_helpers = tf$file[vapply(tf$file, function(f)
-    identical(build_tag(f, 'paleoRF_script_sha256'), SCRIPT_SHA) &&
-      !identical(build_tag(f, 'paleoRF_modis_helpers_sha256'), MODIS_HELPERS_SHA), TRUE)]
-  if (length(wrong_helpers)) stop(length(wrong_helpers), ' monthly files were made by another version of the shared MODIS helpers, e.g. ',
-                                 wrong_helpers[1])
   ll = pixel_lonlat(template)
   cell = paste(floor(ll[, 1]) + 0.5, floor(ll[, 2]) + 0.5)
   keep = tile_land(tf$file) & cell %in% cell_keys
@@ -969,8 +959,7 @@ if (sys.nframe() == 0) {
     files = list.files(monthly_dir, pattern = '^h\\d{2}v\\d{2}_\\d{4}_\\d{2}\\.tif$', full.names = TRUE)
     writeLines(c(paste('cell table:', OUT_FILE, 'written', format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')),
                  paste('land rule:', LAND_RULE), paste('settings:', SETTINGS_TAG),
-                 paste('cell step script sha256:', SCRIPT_SHA),
-                 paste('cell step shared helpers sha256:', MODIS_HELPERS_SHA),
+                 paste('cell step code sha256 (script then shared helpers):', SCRIPT_SHA),
                  script_versions(files)),
                sub('\\.csv$', '_provenance.txt', OUT_FILE))
 

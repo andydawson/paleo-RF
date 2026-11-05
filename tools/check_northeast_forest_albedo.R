@@ -28,7 +28,7 @@ dir.create(temp_dir, showWarnings = FALSE)
 terraOptions(memmax = 0.25, memfrac = 0.1, parallel = FALSE, tempdir = temp_dir, progress = 0)
 
 # These are the pipeline's own cell centres, not a rectangular replacement grid.
-cells = readRDS(file.path(SHARED_DATA, 'elev_interp_cells.RDS'))[, c('x', 'y')]
+cells = read_input(run, path_file(paths, 'elevation_cache'))[, c('x', 'y')]
 cells = unique(cells[cells$x >= -80 & cells$x < -66 & cells$y >= 40 & cells$y < 48, ])
 cells = cells[order(cells$y, cells$x), ]
 cells$key = paste(cells$x, cells$y)
@@ -79,7 +79,7 @@ stopifnot(identical(readRDS(pair_file), pairs), identical(unname(tools::md5sum(p
 # Paths, sizes and modification times identify inputs without scanning albedo payloads.
 # The native GMTED component files are listed explicitly; its grid is never moved.
 files = c(inputs$land_cover$file, inputs$acquisition, inputs$monthly$file, inputs$water,
-          list.files(inputs$dem, full.names = TRUE), file.path(SHARED_DATA, 'elev_interp_cells.RDS'))
+          list.files(inputs$dem, full.names = TRUE), path_file(paths, 'elevation_cache'))
 info = file.info(files)
 write_output(run, data.frame(file = files, bytes = info$size, modified = as.character(info$mtime)),
              file.path(run_dir, 'inputs.csv'), write.csv, row.names = FALSE)
@@ -93,14 +93,7 @@ write_output(run, northeast_retrieval_settings(), file.path(run_dir, 'retrieval_
 run_record(run, 'session', capture.output(sessionInfo()))
 write_output(run, c('Coverage only. No albedo values or sums have been read.',
              paste('Fixed pair table MD5:', pair_md5),
-             'main, stricter and looser are joint stress tests; no setting was relaxed automatically.',
-             'full_75 is primary; any_75 is lower quality throughout; full_70 is a separate stricter check.',
-             'Send feasibility.csv and the coverage tables to Chris before starting stage 2.',
-             'Unknown wetland flags remain unknown. Candidate counts use their own pipeline cells;',
-             'pair latitude bands and halves use the ENF cell. Outside-cell DBFs are search support.',
-             'Search boundaries use the conservative geographic bounding rectangle of each search circle.',
-             'Reciprocal pairs compare against eligible ENFs in the target pipeline cells.',
-             'The stricter unflagged subset requires known, unflagged 3 x 3 blocks for both members.'),
+             'Send feasibility.csv and the coverage tables to Chris before starting stage 2.'),
              file.path(out_dir, 'coverage_notes.txt'), writeLines)
 print(reports$feasibility)
 run_finish(run)

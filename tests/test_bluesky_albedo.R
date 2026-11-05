@@ -4,6 +4,19 @@ suppressMessages(source("tools/prepare_bluesky_albedo.R"))
 WORKERS <- 1                                      # Small fixtures do not need forked workers.
 near <- function(a, b, tol = 1e-12) isTRUE(all(abs(a - b) < tol))
 
+# One digest covers exact script bytes then helper bytes, including line endings.
+code_dir = file.path(tempdir(), 'combined_code_test'); dir.create(code_dir, showWarnings = FALSE)
+script_file = file.path(code_dir, 'script.R'); helper_file = file.path(code_dir, 'helper.R')
+writeBin(charToRaw('script\r\n'), script_file); writeBin(charToRaw('helper\n'), helper_file)
+original_sha = code_sha256(script_file, helper_file)
+writeBin(charToRaw('script\n'), script_file)
+changed_script_sha = code_sha256(script_file, helper_file)
+writeBin(charToRaw('script\r\n'), script_file); writeBin(charToRaw('helper\r\n'), helper_file)
+changed_helper_sha = code_sha256(script_file, helper_file)
+stopifnot(original_sha == 'b6b10e8f71857cc5fe70f95eec3d64a7acd80e54a397ee885fade03c718f75ee',
+          changed_script_sha != original_sha, changed_helper_sha != original_sha,
+          identical(SCRIPT_SHA, code_sha256('tools/prepare_bluesky_albedo.R', MODIS_HELPERS_FILE)))
+
 # Blue-sky mix: f = 0 gives black-sky, f = 1 white-sky, and values in between stay between them.
 stopifnot(
   near(blue_sky(0.10, 0.30, 0), 0.10), near(blue_sky(0.10, 0.30, 1), 0.30),
@@ -348,16 +361,15 @@ consistent <- function() {
               list(land_days = floor(n_all / 2), shore_days = floor(n_all / 4), read_days = n_all))
   r <- rast(lapply(TILE_LAYERS, function(n) setValues(tpl, layers[[n]]))); names(r) <- TILE_LAYERS; r
 }
-write_tile <- function(r, name, tag = SETTINGS_TAG, sha = SCRIPT_SHA, helper_sha = MODIS_HELPERS_SHA) {   # tags set last: changing a layer drops them
-  metags(r) <- c(paleoRF_build = tag, paleoRF_script_sha256 = sha,
-                 if (!is.na(helper_sha)) c(paleoRF_modis_helpers_sha256 = helper_sha)); f <- file.path(tmp, name)
-  writeRaster(r, f, overwrite = TRUE, gdal = "COMPRESS=DEFLATE", datatype = "FLT4S"); f
+write_tile = function(r, name, tag = SETTINGS_TAG, sha = SCRIPT_SHA) {   # tags set last: changing a layer drops them
+  metags(r) = c(paleoRF_build = tag, paleoRF_script_sha256 = sha); f = file.path(tmp, name)
+  writeRaster(r, f, overwrite = TRUE, gdal = 'COMPRESS=DEFLATE', datatype = 'FLT4S'); f
 }
 good <- write_tile(consistent(), "good.tif")
 old_tag <- write_tile(consistent(), "old.tif", tag = "reduction 1")
 old_script <- write_tile(consistent(), "old_script.tif", sha = "0123abcd")
-old_helpers <- write_tile(consistent(), "old_helpers.tif", helper_sha = strrep("cd", 32))
-missing_helpers <- write_tile(consistent(), "missing_helpers.tif", helper_sha = NA_character_)
+changed_script = write_tile(consistent(), 'changed_script.tif', sha = changed_script_sha)
+changed_helpers = write_tile(consistent(), 'changed_helpers.tif', sha = changed_helper_sha)
 r <- consistent(); r[["full_75_n_snow"]] <- r[["full_75_n_all"]] + 1; bad_layer <- write_tile(r, "bad_layer.tif")   # not the last layer
 r <- consistent(); r[["full_70_n_all"]] <- r[["full_70_n_all"]] + 1; r[["full_70_n_free"]] <- r[["full_70_n_free"]] + 1
 not_nested <- write_tile(r, "not_nested.tif")
@@ -380,10 +392,10 @@ problem <- function(f, ...) paste(output_problems(f, ...), collapse = "; ")
 stopifnot(valid_output(good, template = tpl),
           problem(old_tag, template = tpl) == "was made with other settings",
           problem(old_script, template = tpl) == "was made by another version of the build script",
-          problem(old_helpers, template = tpl) == "was made by another version of the shared MODIS helpers",
-          problem(missing_helpers, template = tpl) == "was made by another version of the shared MODIS helpers",
-          SCRIPT_SHA != "unknown", nchar(SCRIPT_SHA) == 64,
-          MODIS_HELPERS_SHA != "unknown", nchar(MODIS_HELPERS_SHA) == 64,
+          problem(changed_script, template = tpl) == 'was made by another version of the build script',
+          problem(changed_helpers, template = tpl) == 'was made by another version of the build script',
+          SCRIPT_SHA != 'unknown', nchar(SCRIPT_SHA) == 64,
+          is.na(build_tag(good, 'paleoRF_modis_helpers_sha256')),
           grepl("full_75 snowy plus snow-free days exceed all days", problem(bad_layer, template = tpl)),
           problem(not_nested, template = tpl) == "the versions do not nest",
           grepl("any_75 albedo sums outside 0 to their number of days", problem(too_bright, template = tpl)),   # and its unknown part goes negative
@@ -403,9 +415,9 @@ stale_msg <- tryCatch(process_tile_month("h00v00", as.Date("2005-07-01"), tmp, r
 invisible(file.copy(good, file.path(reuse_dir, "h00v01_2005_07.tif")))
 stopifnot(grepl("is stale: it was made by another version of this script", stale_msg),
           identical(process_tile_month("h00v01", as.Date("2005-07-01"), tmp, reuse_dir), file.path(reuse_dir, "h00v01_2005_07.tif")))
-invisible(file.copy(old_helpers, file.path(reuse_dir, "h00v02_2005_07.tif")))
-helper_msg <- tryCatch(process_tile_month("h00v02", as.Date("2005-07-01"), tmp, reuse_dir), error = conditionMessage)
-stopifnot(grepl("is stale: it was made by another version of the shared MODIS helpers", helper_msg))
+invisible(file.copy(changed_helpers, file.path(reuse_dir, 'h00v02_2005_07.tif')))
+helper_msg = tryCatch(process_tile_month('h00v02', as.Date('2005-07-01'), tmp, reuse_dir), error = conditionMessage)
+stopifnot(grepl('is stale: it was made by another version of this script', helper_msg))
 
 # Without its own SHA-256 the script refuses to build or combine monthly files (Chris,
 # 2026-10-21): each entry point stops before doing anything else. The folders point at an empty
@@ -436,8 +448,7 @@ stopifnot(!is.null(attr(test_step, "status")), any(grepl("cannot tell which vers
 # Publishing: a new monthly file is checked under its temporary name and renamed only if it passes;
 # a file that fails is left as ".tmp.tif" and the tile fails.
 pub <- file.path(tmp, "publish"); dir.create(pub)
-tagged <- function(r) { metags(r) <- c(paleoRF_build = SETTINGS_TAG, paleoRF_script_sha256 = SCRIPT_SHA,
-                                          paleoRF_modis_helpers_sha256 = MODIS_HELPERS_SHA); r }   # as process_tile_month does
+tagged = function(r) { metags(r) = c(paleoRF_build = SETTINGS_TAG, paleoRF_script_sha256 = SCRIPT_SHA); r }   # as process_tile_month does
 ok_out <- publish_tile(tagged(consistent()), file.path(pub, "h00v00_2005_07.tif"), SETTINGS_TAG, tpl)
 r <- consistent(); r[["full_75_n_snow"]] <- r[["full_75_n_all"]] + 1
 bad_msg <- tryCatch(publish_tile(tagged(r), file.path(pub, "h00v01_2005_07.tif"), SETTINGS_TAG, tpl), error = conditionMessage)
@@ -462,14 +473,13 @@ pixel <- function(n_all = 0, n_snow = 0, n_free = 0, s_all = 0, s_snow = 0, s_fr
   c(n_all = n_all, n_snow = n_snow, n_free = n_free, s_all = s_all, s_snow = s_snow, s_free = s_free, land_days = land, shore_days = shore, read_days = read)
 # pixels: one pixel() per cell of the tile, row by row from the top left; sha NA writes no script
 # SHA-256, as files made before the files recorded it.
-write_monthly <- function(tile, year, pixels, dir = cdir, sha = SCRIPT_SHA, helper_sha = MODIS_HELPERS_SHA) {
-  m <- do.call(rbind, pixels)
-  layers <- lapply(TILE_LAYERS, function(n) { sum_name <- sub("^(full|any)_[^_]+_", "", n)
-    setValues(templates[[tile]], m[, if (n %in% c("land_days", "shore_days", "read_days")) n else sum_name]) })
-  r <- rast(layers); names(r) <- TILE_LAYERS
-  metags(r) <- c(paleoRF_build = SETTINGS_TAG, if (!is.na(sha)) c(paleoRF_script_sha256 = sha),
-                 if (!is.na(helper_sha)) c(paleoRF_modis_helpers_sha256 = helper_sha))
-  writeRaster(r, file.path(dir, sprintf("%s_%d_07.tif", tile, year)), overwrite = TRUE)
+write_monthly = function(tile, year, pixels, dir = cdir, sha = SCRIPT_SHA) {
+  m = do.call(rbind, pixels)
+  layers = lapply(TILE_LAYERS, function(n) { sum_name = sub('^(full|any)_[^_]+_', '', n)
+    setValues(templates[[tile]], m[, if (n %in% c('land_days', 'shore_days', 'read_days')) n else sum_name]) })
+  r = rast(layers); names(r) = TILE_LAYERS
+  metags(r) = c(paleoRF_build = SETTINGS_TAG, if (!is.na(sha)) c(paleoRF_script_sha256 = sha))
+  writeRaster(r, file.path(dir, sprintf('%s_%d_07.tif', tile, year)), overwrite = TRUE)
 }
 none <- pixel()
 write_monthly("h01v01", 2005, list(pixel(1, 0, 1, 0.15, 0, 0.15, land = 1, read = 1), none, none, none))
@@ -510,11 +520,11 @@ stopifnot(missing_month_stops, wrong_tag_stops, dead_stops, error_stops,
 # Only files made by this version of the script are accepted at the cell step (Chris, 2026-10-21):
 # the same four files, but one without a script SHA-256 (made before the files recorded it) or
 # one with another SHA-256 among them, stop it and name the file; the tagged ones alone pass.
-script_check <- function(sha, helper_sha = MODIS_HELPERS_SHA) {
-  d <- file.path(tmp, paste0("monthly_sha_", if (is.na(sha)) "none" else sha)); unlink(d, recursive = TRUE); dir.create(d)
+script_check = function(sha) {
+  d = file.path(tmp, paste0('monthly_sha_', if (is.na(sha)) 'none' else sha)); unlink(d, recursive = TRUE); dir.create(d)
   invisible(file.copy(list.files(cdir, full.names = TRUE), d))
-  write_monthly("h02v01", 2006, list(none, none, pixel(2, 0, 2, 0.6, 0, 0.6, land = 2, read = 2), pixel(shore = 1, read = 1),
-                                     none, none, none, none), dir = d, sha = sha, helper_sha = helper_sha)
+  write_monthly('h02v01', 2006, list(none, none, pixel(2, 0, 2, 0.6, 0, 0.6, land = 2, read = 2), pixel(shore = 1, read = 1),
+                                    none, none, none, none), dir = d, sha = sha)
   tryCatch(cell_table(names(templates), cells2, d, yrs, template_of = function(t) templates[[t]]), error = conditionMessage)
 }
 untagged_msg <- script_check(NA)
@@ -525,13 +535,13 @@ stopifnot(is.character(untagged_msg),
           is.character(other_msg), grepl("h02v01_2006_07.tif \\(SHA-256 0123abcd, now ", other_msg),
           is.data.frame(script_check(SCRIPT_SHA)))
 
-# The archive's historical hashes still pass without a separate helper hash: their helpers were
-# part of the script. New files must record matching hashes for both files of executable code.
+# The approved historical hashes still pass without a helper tag: their scripts included the
+# helpers. An unapproved combined digest fails whether the script or the helper bytes changed.
 for (sha in ACCEPTED_OLDER_SHAS)
-  stopifnot(isTRUE(all.equal(script_check(sha, helper_sha = NA_character_), ct)))
-for (helper_sha in c(NA_character_, strrep("cd", 32))) {
-  helper_msg <- script_check(SCRIPT_SHA, helper_sha = helper_sha)
-  stopifnot(is.character(helper_msg), grepl("another version of the shared MODIS helpers", helper_msg))
+  stopifnot(isTRUE(all.equal(script_check(sha), ct)))
+for (sha in c(changed_script_sha, changed_helper_sha)) {
+  changed_msg = script_check(sha)
+  stopifnot(is.character(changed_msg), grepl('not one listed in ACCEPTED_OLDER_SHAS', changed_msg))
 }
 # An older version listed in ACCEPTED_OLDER_SHAS, checked to compute the same numbers, is accepted
 # too (Chris, 2026-10-21), with the same result; one not listed, or a file with no SHA-256, is still

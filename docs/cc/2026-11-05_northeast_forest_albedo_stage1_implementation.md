@@ -3,8 +3,8 @@
 Issue #27; implementation for Chris, 5 November 2026. This stage establishes whether the
 paper's proposed local forest comparison has adequate geographic support before anyone
 examines its albedo contrasts. The approved 3 November design and frozen settings govern
-the implementation. Nothing is committed, downloaded or run over the full footprint here.
-Fable's review and Astra's subsequent reconciliation remain to follow.
+the implementation. Updated after Fable's review, Astra's reconciliation and Chris's
+5 November decisions. This follow-up makes no commits, downloads or full coverage run.
 
 ## Implementation
 
@@ -15,28 +15,35 @@ tables, and writes structural and count-only retrieval coverage. Its functions l
 
 The driver writes `fixed_pairs.rds`, full-precision `eligible_candidates.rds`, readable `pairs_{main,stricter,looser}.csv` and
 `candidates_{main,stricter,looser}.csv`, structural/cell coverage, distance and elevation
-summaries, DBF reuse, wetland strata, sequential screen losses, outside-cell candidate
-support and feasibility flags into `output/northeast_forest_albedo/`. Retrieval outputs
-give monthly coverage by version, panel, latitude and wetland stratum; year-specific
-before/after count diagnostics; and all cell-years, including zeros. Run metadata records
+summaries, DBF reuse, wetland strata, sequential screen losses at regional and cell level,
+outside-cell candidate support and feasibility flags into `output/northeast_forest_albedo/`.
+Retrieval outputs give monthly coverage by version, panel, latitude and wetland stratum. Retrieval
+diagnostics and the cell-year output are deferred to stage 2; the eligibility masks
+and regional retrieval coverage remain unchanged. Run metadata records
 the settings, exact inputs, build tags, code hashes and fixed-pair identity. The normal
 `run$dir` redirection and run manifests are used, so the verification tool can run it.
 
 Screen order is first-year forest class (including a total for excluded nonforest/missing
-labels), nine-year centre stability, centre QC, complete neighbourhood, neighbourhood
+labels), explicit removal of ENF centres outside the selected cells (`enf_scope`),
+nine-year centre stability, centre QC, complete neighbourhood, neighbourhood
 class persistence, MOD44W land, complete valid GMTED neighbourhood, relief, complete ENF
 search, record-wide land, then availability of a partner within both distance and elevation
 limits. Losses are sequential; their sums are not independent estimates of each cause.
+`screen_losses_cell.csv` preserves the raw strip-level rows: sum repeated
+bundle/class/cell/screen keys before reconciling. The initial `all` class screen includes
+nonforest and missing labels; its survivors equal the combined ENF/DBF scope-screen
+input. A missing cell key denotes search support outside the selected cells.
 
 `R/modis_albedo_helpers.R` contains the moved grid constants, `tile_template`, `pixel_lonlat`
 and `is_land`. Preparation sources them. Parsed comparison with the preceding code found
 the constants and function bodies identical. The shared land default is literal `land`;
 preparation explicitly passes its `LAND_RULE`, including its existing shoreline option.
 
-New monthly files record `paleoRF_modis_helpers_sha256` as well as their script hash;
-build reuse and the cell step check both for new files. The cell step still accepts the
-existing historical script hashes without a helper tag, since those scripts contained the
-helpers. The pre-extraction hash
+New monthly files store one SHA-256 digest of the exact preparation-script bytes followed
+by the shared-helper bytes in `paleoRF_script_sha256`. Both build reuse and the cell step
+check that combined identity; no second tag is written. The cell step still accepts the
+approved historical script hashes unchanged, since those scripts contained the helpers.
+The pre-extraction hash
 `cb2920f6357010ada20c311d31cc90fc7cee00cafbee9358dc2f1735e9684638` was added to that list;
 the archive's existing `2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5`
 was already accepted. Existing files therefore need no rebuild for cell use. Build-time
@@ -56,7 +63,9 @@ These implementation details do not change a frozen threshold:
    neighbourhood. This conservative outer-boundary test can exclude a few extra centres.
    Internal tile joins are not boundaries. Both forest classes need full neighbourhoods;
    only ENF anchors need a complete partner search.
-4. Read all DBF candidates in the target rectangle plus the largest search-radius buffer;
+4. Derive the target rectangle from the selected cells' outer edges and add the largest
+   search-radius buffer; derive each tile's column count from the mosaic and tile count.
+   Read all DBF candidates inside those bounds;
    allow partners outside the 83 cells. Candidate coverage uses each candidate's own cell;
    outside-cell DBFs are reported separately. Pair coverage always uses the ENF cell.
 5. A member is wetland TRUE if flagged in any year; FALSE only if all required flags are
@@ -80,7 +89,9 @@ These implementation details do not change a frozen threshold:
     and exactly 108 months for 2001–2009 retrieval coverage; missing files stop the run.
 11. Use a clearly named `SHARED_DATA` setting because `R/paths.R` has no shared-input-root
     setting. Native files stay read-only in the existing checkout; products follow
-    `run$dir`. Terra temporary files go under the local output directory.
+    `run$dir`. Read the pipeline cell domain through
+    `read_input(run, path_file(paths, 'elevation_cache'))`, recording its catalogued path
+    and MD5. Terra temporary files go under the local output directory.
 12. A rerun accepts an identical RDS pair table; a changed table requires a separate run
     directory. Store pair-table and code MD5s, exact input names/sizes/mtimes and monthly
     build tags without hashing the enormous monthly albedo payloads. Check MCD12Q1 names
@@ -106,7 +117,7 @@ No additional source is needed to implement the approved boundary rule.
 Count bands can be selected independently in the monthly files. Thus retrieval coverage
 is included in stage 1 rather than deferred. The land rule uses March 2000–December 2009,
 matching the albedo preparation, while forest persistence and retrieval coverage use
-2001–2009. The 83 pipeline cells come from `elev_interp_cells.RDS`.
+2001–2009. The 83 pipeline cells come from the catalogued `data/elev_interp_cells.RDS`.
 
 ## Scientific precedents carried forward
 
@@ -132,32 +143,33 @@ The approved design's outstanding automated reference-check record remains outst
 
 ## Verification after review and Chris's commit
 
-Use `tools/verify_change.R` with a spec containing the full implementation commit, the
-normal `config.R`, script `tools/check_northeast_forest_albedo.R`, no seeds or anchors for
-this new coverage product, and environment `THREADS=1`, `OPENBLAS_NUM_THREADS=1`. Its run
-directory must be new. Include the four unit checks:
+The draft spec is `docs/cc/verification/2026-11-05_northeast-coverage.R`, with
+`commit = 'TO_FILL'`. After Chris commits the reviewed code, fill in the full revision
+and run it through `tools/verify_change.R` in its separate worktree and a fresh run
+directory, with `THREADS=1` and `OPENBLAS_NUM_THREADS=1`. The spec parses the changed R
+files and runs the four tests:
 
 - `tests/test_modis_albedo_helpers.R`
 - `tests/test_bluesky_albedo.R`
 - `tests/test_northeast_forest_albedo.R`
 - `tests/test_northeast_forest_coverage.R`
 
-The post-run checks should verify: the 27 filenames and sizes, all 354 tile-month inputs,
-unchanged native grids, 83 cells including zeros, complete per-band/per-half coverage,
-sequential nonnegative screen losses including explicit boundary/partner exclusions,
-unique ENF IDs and correct DBF reuse, each chosen partner's eligibility and nearest/tie
-rule, inclusive radius/elevation/relief limits, exact recomputation of feasibility flags,
-unknown wetland handling, stricter diagnostics as subsets, correct count thresholds and
-cell-year gates, and pair identity unchanged after count reading. Recompute pairs from
-`eligible_candidates.rds` and compare exactly (the CSVs are for reading, not exact floating-point
-round trips). An empty or thin result must still be a
-valid completed run and must flag Chris. Software PASS does not mean feasibility PASS.
+Its checks cover the approved input catalogue and native geometry, the 83-cell domain,
+pixel-ID round trips, boundary and strip/tile fixtures, independent sampled nearest
+partners against all eligible DBFs, thresholds, wetland subsets and reciprocity. Cell
+losses reconcile from the initial class screen through scope exclusion and partner
+availability; regional coverage and feasibility flags are recomputed, including zero-pair
+cells. Count eligibility is independently reconstructed for January, July and December
+in all nine years, including the stricter cell-year gate and represented-year accounting;
+this is a sample of months, not an independent check of every retrieval output row.
 
-Verify the extraction with the unchanged historical cell-total fixtures and both land
-rules; no scientific albedo regeneration is justified for this extraction. Retain the
-tool's normal completed-manifest, output-hash and unchanged-input checks. The code stores
-monthly input sizes/mtimes and build identities; compare these before and after if the
-archive is being read by other concurrent jobs.
+The historical-build fixtures check unchanged cell totals and both land rules, sensitivity
+of the combined digest to either code file, historical acceptance without a helper tag,
+and rejection of unapproved identities. No archive rebuild is needed. The spec also
+checks completed manifests, output hashes, unchanged recorded inputs and pair identity
+after count reading. Return coverage and feasibility to Chris before stage 2: a software
+PASS does not establish scientific feasibility, and an empty or thin result must remain
+a valid completed run with the review flag set.
 
 Direct driver command (for that later verification, not run in this session):
 
@@ -168,23 +180,34 @@ THREADS=1 OPENBLAS_NUM_THREADS=1 tools/rscript.sh tools/check_northeast_forest_a
 The wrapper resets BLAS/OMP/MKL threads from `THREADS`, so setting only
 `OPENBLAS_NUM_THREADS` would not enforce one thread. No full coverage result exists yet.
 
-## Checks in this session
+## Checks in the original build and the agreed-change follow-up
 
-All eight new or changed R files parsed. All four unit-test files listed above passed.
-Tests cover native coordinates and cell/tile boundaries, historical build hashes and
-both land rules, nearest eligible partners/ties/reuse/no partner, spherical distances,
-inclusive elevation/relief/count thresholds, nine-year class neighbourhoods across tile
-joins, odd MOD44W subpixel offsets, native DEM boundaries and incomplete relief, wetland
-unknowns, immutable pair tables, count-only reads when synthetic albedo sums are changed,
-cell-year gates and missing years. Zero-candidate structural and retrieval reports were
-also checked; no retrieval reader was called. The separate implementation check found and
-fixed one actual defect: assigning a scalar land flag to an empty candidate table. No
-speculative findings were retained or dropped, and no test remains failing.
+The original build parsed eight new or changed R files and passed all four tests. Its
+small real-input reads checked one five-row strip of three 2001 HDFs, aligned water,
+native elevation/relief, selected land/retrieval count pixels and one monthly metadata
+record. The 27 approved filename/byte-count entries matched and all 354 monthly paths
+existed. The original independent check found and fixed one defect: assigning a scalar
+land flag to an empty candidate table.
 
-Small real-input reads checked one five-row strip of three 2001 HDFs, aligned water,
-native elevation/relief, selected land/retrieval count pixels, and one monthly metadata
-record. The 27 approved filename/byte-count entries match and all 354 monthly paths exist.
-No albedo-value band was read. The full coverage driver, verification tool, downloads and
-network were not run; no commits or pushes were made. Work remains on
-`northeast-forest-check`, awaiting Fable's review, Astra's reconciliation, Chris's commit
-and coverage verification. README tables remain for stage 2 as instructed.
+The follow-up adds sharp southern-boundary brackets for all three bundles, a small
+candidate-building fixture across tile and strip joins, pixel-ID coordinate round trips,
+loss reconciliation and combined-digest compatibility checks. The cell-loss export is
+checked against the original rows, including repeated strip keys. The retrieval fixture
+checks that coverage is the sole retrieval output and retains its existing count and
+year-accounting assertions. All seven changed/new R files parse, all four tests pass
+with `THREADS=1 OPENBLAS_NUM_THREADS=1 tools/rscript.sh`, and the draft spec passes
+`read_spec()` without executing its coverage checks. The strip/whole fixture permits
+`1e-12` numerical tolerance (observed latitude roundoff was `1.11e-16` degrees); pixel
+IDs must still match exactly and coordinate round trips must be within `1e-9` degrees.
+
+Independent review found no confirmed defect in the code changes. Two non-defects were
+dropped: processing outside-domain ENFs before recording their exclusion, and repeated
+strip rows in the cell-loss output. Both remain bounded and reconcilable. Spec review
+found and fixed a CSV integer/double mismatch that would have caused a false failure.
+Read-only metadata checks confirmed native GMTED bounds and input sizes; no coverage
+functions were run.
+
+No full coverage run, verification run, download, network access, commit or push was made
+in either implementation session. No albedo-value band from the archive was read, and the
+requests directory was never opened. The changes remain in `northeast-forest-check` for
+Chris's review, commit and coverage verification. README tables remain for stage 2.
