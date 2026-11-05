@@ -286,3 +286,4 @@ its own code-identical commit on branch `refit-runs` (documentation-only commits
 - cv-mod8-fit-apr-jun: a documentation-only commit so that it gets its own worktree.
 - cv-mod8-fit-jul-sep: a documentation-only commit so that it gets its own worktree.
 - cv-mod8-fit-oct-dec: a documentation-only commit so that it gets its own worktree.
+- cv-mod8: a documentation-only commit so that it gets its own worktree.
