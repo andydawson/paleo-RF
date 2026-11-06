@@ -105,6 +105,7 @@ stopifnot(
   accepts(with_setting("analysis$land_cover$reduction", "median")),
   refuses("land_cover\\$reduction has 'trimmed'", with_setting("analysis$land_cover$reduction", "trimmed")),
   accepts(with_setting("analysis$calibration$model_id", "mod7")),
+  accepts(with_setting("analysis$calibration$model_id", "mod8_small_cover")),
   refuses("model_id has 'spatial'", with_setting("analysis$calibration$model_id", "spatial")),
   refuses("model_id must be a single value", with_setting("analysis$calibration$model_id", c("mod7", "mod8"))),
   refuses("draws\\$evaluation must lie between 2", with_setting("analysis$draws$evaluation", 1)),
@@ -230,4 +231,5 @@ local({
   stopifnot(refused("output/alt"), refused(file.path(storage, "alt")), is.null(check_run_dir("elsewhere")))
 })
 
+for (id in CV_MODELS) stopifnot(accepts(with_setting("analysis$calibration$model_id", id)))
 cat("test_config: all tests passed\n")

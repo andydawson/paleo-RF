@@ -33,7 +33,8 @@ set.seed(1)
 toy = data.frame(elev = runif(200, 0, 3000))
 toy$jan = plogis(-1 + toy$elev / 2000 + rnorm(200, 0, 0.3))
 toy$jan[1:2] = NA
-default_fit = suppressWarnings(fit_calibration_model("elev", "jan", toy))
+default_fit = suppressWarnings(fit_calibration_model("elev", "jan", toy,
+  control = modifyList(CALIBRATION_CONTROL, list(nthreads = 1))))
 small_fit = suppressWarnings(fit_calibration_model("elev", "jan", toy, control = modifyList(CALIBRATION_CONTROL, list(maxit = 3, nthreads = 1))))
 stopifnot(
   identical(names(formals(fit_calibration_model)), c("model_id", "month", "data", "method", "control")),
@@ -54,4 +55,37 @@ stopifnot(
   model_coefficients("elev", "jan", cells) == 50,     # s(elev, k = 50): intercept + 49
   model_coefficients("spatial_elev", "jan", cells) == 549
 )
+# The approved grid's setup counts and order, independent of fitted EDF. All models use
+# the same complete rows even when their own formula omits location or a cover column.
+set.seed(12)
+fractions = matrix(rexp(3 * 800), ncol = 3)
+fractions = fractions / rowSums(fractions)
+grid = data.frame(x = runif(800, -125, -65), y = runif(800, 28, 73),
+                   elev = runif(800, 0, 3000), OL = fractions[, 1], ET = fractions[, 2],
+                   ST = fractions[, 3], jan = runif(800, 0.1, 0.8))
+expected_ids = c('lin_cover_noloc', 'loc0_tp50', 'cover_elev',
+                  'loc12_linear', 'loc12_tp50', 'loc12_tp200',
+                  'loc30_linear', 'loc30_tp50', 'mod8_coarse_loc',
+                  'loc100_linear', 'loc100_tp50', 'loc100_tp200',
+                  'lin_cover', 'loc500_tp50', 'mod8')
+expected_counts = c(52L, 99L, 249L, 63L, 110L, 260L, 81L, 128L, 278L,
+                     151L, 198L, 348L, 551L, 598L, 748L)
+stopifnot(identical(CV_MODELS, expected_ids), identical(unname(CV_COEFFICIENTS), expected_counts),
+          identical(vapply(CV_MODELS, model_coefficients, 0L, month = 'jan', data = grid), CV_COEFFICIENTS),
+          identical(LADDER_MODELS, paste0('mod', 1:8)), length(SPATIAL_MODELS) == 7L)
+
+# The five retained CV formulas are written out so adding the grid cannot change them.
+unchanged = list(
+  lin_cover_noloc = ~ s(elev, k = 50) + ET + ST,
+  cover_elev = ~ s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200),
+  mod8_coarse_loc = ~ s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200),
+  lin_cover = ~ s(x, y, bs = "gp", k = 500) + s(elev, k = 50) + ET + ST,
+  mod8 = ~ s(x, y, bs = "gp", k = 500) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200))
+for (id in names(unchanged)) stopifnot(identical(CALIBRATION_MODELS[[id]]$rhs, unchanged[[id]]))
+# Prediction setup is identical for the old model-8 formula and registry formula, without
+# fitting a CV model. Both matrix rows and penalties must agree, not just coefficient counts.
+old_formula = eval(call('~', as.name('jan'), unchanged$mod8[[2]]))
+old_setup = mgcv::gam(old_formula, data = grid, fit = FALSE)
+new_setup = mgcv::gam(calibration_formula('mod8', 'jan'), data = grid, fit = FALSE)
+stopifnot(identical(old_setup$X, new_setup$X), identical(old_setup$S, new_setup$S))
 cat("test_model_registry: all tests passed\n")

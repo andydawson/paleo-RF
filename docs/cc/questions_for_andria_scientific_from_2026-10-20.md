@@ -321,6 +321,10 @@ the fitted model implies the opposite sign in spring and summer. Nothing has bee
 Updated from [CV protocol 2](2026-11-06_cv_protocol_v2.md) and Fable’s reviews
 (`2026-11-06_cv_protocol_v2_review_fable.md`, `2026-11-06_cv_deep_band_review_fable.md`).*
 
+Implementation check, 6 November: the code follows these decisions. Recovery and capacity
+results are pending the verification runs; the library diagnostic issue below arose on a
+read of the existing model-8 fit, without refitting.
+
 The cross-validation chooses the calibration model by how well it predicts modern cells whose cover mixes lie outside
 the range of the cells it was fitted on. Because unusual mixes are clustered in space, withholding them also leaves a
 geographic gap: in the first run’s northeast holdout, 82 of the 83 cells were withheld, so every model had to predict
@@ -345,3 +349,9 @@ northeast’s own cells under a stipulated truth, not the real response.
 2. Is a common cover response across regions acceptable for interpreting the northeast? The real-data capacity
    comparison and synthetic recovery test examine its stability and capability, but cannot establish the real
    regional response. (Protocol-2 review and separation tests, 6 November.)
+3. How should the paper present a numerically invalid worst-case concurvity diagnostic? On the saved April
+   model-8 REML fit, mgcv 1.9.4 returns 4.355651 for cover explained by location (the expected range is 0–1);
+   the reverse direction is 0.999508. The implementation preserves the raw values, reports the observed and
+   estimate measures too, and applies no concurvity gate. A numerical rank problem is suspected, not established.
+   Source: independent implementation checks of `mgcv::concurvity(fit, full = FALSE)`, 6 November 2026;
+   `docs/cc/2026-11-06_cv2_implementation.md` records the check and the source fit.

@@ -65,13 +65,13 @@ choice2 <- cv_choose(list(score = c(m_big = 1, m_far = 1.5), resampled = cbind(m
 stopifnot(identical(choice2$chosen, c(FALSE, TRUE)))
 
 # The resampled uncertainty must be finite: one non-finite resample of an eligible model means no
-# automatic choice; an ineligible model's missing score is harmless; no eligible model stops.
+# automatic choice; an ineligible model's missing score is harmless; no eligible model makes no choice.
 choice3 <- cv_choose(list(score = c(m_big = 1, m_small = 1.05), resampled = cbind(m_big = c(1, NaN), m_small = c(1.05, NaN))),
                      coefficients = c(700, 60), eligible = c(TRUE, TRUE))
 choice4 <- cv_choose(list(score = c(base = 0.1, m_big = 1, m_fail = NA), resampled = cbind(base = c(0.1, 0.1), m_big = c(1, 1.1), m_fail = NA)),
                      coefficients = c(50, 700, 10), eligible = c(FALSE, TRUE, FALSE))
 stopifnot(!any(choice3$chosen), identical(choice4$chosen, c(FALSE, TRUE, FALSE)),
-          inherits(try(cv_choose(list(score = c(a = 1), resampled = cbind(a = 1)), 1, FALSE), silent = TRUE), "try-error"))
+          !any(cv_choose(list(score = c(a = 1), resampled = cbind(a = 1)), 1, FALSE)$chosen))
 
 # Target weights, worked by hand (Fable's review): cells A (area 2) and B (area 1), slices 50, 500,
 # 1000; script 7a's pairs give A 0 / 0.5 / 1.0 and B 0 / 0 / 0 ice. Ice-free area: A500 = 1, A1000 = 0,
@@ -156,7 +156,7 @@ r <- rbind(transform(base, model = "mod8", predicted = c(0.4, 0.2, 0.5, 0.9), co
 run_report <- function(r) {
   out <- file.path(tempfile(), "run")
   invisible(capture.output(inrange_report(out, r, models = c("mod8", "short", "failed"), months = c("jan", "feb"))))
-  utils::read.csv(file.path(out, "output", "cross_validation", "inrange_scores.csv"))
+  utils::read.csv(file.path(out, "output", "cross_validation_v2", "inrange_scores.csv"))
 }
 ir <- run_report(r)
 stopifnot(isTRUE(all.equal(ir$score[ir$model == "mod8"], 0.055)), ir$difference[ir$model == "mod8"] == 0,
@@ -192,4 +192,69 @@ saveRDS(data.frame(model = "a", predicted = 0.1), unstamped)
 stopifnot(grepl("predictions_d1_feb.rds", tryCatch({ read_predictions(run, c(fresh, unstamped)); "" }, error = conditionMessage), fixed = TRUE))
 saveRDS(list(version = 2), cv_file(run, "holdouts.rds"))      # the holdouts rebuilt
 stopifnot(inherits(try(read_predictions(run, fresh), silent = TRUE), "try-error"))
+# Protocol 2: the cutoff is strict and unrounded. A far error can be arbitrary without moving
+# selection; a zero-target nearby cell also cannot enter. Missing weight is not redistributed.
+v2 <- data.frame(km = c(240, 260, 250, 249.999), group = c("g1", "g1", "g2", "g0"),
+                 block = c("A", "B", "C", "D"), a = c(4, 1e6, 1e6, 1e6), b = c(1, 0, 0, 0))
+v2_target <- data.frame(group = c("g1", "g2", "g0"), weight = c(3, 1, 0))
+v2_keep <- cv_scoring_rows(v2, v2_target)
+stopifnot(identical(v2_keep, c(TRUE, FALSE, FALSE, FALSE)))
+v2_score <- cv_score(v2[v2_keep, ], v2_target, c("a", "b"), 2, 20)
+stopifnot(identical(unname(v2_score$score), c(4, 1)), v2_score$represented == .75,
+          cv_represented_weight(v2$group[v2_keep], v2_target)[["missing"]] == .25)
+v2$a[2:4] <- -100
+stopifnot(identical(cv_score(v2[cv_scoring_rows(v2, v2_target), ], v2_target, c("a", "b"), 2, 20), v2_score))
+# Ten nearby positive-target blocks are required, independent of all far blocks.
+near <- data.frame(x = seq(0, 45, 5), y = 40, km = 240, group = "g1")
+stopifnot(cv_feasibility(748, 748, near, v2_target)$feasible,
+          !cv_feasibility(747, 748, near, v2_target)$feasible)
+near$km[10] <- 260
+f <- cv_feasibility(748, 748, near, v2_target)
+stopifnot(!f$feasible, f$nearby_scored_cells == 9, f$blocks == 9, f$far_cells == 1)
+near$km[10] <- 249.999
+near$group[10] <- "g0"
+stopifnot(!cv_feasibility(748, 748, near, v2_target)$feasible)
+# Frozen selection-weight shares sum to one; geographic far bands explicitly receive zero.
+w2 <- cv_weight_share(v2$group, v2_target, data.frame(km_band = as.character(km_band(v2$km))), v2_keep)
+stopifnot(w2$score_weight_share[w2$km_band == "[250,500)"] == 0, sum(w2$score_weight_share) == 1)
+# Depth is by the cell's own direction and month. Duplicate holdout appearances remain distinct
+# predictions but not new cells/blocks; absent combinations are untested (NA), never depth zero.
+depth_rows <- data.frame(month = c("jan", "jan", "jan", "feb"), own_direction = c("d1", "d1", "d2", "d1"),
+                         group = "g1", km = c(240, 240, 260, 240), distance = c(.11, .11, .3, .04),
+                         x = c(-75, -75, -60, -70), y = 45)
+depth <- cv_nearby_depth(depth_rows, v2_target, c("d1", "d2"), c("jan", "feb"))
+d1jan <- depth[depth$month == "jan" & depth$own_direction == "d1", ]
+stopifnot(d1jan$cells == 1, d1jan$cell_month_holdouts == 2, d1jan$blocks == 1,
+          d1jan$max_cover_distance_nearby == .11, d1jan$deep_blocks == 1,
+          all(is.na(depth$max_cover_distance_nearby[depth$own_direction == "d2"])))
+# Comparison maxima distinguish eligible nearby evidence from all diagnostic rows, including far
+# depth; an infeasible fold has neither maximum. The pooled deep share counts each block once.
+maxima <- cv_distance_maxima(depth_rows, v2_target)
+stopifnot(maxima[["max_cover_distance_nearby"]] == .11, maxima[["max_cover_distance_all"]] == .3,
+          all(is.na(cv_distance_maxima(depth_rows, v2_target, feasible = FALSE))))
+coverage <- cv_nearby_coverage(depth_rows, v2_target)
+deep_coverage <- coverage[coverage$cover_band == "[0.1,Inf)", ]
+stopifnot(deep_coverage$cell_month_holdouts == 2, deep_coverage$cells == 1, deep_coverage$blocks == 1,
+          isTRUE(all.equal(deep_coverage$score_weight_share, 2 / 3)), sum(coverage$score_weight_share) == 1)
+# Pair reports use identical valid rows for errors, cells and positive-target weight coverage.
+pair_errors <- data.frame(x = c(-75, -70), y = 45, block = c("A", "B"), group = c("g1", "g2"), a = c(NA, 9), mod8 = c(1, 4))
+pair_signed <- transform(pair_errors, a = c(NA, -3), mod8 = c(1, 2))
+pair <- cv_paired_by_band(pair_errors, data.frame(own_direction = c("d1", "d1")), "a", "mod8", 1, 20,
+                          signed_errors = pair_signed, target = v2_target)
+stopifnot(pair$cell_month_holdouts == 1, pair$cells == 1, pair$blocks == 1, pair$missing_prediction_pairs == 1,
+          pair$positive_target_count == 1, pair$signed_error == -3, pair$rmse == 3,
+          pair$difference == 5, pair$represented == .25, pair$missing == .75)
+# Missing area and cover are reported independently, and the retained slice keeps its equal share.
+bad_paleo <- paleo
+bad_paleo$ET[bad_paleo$x == -71 & bad_paleo$ages == 1000] <- NA
+bad_diffs <- diffs
+bad_diffs$area[bad_diffs$x == -70] <- NA
+bad <- cv_target_weights(bad_paleo, bad_diffs, c(50, 500, 1000), 1, 27, 74)
+stopifnot(attr(bad, "exclusions")$missing_cover == 1, attr(bad, "exclusions")$missing_or_invalid_area == 2,
+          sum(bad$weight) == .5, !any(bad$ages == 50))
+# Coefficient ties use the approved table order, even when score columns arrive in another order.
+ordered <- rev(CV_MODELS[1:2])
+tie <- cv_choose(list(score = setNames(c(1, 1), ordered), resampled = matrix(1, 3, 2, dimnames = list(NULL, ordered))),
+                 coefficients = c(5, 5), eligible = c(TRUE, TRUE))
+stopifnot(tie$model[tie$chosen] == CV_MODELS[1])
 cat("test_cross_validation: all tests passed\n")

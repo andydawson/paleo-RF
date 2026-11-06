@@ -3,7 +3,7 @@
 Maintained by Chris with Claude Code; kept current as work proceeds (see
 AGENTS.md). Current technical and scientific questions are in
 `questions_for_andria_scientific_from_2026-10-20.md`; the earlier file is frozen.
-Reviewed 2026-11-06 for CV protocol 2: no new logistical questions. Only questions
+Reviewed 2026-11-06 for CV protocol 2 and its implementation: no new logistical questions. Only questions
 that are still open are listed; answered or superseded items are removed
 (e.g. the REVEALS and interpolation code, now agreed to be out of scope;
 the point / non-interp path, now dropped; the interpolated posteriors and
