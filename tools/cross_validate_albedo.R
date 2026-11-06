@@ -448,13 +448,7 @@ stage_score = function(run_dir, paths) {
   deep_share = sum(nearby_coverage$score_weight_share[nearby_coverage$cover_band == '[0.1,Inf)'])
   writeLines(c(sprintf('Nearby deep cover: %.6f of selection weight; %d cell-month-holdouts, %d unique cells, %d blocks.',
                         deep_share, nrow(deep), nrow(unique(deep[, c('x', 'y')])), length(unique(cv_block(deep$x, deep$y)))),
-                'Selection score on development data: choosing among fifteen configurations is optimistic.',
                 'The bootstrap standard error in albedo units is selection_rmse_se in scores.csv.',
-                'Optimism may be about one such standard error: a judgement, not measured bias, an upper bound or a correction.',
-                'Distances and errors beyond observed support are untested; the deep band does not establish accuracy at all deeper distances.',
-                'Missing direction-month depth combinations are NA, not depth zero.',
-                'Distance-table represented/missing shares use the full frozen historical target denominator.',
-                'Pooled diagnostic errors and partial model-8 comparisons never select the model.',
                 if (converged[['mod8']]) 'Model 8 completed every required fit.' else 'Model 8 failed a required fit: comparison incomplete.',
                 if (any(choice$chosen)) paste('Chosen:', choice$model[choice$chosen]) else 'No automatic choice: no eligible model or unsupported uncertainty.'),
               cv_file(run_dir, 'selection_notes.txt'))

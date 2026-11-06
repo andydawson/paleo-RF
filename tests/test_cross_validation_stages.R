@@ -56,6 +56,14 @@ scores = out('scores.csv')
 stopifnot(!scores$eligible[scores$model == 'loc12_tp50'], any(scores$chosen), all(scores$represented < 1),
           file.exists(cv_file(run_dir, 'fit_summary_d1_jan.csv')),
           !any(grepl('AIC', names(out('fit_summary_d1_jan.csv')))))
+# Independently hand-scored from this fixture, including the unrepresented third group.
+linear_score = scores[scores$model == 'lin_cover_noloc', ]
+stopifnot(nrow(linear_score) == 1L,
+          abs(linear_score$score - 0.002323295918367347) < 1e-15,
+          abs(linear_score$represented - 2 / 3) < 1e-15)
+notes = readLines(cv_file(run_dir, 'selection_notes.txt'))
+stopifnot(paste('Chosen:', scores$model[scores$chosen]) %in% notes,
+          any(grepl('Model 8 completed every required fit', notes, fixed = TRUE)))
 # The manual score uses only the frozen positive-target nearby rows, all configurations together.
 p = read_predictions(run_dir, cv_file(run_dir, paste0('predictions_d1_', months, '.rds')))
 errors = wide_by_model(p, c('holdout', 'month', 'x', 'y', 'group', 'km'),
@@ -85,6 +93,9 @@ for (i in seq_along(files)) {
 }
 invisible(capture.output(stage_score(run_dir, paths)))
 stopifnot(!any(out('scores.csv')$chosen), !any(out('scores.csv')$eligible), !any(out('scores.csv')$comparison_complete))
+notes = readLines(cv_file(run_dir, 'selection_notes.txt'))
+stopifnot(any(startsWith(notes, 'No automatic choice:')),
+          any(startsWith(notes, 'Model 8 failed a required fit:')))
 for (i in seq_along(files)) saveRDS(original[[i]], files[i])
 short = original[[1]][-1, ]
 attr(short, 'holdouts_md5') = holdouts_md5(run_dir)

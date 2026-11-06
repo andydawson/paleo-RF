@@ -88,4 +88,29 @@ old_formula = eval(call('~', as.name('jan'), unchanged$mod8[[2]]))
 old_setup = mgcv::gam(old_formula, data = grid, fit = FALSE)
 new_setup = mgcv::gam(calibration_formula('mod8', 'jan'), data = grid, fit = FALSE)
 stopifnot(identical(old_setup$X, new_setup$X), identical(old_setup$S, new_setup$S))
+
+# A fixed ET-for-ST exchange changes every linear model's logit by the same amount.
+# Both endpoints enter one setup, so unchanged elevation/location use identical bases.
+source('R/cv_separation.R')
+exchange_cells = grid[which(grid$ET >= 0.05 & grid$ST >= 0.05)[1:5], ]
+exchange = fixed_exchange(exchange_cells, rep(1, nrow(exchange_cells)))
+endpoints = rbind(grid, transform(exchange$first, jan = 0.4), transform(exchange$second, jan = 0.4))
+first_rows = nrow(grid) + seq_len(nrow(exchange$first))
+second_rows = first_rows + nrow(exchange$first)
+linear_models = CV_MODELS[CV_COVER_FORM == 'linear']
+stopifnot(length(linear_models) == 5L, nrow(exchange$first) == nrow(exchange_cells))
+for (id in linear_models) {
+  setup = mgcv::gam(calibration_formula(id, 'jan'), data = endpoints, fit = FALSE)
+  X0 = setup$X[first_rows, , drop = FALSE]
+  X1 = setup$X[second_rows, , drop = FALSE]
+  cover_columns = match(c('ET', 'ST'), colnames(setup$X))
+  stopifnot(!anyNA(cover_columns))
+  beta = seq_len(ncol(setup$X)) / ncol(setup$X)
+  beta[cover_columns] = c(0.7, -0.3)
+  difference = X1 - X0
+  stopifnot(all(abs(difference[, -cover_columns]) < 1e-12),
+            all(abs(difference[, cover_columns[1]] - 0.1) < 1e-12),
+            all(abs(difference[, cover_columns[2]] + 0.1) < 1e-12),
+            all(abs(drop(difference %*% beta) - 0.1 * (beta[cover_columns[1]] - beta[cover_columns[2]])) < 1e-12))
+}
 cat("test_model_registry: all tests passed\n")

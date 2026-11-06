@@ -5,17 +5,26 @@ capacity, recovery or pipeline fit was run while writing them. Replace `TO_FILL`
 `docs/cc/verification/2026-11-06_cv2-*.R` with that same full commit SHA before launching.
 Keep the approved protocol and these input records with that commit.
 
-Run each specification through the existing queue and `tools/verify_change.R`, from the
-same checkout throughout, for example:
+Run each specification through the existing queue and `tools/verify_change.R`, using the
+baseline-populated main checkout as the working directory throughout. Use the tools and
+specifications from this worktree until they are integrated into that checkout:
 
 ```sh
-THREADS=1 OPENBLAS_NUM_THREADS=1 tools/rscript.sh tools/verify_change.R docs/cc/verification/2026-11-06_cv2-tests.R
+cd /home/expert/Documents/contracting/Andria/paleo-RF
+cv2_checkout=/home/expert/Documents/contracting/Andria/paleo-RF-wt/cv2
+THREADS=1 OPENBLAS_NUM_THREADS=1 "$cv2_checkout/tools/rscript.sh" "$cv2_checkout/tools/verify_change.R" "$cv2_checkout/docs/cc/verification/2026-11-06_cv2-tests.R"
 ```
+
+`test_paths.R` needs `output/calibration/calibration_model_stats.csv`. The main checkout's
+file matches the frozen-inventory MD5 `3612e3d9301b601cfe74b4b76273cfd0`.
+The verifier's existing `link_inputs()` supplies it to the detached verification worktree
+from that checkout; the test then copies it into its own temporary directory. No data is
+copied into the `cv2` worktree. The verifier still checks the complete frozen inventory.
 
 The verifier creates its own detached worktree. The common scientific run is
 `.rundirs/cv2-holdouts` there; the job-specific folders hold verification logs. Use at most
 six concurrent single-thread fitting processes across all CV and separation jobs. Each
-job fits its configurations sequentially. Run preparation first to create the worktree
+job fits its configurations and months sequentially. Run preparation first to create the worktree
 before any parallel launches; do not run two jobs with the same specification name.
 
 | Order | Specification suffix after `2026-11-06_` | Jobs | Maximum new fits |
@@ -26,10 +35,10 @@ before any parallel launches; do not run two jobs with the same specification na
 | 3 | `cv2-capacity-apr.R`, `cv2-capacity-may.R` | 2 | 28 |
 | 4 | `cv2-score.R` | 1 | 0 |
 | 5 | `cv2-recovery-<apr\|may>-<darkens\|null\|shorter>.R` | 6 | 360 |
-| 5 | `cv2-fit-inrange-<month>.R` | 12 | 24 |
+| 5 | `cv2-fit-inrange-<jan-mar\|apr-jun\|jul-sep\|oct-dec>.R` | 4 | 24 |
 | 6 | `cv2-summary.R` | 1 | 0 |
 | 7 | `cv2-winner.R`, only when the winner differs from model 8 | 1 | 192 |
-| **Total** | | **61** | **1,144** |
+| **Total** | | **53** | **1,144** |
 
 Orders 3's capacity jobs may run alongside the directional jobs, within the six-process
 limit. Order 4 waits for every directional job, but does not depend on capacity results.
@@ -41,8 +50,9 @@ The totals assume three feasible directions and all months. Each directional job
 fifteen configurations; an infeasible fold is skipped according to the frozen mask.
 Capacity reuses two model-8 fits. Each recovery job fits twenty datasets with at most three
 distinct configurations; the datasets are generated once by preparation and shared across
-configurations. In-range jobs fit at most two configurations. Retries are additional and
-are recorded. Before the winner pipeline there are **60 jobs and at most 952 new fits**.
+configurations. Each in-range job runs three months sequentially, with at most two
+configurations per month (six fits per job). Retries are additional and are recorded.
+Before the winner pipeline there are **52 jobs and at most 952 new fits**.
 If model 8 wins, deduplication further reduces recovery and in-range fits and its pipeline
 is reused. The unit suite has small fitting fixtures, counted separately from research fits.
 
@@ -74,5 +84,5 @@ finish. Neither the existing pipeline nor its original verification records is c
 
 Implementation choices left to the runner are the final code commit and the queue's job
 slots. The job split (one directional holdout/month; one capacity month; one recovery
-month/truth; one in-range month) is administrative and changes no scientific settings.
+month/truth; three in-range months) is administrative and changes no scientific settings.
 The historical absolute source paths above reproduce this machine's first-run layout.

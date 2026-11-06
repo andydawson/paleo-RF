@@ -4,7 +4,36 @@ Implemented the approved [protocol](2026-11-06_cv_protocol_v2.md), sections 1–
 
 All edits are in the `cv-v2` worktree. No commits, pushes, network calls, production CV/capacity/recovery fits or pipeline runs were made. The approved protocol, scripts 1–10, `config.R`, and all run-1 specs/records are unchanged. GitHub issue #24 was not updated under the no-network instruction.
 
-## Files
+## Pre-run fixes chosen by Chris
+
+These fixes preserve interpretable diagnostics for Andria and reduce job management without changing model formulas, selection or contrast calculations. The historical exchange is stored and reported once per month and reused by capacity. Thin-plate concurvity now follows Chris's explicit NA/reason policy, with rank/count/EDF retained for every available capacity fit. The ET/ST eligibility comment explains the existing endpoint validation. Fixed interpretation prose is below; generated facts, figure labels, both record writers and `predicted_nearby_depth.csv` remain.
+
+The following counts are relative to the committed files at the start of this fix session; the original implementation history follows separately. Only these files and the listed spec replacements changed. No commits, network calls, question-file edits, data copies, CV/capacity/recovery fits or other document edits were made.
+
+| Changed file | Lines before → after |
+|---|---:|
+| [R/cv_separation.R](../../R/cv_separation.R) | 220 → 243 |
+| [tools/check_cv_separation.R](../../tools/check_cv_separation.R) | 279 → 271 |
+| [tools/cross_validate_albedo.R](../../tools/cross_validate_albedo.R) | 481 → 475 |
+| [tests/test_cv_separation.R](../../tests/test_cv_separation.R) | 205 → 285 |
+| [tests/test_model_registry.R](../../tests/test_model_registry.R) | 91 → 116 |
+| [tests/test_cross_validation_stages.R](../../tests/test_cross_validation_stages.R) | 111 → 122 |
+| [docs/cc/2026-11-06_cv2_run_order.md](2026-11-06_cv2_run_order.md) | 78 → 88 |
+| [docs/cc/2026-11-06_cv2_implementation.md](2026-11-06_cv2_implementation.md) | 369 → 400 |
+| Twelve removed `verification/2026-11-06_cv2-fit-inrange-<month>.R` specs (`jan`–`dec`) | 10 → 0 each |
+| Four replacement specs: `jan-mar`, `apr-jun`, `jul-sep`, `oct-dec` (linked below) | 0 → 11 each |
+
+Checks for this fix:
+
+- All **66** implementation/test/spec R files parse (13 code/test files and 53 specs). `git diff --check` passes. Static checks confirm four in-range specs, one driver invocation with three months each, and all twelve months exactly once.
+- **11 of 12 test scripts pass:** `test_model_registry`, `test_calibration_fit`, `test_cross_validation`, `test_cross_validation_stages`, `test_cv_separation`, `test_training_support`, `test_random`, `test_config`, `test_differences`, `test_forcing_periods`, `test_forcing_breakdown`. Every R invocation used `THREADS=1 OPENBLAS_NUM_THREADS=1 tools/rscript.sh`. Existing small unit fitting fixtures remain; the new checks use setup matrices or deterministic stand-ins.
+- New tests cover all ten thin-plate NA/reason policies and retained fit/cover ranks and EDF, including saved CSVs and a nonconverged available fit; all five linear-cover logit invariants; the independent stage score **0.002323295918367347** and represented weight **2/3**; and actual hull checks for inside/inside, outside/inside, inside/outside and outside/outside (**FALSE, TRUE, TRUE, TRUE**). Generated selection status messages are also checked.
+- `test_paths.R` stops at its missing baseline `output/calibration/calibration_model_stats.csv`. No fixture was supplied here. The [run order](2026-11-06_cv2_run_order.md) now launches the verifier from the baseline-populated main checkout, whose existing file matches frozen MD5 `3612e3d9301b601cfe74b4b76273cfd0`; `link_inputs()` will link it into the detached verification worktree. The full verifier remains for Chris's final commit, and its entire frozen-input check still applies.
+- An independent code review found no actionable defects in the reporting helper, drivers or grouped specs; zero speculative findings were retained or dropped.
+
+Updated maximum: **52 jobs / 952 new fits** before the optional winner pipeline; **53 jobs / 1,144 new fits** including it, before retries. The 952 fits are 540 directional + 28 capacity + 360 recovery + 24 in-range; the optional pipeline adds 192. Run tests → preparation/holdouts → 36 directional and 2 capacity jobs → selection → 6 recovery and 4 in-range jobs → summary. The optional winner pipeline may start after selection if the winner differs from model 8. Capacity reuses the two saved full-data model-8 fits; no-choice, infeasible or deduplicated cases reduce the counts. The six-process limit is unchanged.
+
+## Original implementation files
 
 | Code file | Lines before → after | Purpose |
 |---|---:|---|
@@ -22,9 +51,9 @@ All edits are in the `cv-v2` worktree. No commits, pushes, network calls, produc
 | [tests/test_cross_validation_stages.R](../../tests/test_cross_validation_stages.R) | 76 → 111 | Standalone frozen fixture with deterministic stand-ins: selection, diagnostic, incomplete and stale-record flows. |
 | [tests/test_cv_separation.R](../../tests/test_cv_separation.R) | 0 → 205 | Hand-worked contrast, generator, AIC and pass boundaries; full mocked stages including whole-job failure. |
 
-The 61 new verification specs are listed individually below; all use `commit = 'TO_FILL'`. The [run order](2026-11-06_cv2_run_order.md) gives their dependencies. README now maps the CV and separation tools and their input/output files. Both living Andria question documents were reviewed and updated; the scientific file records the concurvity issue below. This document is the implementation/change record.
+The 53 verification specs are listed individually below; all use `commit = 'TO_FILL'`. The [run order](2026-11-06_cv2_run_order.md) gives their dependencies. README now maps the CV and separation tools and their input/output files. Both living Andria question documents were reviewed and updated; the scientific file records the concurvity issue below. This document is the implementation/change record.
 
-## Checks performed
+## Original implementation checks
 
 - All 74 new/changed R files parse: 13 implementation/test files and 61 specs. `git diff --check` passes.
 - All 12 relevant test scripts pass: `test_model_registry`, `test_calibration_fit`, `test_cross_validation`, `test_cross_validation_stages`, `test_cv_separation`, `test_training_support`, `test_random`, `test_config`, `test_paths`, `test_differences`, `test_forcing_periods`, and `test_forcing_breakdown` (under `tests/`).
@@ -37,7 +66,7 @@ The 61 new verification specs are listed individually below; all use `commit = '
 ## Choices not fixed by the protocol
 
 1. Results live under `output/cross_validation_v2/`; separation records are its `separation/` subdirectory. Old records are preserved by their original paths and recorded commits. Old `mod8_small_cover` configurations remain valid outside the CV grid.
-2. Jobs split by directional holdout/month, capacity month, recovery month/truth and in-range month. These administrative partitions reuse the existing verifier and queue. Historical source paths are those in the run order; the runner supplies the final full commit SHA.
+2. Jobs split by directional holdout/month, capacity month, recovery month/truth and three-month in-range group. These administrative partitions reuse the existing verifier and queue. Historical source paths are those in the run order; the runner supplies the final full commit SHA.
 3. Truth identifiers in seed derivation are `darkens`, `null`, and `shorter`. All 120 response vectors and their seeds are frozen by preparation, before fitting; each configuration reads the same vector.
 4. A contrast belongs to the inside subset only if both endpoints are inside the monthly hull; either endpoint outside places it in the outside subset. Subset reports renormalize their frozen cell-area weights, with retained area and shares relative to the complete exchange reported. The pass gate uses the complete valid set; subsets remain diagnostic.
 5. Approximate 95% capacity intervals use ±1.96 SE. Monte Carlo standard errors use sample variation across replicates: SD/sqrt(20) for means and mean absolute contrasts, sqrt(p(1−p)/20) for sign proportions, and a delta-method SE for RMSE. Magnitude variation is the range of absolute capacity contrasts. None changes the pass thresholds.
@@ -48,11 +77,21 @@ The 61 new verification specs are listed individually below; all use `commit = '
 
 ## Real-code limitation and remaining work
 
-Installed mgcv 1.9.4 returns a pairwise worst-case concurvity above its theoretical 0–1 range for the saved model-8 fits. Independently confirmed on April: `worst["s(x,y)", "s(OL,ET,ST)"] = 4.355651234860306` (cover explained by location); the reciprocal value is `0.9995082328039331`. The source is `/home/expert/Documents/contracting/Andria/paleo-RF-verify/d5d5df5/.rundirs/run1-main/output/calibration/calibration_prediction_fit_apr_bluesky.RDS`; May shows the same first value. A numerical rank problem is suspected, not established. The reports preserve raw mgcv results and report all three measures; no clipping, new estimator or concurvity gate was added. This is recorded for Andria’s interpretation.
+The [independent rank review](2026-11-06_cv2_code_review_codex_gpt6astra.md) confirmed that the thin-plate cover basis is rank-deficient because OL + ET + ST = 1. On the saved April model-8 fit, fit rank/coefficient count was 744/748 and cover-block rank/count was 195/199. Chris chose NA for all six pairwise concurvity fields of all ten thin-plate configurations, with the reason “not computable: cover fractions sum to one, so the thin-plate cover basis is rank-deficient”. Each available capacity fit retains its fit rank, coefficient count, cover-block rank/count and location EDF before being discarded, including nonconverged fits. The five linear-cover configurations keep their previous concurvity calculation (not applicable when location is absent). The model, contrasts and uncertainty calculations are unchanged; this is a reporting decision supported by that review, not a new scientific method.
 
 The code and input checks otherwise accommodated the approved protocol. Production nearby/deep coverage, the winning model, full capacity results and recovery outcomes await the verification jobs. Period-sum and endpoint regressions for the unchanged pipeline passed; section-7 two-run common-cell, support-period and hindcast endpoint tests remain with the explicitly deferred comparison tool.
 
-Run order: tests → preparation/holdouts → 36 directional jobs plus 2 capacity jobs → selection → 6 recovery jobs plus 12 in-range jobs → summary → winner pipeline when needed. Maximum: **61 jobs and 1,144 new fits**, before retries; **60 jobs and 952 fits** before the winner pipeline. Capacity reuses two full-data model-8 fits. A model-8 winner, duplicate recovery configurations and infeasible folds reduce the count. AIC adds no fits. At most six CV/separation fit processes run concurrently.
+Run order: tests → preparation/holdouts → 36 directional jobs plus 2 capacity jobs → selection → 6 recovery jobs plus 4 three-month in-range jobs → summary → winner pipeline when needed. Maximum: **53 jobs and 1,144 new fits**, before retries; **52 jobs and 952 fits** before the winner pipeline. Capacity reuses two full-data model-8 fits. A model-8 winner, duplicate recovery configurations and infeasible folds reduce the count. AIC adds no fits. At most six CV/separation fit processes run concurrently.
+
+## Interpretation of the run outputs
+
+The selection score is measured on development data: choosing among fifteen configurations is optimistic. Optimism may be about one bootstrap standard error in albedo units (`selection_rmse_se` in `scores.csv`); this is a judgement, not measured bias, an upper bound or a correction. Distances and errors beyond observed support are untested; the deep band does not establish accuracy at all deeper distances. Missing direction-month depth combinations are NA, not depth zero. Distance-table represented/missing shares use the full frozen historical target denominator. Pooled diagnostic errors and partial model-8 comparisons never select the model.
+
+Capacity and recovery reports do not change selection. AIC differences compare only full-data fits within one month. Recovery pass rules use the complete frozen cell set; inside/outside subsets are diagnostics, and outside means either endpoint is outside. Capacity and recovery share the same monthly `historical` exchange; its endpoints and exclusions are recorded once per month.
+
+Intervals use `Vp` and are conditional on smoothing parameters; errors across configurations are not independent. Twenty replicates give worst-case Monte Carlo SE 0.112 for a sign proportion. Reported MCSEs use independent replicate variation. Recovery failure, incompleteness or untestability prevents a northeast vegetation-sign claim. Agreement within this grid does not establish correct separation or historical signs.
+
+Fixed interpretation prose now lives here instead of generated text files. `selection_notes.txt` keeps generated depth/weight counts, completion/failure and chosen/no-choice messages, and the bootstrap-SE field label. The capacity figure keeps its conditional-interval caption. Both record writers and `predicted_nearby_depth.csv` are retained; the latter reports finite candidate/model-8 prediction pairs and can differ from the pre-fit geometry.
 
 ## Published basis
 
@@ -107,18 +146,10 @@ No references were newly fetched or checked online; the protocol’s remaining r
 | [2026-11-06_cv2-fit-d3-nov.R](verification/2026-11-06_cv2-fit-d3-nov.R) | 0 → 10 | fit-d3-nov |
 | [2026-11-06_cv2-fit-d3-oct.R](verification/2026-11-06_cv2-fit-d3-oct.R) | 0 → 10 | fit-d3-oct |
 | [2026-11-06_cv2-fit-d3-sep.R](verification/2026-11-06_cv2-fit-d3-sep.R) | 0 → 10 | fit-d3-sep |
-| [2026-11-06_cv2-fit-inrange-apr.R](verification/2026-11-06_cv2-fit-inrange-apr.R) | 0 → 10 | fit-inrange-apr |
-| [2026-11-06_cv2-fit-inrange-aug.R](verification/2026-11-06_cv2-fit-inrange-aug.R) | 0 → 10 | fit-inrange-aug |
-| [2026-11-06_cv2-fit-inrange-dec.R](verification/2026-11-06_cv2-fit-inrange-dec.R) | 0 → 10 | fit-inrange-dec |
-| [2026-11-06_cv2-fit-inrange-feb.R](verification/2026-11-06_cv2-fit-inrange-feb.R) | 0 → 10 | fit-inrange-feb |
-| [2026-11-06_cv2-fit-inrange-jan.R](verification/2026-11-06_cv2-fit-inrange-jan.R) | 0 → 10 | fit-inrange-jan |
-| [2026-11-06_cv2-fit-inrange-jul.R](verification/2026-11-06_cv2-fit-inrange-jul.R) | 0 → 10 | fit-inrange-jul |
-| [2026-11-06_cv2-fit-inrange-jun.R](verification/2026-11-06_cv2-fit-inrange-jun.R) | 0 → 10 | fit-inrange-jun |
-| [2026-11-06_cv2-fit-inrange-mar.R](verification/2026-11-06_cv2-fit-inrange-mar.R) | 0 → 10 | fit-inrange-mar |
-| [2026-11-06_cv2-fit-inrange-may.R](verification/2026-11-06_cv2-fit-inrange-may.R) | 0 → 10 | fit-inrange-may |
-| [2026-11-06_cv2-fit-inrange-nov.R](verification/2026-11-06_cv2-fit-inrange-nov.R) | 0 → 10 | fit-inrange-nov |
-| [2026-11-06_cv2-fit-inrange-oct.R](verification/2026-11-06_cv2-fit-inrange-oct.R) | 0 → 10 | fit-inrange-oct |
-| [2026-11-06_cv2-fit-inrange-sep.R](verification/2026-11-06_cv2-fit-inrange-sep.R) | 0 → 10 | fit-inrange-sep |
+| [2026-11-06_cv2-fit-inrange-jan-mar.R](verification/2026-11-06_cv2-fit-inrange-jan-mar.R) | 0 → 11 | fit-inrange-jan-mar |
+| [2026-11-06_cv2-fit-inrange-apr-jun.R](verification/2026-11-06_cv2-fit-inrange-apr-jun.R) | 0 → 11 | fit-inrange-apr-jun |
+| [2026-11-06_cv2-fit-inrange-jul-sep.R](verification/2026-11-06_cv2-fit-inrange-jul-sep.R) | 0 → 11 | fit-inrange-jul-sep |
+| [2026-11-06_cv2-fit-inrange-oct-dec.R](verification/2026-11-06_cv2-fit-inrange-oct-dec.R) | 0 → 11 | fit-inrange-oct-dec |
 | [2026-11-06_cv2-holdouts.R](verification/2026-11-06_cv2-holdouts.R) | 0 → 20 | holdouts |
 | [2026-11-06_cv2-recovery-apr-darkens.R](verification/2026-11-06_cv2-recovery-apr-darkens.R) | 0 → 10 | recovery-apr-darkens |
 | [2026-11-06_cv2-recovery-apr-null.R](verification/2026-11-06_cv2-recovery-apr-null.R) | 0 → 10 | recovery-apr-null |

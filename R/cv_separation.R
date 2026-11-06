@@ -45,6 +45,7 @@ historical_exchange = function(cells, paleo, area) {
   freeze_exchange(first, second, area)
 }
 
+# Validating both endpoints enforces starting ET/ST >= 0.05; no separate filter is needed.
 fixed_exchange = function(cells, area) {
   first = second = cells[, c('x', 'y', 'elev', 'OL', 'ET', 'ST')]
   first$ET = cells$ET - 0.05; first$ST = cells$ST + 0.05
@@ -193,19 +194,41 @@ recovery_statistics = function(contrast, converged, exact, reference, null = FAL
   out
 }
 
-location_concurvity = function(fit, model) {
-  out = data.frame(location_edf = NA_real_, cover_block = if (CV_COVER_FORM[[model]] == 'linear')
+location_concurvity = function(fit, model, compute_concurvity = TRUE) {
+  linear = CV_COVER_FORM[[model]] == 'linear'
+  out = data.frame(fit_rank = NA_integer_, coefficient_count = NA_integer_,
+    cover_rank = NA_integer_, cover_coefficient_count = NA_integer_,
+    location_edf = NA_real_, cover_block = if (linear)
     'parametric (intercept and ET/ST)' else 'cover smooth',
+    concurvity_reason = if (linear) 'fit unavailable' else
+      'not computable: cover fractions sum to one, so the thin-plate cover basis is rank-deficient',
     location_from_cover_worst = NA_real_, location_from_cover_observed = NA_real_,
     location_from_cover_estimate = NA_real_, cover_from_location_worst = NA_real_,
     cover_from_location_observed = NA_real_, cover_from_location_estimate = NA_real_)
-  if (CV_LOCATION_K[[model]] == 0) { out$cover_block = 'not applicable'; return(out) }
+  if (CV_LOCATION_K[[model]] == 0) {
+    out$cover_block = 'not applicable'
+    if (linear) out$concurvity_reason = 'not applicable: no location term'
+  }
   if (is.null(fit)) return(out)
+  out$fit_rank = fit$rank
+  out$coefficient_count = length(coef(fit))
+  if (linear) {
+    cover_matrix = model.matrix(~ ET + ST, data = fit$model)
+  } else {
+    cover = which(vapply(fit$smooth, function(s) s$label == 's(OL,ET,ST)', FALSE))
+    cover_matrix = mgcv::PredictMat(fit$smooth[[cover]], fit$model)
+  }
+  out$cover_rank = qr(cover_matrix)$rank
+  out$cover_coefficient_count = ncol(cover_matrix)
+  if (CV_LOCATION_K[[model]] == 0) return(out)
   terms = calibration_fit_summary(fit)
   out$location_edf = terms$edf[terms$term == 's(x,y)']
+  if (!linear) return(out)
+  if (!compute_concurvity) { out$concurvity_reason = 'fit did not converge'; return(out) }
   pair = mgcv::concurvity(fit, full = FALSE)
-  cover = if (CV_COVER_FORM[[model]] == 'linear') 'para' else 's(OL,ET,ST)'
-  out[names(location_cover_concurvity(pair, cover))] = location_cover_concurvity(pair, cover)
+  values = location_cover_concurvity(pair, 'para')
+  out[names(values)] = values
+  out$concurvity_reason = ''
   out
 }
 

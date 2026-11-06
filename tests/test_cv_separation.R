@@ -22,6 +22,17 @@ stopifnot(fails(freeze_exchange(fixed$first, bad, fixed$area)))
 empty = fixed_exchange(cells[0, ], numeric())
 stopifnot(nrow(empty$first) == 0, !length(empty$weight))
 
+# A real hull exercises neither, first-only, second-only and both endpoints outside.
+hull = training_hull(data.frame(OL = c(.2, .2, .6), ET = c(.2, .6, .2), ST = c(.6, .2, .2)))
+first = second = cells
+first$OL = second$OL = .3
+first$ET = c(.3, .1, .3, .1); first$ST = 1 - first$OL - first$ET
+second$ET = c(.4, .3, .1, .6); second$ST = 1 - second$OL - second$ET
+support = exchange_support(freeze_exchange(first, second, area), hull)
+stopifnot(identical(support$outside_first, c(FALSE, TRUE, FALSE, TRUE)),
+  identical(support$outside_second, c(FALSE, FALSE, TRUE, TRUE)),
+  identical(support$outside, c(FALSE, TRUE, TRUE, TRUE)))
+
 # Two endpoint matrices and their shared coefficients. Identical endpoints have zero SE;
 # regional averaging preserves covariance between cells, rather than dividing it by n.
 X0 = cbind(1, c(0, 0)); X1 = cbind(1, c(1, 2)); weight = c(.25, .75)
@@ -121,6 +132,52 @@ stopifnot(pair_values$location_from_cover_observed == .2, pair_values$cover_from
   location_concurvity(NULL, 'lin_cover_noloc')$cover_block == 'not applicable',
   is.na(location_concurvity(NULL, 'loc12_linear')$location_edf))
 
+# Build the real bases without estimating coefficients. The three cover fractions have
+# four redundant thin-plate columns; the rank record and location EDF must survive suppression.
+suppressPackageStartupMessages(library(mgcv))
+diagnostic_data = expand.grid(OL = seq(.1, .6, length.out = 17), share = seq(.1, .8, length.out = 13))
+diagnostic_data$ET = (1 - diagnostic_data$OL) * diagnostic_data$share
+diagnostic_data$ST = 1 - diagnostic_data$OL - diagnostic_data$ET
+i = seq_len(nrow(diagnostic_data))
+diagnostic_data$x = -75 + sin(i * sqrt(2)); diagnostic_data$y = 43 + cos(i * sqrt(3))
+diagnostic_data$elev = 100 + (i * 17) %% 211; diagnostic_data$apr = .3
+diagnostic_fixture = function(model) {
+  setup = mgcv::gam(calibration_formula(model, 'apr'), data = diagnostic_data, fit = FALSE)
+  setup$model = setup$mf
+  setup$coefficients = seq_len(ncol(setup$X)) / ncol(setup$X)
+  setup$rank = qr(setup$X)$rank
+  setup$edf = rep(.5, ncol(setup$X))
+  setup$R = qr.R(qr(setup$X))
+  class(setup) = 'gam'
+  setup
+}
+thin_fit = diagnostic_fixture('loc12_tp50')
+linear_fit = diagnostic_fixture('loc12_linear')
+reason = 'not computable: cover fractions sum to one, so the thin-plate cover basis is rank-deficient'
+concurvity_columns = c(paste0('location_from_cover_', c('worst', 'observed', 'estimate')),
+  paste0('cover_from_location_', c('worst', 'observed', 'estimate')))
+for (model in CV_MODELS[CV_COVER_FORM != 'linear']) {
+  diagnostic = location_concurvity(thin_fit, model)
+  stopifnot(all(is.na(diagnostic[, concurvity_columns])), diagnostic$concurvity_reason == reason,
+    diagnostic$fit_rank == thin_fit$rank, diagnostic$coefficient_count == length(coef(thin_fit)),
+    diagnostic$cover_rank == 45L, diagnostic$cover_coefficient_count == 49L,
+    if (CV_LOCATION_K[[model]] == 0) is.na(diagnostic$location_edf) else diagnostic$location_edf == 5.5)
+}
+linear_pair = location_cover_concurvity(mgcv::concurvity(linear_fit, full = FALSE), 'para')
+for (model in CV_MODELS[CV_COVER_FORM == 'linear']) {
+  diagnostic = location_concurvity(linear_fit, model)
+  stopifnot(diagnostic$fit_rank == linear_fit$rank,
+    diagnostic$coefficient_count == length(coef(linear_fit)),
+    diagnostic$cover_rank == 3L, diagnostic$cover_coefficient_count == 3L)
+  if (CV_LOCATION_K[[model]] == 0) stopifnot(all(is.na(diagnostic[, concurvity_columns]))) else
+    stopifnot(diagnostic$concurvity_reason == '',
+      equal(as.list(diagnostic[, concurvity_columns]), linear_pair[concurvity_columns]))
+}
+diagnostic = location_concurvity(linear_fit, 'loc12_linear', compute_concurvity = FALSE)
+stopifnot(diagnostic$fit_rank == linear_fit$rank, diagnostic$cover_rank == 3L,
+  diagnostic$location_edf == 5.5, all(is.na(diagnostic[, concurvity_columns])),
+  diagnostic$concurvity_reason == 'fit did not converge')
+
 # Exercise the stage boundaries with a fitter that never estimates anything. The first
 # no-location recovery fit fails; its twenty-slot summary must remain incomplete.
 staged = new.env(parent = globalenv())
@@ -129,12 +186,16 @@ for (name in c('separation_capacity', 'separation_recovery', 'separation_summari
   environment(staged[[name]]) = staged
 }
 staged$month = 'apr'; staged$truth = 'darkens'; staged$calls = 0L; staged$responses = list()
-staged$fail_all = FALSE
+staged$fail_all = staged$nonconverged = FALSE
 staged$gc = function(...) invisible(NULL)
 staged$separation_record = function(...) invisible(NULL)
 staged$calibration_fit_summary = function(fit)
   data.frame(term = 'parametric', edf = 3, smoothing_parameter = NA_real_)
-staged$location_concurvity = function(fit, model) location_concurvity(NULL, model)
+staged$location_concurvity = function(fit, model, compute_concurvity = TRUE) {
+  if (is.null(fit)) return(location_concurvity(NULL, model))
+  location_concurvity(if (CV_COVER_FORM[[model]] == 'linear') linear_fit else thin_fit,
+    model, compute_concurvity)
+}
 make_fixture = function(data, month, model = 'mod8') {
   result = fit
   result$model = data[complete_rows(data, month), c(month, CALIBRATION_PREDICTORS)]
@@ -147,9 +208,10 @@ staged$fit_calibration_retry = function(model, month, data) {
   staged$responses[[staged$calls]] = data[[month]]
   failed = staged$fail_all || (staged$fail && model == 'cover_elev' && staged$calls == 2L)
   result = if (failed) NULL else make_fixture(data, month, model)
-  list(fit = result, converged = !failed, retries = 0L,
+  converged = !failed && !(staged$nonconverged && model == 'loc12_linear')
+  list(fit = result, converged = converged, retries = 0L,
     status = if (failed) 'ERROR: stipulated fixture failure' else 'fixture converged', warnings = '',
-    attempts = data.frame(attempt = 1L, maxit = 500, converged = !failed, status = 'fixture'))
+    attempts = data.frame(attempt = 1L, maxit = 500, converged = converged, status = 'fixture'))
 }
 staged$exchange_contrast = function(fit, exchange)
   c(contrast = generator_contrast(exchange, generator, staged$truth), se = 0)
@@ -165,7 +227,7 @@ for (month in c('apr', 'may')) {
   responses = setNames(lapply(CV_RECOVERY_TRUTHS, function(truth)
     lapply(1:20, function(replicate) recovery_response(fixture_cal, month, generator, truth, replicate, CV_SEED))),
     CV_RECOVERY_TRUTHS)
-  fixture$months[[month]] = list(model8_file = fit_file, capacity = fixed, exchanges = exchanges,
+  fixture$months[[month]] = list(model8_file = fit_file, exchanges = exchanges,
     generator = generator, responses = responses)
 }
 fixture$input_files = file.path(fixture_dir, paste0(c('apr','may'), '.rds'))
@@ -192,6 +254,14 @@ stopifnot(nrow(capacity_table) == 30L, sum(capacity_table$reused) == 2L,
   passed$passes_recovery[passed$model == 'mod8'], !passed$passes_recovery[passed$model == 'cover_elev'],
   all(recovery_table$status[recovery_table$model == 'cover_elev' & recovery_table$month == 'apr' &
     recovery_table$truth == 'darkens'] == 'incomplete'))
+thin_rows = capacity_table$cover_form != 'linear'
+stopifnot(all(is.na(capacity_table[thin_rows, concurvity_columns])),
+  all(capacity_table$concurvity_reason[thin_rows] == reason),
+  all(capacity_table$fit_rank[thin_rows] == thin_fit$rank),
+  all(capacity_table$coefficient_count[thin_rows] == length(coef(thin_fit))),
+  all(capacity_table$cover_rank[thin_rows] == 45L),
+  all(capacity_table$cover_coefficient_count[thin_rows] == 49L),
+  all(capacity_table$location_edf[thin_rows & capacity_table$location_k != 0] == 5.5))
 # A whole failed job has no term summaries. It still writes every failed replicate and
 # the final report must say incomplete rather than failing while appending an empty table.
 staged$fail_all = TRUE; staged$truth = 'null'
@@ -201,5 +271,15 @@ recovery_table = read.csv(separation_file(fixture_dir, 'summaries.csv'))
 passed = read.csv(separation_file(fixture_dir, 'passed.csv'))
 stopifnot(!any(passed$passes_recovery),
   all(recovery_table$status[recovery_table$month == 'may' & recovery_table$truth == 'null'] == 'incomplete'))
+# A returned fit that did not converge still leaves rank/EDF evidence before discard.
+staged$fail_all = FALSE; staged$nonconverged = TRUE
+staged$separation_capacity(fixture_dir, 'apr')
+capacity_table = read.csv(separation_file(fixture_dir, 'capacity_apr.csv'))
+unconverged = capacity_table[capacity_table$model == 'loc12_linear', ]
+stopifnot(!unconverged$converged, is.na(unconverged$contrast),
+  unconverged$fit_rank == linear_fit$rank, unconverged$coefficient_count == length(coef(linear_fit)),
+  unconverged$cover_rank == 3L, unconverged$cover_coefficient_count == 3L,
+  unconverged$location_edf == 5.5, all(is.na(unconverged[, concurvity_columns])),
+  unconverged$concurvity_reason == 'fit did not converge')
 unlink(fixture_dir, recursive = TRUE)
 cat('CV separation: hand-worked checks passed (no fits).\n')

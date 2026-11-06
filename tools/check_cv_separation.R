@@ -54,8 +54,8 @@ separation_prepare = function(run_dir, source_run) {
   if (anyDuplicated(separation_cell_key(areas))) stop('one cell has inconsistent areas')
   cell_area = function(cells) areas$area[match(separation_cell_key(cells), separation_cell_key(areas))]
   past_cells = paleo[paleo$ages == 6000 & separation_northeast(paleo), c('x', 'y', 'elev')]
-  capacity = historical_exchange(past_cells, paleo, cell_area(past_cells))
-  frozen = list(cal = cal, capacity = capacity, months = list(), config = cfg,
+  historical = historical_exchange(past_cells, paleo, cell_area(past_cells))
+  frozen = list(cal = cal, months = list(), config = cfg,
     source_config = old_cfg, models = CV_MODELS, location_k = CV_LOCATION_K, cover_form = CV_COVER_FORM,
     base_seed = CV_SEED, protocol_md5 = unname(tools::md5sum('docs/cc/2026-11-06_cv_protocol_v2.md')))
   seeds = endpoints = exclusions = NULL
@@ -68,10 +68,8 @@ separation_prepare = function(run_dir, source_run) {
     rows = cal[complete_rows(cal, month), ]
     hull = training_hull(rows)
     modern = rows[separation_northeast(rows), ]
-    exchanges = list(fixed = fixed_exchange(modern, cell_area(modern)), historical = capacity)
+    exchanges = list(fixed = fixed_exchange(modern, cell_area(modern)), historical = historical)
     for (name in names(exchanges)) exchanges[[name]]$support = exchange_support(exchanges[[name]], hull)
-    month_capacity = capacity
-    month_capacity$support = exchange_support(month_capacity, hull)
     responses = list()
     for (truth in CV_RECOVERY_TRUTHS) {
       responses[[truth]] = lapply(seq_len(CV_RECOVERY_REPLICATES), function(replicate)
@@ -79,15 +77,15 @@ separation_prepare = function(run_dir, source_run) {
       seeds = rbind(seeds, data.frame(month = month, truth = truth, replicate = seq_len(CV_RECOVERY_REPLICATES),
         seed = vapply(responses[[truth]], function(x) x$seed, 0L)))
     }
-    for (name in c('capacity', names(exchanges))) {
-      exchange = if (name == 'capacity') month_capacity else exchanges[[name]]
+    for (name in names(exchanges)) {
+      exchange = exchanges[[name]]
       exclusions = rbind(exclusions, cbind(month = month, exchange = name, exchange$exclusions))
       endpoints = rbind(endpoints, cbind(month = rep(month, nrow(exchange$first)),
         exchange = rep(name, nrow(exchange$first)), exchange$support,
         OL = exchange$first$OL, ET_first = exchange$first$ET, ST_first = exchange$first$ST,
         ET_second = exchange$second$ET, ST_second = exchange$second$ST))
     }
-    frozen$months[[month]] = list(generator = generator, exchanges = exchanges, capacity = month_capacity,
+    frozen$months[[month]] = list(generator = generator, exchanges = exchanges,
       responses = responses, model8_file = fit_file, reuse = fit_convergence(fit))
     rm(fit)
   }
@@ -123,10 +121,10 @@ separation_capacity = function(run_dir, month) {
       check_full_month_rows(fit, data, month)
       fit_terms = calibration_fit_summary(fit)
       terms = rbind(terms, cbind(month = month, model = model, fit_terms))
+      concurvity = location_concurvity(fit, model, compute_concurvity = fitted$converged)
       if (fitted$converged) {
-        contrast = exchange_contrast(fit, frozen$months[[month]]$capacity)
+        contrast = exchange_contrast(fit, frozen$months[[month]]$exchanges$historical)
         aic = full_month_aic(fit, data, month)
-        concurvity = location_concurvity(fit, model)
       }
     }
     result = rbind(result, cbind(data.frame(month = month, model = model,
@@ -255,12 +253,6 @@ separation_summarize = function(run_dir) {
     labs(x = 'Location basis size (0: no location term)', y = 'Albedo contrast: second endpoint minus first',
       colour = 'Cover form', caption = '6 ka open land; 4.5 ka evergreen minus 6 ka evergreen. Conditional approximate 95% intervals.')
   ggsave(separation_file(run_dir, 'capacity.pdf'), plot, width = 10, height = 5)
-  writeLines(c('Selection is unchanged by these reports. AIC differences compare only full-data fits within one month.',
-    'Recovery pass rules use the complete frozen cell set. Inside/outside subsets are diagnostics; outside means either endpoint is outside.',
-    'Intervals use Vp and are conditional on smoothing parameters; errors across configurations are not independent.',
-    'Twenty replicates give worst-case Monte Carlo SE 0.112 for a sign proportion. MCSEs here use independent replicate variation.',
-    'Recovery failure, incompleteness or untestability prevents a northeast vegetation-sign claim.',
-    'Agreement within this grid does not establish correct separation or historical signs.'), separation_file(run_dir, 'interpretation.txt'))
   separation_record(run_dir, 'summarize', attr(frozen, 'md5'))
   print(passed, row.names = FALSE)
 }
