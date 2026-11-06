@@ -313,21 +313,35 @@ the fitted model implies the opposite sign in spring and summer. Nothing has bee
    labelled lower quality. Did your raster keep all qualities, or only the full inversions? (Its winter values reach
    as far north as a noon sun 80-85 degrees from overhead, so it kept at least some low-sun retrievals.)
 
-## 8. What the cross-validation's score can and cannot show (3 November)
+## 8. What the cross-validation's score can and cannot show (updated 6 November)
 
 *From Astra's answer on the northeast and its design for the geographic gap, and Fable's reviews (branch
 `cv-design`: `docs/cc/2026-11-03_cv_northeast_question_codex_gpt6astra.md`,
-`2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`; issue #24). No model has been fitted yet.*
+`2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`; issue #24).
+Updated from [CV protocol 2](2026-11-06_cv_protocol_v2.md) and Fable’s reviews
+(`2026-11-06_cv_protocol_v2_review_fable.md`, `2026-11-06_cv_deep_band_review_fable.md`).*
 
 The cross-validation chooses the calibration model by how well it predicts modern cells whose cover mixes lie outside
 the range of the cells it was fitted on. Because unusual mixes are clustered in space, withholding them also leaves a
-geographic gap: in the northeast, the matching holdout withholds 82 of the 83 cells, so every model must predict
+geographic gap: in the first run’s northeast holdout, 82 of the 83 cells were withheld, so every model had to predict
 170-520 km from its nearest training cell. The hindcast, by contrast, predicts new cover at places the model was fitted
-on. So the score measures transfer to unfamiliar cover across a geographic gap, not "new cover at the same place",
-which today's data cannot observe directly (one albedo per cell and month). Chris decided to keep the choice rule and
-report beside it how each model's advantage depends on distance from training, and a geographic-only holdout for the
-models that differ only in their location term; the rule's tie-break leans towards models without a location term, and
-that is stated rather than corrected.
+on. Today's data cannot observe changed cover at the same place directly (one albedo per cell and month).
 
-**Question.** Do you accept this as the basis for choosing the model (with its limits reported), or would you rather
-the paper keep model 8 and show the cross-validation's choice as a sensitivity?
+**Decided by Chris, 6 November, after the first CV run:** version 2 tunes fifteen configurations using only
+withheld observations less than 250 km from training; farther observations are reported beside the score. This
+replaces the 3 November rule. It also compares the northeast response across location capacities and tests recovery
+of known synthetic effects. Recovery failure prevents a northeast sign claim without changing predictive selection.
+
+The nearby observations test the northeast’s less-open-land departure direction through the 0.05–0.10 cover-distance
+band, but not at 0.10 or more. The nearby deep band carries 1.5% of the score’s weight on two blocks, all in another
+direction; Chris accepts this with the limit reported. Synthetic recovery tests the historical-size exchange at the
+northeast’s own cells under a stipulated truth, not the real response.
+
+**Questions.**
+
+1. Do you accept this basis for choosing the model, with its limits reported, or should the paper keep model 8 and
+   show the chosen model as a sensitivity? In particular, is nearby modern skill below 0.10 plus synthetic recovery
+   under a stipulated truth enough for the paper’s northeast claim? (Deep-band review, 6 November.)
+2. Is a common cover response across regions acceptable for interpreting the northeast? The real-data capacity
+   comparison and synthetic recovery test examine its stability and capability, but cannot establish the real
+   regional response. (Protocol-2 review and separation tests, 6 November.)
