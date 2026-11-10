@@ -11,6 +11,17 @@ me any questions needed." Second version, revised after Astra's check
   model.
 - "Fable builds, Astra reviews."
 - "Yes, open-access copies": the citation agents may download open-access copies of the reference papers.
+- "Six versions."
+- On the diagnostic: "I'm happy with something along these lines but the closer to a published precedent the
+  better." A separate agent is reading the methods of Lejeune et al. (2020), Duveiller et al. (2018), Li et al.
+  (2015) and Boisier et al. (2013) closely, so that the name, unit, reliability rules and presentation of the
+  diagnostic follow them where they can (section 7). The build takes its final form from that reading.
+- On scope: "I don't want to get too hung up on the north east and the hemlock decline. It is one interesting
+  feature to look at because we know something happened then with the vegetation and we know the effect it should
+  have had on Albedo. So it makes a good test case for the modelling. But there might be other times and regions
+  where we can also say something interesting [...] so we should explore those options too." So the contrasts are
+  reported for every region the project already names, not for the northeast alone (section 1), and a separate
+  search for other case studies is under way.
 
 **Benefit to the paper.** The vegetation forcing depends on how albedo responds when cover changes at a fixed
 place, and the three pipeline runs disagree about it in every period. This shows that fitted response directly,
@@ -51,7 +62,9 @@ are exchanged at the modern cells, with location, elevation and the third cover 
   from the coefficient covariance (`exchange_contrast()`, `R/cv_separation.R:86-90`, unchanged). The standard
   error is approximate and conditional: it leaves out the uncertainty of the smoothing, spatial dependence, the
   cover data and the choice of model.
-- **Regions:** the northeast box, and the forcing's study area (27 to 74 N).
+- **Regions:** the forcing's study area (27 to 74 N) and each of the six regions the project already names
+  (`R/regions.R`: Southwest, Southern Plains, Southeast, Northeast, Upper Midwest and Great Lakes, Alaska and
+  Yukon). The northeast is one of them, not the focus.
 - **Always shown with it:** the number of eligible cells and their share of the region's area. From the saved
   tables, in the northeast on all-days albedo: 58, 41 and 22 of 83 cells for the three exchanges (70%, 50% and 27%
   of the area); on snowy albedo outside December to April only a handful, and none in June and September. A
@@ -68,22 +81,27 @@ hindcast comparison tool reports it.
 |---|---|---|
 | 100 | `loc100_linear` (the chosen model) | `loc100_tp200` |
 | 500 | `lin_cover` (its flexible-location rival) | `mod8` (the original) |
-| 30, if Chris wants the third pipeline run represented | `loc30_linear` | `mod8_coarse_loc` (the first run's choice) |
+| 30 | `loc30_linear` | `mod8_coarse_loc` (the first run's choice) |
 
-- Four versions separate location size from cover form. Six also cover the coarse-location pipeline run, at the
-  cost of about 70 more fits that take seconds each. The code is the same either way.
+- Six versions (Chris, 10 November): location size crossed with cover form, covering all three finished pipeline
+  runs (model 8, the coarse-location model, the chosen model).
 - Twelve months; three existing calibration tables with the 75-degree limit on the sun's zenith angle
   (`full_75`): all days (the protocol 2 run), snow-free (run 2) and snowy (run 7).
 - A month is fitted for a version only where the table has at least as many complete cells as the version has
   coefficients (the protocol's existing rule).
-- Every fit is made afresh by REML with the ordinary fitter and its one retry: at most 144 fits for four versions,
-  216 for six. Most take seconds; those with location 500 about two minutes. Refitting all is simpler than
-  checking saved fits for reuse, and costs under an hour on twelve cores.
+- Every fit is made afresh by REML with the ordinary fitter and its one retry: at most 216 fits. Most take
+  seconds; those with location 500 about two minutes (one took 26). Refitting all is simpler than checking saved
+  fits for reuse, and costs under an hour on twelve cores.
 
 ## 3. Published values shown beside
 
 A small table, one row per published value, with its classes, months, snow state, region, kind of albedo, value
-and spread, source, table or figure and page. A separate agent is assembling it from open-access copies now.
+and spread, source, table or figure and page. A separate agent assembled it on 10 November from open-access
+copies: 103 rows, 96 of them read in the source (22 from figures), from Hollinger et al. (2010), Boisier et al.
+(2013), Burakowski et al. (2015, 2016), Bright et al. (2015), Euskirchen et al. (2016) and Lutz and Howarth
+(2015). It could not obtain Jin et al. (2002), Barnes and Roy (2010), Ghimire et al. (2014) or Zhao and Jackson
+(2014); Astra read Jin's Table 1 the same day and confirmed its two values. Every published value is seasonal or
+by snow period; none is for a single calendar month.
 
 | Source | What it gives | Kind of albedo |
 |---|---|---|
@@ -151,12 +169,12 @@ Passages read by Astra on 10 November unless noted.
 - Agreement at modern mixes says nothing about the step to past mixes outside the modern range, which in the
   northeast is nearly every slice from 0.5 to 8.5 ka.
 - Snow-free values rest on retrievals classed as snow-free; some rest on very few (review, section 2.5). The
-  script reports how many retrievals stand behind the eligible cells where the table carries that count.
+  script reports, beside each result, the typical share of that month's retrievals that stand behind the eligible
+  cells, from the albedo build's cell table (`full_75_share_snowfree`, `full_75_share_snowy`).
 
 ## 9. Questions
 
-For Chris, before the build: four versions or six; and whether he is content with this diagnostic, which has no
-published precedent in exactly this form.
+For Chris: answered on 10 November (above).
 For Andria (open questions file, section 8, questions 4, 5 and 7).
 
 ## References
