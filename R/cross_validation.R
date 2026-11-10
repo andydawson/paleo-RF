@@ -59,19 +59,13 @@ cv_feasibility = function(training_rows, largest_model, valid, target) {
 # The target (protocol, section 2, as amended 3 November): the past cell-slices in the forcing's
 # latitude window (script 8 keeps lat_min < latitude < lat_max), each weighted so that every slice
 # and every month count equally and, within a slice, by area times the ice-free fraction. Each
-# slice's area and ice fraction come from script 7a's pairs: a slice is the younger end of its own
-# pair, and the oldest slice the older end of the last pair (ice does not depend on the month).
+# slice's area and ice fraction come from script 7a's pairs (slice_area_ice() below).
 # Cell-slices without an ice fraction (script 7a leaves a few missing) get no weight; the caller
 # reports how many. `slices` are the run's configured ages, youngest (modern) first; the modern
 # slice is not part of the target.
 cv_target_weights = function(paleo, diffs, slices, n_months, lat_min, lat_max) {
   slices = sort(slices)
-  pairs = diffs[diffs$month == diffs$month[1], ]
-  if (!setequal(unique(pairs$year), head(slices, -1)))
-    stop('script 7a\'s pairs do not start at the configured slices (config.R analysis$ages) but the last')
-  oldest = pairs[pairs$year == slices[length(slices) - 1], ]
-  ice = rbind(data.frame(x = pairs$x, y = pairs$y, ages = pairs$year, area = as.numeric(pairs$area), ice = pairs$ice_frac_young),
-              data.frame(x = oldest$x, y = oldest$y, ages = max(slices), area = as.numeric(oldest$area), ice = oldest$ice_frac_old))
+  ice = slice_area_ice(diffs, slices)
   historical_slices = setdiff(slices, 50)
   past = paleo[paleo$ages %in% historical_slices & paleo$y > lat_min & paleo$y < lat_max, ]
   past = merge(past, ice, by = c('x', 'y', 'ages'), all.x = TRUE)
@@ -90,6 +84,20 @@ cv_target_weights = function(paleo, diffs, slices, n_months, lat_min, lat_max) {
   past$weight = ifelse(total > 0, ice_free_area / total / length(historical_slices) / n_months, 0)
   attr(past, 'exclusions') = exclusions
   past
+}
+
+# Each cell-slice's area and ice fraction, from script 7a's pairs (one row per cell, month and pair
+# of consecutive slices): a slice is the younger end of its own pair, and the oldest slice the older
+# end of the last pair. Ice does not depend on the month, so one month's rows are read. Shared by the
+# target weights above and tools/compare_cv_hindcasts.R, so both weigh a cell-slice alike.
+slice_area_ice = function(diffs, slices) {
+  slices = sort(slices)
+  pairs = diffs[diffs$month == diffs$month[1], ]
+  if (!setequal(unique(pairs$year), head(slices, -1)))
+    stop('script 7a\'s pairs do not start at the configured slices (config.R analysis$ages) but the last')
+  oldest = pairs[pairs$year == slices[length(slices) - 1], ]
+  rbind(data.frame(x = pairs$x, y = pairs$y, ages = pairs$year, area = as.numeric(pairs$area), ice = pairs$ice_frac_young),
+        data.frame(x = oldest$x, y = oldest$y, ages = max(slices), area = as.numeric(oldest$area), ice = oldest$ice_frac_old))
 }
 
 # The direction (degrees on the cover triangle, 0 = towards more summergreen at fixed evergreen,

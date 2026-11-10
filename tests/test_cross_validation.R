@@ -85,6 +85,13 @@ diffs <- data.frame(month = "jan", x = c(-70, -70, -71, -71, -72, -72), y = c(45
 w <- cv_target_weights(paleo, diffs, c(50, 500, 1000), n_months = 1, lat_min = 27, lat_max = 74)
 w <- w[order(w$ages, w$x), ]
 stopifnot(identical(w$x, c(-71, -70, -71, -70)), isTRUE(all.equal(w$weight, c(0.25, 0.25, 0.5, 0))), sum(w$weight) == 1)
+# The per-slice area and ice fraction those weights are built from (shared with
+# tools/compare_cv_hindcasts.R): slices 50 and 500 are the younger ends of their own pairs, the oldest
+# slice the older end of the last pair; one row per cell and slice, the cell's area at each.
+ice <- slice_area_ice(diffs, c(50, 500, 1000))
+ice <- ice[order(ice$x, ice$ages), ]
+stopifnot(nrow(ice) == 9, identical(ice$ice[ice$x == -70], c(0, 0.5, 1)), all(ice$ice[ice$x == -71] == 0),
+          identical(ice$area[ice$x == -70], c(2, 2, 2)), identical(ice$ages[ice$x == -72], c(50, 500, 1000)))
 diffs$ice_frac_young[2] <- NA
 w2 <- cv_target_weights(paleo, diffs, c(50, 500, 1000), 1, 27, 74)
 stopifnot(nrow(w2) == 3, isTRUE(all.equal(w2$weight[w2$ages == 500], 0.5)),
