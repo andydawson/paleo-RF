@@ -125,23 +125,17 @@ for (name in names(models)) {
 }
 
 # Panel c: the region's 6 ka cells with evergreen set to one value, open land as it was then
-# and summergreen the rest.
-cells_with_evergreen = function(evergreen) {
-  cells = at_6ka
-  cells$ET = evergreen
-  cells$ST = 1 - cells$OL - evergreen
-  cells
-}
+# and summergreen the rest (cells_with_evergreen(), R/training_support.R).
 curves = NULL
 for (name in names(models)) for (evergreen in EVERGREEN_STEPS) {
-  cells = cells_with_evergreen(evergreen)
+  cells = cells_with_evergreen(at_6ka, evergreen)
   curves = rbind(curves, data.frame(model = name, ET = evergreen,
                                     albedo = mean(predict(models[[name]], cells, type = 'response'))))
 }
 # The lines' cells, judged by the training-range rule of the other diagnostic figures. The
 # same cells feed both models, so one share per evergreen step.
 line_support = data.frame(ET = EVERGREEN_STEPS,
-  outside = sapply(EVERGREEN_STEPS, function(evergreen) mean(training_support(cells_with_evergreen(evergreen), hull)$outside)))
+  outside = sapply(EVERGREEN_STEPS, function(evergreen) mean(training_support(cells_with_evergreen(at_6ka, evergreen), hull)$outside)))
 cat('share of the cells on the lines of panel c outside the training range, by evergreen share:\n')
 every_fifth_step = line_support[seq(1, nrow(line_support), by = 5), ]
 every_fifth_step$outside = round(every_fifth_step$outside, 2)

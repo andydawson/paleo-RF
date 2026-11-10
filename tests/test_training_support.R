@@ -28,4 +28,14 @@ inputs <- read_training_support_inputs(list(cfg = list(analysis = list(months = 
 stopifnot(identical(inputs$fit$model, training), identical(inputs$hull, training_hull(training)),
           all(inputs$cover$month == "may"), identical(inputs$cover$year, c(500, 1000)))
 
+# The evergreen-summergreen swap at fixed open land (design of 5 November, hand-worked): a mix of
+# 0.15 open land, 0.40 evergreen and 0.45 summergreen with evergreen set to 0.20 becomes 0.15, 0.20 and
+# 0.65; location and elevation are untouched; setting a cell's own evergreen share changes nothing.
+swap_cells <- data.frame(x = c(-75, -74), y = c(42, 43), elev = c(100, 200), OL = c(0.15, 0.30), ET = c(0.40, 0.20), ST = c(0.45, 0.50))
+swapped <- cells_with_evergreen(swap_cells, 0.20)
+stopifnot(isTRUE(all.equal(swapped$ST, c(0.65, 0.50))), all(swapped$ET == 0.20),
+          identical(swapped[, c("x", "y", "elev", "OL")], swap_cells[, c("x", "y", "elev", "OL")]),
+          isTRUE(all.equal(rowSums(swapped[, c("OL", "ET", "ST")]), c(1, 1))),
+          isTRUE(all.equal(cells_with_evergreen(swap_cells[2, ], 0.20), swap_cells[2, ])))
+
 cat("test_training_support: all tests passed\n")
