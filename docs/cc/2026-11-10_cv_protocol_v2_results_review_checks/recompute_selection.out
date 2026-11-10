@@ -1,0 +1,195 @@
+282315 prediction rows; 15 models; 36 holdout-months
+
+== 1. Overall selection MSE: recomputed against scores.csv
+                recomputed      saved max_abs_diff
+lin_cover_noloc 0.02042001 0.02042001  4.85723e-17
+loc0_tp50       0.02331062 0.02331062  2.42861e-17
+cover_elev              NA         NA           NA
+loc12_linear    0.00528475 0.00528475  3.46945e-18
+loc12_tp50      0.00441554 0.00441554  1.73472e-18
+loc12_tp200     0.00501330 0.00501330  3.46945e-18
+loc30_linear    0.00498651 0.00498651  8.67362e-19
+loc30_tp50      0.00390279 0.00390279  1.73472e-18
+mod8_coarse_loc 0.00462680 0.00462680  0.00000e+00
+loc100_linear   0.00243945 0.00243945  1.73472e-18
+loc100_tp50     0.00261704 0.00261704  3.90313e-18
+loc100_tp200    0.00298362 0.00298362  4.33681e-18
+lin_cover       0.00396293 0.00396293  5.20417e-18
+loc500_tp50     0.00354257 0.00354257  8.67362e-19
+mod8            0.00435524 0.00435524  1.73472e-18
+unconverged or failed fits by model:
+            
+             d1 jun
+  cover_elev    562
+
+== 2. Selection RMSE by month (same rows and weights, one month at a time)
+                  jan   feb   mar   apr   may   jun   jul   aug   sep   oct
+lin_cover_noloc 0.150 0.169 0.220 0.241 0.203 0.092 0.023 0.022 0.046 0.124
+loc0_tp50       0.142 0.175 0.216 0.249 0.223 0.150 0.024 0.023 0.074 0.147
+cover_elev      0.140 0.164 0.221 0.250 0.223    NA 0.025 0.024 0.071 0.141
+loc12_linear    0.103 0.085 0.086 0.095 0.103 0.058 0.024 0.024 0.038 0.047
+loc12_tp50      0.089 0.072 0.081 0.091 0.101 0.058 0.025 0.025 0.036 0.053
+loc12_tp200     0.093 0.075 0.083 0.102 0.116 0.057 0.025 0.025 0.035 0.052
+loc30_linear    0.106 0.086 0.076 0.081 0.106 0.057 0.023 0.021 0.030 0.062
+loc30_tp50      0.073 0.063 0.069 0.083 0.111 0.057 0.023 0.021 0.031 0.063
+mod8_coarse_loc 0.071 0.088 0.071 0.090 0.124 0.056 0.023 0.021 0.031 0.062
+loc100_linear   0.066 0.066 0.063 0.057 0.066 0.038 0.021 0.020 0.029 0.044
+loc100_tp50     0.062 0.060 0.059 0.064 0.082 0.038 0.021 0.019 0.028 0.049
+loc100_tp200    0.064 0.061 0.061 0.070 0.092 0.040 0.021 0.019 0.028 0.050
+lin_cover       0.070 0.055 0.068 0.077 0.108 0.076 0.025 0.027 0.027 0.068
+loc500_tp50     0.069 0.060 0.072 0.073 0.097 0.065 0.024 0.026 0.027 0.061
+mod8            0.071 0.060 0.077 0.080 0.113 0.067 0.024 0.026 0.027 0.062
+                  nov   dec
+lin_cover_noloc 0.065 0.125
+loc0_tp50       0.080 0.117
+cover_elev      0.071 0.115
+loc12_linear    0.044 0.091
+loc12_tp50      0.040 0.067
+loc12_tp200     0.041 0.071
+loc30_linear    0.042 0.082
+loc30_tp50      0.033 0.058
+mod8_coarse_loc 0.038 0.063
+loc100_linear   0.039 0.050
+loc100_tp50     0.035 0.054
+loc100_tp200    0.038 0.060
+lin_cover       0.045 0.052
+loc500_tp50     0.046 0.048
+mod8            0.046 0.077
+winner of each month:             jan             feb             mar             apr             may 
+  "loc100_tp50"     "lin_cover"   "loc100_tp50" "loc100_linear" "loc100_linear" 
+            jun             jul             aug             sep             oct 
+"loc100_linear"  "loc100_tp200"  "loc100_tp200"   "loc500_tp50" "loc100_linear" 
+            nov             dec 
+   "loc30_tp50"   "loc500_tp50" 
+rank of loc100_linear, loc100_tp50, mod8 in each month:
+                jan feb mar apr may jun jul aug sep oct nov dec
+loc100_linear     3   7   3   1   1   1   3   3   6   1   5   2
+loc100_tp50       1   4   1   2   2   2   2   2   5   3   2   4
+mod8              7   3   9   6  10  11  10  13   2   9  12  10
+lin_cover         5   1   4   5   8  12  15  15   3  12  10   3
+lin_cover_noloc  15  14  14  13  13  13   5   7  13  13  13  15
+
+== 3. Each month's share of the overall MSE (weight x group MSE), winner and model 8
+                        jan      feb     mar     apr     may     jun     jul
+winner              0.00036  0.00036 0.00033 0.00027 0.00036 0.00012 0.00004
+mod8                0.00043  0.00030 0.00049 0.00053 0.00107 0.00037 0.00005
+difference          0.00006 -0.00006 0.00016 0.00026 0.00071 0.00025 0.00001
+share_of_difference 0.03294 -0.03124 0.08340 0.13695 0.36982 0.13109 0.00601
+                        aug      sep     oct     nov     dec
+winner              0.00003  0.00007 0.00016 0.00013 0.00021
+mod8                0.00006  0.00006 0.00032 0.00018 0.00050
+difference          0.00002 -0.00001 0.00016 0.00005 0.00029
+share_of_difference 0.01139 -0.00454 0.08370 0.02685 0.15365
+
+== 4. Selection RMSE by distance to the nearest training cell, and by departure direction
+                under_100km km_100_to_250     d1     d2     d3
+lin_cover_noloc      0.1380        0.1446 0.1655 0.1018 0.1855
+loc0_tp50            0.1478        0.1492 0.1909 0.0879 0.1739
+cover_elev               NA            NA     NA 0.0829 0.1710
+loc12_linear         0.0692        0.0727 0.0790 0.0628 0.0837
+loc12_tp50           0.0630        0.0675 0.0696 0.0617 0.0726
+loc12_tp200          0.0638        0.0743 0.0681 0.0735 0.0718
+loc30_linear         0.0671        0.0706 0.0795 0.0589 0.0727
+loc30_tp50           0.0596        0.0627 0.0659 0.0584 0.0628
+mod8_coarse_loc      0.0609        0.0694 0.0724 0.0642 0.0602
+loc100_linear        0.0452        0.0507 0.0459 0.0502 0.0639
+loc100_tp50          0.0456        0.0535 0.0479 0.0531 0.0591
+loc100_tp200         0.0468        0.0576 0.0508 0.0579 0.0585
+lin_cover            0.0510        0.0653 0.0718 0.0537 0.0512
+loc500_tp50          0.0481        0.0626 0.0639 0.0554 0.0533
+mod8                 0.0515        0.0693 0.0666 0.0673 0.0529
+rows under 100 km: 2732  rows 100-250 km: 6338 
+quantiles of km among selected rows:
+   0%   10%   25%   50%   75%   90%  100% 
+ 27.8  64.6  87.0 128.5 183.4 222.4 249.8 
+
+== 5. Post-hoc sensitivity of the choice (not the protocol's rule): which model has the lowest score if...
+all                        loc100_linear 0.0494, loc100_tp50 0.0512, loc100_tp200 0.0546, loc500_tp50 0.0595 | mod8 0.0660
+under_100km                loc100_linear 0.0452, loc100_tp50 0.0456, loc100_tp200 0.0468, loc500_tp50 0.0481 | mod8 0.0515
+km_100_250                 loc100_linear 0.0507, loc100_tp50 0.0535, loc100_tp200 0.0576, loc500_tp50 0.0626 | mod8 0.0693
+snow_free_jun_sep          loc100_tp50 0.0276, loc100_linear 0.0279, loc100_tp200 0.0281, mod8_coarse_loc 0.0356 | mod8 0.0401
+oct_to_may                 loc100_linear 0.0571, loc100_tp50 0.0595, loc100_tp200 0.0638, loc500_tp50 0.0673 | mod8 0.0756
+shallow_cover_under_0.02   lin_cover 0.0423, loc500_tp50 0.0425, loc100_tp50 0.0453, loc100_linear 0.0454 | mod8 0.0456
+deeper_cover_0.02_plus     loc100_linear 0.0547, loc100_tp50 0.0587, loc100_tp200 0.0634, loc12_tp50 0.0722 | mod8 0.0878
+leave one month out, lowest score:             jan             feb             mar             apr             may 
+"loc100_linear" "loc100_linear" "loc100_linear" "loc100_linear"   "loc100_tp50" 
+            jun             jul             aug             sep             oct 
+"loc100_linear" "loc100_linear" "loc100_linear" "loc100_linear" "loc100_linear" 
+            nov             dec 
+"loc100_linear" "loc100_linear" 
+months standardised by observed variance (relative RMSE):
+    loc100_tp50   loc100_linear    loc100_tp200      loc30_tp50     loc500_tp50 
+          0.430           0.436           0.451           0.491           0.509 
+mod8_coarse_loc       lin_cover      loc12_tp50            mod8     loc12_tp200 
+          0.529           0.530           0.541           0.546           0.559 
+   loc30_linear    loc12_linear lin_cover_noloc       loc0_tp50 
+          0.571           0.590           0.987           1.092 
+
+== 6. Model 8 minus winner, mean squared error and bias, by km bin and cover-distance band (selected rows)
+rows:
+           cb
+kmb         [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+  [0,100)       2184         548          0         0
+  [100,150)     1438        1338        273         0
+  [150,200)      319         853        309         0
+  [200,250)      267         994        511        36
+winner RMSE:
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)      0.042       0.052         NA        NA
+[100,150)    0.053       0.054      0.061        NA
+[150,200)    0.058       0.068      0.056        NA
+[200,250)    0.060       0.069      0.059     0.056
+model 8 RMSE:
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)      0.038       0.056         NA        NA
+[100,150)    0.056       0.064      0.087        NA
+[150,200)    0.073       0.082      0.138        NA
+[200,250)    0.053       0.083      0.144     0.054
+linear cover with location k=500, RMSE:
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)      0.036       0.056         NA        NA
+[100,150)    0.053       0.054      0.102        NA
+[150,200)    0.059       0.074      0.150        NA
+[200,250)    0.049       0.079      0.152     0.055
+winner bias:
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)     0.0031      0.0068         NA        NA
+[100,150)   0.0035      0.0042    -0.0112        NA
+[150,200)   0.0126      0.0014     0.0008        NA
+[200,250)   0.0006      0.0148     0.0014   -0.0322
+model 8 bias:
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)     0.0066      0.0151         NA        NA
+[100,150)   0.0079      0.0120     0.0231        NA
+[150,200)   0.0135      0.0201     0.0640        NA
+[200,250)  -0.0011      0.0321     0.0601   -0.0068
+
+same by month group (jun-sep, then oct-may), all directions: model 8 RMSE then winner RMSE:
+jun jul aug sep 
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)      0.026       0.033         NA        NA
+[100,150)    0.040       0.035      0.061        NA
+[150,200)    0.047       0.071      0.083        NA
+[200,250)    0.037       0.049      0.092     0.021
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)      0.027       0.022         NA        NA
+[100,150)    0.043       0.027      0.034        NA
+[150,200)    0.042       0.069      0.018        NA
+[200,250)    0.029       0.040      0.016     0.012
+jan feb mar apr may oct nov dec 
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)      0.044       0.066         NA        NA
+[100,150)    0.065       0.076      0.099        NA
+[150,200)    0.087       0.088      0.162        NA
+[200,250)    0.061       0.097      0.165     0.065
+          [0,0.02) [0.02,0.05) [0.05,0.1) [0.1,Inf)
+[0,100)      0.049       0.063         NA        NA
+[100,150)    0.058       0.065      0.072        NA
+[150,200)    0.067       0.067      0.070        NA
+[200,250)    0.073       0.081      0.072     0.068
+
+== 7. Where the selected (nearby) withheld cells are
+   holdout cells                   lon_q              lat_q
+d1      d1   267 -156.5 / -113.5 / -75.5 31.8 / 57.5 / 72.5
+d2      d2   373 -150.5 / -116.5 / -61.5 41.5 / 53.5 / 64.5
+d3      d3   211 -119.5 / -101.5 / -83.5   28 / 43.5 / 76.5

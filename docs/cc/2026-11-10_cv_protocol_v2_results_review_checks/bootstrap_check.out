@@ -1,0 +1,12 @@
+blocks: 94  rows: 9070 
+loc100_tp50   minus winner: difference 0.000178, bootstrap SE 0.000140 (ratio 1.27); 95% interval -0.000081 to 0.000470; winner better in 90.6% of resamples
+loc100_tp200  minus winner: difference 0.000544, bootstrap SE 0.000243 (ratio 2.24); 95% interval 0.000120 to 0.001070; winner better in 99.7% of resamples
+loc500_tp50   minus winner: difference 0.001103, bootstrap SE 0.000532 (ratio 2.07); 95% interval 0.000109 to 0.002216; winner better in 99.0% of resamples
+lin_cover     minus winner: difference 0.001523, bootstrap SE 0.000707 (ratio 2.16); 95% interval 0.000207 to 0.002940; winner better in 99.3% of resamples
+mod8          minus winner: difference 0.001916, bootstrap SE 0.000584 (ratio 3.28); 95% interval 0.000802 to 0.003105; winner better in 100.0% of resamples
+loc30_tp50    minus winner: difference 0.001463, bootstrap SE 0.000258 (ratio 5.67); 95% interval 0.000984 to 0.001961; winner better in 100.0% of resamples
+share of the model-8-minus-winner difference from the top 5 blocks: 0.68 ; top 10: 0.89 ; blocks with negative contribution: 47 of 94 
+-32 12 -32 11 -32 13 -31 12 -25 10  -17 8 -12 10 -24 10 
+ 0.246  0.160  0.121  0.082  0.075  0.053  0.049  0.041 
+1d31cfc/.rundirs/cv2-winner April, direct predict():  -0.002035697 
+f05628d/.rundirs/cv-mod8 April, direct predict():  -0.04115066 

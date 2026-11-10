@@ -1,0 +1,15 @@
+all selected rows                              rows  9070, target weight kept 0.98 | loc100_linear 0.0494, loc100_tp50 0.0512, loc100_tp200 0.0546, loc500_tp50 0.0595 | mod8 0.0660, lin_cover(k500) 0.0630
+without the four top blocks (W/interior Alaska) rows  8524, target weight kept 0.98 | loc100_linear 0.0482, lin_cover 0.0483, loc500_tp50 0.0486, loc100_tp50 0.0492 | mod8 0.0557, lin_cover(k500) 0.0483
+without Alaska and Yukon west of 140 W         rows  8028, target weight kept 0.98 | lin_cover 0.0464, loc100_linear 0.0465, loc500_tp50 0.0474, loc100_tp50 0.0483 | mod8 0.0547, lin_cover(k500) 0.0464
+only east of 100 W                             rows  4416, target weight kept 0.98 | lin_cover 0.0353, loc500_tp50 0.0394, loc100_linear 0.0399, loc100_tp50 0.0424 | mod8 0.0473, lin_cover(k500) 0.0353
+without the ten top blocks                     rows  7786, target weight kept 0.98 | loc500_tp50 0.0466, lin_cover 0.0467, loc100_linear 0.0471, loc100_tp50 0.0484 | mod8 0.0503, lin_cover(k500) 0.0467
+without the four blocks: loc100_tp50  minus winner 0.000099, SE 0.000119 (ratio 0.83), winner better in 80.8% of resamples
+without the four blocks: loc500_tp50  minus winner 0.000042, SE 0.000198 (ratio 0.21), winner better in 61.0% of resamples
+without the four blocks: lin_cover    minus winner 0.000008, SE 0.000218 (ratio 0.04), winner better in 53.0% of resamples
+without the four blocks: mod8         minus winner 0.000785, SE 0.000274 (ratio 2.87), winner better in 100.0% of resamples
+without the four blocks: loc30_tp50   minus winner 0.001074, SE 0.000208 (ratio 5.16), winner better in 100.0% of resamples
+the four blocks: cells 50 ; rows 546 ; holdouts d1 372, d2 174 
+           jan   feb   mar   apr   may   jun   jul   aug   sep   oct   nov dec
+observed 0.372 0.365 0.426 0.405 0.229 0.138 0.133 0.130 0.131 0.204 0.282  NA
+winner   0.287 0.422 0.461 0.400 0.298 0.176 0.137 0.136 0.146 0.247 0.187  NA
+mod8     0.838 0.455 0.570 0.553 0.470 0.293 0.161 0.155 0.170 0.329 0.469  NA

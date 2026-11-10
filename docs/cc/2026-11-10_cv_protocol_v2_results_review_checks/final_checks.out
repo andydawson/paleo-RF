@@ -1,0 +1,16 @@
+share of each slice outside the modern (April) range, by age in years BP:
+   50   200   500  1000  1500  2000  2500  3000  3500  4000  4500  5000  5500 
+0.000 0.037 0.073 0.129 0.136 0.097 0.146 0.135 0.115 0.151 0.173 0.142 0.142 
+ 6000  6500  7000  7500  8000  8500  9000  9500 10000 10500 11000 11500 
+0.167 0.107 0.130 0.102 0.126 0.103 0.170 0.121 0.106 0.081 0.114 0.092 
+same, northeast box only:
+   50   200   500  1000  1500  2000  2500  3000  3500  4000  4500  5000  5500 
+ 0.00  0.14  0.82  0.99  0.99  1.00  1.00  0.99  0.98  0.97  1.00  1.00  0.99 
+ 6000  6500  7000  7500  8000  8500  9000  9500 10000 10500 11000 11500 
+ 0.98  0.99  1.00  0.87  0.88  0.81  0.58  0.24  0.00  0.00  0.00  0.00 
+all rows                         mod8        minus lin_cover    : 0.000392, SE 0.000286, ratio 1.37
+all rows                         mod8        minus loc500_tp50  : 0.000813, SE 0.000199, ratio 4.09
+all rows                         lin_cover   minus loc100_linear: 0.001523, SE 0.000707, ratio 2.16
+without the four Alaskan blocks  mod8        minus lin_cover    : 0.000777, SE 0.000244, ratio 3.18
+without the four Alaskan blocks  mod8        minus loc500_tp50  : 0.000743, SE 0.000202, ratio 3.68
+without the four Alaskan blocks  lin_cover   minus loc100_linear: 0.000008, SE 0.000218, ratio 0.04
