@@ -125,10 +125,11 @@ The cross-validation that chooses the calibration model is a tool, not a pipelin
 Protocol 2 is [the approved 6 November protocol](docs/cc/2026-11-06_cv_protocol_v2.md);
 the first experiment remains reproducible at the commits in its verification specs.
 
-| Tool | Reads | Writes in the run folder |
+| Tool | Reads | Writes |
 |---|---|---|
 | `tools/cross_validate_albedo.R` (`holdouts`, `fit`, `score`) | run configuration; calibration table; historical cover; script 7a's area and ice fractions | `output/cross_validation_v2/`: frozen holdouts and target weights, predictions, fit summaries, selection scores, distance/direction reports and winner/model-8 in-range diagnostic |
 | `tools/check_cv_separation.R` (`prepare`, `capacity`, `recovery`, `summarize`) | the same inputs; run 1's April–May REML prediction fits; the CV winner | `output/cross_validation_v2/separation/`: frozen exchanges and synthetic responses, full-data capacity contrasts and conditional AIC, recovery replicates and pass rules |
+| `tools/compare_cv_hindcasts.R` (an output folder, the cross-validation's output folder, then the baseline run and one or more other runs) | each finished run's settings, calibration table, monthly prediction fits, prediction tables and forcing tables; the cross-validation's `by_distance.csv` and `nearby_coverage.csv` | nothing in a run folder; in its own output folder: the runs side by side as tables (albedo by month and slice; forcing by period with the vegetation part, the ice part and the total; the northeast by month; tested limits; geographic support by month), four figures and a record of inputs |
 
 The [CV2 run order](docs/cc/2026-11-06_cv2_run_order.md) gives the verification specs and
 dependencies for single-thread jobs. Scripts 1–10 still run unchanged for the selected model.
