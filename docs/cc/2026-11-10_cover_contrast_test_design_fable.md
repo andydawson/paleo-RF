@@ -42,8 +42,8 @@ the modern cells, with location and elevation held fixed:
 
 - The fifteen versions of protocol 2, unchanged.
 - Twelve months.
-- Three existing calibration tables, all with the 75% rule: all days (the protocol 2 run), snow-free (run 2) and
-  snowy (run 7, ten months: no July or August).
+- Three existing calibration tables, all with the 75-degree limit on the sun's zenith angle (`full_75`): all
+  days (the protocol 2 run), snow-free (run 2) and snowy (run 7, ten months: no July or August).
 - Up to 510 full-data fits by REML with the ordinary fitter and its one retry. Most take seconds; the three
   versions with location 500 take about two minutes each (one took 26). Model 8's saved fits are reused.
 

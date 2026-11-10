@@ -324,17 +324,26 @@ Updated from [CV protocol 2](2026-11-06_cv_protocol_v2.md) and Fable’s reviews
 Implementation check, 6 November: the code follows these decisions.
 
 **Results, 6 to 7 November, and their review, 10 November**
-(`2026-11-10_cv_protocol_v2_results_review_fable.md`; Chris has not yet decided on its recommendations).
+(`2026-11-10_cv_protocol_v2_results_review_fable.md`, revised after Astra's check of the same day,
+`2026-11-10_cv_protocol_v2_results_review_check_codex_gpt6astra.md`). Chris chose on 10 November to explore the
+cover contrasts against published values, with no pass or fail, and to build the hindcast comparison tool.
 
 - The rule chose location term 100 with straight-line cover (`loc100_linear`). Its pipeline run passed.
-- Its lead over the flexible location term (500) comes from four blocks in Alaska; elsewhere the two tie. The test
-  does reject the no-location and coarse-location versions and model 8's 200-basis cover term.
-- The forcing before 6 ka is the same across model 8, the coarse-location model and the chosen model (within about
-  10% for 6 to 10 ka). Since 6 ka it is not: for 4 to 6 ka the study-area mean is -0.45, -0.17 and +0.20 W/m².
+- Its lead over the flexible location term (500) comes mostly from four blocks in Alaska; elsewhere the two tie.
+  Under this test the no-location and coarse-location versions and model 8's 200-basis cover term score clearly
+  worse.
+- The total forcing for 6 to 10 ka agrees across model 8, the coarse-location model and the chosen model because
+  ice dominates it. The vegetation part differs between them in every period, and in sign from 4 to 12 ka
+  (study-area mean, HadGEM3, W/m²: 4 to 6 ka -0.56, -0.25, +0.11; 6 to 8 ka -0.07, +0.27, +0.08; 8 to 10 ka
+  -0.22, +0.30, -0.05; 10 to 12 ka +1.14, +0.91, -0.03).
 - Set against published forest contrasts (Hollinger et al. 2010; Jin et al. 2002), the chosen model's
-  evergreen-against-summergreen response is right in June to October and wrong in November to January; model 8's
-  northeast response is wrong from March to October. On snow-free albedo the chosen model's response has the
-  published sign in eleven of twelve months (exploratory fits, to be redone properly before use).
+  evergreen-against-summergreen response agrees in June to October and has the opposite sign in November to
+  January; model 8's northeast response has the opposite sign from March to October. On snow-free albedo the
+  chosen model's sign matches the published one in eleven of twelve months. These last are exploratory fits, not
+  yet reproduced, and they do not isolate snow as the cause: the snow-free table differs in its cells and in how
+  well each is observed.
+- From October to February the hindcast predicts north of the northernmost cell the calibration has an albedo
+  for (north of 53.5 N in December, for half of the past cells).
 
 The cross-validation chooses the calibration model by how well it predicts modern cells whose cover mixes lie outside
 the range of the cells it was fitted on. Because unusual mixes are clustered in space, withholding them also leaves a
@@ -366,10 +375,18 @@ northeast’s own cells under a stipulated truth, not the real response.
    to leave those entries blank with the reason; predictions and standard errors are unaffected. Source:
    `2026-11-06_cv2_code_review_fable.md` and `2026-11-06_cv2_code_review_codex_gpt6astra.md`.
 4. Would you accept calibrating snow-free and snowy albedo separately and mixing them by snow fraction (Barnes and
-   Roy 2010; Ghimire et al. 2014), instead of one model of all-days albedo? On all-days albedo every version tested
-   gets the evergreen-against-summergreen contrast wrong in some season; on snow-free albedo the simple version does
-   not. (Review of 10 November, sections 2.4 and 2.5.)
-5. Are published forest-type albedo contrasts by season and snow state an acceptable check on the fitted cover
-   response, declared before the run? Which sources would you use for the northeast? (Same review, recommendation 2.)
-6. How should the paper present forcing since 6 ka, which depends on the model version, including the sign for 4 to
-   6 ka: one model with a range across versions, or only the periods that are stable? (Same review, section 2.3.)
+   Roy 2010; Ghimire et al. 2014), instead of one model of all-days albedo? And should the vegetation forcing hold
+   modern snow fixed, or represent past changes in snow? That choice decides what such a mixture would estimate.
+   On all-days albedo every version tested has the opposite sign to published evergreen-against-summergreen
+   contrasts in some season. (Review of 10 November, sections 2.4 and 2.5; Astra's check, section 4.)
+5. For the northeast hemlock decline, may observations of broadleaf-deciduous against needleleaf-evergreen forest
+   stand for your reconstructed groups, which include shrubs and larch: for sign, for size, or for neither? Which
+   sources would you use for the northeast? (Same review, recommendation 2; Astra's check.)
+6. How should the paper present the vegetation forcing, which depends on the model version in every period: one
+   model with the range across versions shown as model sensitivity, with the vegetation and ice parts separately?
+   (Same review, section 2.3; Astra's check, section 2.)
+7. Is one continental cover response acceptable for interpreting the northeast, given that its summer estimate
+   changes when only the albedo of cells elsewhere changes? (Astra's check, section 4. This sharpens question 2.)
+8. In October to February the pipeline predicts albedo for past cells north of every cell the calibration has a
+   winter albedo for. Should those cell-months be shown, masked, or weighted out, given how little winter sun they
+   receive? (Astra's check, section 7; the count is in the review, section 2.1.)
