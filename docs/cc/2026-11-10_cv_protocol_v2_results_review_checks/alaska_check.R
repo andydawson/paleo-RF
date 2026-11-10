@@ -27,6 +27,8 @@ for (m in c('loc100_tp50', 'loc500_tp50', 'lin_cover', 'mod8', 'loc30_tp50')) { 
   cat(sprintf('without the four blocks: %-12s minus winner %.6f, SE %.6f (ratio %.2f), winner better in %.1f%% of resamples\n', m, full[[m]] - full[['loc100_linear']], sd(d), (full[[m]] - full[['loc100_linear']]) / sd(d), 100 * mean(d > 0))) }
 a = base[!keep, ]
 cat('the four blocks: cells', nrow(unique(a[, c('x', 'y')])), '; rows', nrow(a), '; holdouts', paste(names(table(a$holdout)), table(a$holdout), collapse = ', '), '\n')
-b8 = p[p$model == 'mod8', ][match(k0, key[p$model == 'mod8']), ][!keep, ]; bw = base[!keep, ]
-print(round(rbind(observed = tapply(bw$observed, factor(bw$month, h$months), mean), winner = tapply(bw$predicted, factor(bw$month, h$months), mean),
-                  mod8 = tapply(b8$predicted, factor(b8$month, h$months), mean)), 3))
+# Corrected 10 November after Astra's check: `base` holds the first model's rows (no location term), so the
+# first version printed that model's predictions under the label "winner". Each model's own rows are used now.
+means = function(m) { d = p[p$model == m, ][match(k0, key[p$model == m]), ][!keep, ]; tapply(d$predicted, factor(d$month, h$months), mean) }
+print(round(rbind(observed = tapply(base$observed[!keep], factor(base$month[!keep], h$months), mean), chosen = means('loc100_linear'),
+                  rival_loc500_linear = means('lin_cover'), mod8 = means('mod8'), no_location = means('lin_cover_noloc')), 3))

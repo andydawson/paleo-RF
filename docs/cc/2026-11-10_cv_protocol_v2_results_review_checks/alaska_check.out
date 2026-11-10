@@ -9,7 +9,15 @@ without the four blocks: lin_cover    minus winner 0.000008, SE 0.000218 (ratio 
 without the four blocks: mod8         minus winner 0.000785, SE 0.000274 (ratio 2.87), winner better in 100.0% of resamples
 without the four blocks: loc30_tp50   minus winner 0.001074, SE 0.000208 (ratio 5.16), winner better in 100.0% of resamples
 the four blocks: cells 50 ; rows 546 ; holdouts d1 372, d2 174 
-           jan   feb   mar   apr   may   jun   jul   aug   sep   oct   nov dec
-observed 0.372 0.365 0.426 0.405 0.229 0.138 0.133 0.130 0.131 0.204 0.282  NA
-winner   0.287 0.422 0.461 0.400 0.298 0.176 0.137 0.136 0.146 0.247 0.187  NA
-mod8     0.838 0.455 0.570 0.553 0.470 0.293 0.161 0.155 0.170 0.329 0.469  NA
+                      jan   feb   mar   apr   may   jun   jul   aug   sep   oct
+observed            0.372 0.365 0.426 0.405 0.229 0.138 0.133 0.130 0.131 0.204
+chosen              0.352 0.372 0.428 0.443 0.297 0.154 0.130 0.139 0.138 0.193
+rival_loc500_linear 0.841 0.439 0.556 0.573 0.506 0.344 0.167 0.166 0.174 0.369
+mod8                0.838 0.455 0.570 0.553 0.470 0.293 0.161 0.155 0.170 0.329
+no_location         0.287 0.422 0.461 0.400 0.298 0.176 0.137 0.136 0.146 0.247
+                      nov dec
+observed            0.282  NA
+chosen              0.276  NA
+rival_loc500_linear 0.475  NA
+mod8                0.469  NA
+no_location         0.187  NA

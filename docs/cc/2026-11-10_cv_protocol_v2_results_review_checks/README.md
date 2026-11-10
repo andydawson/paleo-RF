@@ -9,6 +9,7 @@ repository root with `THREADS=1 tools/rscript.sh <script>`; paths to the run fol
 | `recompute_selection.R` | Recomputes the selection score from the saved predictions with separate code; by month, distance, direction; sensitivity of the choice | none |
 | `bootstrap_check.R` | Independent block bootstrap of the paired differences; each block's share; contrast helper against plain `predict()` | none |
 | `alaska_check.R` | The score without the dominant Alaskan blocks | none |
+| `astra_points_check.R` | Added after Astra's check: mean albedo in the four Alaskan blocks by model; past cells north of the northernmost fitting cell by month | none |
 | `final_checks.R` | Share of each past slice outside the modern range; paired differences among the location-500 versions | none |
 | `northeast_by_month.R` | The protocol's two northeast exchanges for all twelve months from the three pipelines' saved fits | none |
 | `northeast_snow_states.R` | The same from model 8's saved snow-free (run 2) and snowy (run 7) fits | none |
