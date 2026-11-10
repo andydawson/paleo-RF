@@ -313,7 +313,7 @@ the fitted model implies the opposite sign in spring and summer. Nothing has bee
    labelled lower quality. Did your raster keep all qualities, or only the full inversions? (Its winter values reach
    as far north as a noon sun 80-85 degrees from overhead, so it kept at least some low-sun retrievals.)
 
-## 8. What the cross-validation's score can and cannot show (updated 6 November)
+## 8. What the cross-validation's score can and cannot show (updated 10 November)
 
 *From Astra's answer on the northeast and its design for the geographic gap, and Fable's reviews (branch
 `cv-design`: `docs/cc/2026-11-03_cv_northeast_question_codex_gpt6astra.md`,
@@ -321,9 +321,20 @@ the fitted model implies the opposite sign in spring and summer. Nothing has bee
 Updated from [CV protocol 2](2026-11-06_cv_protocol_v2.md) and Fable’s reviews
 (`2026-11-06_cv_protocol_v2_review_fable.md`, `2026-11-06_cv_deep_band_review_fable.md`).*
 
-Implementation check, 6 November: the code follows these decisions. Recovery and capacity
-results are pending the verification runs; the library diagnostic issue below arose on a
-read of the existing model-8 fit, without refitting.
+Implementation check, 6 November: the code follows these decisions.
+
+**Results, 6 to 7 November, and their review, 10 November**
+(`2026-11-10_cv_protocol_v2_results_review_fable.md`; Chris has not yet decided on its recommendations).
+
+- The rule chose location term 100 with straight-line cover (`loc100_linear`). Its pipeline run passed.
+- Its lead over the flexible location term (500) comes from four blocks in Alaska; elsewhere the two tie. The test
+  does reject the no-location and coarse-location versions and model 8's 200-basis cover term.
+- The forcing before 6 ka is the same across model 8, the coarse-location model and the chosen model (within about
+  10% for 6 to 10 ka). Since 6 ka it is not: for 4 to 6 ka the study-area mean is -0.45, -0.17 and +0.20 W/m².
+- Set against published forest contrasts (Hollinger et al. 2010; Jin et al. 2002), the chosen model's
+  evergreen-against-summergreen response is right in June to October and wrong in November to January; model 8's
+  northeast response is wrong from March to October. On snow-free albedo the chosen model's response has the
+  published sign in eleven of twelve months (exploratory fits, to be redone properly before use).
 
 The cross-validation chooses the calibration model by how well it predicts modern cells whose cover mixes lie outside
 the range of the cells it was fitted on. Because unusual mixes are clustered in space, withholding them also leaves a
@@ -349,9 +360,16 @@ northeast’s own cells under a stipulated truth, not the real response.
 2. Is a common cover response across regions acceptable for interpreting the northeast? The real-data capacity
    comparison and synthetic recovery test examine its stability and capability, but cannot establish the real
    regional response. (Protocol-2 review and separation tests, 6 November.)
-3. How should the paper present a numerically invalid worst-case concurvity diagnostic? On the saved April
-   model-8 REML fit, mgcv 1.9.4 returns 4.355651 for cover explained by location (the expected range is 0–1);
-   the reverse direction is 0.999508. The implementation preserves the raw values, reports the observed and
-   estimate measures too, and applies no concurvity gate. A numerical rank problem is suspected, not established.
-   Source: independent implementation checks of `mgcv::concurvity(fit, full = FALSE)`, 6 November 2026;
-   `docs/cc/2026-11-06_cv2_implementation.md` records the check and the source fit.
+3. Does the paper need a concurvity diagnostic at all? For the thin-plate cover forms it cannot be computed:
+   the three cover fractions sum to one, so that basis is rank-deficient (744 of 748 on the April model-8 fit;
+   established 6 November) and mgcv's worst-case value is meaningless (4.36 where the range is 0 to 1). Chris chose
+   to leave those entries blank with the reason; predictions and standard errors are unaffected. Source:
+   `2026-11-06_cv2_code_review_fable.md` and `2026-11-06_cv2_code_review_codex_gpt6astra.md`.
+4. Would you accept calibrating snow-free and snowy albedo separately and mixing them by snow fraction (Barnes and
+   Roy 2010; Ghimire et al. 2014), instead of one model of all-days albedo? On all-days albedo every version tested
+   gets the evergreen-against-summergreen contrast wrong in some season; on snow-free albedo the simple version does
+   not. (Review of 10 November, sections 2.4 and 2.5.)
+5. Are published forest-type albedo contrasts by season and snow state an acceptable check on the fitted cover
+   response, declared before the run? Which sources would you use for the northeast? (Same review, recommendation 2.)
+6. How should the paper present forcing since 6 ka, which depends on the model version, including the sign for 4 to
+   6 ka: one model with a range across versions, or only the periods that are stable? (Same review, section 2.3.)
