@@ -13,7 +13,7 @@ repository root with `THREADS=1 tools/rscript.sh <script>`; paths to the run fol
 | `northeast_by_month.R` | The protocol's two northeast exchanges for all twelve months from the three pipelines' saved fits | none |
 | `northeast_snow_states.R` | The same from model 8's saved snow-free (run 2) and snowy (run 7) fits | none |
 | `winner_by_snow_state.R` | **Exploratory:** the chosen model's formula fitted to the all-days, snow-free and snowy tables | 34 |
-| `rival_by_snow_state.R` | **Exploratory:** location 500 with straight-line cover fitted to the all-days and snow-free tables, one month per process | 24 (January still running when filed) |
+| `rival_by_snow_state.R` | **Exploratory:** location 500 with straight-line cover fitted to the all-days and snow-free tables, one month per process | 24 |
 
 The exploratory fits are outside protocol 2 and were not saved; only the tables were. Results that are to be used
 must be redone through the usual route (Astra writes, reviews, `tools/verify_change.R`).

@@ -189,7 +189,7 @@ coefficients are continental; positive is the published sign):
 
 | Month | Chosen, all days | Chosen, snow-free | Chosen, snowy | Rival, all days | Rival, snow-free |
 |---|---:|---:|---:|---:|---:|
-| Jan | -0.216 ± 0.061 | +0.017 ± 0.023 | +0.001 ± 0.080 | still running | still running |
+| Jan | -0.216 ± 0.061 | +0.017 ± 0.023 | +0.001 ± 0.080 | +0.005 ± 0.084 | -0.043 ± 0.033 |
 | Feb | -0.033 ± 0.052 | -0.014 ± 0.020 | +0.004 ± 0.063 | -0.081 ± 0.078 | -0.074 ± 0.031 |
 | Mar | +0.170 ± 0.038 | +0.027 ± 0.017 | -0.018 ± 0.056 | -0.129 ± 0.061 | -0.012 ± 0.026 |
 | Apr | -0.012 ± 0.023 | +0.025 ± 0.015 | +0.080 ± 0.051 | -0.228 ± 0.039 | -0.022 ± 0.023 |
@@ -207,8 +207,8 @@ coefficients are continental; positive is the published sign):
   Open land is brighter than evergreen by 0.03 to 0.07 in every month and about equal to summergreen.
 - **Chosen model on snowy albedo:** open land is brighter than both forest types by 0.24 to 0.27 in January to
   March, as snow requires. Evergreen against summergreen is not resolved (standard errors 0.05 to 0.09).
-- **The rival (location 500):** on all-days albedo the published sign only in July to September; on snow-free
-  albedo in eight of eleven months, at about half the published size. So the physical check separates the two
+- **The rival (location 500):** on all-days albedo the published sign only in July to September (January is zero
+  within a wide error); on snow-free albedo in eight of twelve months, at about half the published size. So the physical check separates the two
   location sizes that the prediction score could not, in favour of the chosen one.
 - **Model 8 on snow-free albedo:** at the modern northeast mixes, 0.10 more evergreen still brightens it by
   +0.006 to +0.023 from January to October (2 SE or more from February to October). Snow is not what makes
@@ -279,4 +279,3 @@ response; how to present forcing since 6 ka that depends on the model version.
 - The references: quoted from the project's checked table, not re-verified. The reference checkers were not run.
 - Paired standard errors east of 100 W; why the flexible location term runs away in Alaska; why model 8 makes
   evergreen brighter in the northeast on snow-free albedo.
-- The rival's January fits were still running when this was filed.
