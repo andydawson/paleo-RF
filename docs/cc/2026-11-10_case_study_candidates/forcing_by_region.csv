@@ -1,0 +1,253 @@
+"run","period","region","cells","global_equivalent_mwm2","mean_over_region_wm2"
+"mod8"," 0.05- 0.5 ka","Alaska",255,1.42471367273595,0.539364331018102
+"mod8"," 0.05- 0.5 ka","North-west Canada",376,-2.58721664069748,-0.634102264365258
+"mod8"," 0.05- 0.5 ka","Central Canada north of 55 N",459,-1.81804328790241,-0.379417898780814
+"mod8"," 0.05- 0.5 ka","Quebec-Labrador and eastern Arctic",292,-0.461647092788322,-0.127020514172625
+"mod8"," 0.05- 0.5 ka","Pacific coast and western mountains",212,-1.19726496796903,-0.335263927088935
+"mod8"," 0.05- 0.5 ka","Northern Rockies and northern plains",225,-1.57550020040578,-0.428829159647855
+"mod8"," 0.05- 0.5 ka","Midwest prairie-forest border",177,-1.77821595103818,-0.615291004855643
+"mod8"," 0.05- 0.5 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-5.57344110761848,-2.16348586972172
+"mod8"," 0.05- 0.5 ka","North-east",135,-2.21219630005142,-0.973658402919088
+"mod8"," 0.05- 0.5 ka","South-east",115,-3.5002665824905,-1.5054792266428
+"mod8"," 0.05- 0.5 ka","Southern Plains",111,-0.300944991426788,-0.134855440647558
+"mod8"," 0.05- 0.5 ka","South-west",149,-1.35576552247991,-0.452105783940215
+"mod8"," 0.50- 2.0 ka","Alaska",255,-0.770528699424466,-0.291704715444497
+"mod8"," 0.50- 2.0 ka","North-west Canada",376,-0.263270117227325,-0.0645250091730041
+"mod8"," 0.50- 2.0 ka","Central Canada north of 55 N",459,-1.30774293219321,-0.272920385768529
+"mod8"," 0.50- 2.0 ka","Quebec-Labrador and eastern Arctic",292,-0.113950516242482,-0.0313530690206098
+"mod8"," 0.50- 2.0 ka","Pacific coast and western mountains",212,-0.860517778585898,-0.240966350387709
+"mod8"," 0.50- 2.0 ka","Northern Rockies and northern plains",225,1.30237244168202,0.354487596746215
+"mod8"," 0.50- 2.0 ka","Midwest prairie-forest border",177,0.316342444635236,0.109459517852411
+"mod8"," 0.50- 2.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,0.471919580912938,0.183188684555134
+"mod8"," 0.50- 2.0 ka","North-east",135,-1.96207570738736,-0.863572323856029
+"mod8"," 0.50- 2.0 ka","South-east",115,-0.761446902384984,-0.327501482163242
+"mod8"," 0.50- 2.0 ka","Southern Plains",111,-1.99739102334845,-0.895044125247257
+"mod8"," 0.50- 2.0 ka","South-west",149,-15.6022114041751,-5.20285396045695
+"mod8"," 2.00- 4.0 ka","Alaska",255,-0.960789397650353,-0.36373310696023
+"mod8"," 2.00- 4.0 ka","North-west Canada",376,-1.89252833214284,-0.463840747585661
+"mod8"," 2.00- 4.0 ka","Central Canada north of 55 N",459,-2.50533287564578,-0.522852311465447
+"mod8"," 2.00- 4.0 ka","Quebec-Labrador and eastern Arctic",292,-3.20422901308488,-0.881631928646209
+"mod8"," 2.00- 4.0 ka","Pacific coast and western mountains",212,-1.37058875518645,-0.383798892293014
+"mod8"," 2.00- 4.0 ka","Northern Rockies and northern plains",225,-0.517141043962074,-0.140758572575588
+"mod8"," 2.00- 4.0 ka","Midwest prairie-forest border",177,1.42034264373551,0.491461147895516
+"mod8"," 2.00- 4.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-0.719572395764395,-0.279321998818659
+"mod8"," 2.00- 4.0 ka","North-east",135,-2.89972578307801,-1.27626213586444
+"mod8"," 2.00- 4.0 ka","South-east",115,-2.44171423271174,-1.05019145488345
+"mod8"," 2.00- 4.0 ka","Southern Plains",111,11.3004499293181,5.06380633719432
+"mod8"," 2.00- 4.0 ka","South-west",149,16.4440430099185,5.48357871097581
+"mod8"," 4.00- 6.0 ka","Alaska",255,-3.7720355491554,-1.42800723364979
+"mod8"," 4.00- 6.0 ka","North-west Canada",376,1.04621746473864,0.256417979450846
+"mod8"," 4.00- 6.0 ka","Central Canada north of 55 N",459,-3.51526414005247,-0.733620669295004
+"mod8"," 4.00- 6.0 ka","Quebec-Labrador and eastern Arctic",292,-8.59955493212559,-2.36613618107454
+"mod8"," 4.00- 6.0 ka","Pacific coast and western mountains",212,1.72695038463924,0.483588999370836
+"mod8"," 4.00- 6.0 ka","Northern Rockies and northern plains",225,2.25364625100454,0.613411047306057
+"mod8"," 4.00- 6.0 ka","Midwest prairie-forest border",177,0.819902963136151,0.283699467310273
+"mod8"," 4.00- 6.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,0.332844984324746,0.129203019551064
+"mod8"," 4.00- 6.0 ka","North-east",135,4.65311978569857,2.0479869616585
+"mod8"," 4.00- 6.0 ka","South-east",115,2.00000283389348,0.860209543671678
+"mod8"," 4.00- 6.0 ka","Southern Plains",111,-5.72650796757625,-2.5660860866233
+"mod8"," 4.00- 6.0 ka","South-west",149,-12.165780179826,-4.05691064881471
+"mod8"," 6.00- 8.0 ka","Alaska",255,-0.712801831785936,-0.269850630696483
+"mod8"," 6.00- 8.0 ka","North-west Canada",376,2.24404421358349,0.549993956743196
+"mod8"," 6.00- 8.0 ka","Central Canada north of 55 N",459,-3.36638937072443,-0.702551138368107
+"mod8"," 6.00- 8.0 ka","Quebec-Labrador and eastern Arctic",292,6.78671347293174,1.86733946415069
+"mod8"," 6.00- 8.0 ka","Pacific coast and western mountains",212,-0.734674676166875,-0.205727156188595
+"mod8"," 6.00- 8.0 ka","Northern Rockies and northern plains",225,-0.802404905880666,-0.218403413339774
+"mod8"," 6.00- 8.0 ka","Midwest prairie-forest border",177,-0.0765548631891075,-0.0264892004093832
+"mod8"," 6.00- 8.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,1.6258612496368,0.631123173600796
+"mod8"," 6.00- 8.0 ka","North-east",135,0.0290641807081351,0.0127920762591353
+"mod8"," 6.00- 8.0 ka","South-east",115,4.11462231860578,1.76971618594101
+"mod8"," 6.00- 8.0 ka","Southern Plains",111,-0.0387574837511678,-0.0173674847515308
+"mod8"," 6.00- 8.0 ka","South-west",149,-11.64708430933,-3.88394165139679
+"mod8"," 8.00-10.0 ka","Alaska",255,1.17648780613288,0.445391639491496
+"mod8"," 8.00-10.0 ka","North-west Canada",376,-9.93689535641028,-2.43543882145165
+"mod8"," 8.00-10.0 ka","Central Canada north of 55 N",459,4.39722423904983,0.917681989394913
+"mod8"," 8.00-10.0 ka","Quebec-Labrador and eastern Arctic",292,0.413006618462872,0.113637265030727
+"mod8"," 8.00-10.0 ka","Pacific coast and western mountains",212,1.04686278013978,0.293147579009412
+"mod8"," 8.00-10.0 ka","Northern Rockies and northern plains",225,1.1605852401981,0.315895099934401
+"mod8"," 8.00-10.0 ka","Midwest prairie-forest border",177,-4.62540706364566,-1.60046441963101
+"mod8"," 8.00-10.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,4.8630333637992,1.88772138494176
+"mod8"," 8.00-10.0 ka","North-east",135,5.6252685231993,2.47586073901396
+"mod8"," 8.00-10.0 ka","South-east",115,-6.50710819074838,-2.79873431803548
+"mod8"," 8.00-10.0 ka","Southern Plains",111,-6.3128290087072,-2.82882042218337
+"mod8"," 8.00-10.0 ka","South-west",149,0.38205531671468,0.127403607488018
+"mod8","10.00-11.5 ka","Alaska",255,4.42147407827104,1.67386995294354
+"mod8","10.00-11.5 ka","North-west Canada",376,8.50467125628881,2.08441427612379
+"mod8","10.00-11.5 ka","Central Canada north of 55 N",459,0.839709857784974,0.175243874525068
+"mod8","10.00-11.5 ka","Quebec-Labrador and eastern Arctic",292,0.782117657975284,0.2151968215796
+"mod8","10.00-11.5 ka","Pacific coast and western mountains",212,6.12681241828931,1.71565964665063
+"mod8","10.00-11.5 ka","Northern Rockies and northern plains",225,3.00690522508612,0.81843762411602
+"mod8","10.00-11.5 ka","Midwest prairie-forest border",177,2.57126597166184,0.889698926911137
+"mod8","10.00-11.5 ka","Ohio valley, Great Lakes and mid-Atlantic",149,3.57179636170039,1.38649190129582
+"mod8","10.00-11.5 ka","North-east",135,4.46296177528439,1.96429233441505
+"mod8","10.00-11.5 ka","South-east",115,2.38327001188537,1.02505435223773
+"mod8","10.00-11.5 ka","Southern Plains",111,0.506476648598934,0.226955535297963
+"mod8","10.00-11.5 ka","South-west",149,5.71887954049824,1.90706908757147
+"loc100_linear"," 0.05- 0.5 ka","Alaska",255,0.492893350720911,0.186598260030965
+"loc100_linear"," 0.05- 0.5 ka","North-west Canada",376,0.51602534452393,0.126472918535448
+"loc100_linear"," 0.05- 0.5 ka","Central Canada north of 55 N",459,-0.342669195069561,-0.0715136030232878
+"loc100_linear"," 0.05- 0.5 ka","Quebec-Labrador and eastern Arctic",292,-0.374824433552423,-0.103131576084943
+"loc100_linear"," 0.05- 0.5 ka","Pacific coast and western mountains",212,-0.504833646568055,-0.141365959418443
+"loc100_linear"," 0.05- 0.5 ka","Northern Rockies and northern plains",225,-0.756114456112012,-0.205803799154451
+"loc100_linear"," 0.05- 0.5 ka","Midwest prairie-forest border",177,-0.602571743872111,-0.208499408392006
+"loc100_linear"," 0.05- 0.5 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-1.08808456307984,-0.422370225473047
+"loc100_linear"," 0.05- 0.5 ka","North-east",135,-1.27833188199274,-0.562634780011465
+"loc100_linear"," 0.05- 0.5 ka","South-east",115,-0.842536937315018,-0.362378643715904
+"loc100_linear"," 0.05- 0.5 ka","Southern Plains",111,-0.0963245648891161,-0.0431636744699443
+"loc100_linear"," 0.05- 0.5 ka","South-west",149,-0.247724158101947,-0.0826083292741872
+"loc100_linear"," 0.50- 2.0 ka","Alaska",255,-0.340254134198332,-0.128812509474694
+"loc100_linear"," 0.50- 2.0 ka","North-west Canada",376,-0.239002064377059,-0.0585771395504815
+"loc100_linear"," 0.50- 2.0 ka","Central Canada north of 55 N",459,-1.47186297701032,-0.30717154082445
+"loc100_linear"," 0.50- 2.0 ka","Quebec-Labrador and eastern Arctic",292,-0.675812038903287,-0.185947218138134
+"loc100_linear"," 0.50- 2.0 ka","Pacific coast and western mountains",212,-0.193609315155349,-0.0542154168513687
+"loc100_linear"," 0.50- 2.0 ka","Northern Rockies and northern plains",225,-0.00922168315134791,-0.00251001341371634
+"loc100_linear"," 0.50- 2.0 ka","Midwest prairie-forest border",177,0.211270053207946,0.0731027990488602
+"loc100_linear"," 0.50- 2.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,0.385683026082653,0.149713572101936
+"loc100_linear"," 0.50- 2.0 ka","North-east",135,0.430468516447475,0.189462973164477
+"loc100_linear"," 0.50- 2.0 ka","South-east",115,-0.501354390954906,-0.215634610387797
+"loc100_linear"," 0.50- 2.0 ka","Southern Plains",111,-0.348050457073937,-0.155963711287444
+"loc100_linear"," 0.50- 2.0 ka","South-west",149,-0.658243572170584,-0.219503831072088
+"loc100_linear"," 2.00- 4.0 ka","Alaska",255,-0.0447007227735633,-0.0169226813051418
+"loc100_linear"," 2.00- 4.0 ka","North-west Canada",376,-0.345764928601061,-0.0847437051521584
+"loc100_linear"," 2.00- 4.0 ka","Central Canada north of 55 N",459,-1.13562182710205,-0.236999443476299
+"loc100_linear"," 2.00- 4.0 ka","Quebec-Labrador and eastern Arctic",292,-0.356511178570143,-0.0980927507563274
+"loc100_linear"," 2.00- 4.0 ka","Pacific coast and western mountains",212,-1.60623637122383,-0.44978607748215
+"loc100_linear"," 2.00- 4.0 ka","Northern Rockies and northern plains",225,0.325865750180865,0.0886961079231132
+"loc100_linear"," 2.00- 4.0 ka","Midwest prairie-forest border",177,1.11614985553015,0.386205604430484
+"loc100_linear"," 2.00- 4.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,0.130198821779671,0.0505402866444025
+"loc100_linear"," 2.00- 4.0 ka","North-east",135,0.574530948792682,0.252869461004012
+"loc100_linear"," 2.00- 4.0 ka","South-east",115,0.521301072380029,0.224213761094833
+"loc100_linear"," 2.00- 4.0 ka","Southern Plains",111,2.51684453760137,1.12781467985388
+"loc100_linear"," 2.00- 4.0 ka","South-west",149,0.309679723937628,0.103268590357066
+"loc100_linear"," 4.00- 6.0 ka","Alaska",255,0.413414369332021,0.15650931763702
+"loc100_linear"," 4.00- 6.0 ka","North-west Canada",376,-0.0131448421088546,-0.00322167614989577
+"loc100_linear"," 4.00- 6.0 ka","Central Canada north of 55 N",459,0.383430920339093,0.0800204016541887
+"loc100_linear"," 4.00- 6.0 ka","Quebec-Labrador and eastern Arctic",292,1.27238663261961,0.350092542174471
+"loc100_linear"," 4.00- 6.0 ka","Pacific coast and western mountains",212,1.27269586142817,0.356386450708612
+"loc100_linear"," 4.00- 6.0 ka","Northern Rockies and northern plains",225,1.54750628487049,0.421209606650553
+"loc100_linear"," 4.00- 6.0 ka","Midwest prairie-forest border",177,0.520915229523379,0.180244955530244
+"loc100_linear"," 4.00- 6.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-0.204787331330915,-0.0794938870039971
+"loc100_linear"," 4.00- 6.0 ka","North-east",135,-1.43031963604817,-0.629529455621142
+"loc100_linear"," 4.00- 6.0 ka","South-east",115,0.885435241118756,0.380829382741841
+"loc100_linear"," 4.00- 6.0 ka","Southern Plains",111,-0.439993889789587,-0.19716417146036
+"loc100_linear"," 4.00- 6.0 ka","South-west",149,-0.10734870111606,-0.0357974648774559
+"loc100_linear"," 6.00- 8.0 ka","Alaska",255,0.417181403735814,0.157935431550296
+"loc100_linear"," 6.00- 8.0 ka","North-west Canada",376,0.512285230590177,0.125556252077343
+"loc100_linear"," 6.00- 8.0 ka","Central Canada north of 55 N",459,0.650991374651695,0.135859130053915
+"loc100_linear"," 6.00- 8.0 ka","Quebec-Labrador and eastern Arctic",292,1.4892707977622,0.409767429339729
+"loc100_linear"," 6.00- 8.0 ka","Pacific coast and western mountains",212,1.26780959737181,0.355018175414374
+"loc100_linear"," 6.00- 8.0 ka","Northern Rockies and northern plains",225,1.03020793421693,0.280408217389635
+"loc100_linear"," 6.00- 8.0 ka","Midwest prairie-forest border",177,-0.144359866474918,-0.0499508101096051
+"loc100_linear"," 6.00- 8.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,0.40346673398032,0.156616811950523
+"loc100_linear"," 6.00- 8.0 ka","North-east",135,0.401263837099151,0.176609058956505
+"loc100_linear"," 6.00- 8.0 ka","South-east",115,1.41459305384227,0.608422360561309
+"loc100_linear"," 6.00- 8.0 ka","Southern Plains",111,-0.106081339825379,-0.0475357498352488
+"loc100_linear"," 6.00- 8.0 ka","South-west",149,-4.51434838462639,-1.50539527784828
+"loc100_linear"," 8.00-10.0 ka","Alaska",255,0.854210342942168,0.323384690542754
+"loc100_linear"," 8.00-10.0 ka","North-west Canada",376,3.46833982296254,0.850057200751402
+"loc100_linear"," 8.00-10.0 ka","Central Canada north of 55 N",459,1.60214860133464,0.334361596282101
+"loc100_linear"," 8.00-10.0 ka","Quebec-Labrador and eastern Arctic",292,1.03303246140639,0.284235114776339
+"loc100_linear"," 8.00-10.0 ka","Pacific coast and western mountains",212,0.269231156835819,0.0753914107155338
+"loc100_linear"," 8.00-10.0 ka","Northern Rockies and northern plains",225,-3.46439295961074,-0.942959398657759
+"loc100_linear"," 8.00-10.0 ka","Midwest prairie-forest border",177,-2.94203248331402,-1.01799003766633
+"loc100_linear"," 8.00-10.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-1.21233417209301,-0.470601160047916
+"loc100_linear"," 8.00-10.0 ka","North-east",135,1.21336484153133,0.534040705942825
+"loc100_linear"," 8.00-10.0 ka","South-east",115,-2.25868884392841,-0.971471473342645
+"loc100_linear"," 8.00-10.0 ka","Southern Plains",111,-1.42214828373824,-0.637274049853545
+"loc100_linear"," 8.00-10.0 ka","South-west",149,1.10861214680948,0.369687792917283
+"loc100_linear","10.00-11.5 ka","Alaska",255,0.842841268107259,0.319080616285609
+"loc100_linear","10.00-11.5 ka","North-west Canada",376,4.66280438235283,1.14280913729169
+"loc100_linear","10.00-11.5 ka","Central Canada north of 55 N",459,0.403965789680152,0.0843059415139753
+"loc100_linear","10.00-11.5 ka","Quebec-Labrador and eastern Arctic",292,0.12443678764067,0.0342383283573609
+"loc100_linear","10.00-11.5 ka","Pacific coast and western mountains",212,-0.29472226973949,-0.0825295554425523
+"loc100_linear","10.00-11.5 ka","Northern Rockies and northern plains",225,0.515528813484499,0.140319745947271
+"loc100_linear","10.00-11.5 ka","Midwest prairie-forest border",177,-2.08179564371833,-0.720334407516541
+"loc100_linear","10.00-11.5 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-0.263186050529742,-0.102162970853076
+"loc100_linear","10.00-11.5 ka","North-east",135,1.30298699141218,0.573486282864339
+"loc100_linear","10.00-11.5 ka","South-east",115,-0.0269161034811113,-0.011576728142846
+"loc100_linear","10.00-11.5 ka","Southern Plains",111,-2.26467793696112,-1.01481715866333
+"loc100_linear","10.00-11.5 ka","South-west",149,-4.05639182153159,-1.35268095701954
+"mod8_coarse_loc"," 0.05- 0.5 ka","Alaska",255,1.97161408619256,0.746408441903263
+"mod8_coarse_loc"," 0.05- 0.5 ka","North-west Canada",376,-1.18492345114003,-0.290413501385347
+"mod8_coarse_loc"," 0.05- 0.5 ka","Central Canada north of 55 N",459,-0.810075587332147,-0.169059328369356
+"mod8_coarse_loc"," 0.05- 0.5 ka","Quebec-Labrador and eastern Arctic",292,-0.328091437430803,-0.0902731626151602
+"mod8_coarse_loc"," 0.05- 0.5 ka","Pacific coast and western mountains",212,-0.228567831713267,-0.0640046697402198
+"mod8_coarse_loc"," 0.05- 0.5 ka","Northern Rockies and northern plains",225,-2.36608221354307,-0.644014546637365
+"mod8_coarse_loc"," 0.05- 0.5 ka","Midwest prairie-forest border",177,-1.90833253068277,-0.660313411156271
+"mod8_coarse_loc"," 0.05- 0.5 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-0.943956098051555,-0.366422761152102
+"mod8_coarse_loc"," 0.05- 0.5 ka","North-east",135,-0.168923717658072,-0.0743487353026901
+"mod8_coarse_loc"," 0.05- 0.5 ka","South-east",115,-2.99658263032803,-1.28884266228307
+"mod8_coarse_loc"," 0.05- 0.5 ka","Southern Plains",111,1.36176174725477,0.610214443551243
+"mod8_coarse_loc"," 0.05- 0.5 ka","South-west",149,1.49983519236628,0.500148553848426
+"mod8_coarse_loc"," 0.50- 2.0 ka","Alaska",255,-0.469404887677708,-0.177706059865853
+"mod8_coarse_loc"," 0.50- 2.0 ka","North-west Canada",376,-0.513871271649273,-0.125944975700688
+"mod8_coarse_loc"," 0.50- 2.0 ka","Central Canada north of 55 N",459,-1.5715374376779,-0.327973176671215
+"mod8_coarse_loc"," 0.50- 2.0 ka","Quebec-Labrador and eastern Arctic",292,-1.85656214644782,-0.510826304593161
+"mod8_coarse_loc"," 0.50- 2.0 ka","Pacific coast and western mountains",212,-0.30582658285307,-0.0856390389083546
+"mod8_coarse_loc"," 0.50- 2.0 ka","Northern Rockies and northern plains",225,-0.224080407910496,-0.0609915587399208
+"mod8_coarse_loc"," 0.50- 2.0 ka","Midwest prairie-forest border",177,1.33216772565189,0.460951223654279
+"mod8_coarse_loc"," 0.50- 2.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,0.851290273694889,0.330451949272935
+"mod8_coarse_loc"," 0.50- 2.0 ka","North-east",135,3.22462597142784,1.41926110864523
+"mod8_coarse_loc"," 0.50- 2.0 ka","South-east",115,-1.29159206513203,-0.55551912333758
+"mod8_coarse_loc"," 0.50- 2.0 ka","Southern Plains",111,-2.89084378592423,-1.29540621608553
+"mod8_coarse_loc"," 0.50- 2.0 ka","South-west",149,-7.61031515425016,-2.53780424549435
+"mod8_coarse_loc"," 2.00- 4.0 ka","Alaska",255,-0.670243947514576,-0.253739179519428
+"mod8_coarse_loc"," 2.00- 4.0 ka","North-west Canada",376,-0.588117655801007,-0.14414206038659
+"mod8_coarse_loc"," 2.00- 4.0 ka","Central Canada north of 55 N",459,-3.77874943093281,-0.788608928425409
+"mod8_coarse_loc"," 2.00- 4.0 ka","Quebec-Labrador and eastern Arctic",292,0.809029858516739,0.222601615422545
+"mod8_coarse_loc"," 2.00- 4.0 ka","Pacific coast and western mountains",212,-1.26131619464654,-0.353199861376891
+"mod8_coarse_loc"," 2.00- 4.0 ka","Northern Rockies and northern plains",225,0.331620947261216,0.0902625922224737
+"mod8_coarse_loc"," 2.00- 4.0 ka","Midwest prairie-forest border",177,0.791107978753506,0.273735944676671
+"mod8_coarse_loc"," 2.00- 4.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-0.607346554486624,-0.235758423437877
+"mod8_coarse_loc"," 2.00- 4.0 ka","North-east",135,0.956964250284215,0.421190598483839
+"mod8_coarse_loc"," 2.00- 4.0 ka","South-east",115,2.3143583959042,0.995415179366439
+"mod8_coarse_loc"," 2.00- 4.0 ka","Southern Plains",111,-0.229126541472305,-0.102673118325731
+"mod8_coarse_loc"," 2.00- 4.0 ka","South-west",149,16.1302110405937,5.37892547546828
+"mod8_coarse_loc"," 4.00- 6.0 ka","Alaska",255,0.965966483619728,0.365693034462808
+"mod8_coarse_loc"," 4.00- 6.0 ka","North-west Canada",376,-1.18616962724459,-0.290718927331234
+"mod8_coarse_loc"," 4.00- 6.0 ka","Central Canada north of 55 N",459,2.05235283931054,0.428317305220207
+"mod8_coarse_loc"," 4.00- 6.0 ka","Quebec-Labrador and eastern Arctic",292,7.77414685349919,2.13902815811242
+"mod8_coarse_loc"," 4.00- 6.0 ka","Pacific coast and western mountains",212,-0.73742149250984,-0.206496332986356
+"mod8_coarse_loc"," 4.00- 6.0 ka","Northern Rockies and northern plains",225,3.72772770188269,1.01463543919744
+"mod8_coarse_loc"," 4.00- 6.0 ka","Midwest prairie-forest border",177,-0.24333711531433,-0.0841985126232921
+"mod8_coarse_loc"," 4.00- 6.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,0.0500271915870642,0.0194194430353858
+"mod8_coarse_loc"," 4.00- 6.0 ka","North-east",135,-3.90618424110476,-1.71923671945992
+"mod8_coarse_loc"," 4.00- 6.0 ka","South-east",115,0.992303227019344,0.426793748305111
+"mod8_coarse_loc"," 4.00- 6.0 ka","Southern Plains",111,-4.0321302484403,-1.80682422665953
+"mod8_coarse_loc"," 4.00- 6.0 ka","South-west",149,-14.9580261985292,-4.98803815892475
+"mod8_coarse_loc"," 6.00- 8.0 ka","Alaska",255,0.64372634734868,0.243700216640509
+"mod8_coarse_loc"," 6.00- 8.0 ka","North-west Canada",376,0.178002971537901,0.0436268403427935
+"mod8_coarse_loc"," 6.00- 8.0 ka","Central Canada north of 55 N",459,2.0715594275639,0.432325638468555
+"mod8_coarse_loc"," 6.00- 8.0 ka","Quebec-Labrador and eastern Arctic",292,1.50166598022372,0.413177918594661
+"mod8_coarse_loc"," 6.00- 8.0 ka","Pacific coast and western mountains",212,0.927156978097943,0.259626981345926
+"mod8_coarse_loc"," 6.00- 8.0 ka","Northern Rockies and northern plains",225,-1.2018214351817,-0.327119016527582
+"mod8_coarse_loc"," 6.00- 8.0 ka","Midwest prairie-forest border",177,1.04201560157136,0.360553973319033
+"mod8_coarse_loc"," 6.00- 8.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,1.50684171322289,0.584922436878139
+"mod8_coarse_loc"," 6.00- 8.0 ka","North-east",135,0.448853372635361,0.197554736862562
+"mod8_coarse_loc"," 6.00- 8.0 ka","South-east",115,3.90405766761813,1.67915145309667
+"mod8_coarse_loc"," 6.00- 8.0 ka","Southern Plains",111,0.22396162847173,0.10035868665735
+"mod8_coarse_loc"," 6.00- 8.0 ka","South-west",149,-1.13233101533235,-0.377597300475857
+"mod8_coarse_loc"," 8.00-10.0 ka","Alaska",255,1.99678042306557,0.755935847101543
+"mod8_coarse_loc"," 8.00-10.0 ka","North-west Canada",376,10.9222679093583,2.67694429000774
+"mod8_coarse_loc"," 8.00-10.0 ka","Central Canada north of 55 N",459,5.61063298962216,1.17091523283192
+"mod8_coarse_loc"," 8.00-10.0 ka","Quebec-Labrador and eastern Arctic",292,3.63179253221763,0.999274471814136
+"mod8_coarse_loc"," 8.00-10.0 ka","Pacific coast and western mountains",212,2.2808770787083,0.638702231396671
+"mod8_coarse_loc"," 8.00-10.0 ka","Northern Rockies and northern plains",225,1.63203852484586,0.444218102252427
+"mod8_coarse_loc"," 8.00-10.0 ka","Midwest prairie-forest border",177,-2.48095084954595,-0.858448458030849
+"mod8_coarse_loc"," 8.00-10.0 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-5.08098964109672,-1.97232716385736
+"mod8_coarse_loc"," 8.00-10.0 ka","North-east",135,-1.60587796964415,-0.70679829776875
+"mod8_coarse_loc"," 8.00-10.0 ka","South-east",115,-5.48490866163828,-2.35908204576073
+"mod8_coarse_loc"," 8.00-10.0 ka","Southern Plains",111,0.689739117813116,0.309076659570106
+"mod8_coarse_loc"," 8.00-10.0 ka","South-west",149,-0.706092847694156,-0.235460081517213
+"mod8_coarse_loc","10.00-11.5 ka","Alaska",255,2.70178821193262,1.02283582966057
+"mod8_coarse_loc","10.00-11.5 ka","North-west Canada",376,16.7184180703152,4.09752573025117
+"mod8_coarse_loc","10.00-11.5 ka","Central Canada north of 55 N",459,3.35510088708438,0.700195279862631
+"mod8_coarse_loc","10.00-11.5 ka","Quebec-Labrador and eastern Arctic",292,0.983297442601476,0.270550705712201
+"mod8_coarse_loc","10.00-11.5 ka","Pacific coast and western mountains",212,2.42645344688448,0.679467230116112
+"mod8_coarse_loc","10.00-11.5 ka","Northern Rockies and northern plains",225,6.41304631747599,1.74554167774633
+"mod8_coarse_loc","10.00-11.5 ka","Midwest prairie-forest border",177,-6.26370686891448,-2.16734221242673
+"mod8_coarse_loc","10.00-11.5 ka","Ohio valley, Great Lakes and mid-Atlantic",149,-2.54959808426291,-0.989697266421707
+"mod8_coarse_loc","10.00-11.5 ka","North-east",135,2.64879718358987,1.16582042713422
+"mod8_coarse_loc","10.00-11.5 ka","South-east",115,-0.674214354580957,-0.289982400255873
+"mod8_coarse_loc","10.00-11.5 ka","Southern Plains",111,6.3939485570954,2.86517062821657
+"mod8_coarse_loc","10.00-11.5 ka","South-west",149,1.98174668878203,0.660851102529791
