@@ -390,3 +390,33 @@ northeast’s own cells under a stipulated truth, not the real response.
 8. In October to February the pipeline predicts albedo for past cells north of every cell the calibration has a
    winter albedo for. Should those cell-months be shown, masked, or weighted out, given how little winter sun they
    receive? (Astra's check, section 7; the count is in the review, section 2.1.)
+
+## 9. Other regions and periods as test cases (10 November)
+
+*From Chris's direction of 10 November and the case-study search of the same day
+(`2026-11-10_case_study_candidates.md`, a search agent's report, not yet reviewed).*
+
+Chris, 10 November: "I don't want to get too hung up on the north east and the hemlock decline. It is one
+interesting feature to look at because we know something happened then with the vegetation and we know the effect
+it should have had on Albedo. So it makes a good test case for the modelling. But there might be other times and
+regions where we can also say something interesting based on what we know happened in the past there with the
+vegetation or the climate - so we should explore those options too."
+
+The search ranked eleven candidates. Its first three beside the hemlock decline: the land clearance at European
+settlement in the eastern United States (500 to 50 BP); the rise of spruce in Quebec and Labrador (6 to 2.5 ka),
+with north-west Canada (10 to 8 ka) as a second region; and the prairie's advance and retreat at the
+prairie-forest border in the Midwest (10.5 to 8 ka; 4.5 to 0.5 ka).
+
+**Questions.**
+
+1. Which of these would you accept as test cases, and are there others you would add from what you know of the
+   reconstruction? (Search report, sections 1 and 2.)
+2. What does the 50 BP slice (samples of 1850 to 2024) stand for in the eastern United States: the peak of
+   clearing, or today's regrown forest? The land-clearance case depends on it. (Search report, questions.)
+3. Why does the rise of pine in the south-east hardly show as evergreen cover in the reconstruction? (Same.)
+4. How much does leaving poplar and aspen out lower early-Holocene summergreen cover in Alaska and north-west
+   Canada? (Same.)
+5. Is the single-slice jump of evergreen cover in the South-west at 9.5 ka real (0.29, 0.57 and 0.32 at 10, 9.5
+   and 9 ka)? In two of the three pipeline runs the South-west and the Southern Plains supply much of the
+   continental vegetation forcing between 6 and 0.5 ka, on very few pollen cells. (Search report, section 6.)
+
