@@ -11,6 +11,18 @@ months, snow state, the two classes, their albedos, the difference (computed fro
 the kind of albedo, how it was read, and whether the agent read it in the source. 96 rows were read in the
 source (74 from tables or text, 22 with a figure reading), 1 from an abstract, 6 are placeholders marked "not read".
 
+**Added 15 November 2026, for `tools/explore_cover_contrasts.R`.** Five columns at the end of the table restate
+what its text columns say in a form a script can use. No existing field was changed (every old line is the start
+of the new one). They were derived by rule from `note`, `months`, `snow_state` and `albedo_kind`:
+
+- `contrast`: 1 deciduous minus evergreen, 2 open minus evergreen, 3 open minus deciduous; empty where a row names
+  several contrasts.
+- `first_month`, `last_month`: the calendar months the value covers (`jan` ... `dec`; a range may wrap the year
+  end; `jan` to `dec` for an annual value). Empty for Euskirchen's four snow periods, which are not calendar months
+  and differ between its boreal and tundra sites, and for rows that were not read.
+- `snow`: `snow_free`, `snowy`, or `all_days` for all conditions.
+- `broadband`: `no` for Bright's single spectral bands; empty where the kind of albedo was not read; else `yes`.
+
 | Paper | Obtained | What it gave |
 |---|---|---|
 | Hollinger et al. (2010), doi:10.1111/j.1365-2486.2009.02028.x | Forest Service repository | Table 2, p. 701: snow-free tower means by season for deciduous, evergreen (northerly and southerly), grassland and crop. Fig. 2, p. 700: Bartlett and Howland, digitised |
