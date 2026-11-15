@@ -1,5 +1,7 @@
 # The northeast exchanges and stipulated truths of CV protocol 2, section 6.
 # Keep their cells, weights and scaling fixed so changes describe the model, not its inputs.
+# The exchange functions also serve the exploration of the fitted cover response
+# (tools/explore_cover_contrasts.R), which exchanges any two of the three cover classes.
 source('R/training_support.R')
 source('R/regions.R')
 source('R/random.R')
@@ -8,8 +10,21 @@ source('R/calibration_fit.R')
 CV_RECOVERY_TRUTHS = c('darkens', 'null', 'shorter')
 CV_RECOVERY_REPLICATES = 20L
 
+COVER_CLASSES = c('OL', 'ET', 'ST')
+EXCHANGE_HALF_STEP = 0.05   # a fixed exchange runs from 5 points below a cell's own mix to 5 above
+
 separation_cell_key = function(data) paste(data$x, data$y)
 separation_northeast = function(data) region_of(data$x, data$y) == 'Northeast (hemlock box)'
+
+# Each cell's area (m2) from script 7a's table of slice pairs, which repeats it on every row.
+cell_areas = function(diffs) {
+  areas = unique(data.frame(x = diffs$x, y = diffs$y, area = as.numeric(diffs$area)))
+  if (anyDuplicated(separation_cell_key(areas))) stop('one cell has inconsistent areas')
+  areas
+}
+
+# The area of each of `cells`; missing for a cell that script 7a's table does not have.
+area_of = function(cells, areas) areas$area[match(separation_cell_key(cells), separation_cell_key(areas))]
 
 # Fractions must be physical at both endpoints; never clip or renormalize an exchange.
 valid_exchange_rows = function(data) {
@@ -19,10 +34,20 @@ valid_exchange_rows = function(data) {
     abs(rowSums(fractions) - 1) <= 1e-6
 }
 
-freeze_exchange = function(first, second, area) {
+# The cover class an exchange between two others leaves alone.
+held_class = function(gains, loses) {
+  if (length(gains) != 1 || length(loses) != 1 || !all(c(gains, loses) %in% COVER_CLASSES) || gains == loses)
+    stop('an exchange is between two different cover classes of ', paste(COVER_CLASSES, collapse = ', '))
+  setdiff(COVER_CLASSES, c(gains, loses))
+}
+
+# `held` is the cover class the two endpoints share: open land in protocol 2's own exchanges.
+freeze_exchange = function(first, second, area, held = 'OL') {
+  if (length(held) != 1 || !held %in% COVER_CLASSES) stop('the held class is one of ', paste(COVER_CLASSES, collapse = ', '))
+  fixed = c('x', 'y', 'elev', held)
   if (nrow(first) != nrow(second) || length(area) != nrow(first) ||
-      !isTRUE(all.equal(first[, c('x', 'y', 'elev', 'OL')], second[, c('x', 'y', 'elev', 'OL')],
-                        check.attributes = FALSE))) stop('an exchange changed open land, location or elevation')
+      !isTRUE(all.equal(first[, fixed], second[, fixed], check.attributes = FALSE)))
+    stop('an exchange changed its held cover class (', held, '), location or elevation')
   valid = valid_exchange_rows(first) & valid_exchange_rows(second) & is.finite(area) & area > 0
   valid[is.na(valid)] = FALSE
   list(first = first[valid, ], second = second[valid, ], area = area[valid],
@@ -45,12 +70,17 @@ historical_exchange = function(cells, paleo, area) {
   freeze_exchange(first, second, area)
 }
 
-# Validating both endpoints enforces starting ET/ST >= 0.05; no separate filter is needed.
-fixed_exchange = function(cells, area) {
+# The exchange centred on each cell's own mix: the second endpoint has 5 points more of the class
+# that `gains` and 5 fewer of the class that `loses` than the cell, the first endpoint the reverse;
+# the third class is held. The defaults are protocol 2's exchange (evergreen gains from summergreen).
+# Validating both endpoints enforces a starting share of at least 0.05 in both exchanged classes;
+# no separate filter is needed.
+fixed_exchange = function(cells, area, gains = 'ET', loses = 'ST') {
+  held = held_class(gains, loses)
   first = second = cells[, c('x', 'y', 'elev', 'OL', 'ET', 'ST')]
-  first$ET = cells$ET - 0.05; first$ST = cells$ST + 0.05
-  second$ET = cells$ET + 0.05; second$ST = cells$ST - 0.05
-  freeze_exchange(first, second, area)
+  first[[gains]] = cells[[gains]] - EXCHANGE_HALF_STEP; first[[loses]] = cells[[loses]] + EXCHANGE_HALF_STEP
+  second[[gains]] = cells[[gains]] + EXCHANGE_HALF_STEP; second[[loses]] = cells[[loses]] - EXCHANGE_HALF_STEP
+  freeze_exchange(first, second, area, held)
 }
 
 exchange_support = function(exchange, hull) {

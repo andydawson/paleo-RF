@@ -22,6 +22,38 @@ stopifnot(fails(freeze_exchange(fixed$first, bad, fixed$area)))
 empty = fixed_exchange(cells[0, ], numeric())
 stopifnot(nrow(empty$first) == 0, !length(empty$weight))
 
+# The defaults remain protocol 2's exchange, to the last bit: 5 points of evergreen either side
+# of each cell's own mix, taken from summergreen, with open land held.
+stopifnot(identical(fixed$first$ET, cells$ET[1:3] - .05), identical(fixed$first$ST, cells$ST[1:3] + .05),
+  identical(fixed$second$ET, cells$ET[1:3] + .05), identical(fixed$second$ST, cells$ST[1:3] - .05),
+  identical(fixed$first$OL, cells$OL[1:3]), identical(fixed, fixed_exchange(cells, area, gains = 'ET', loses = 'ST')))
+# Any two classes: the second endpoint has 10 points more of the class that gains and 10 fewer of
+# the class that loses than the first; the third class, total cover, location and elevation are
+# kept, and the reverse exchange swaps the endpoints. Only the fourth cell (1% evergreen) cannot
+# give up 5 points of evergreen.
+for (gains in COVER_CLASSES) for (loses in setdiff(COVER_CLASSES, gains)) {
+  held = setdiff(COVER_CLASSES, c(gains, loses))
+  pair = fixed_exchange(cells, area, gains, loses)
+  n = nrow(pair$first)
+  stopifnot(identical(held_class(gains, loses), held), n == if ('ET' %in% c(gains, loses)) 3 else 4,
+    equal(pair$second[[gains]] - pair$first[[gains]], rep(.1, n)),
+    equal(pair$second[[loses]] - pair$first[[loses]], rep(-.1, n)),
+    identical(pair$first[, c('x', 'y', 'elev', held)], pair$second[, c('x', 'y', 'elev', held)]),
+    equal(rowSums(pair$first[, COVER_CLASSES]), rep(1, n)), equal(rowSums(pair$second[, COVER_CLASSES]), rep(1, n)),
+    identical(pair$first, fixed_exchange(cells, area, loses, gains)$second))
+}
+# Not an exchange: one class twice, an unknown class, two classes at once. And the held class is
+# checked, whichever it is: an open-land exchange is still refused where open land is to be held.
+open = fixed_exchange(cells, area, 'OL', 'ET')
+stopifnot(fails(fixed_exchange(cells, area, 'ET', 'ET')), fails(fixed_exchange(cells, area, 'ET', 'tundra')),
+  fails(held_class(c('ET', 'ST'), 'OL')), fails(freeze_exchange(open$first, open$second, open$area)),
+  fails(freeze_exchange(fixed$first, fixed$second, fixed$area, held = 'ET')),
+  fails(freeze_exchange(fixed$first, fixed$second, fixed$area, held = 'water')))
+# One area per cell from the repeated rows of script 7a's table; a cell it lacks has none.
+diffs = data.frame(x = c(-75, -75, -74), y = c(42, 42, 43), area = c(5, 5, 7))
+stopifnot(equal(area_of(cells, cell_areas(diffs)), c(5, 7, NA, NA)),
+  fails(cell_areas(transform(diffs, area = c(5, 6, 7)))))
+
 # A real hull exercises neither, first-only, second-only and both endpoints outside.
 hull = training_hull(data.frame(OL = c(.2, .2, .6), ET = c(.2, .6, .2), ST = c(.6, .2, .2)))
 first = second = cells
