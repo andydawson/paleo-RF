@@ -1,0 +1,8 @@
+snow_free jan loc30_linear: 0.0 min; fitting loop: 16 of 500 steps; smoothing parameters: full convergence after 5 iterations; largest gradient 1.8e-04; Hessian positive definite (smallest eigenvalue 0.085); fitted on 1227 rows
+snow_free jan loc100_linear: 0.1 min; fitting loop: 19 of 500 steps; smoothing parameters: full convergence after 4 iterations; largest gradient 1.9e-04; Hessian positive definite (smallest eigenvalue 1); fitted on 1227 rows
+snow_free jul loc30_linear: 0.2 min; fitting loop: 15 of 500 steps; smoothing parameters: full convergence after 5 iterations; largest gradient 5.1e-04; Hessian positive definite (smallest eigenvalue 1.5); fitted on 2808 rows
+snow_free jul loc100_linear: 0.2 min; fitting loop: 15 of 500 steps; smoothing parameters: full convergence after 3 iterations; largest gradient 1.0e-03; Hessian positive definite (smallest eigenvalue 1.6); fitted on 2808 rows
+
+real	0m47.111s
+user	0m39.523s
+sys	0m7.580s

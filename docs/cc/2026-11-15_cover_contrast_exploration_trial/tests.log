@@ -1,0 +1,32 @@
+Tests run on 2026-11-15 14:13 UTC in the worktree of branch cover-contrasts at commit 06357f4, each with: THREADS=1 tools/rscript.sh tests/<name>.R
+=== tests/test_cv_separation.R
+CV separation: hand-worked checks passed (no fits).
+exit status: 0
+=== tests/test_explore_cover_contrasts.R
+Cover contrasts: hand-worked checks passed (none of the six versions fitted).
+exit status: 0
+=== tests/test_training_support.R
+test_training_support: all tests passed
+exit status: 0
+=== tests/test_calibration_fit.R
+test_calibration_fit: all tests passed
+exit status: 0
+=== tests/test_model_registry.R
+Linking to GEOS 3.14.1, GDAL 3.13.3, PROJ 9.8.1; sf_use_s2() is TRUE
+test_model_registry: all tests passed
+exit status: 0
+=== tests/test_cross_validation.R
+test_cross_validation: all tests passed
+exit status: 0
+=== tests/test_cross_validation_stages.R
+paths: run directory /tmp/RtmpDJWhVL/cv2_stages_35328d3ea88cb4/run; every product of this run is written there
+test_cross_validation_stages: all tests passed
+exit status: 0
+=== tests/test_preparation_albedo.R
+full_75: mixing identity on 30248 cell-months, largest departure 1.1e-06
+any_75: mixing identity on 30320 cell-months, largest departure 1.1e-06
+full_70: mixing identity on 28474 cell-months, largest departure 1.1e-06
+full_nocut: mixing identity on 31482 cell-months, largest departure 1.1e-06
+test_preparation_albedo: data/lct_modern_reveals_interp.RDS absent; the join with the modern cells skipped
+test_preparation_albedo: all tests passed
+exit status: 0

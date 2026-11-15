@@ -1,0 +1,17 @@
+Linking to GEOS 3.14.1, GDAL 3.13.3, PROJ 9.8.1; sf_use_s2() is TRUE
+snowy jul loc30_linear: 0.0 min; fitting loop: 15 of 500 steps; smoothing parameters: full convergence after 6 iterations; largest gradient 2.1e-08; Hessian positive definite (smallest eigenvalue 1.7); fitted on 470 rows
+snowy jul mod8_coarse_loc: 0.5 min; fitting loop: 21 of 500 steps; smoothing parameters: full convergence after 8 iterations; largest gradient 1.0e-04; Hessian positive definite (smallest eigenvalue 0.49); fitted on 470 rows
+snowy jul loc100_linear: 0.1 min; fitting loop: 37 of 500 steps; smoothing parameters: full convergence after 5 iterations; largest gradient 7.6e-06; Hessian positive definite (smallest eigenvalue 1.6); fitted on 470 rows
+snowy jul loc100_tp200: 1.7 min; fitting loop: 47 of 500 steps; smoothing parameters: full convergence after 9 iterations; largest gradient 2.4e-04; Hessian positive definite (smallest eigenvalue 0.071); fitted on 470 rows
+snowy jul lin_cover: NA min; not fitted: 470 complete cells, fewer than its 551 coefficients
+snowy jul mod8: NA min; not fitted: 470 complete cells, fewer than its 748 coefficients
+snowy aug loc30_linear: 0.0 min; fitting loop: 17 of 500 steps; smoothing parameters: full convergence after 6 iterations; largest gradient 8.5e-06; Hessian positive definite (smallest eigenvalue 0.12); fitted on 360 rows
+snowy aug mod8_coarse_loc: 0.3 min; fitting loop: 19 of 500 steps; smoothing parameters: full convergence after 5 iterations; largest gradient 2.2e-05; Hessian positive definite (smallest eigenvalue 0.25); fitted on 360 rows
+snowy aug loc100_linear: 0.1 min; fitting loop: 32 of 500 steps; smoothing parameters: full convergence after 11 iterations; largest gradient 6.4e-04; Hessian positive definite (smallest eigenvalue 0.0002); fitted on 360 rows
+snowy aug loc100_tp200: 2.4 min; fitting loop: 47 of 500 steps; smoothing parameters: full convergence after 7 iterations; largest gradient 5.8e-06; Hessian positive definite (smallest eigenvalue 0.3); fitted on 360 rows
+snowy aug lin_cover: NA min; not fitted: 360 complete cells, fewer than its 551 coefficients
+snowy aug mod8: NA min; not fitted: 360 complete cells, fewer than its 748 coefficients
+
+real	5m12.636s
+user	5m11.980s
+sys	0m0.551s

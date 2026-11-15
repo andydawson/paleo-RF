@@ -1,0 +1,18 @@
+job: snowy_jul
+time: 2026-11-15 14:14:03 UTC
+commit: 06357f4af039201b212f9512ce387830329b9520
+branch: cover-contrasts
+uncommitted changes in R/, scripts/, config.R or this tool: FALSE
+input configuration /home/expert/Documents/contracting/Andria/paleo-RF-verify/74b5482/.rundirs/run7-snowy/config_used.R c547a726297bc6cb9f2298c7c763fbc8
+input calibration_table /home/expert/Documents/contracting/Andria/paleo-RF-verify/74b5482/.rundirs/run7-snowy/data/calibration_modern_lct_interp_bluesky.RDS c907790dc87b5b9d2a1c171550557b60
+input albedo_differences /home/expert/Documents/contracting/Andria/paleo-RF-verify/74b5482/.rundirs/run7-snowy/data/ALB_diffs_bluesky.RDS e1b6124d758c00d42576d1a6c76f1ef3
+input albedo_modis_cells data/albedo_modis_cells.csv d73c54cca47b864284e430f87ef9ce3f
+version loc30_linear s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + ET + ST
+version mod8_coarse_loc s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)
+version loc100_linear s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + ET + ST
+version loc100_tp200 s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)
+version lin_cover s(x, y, bs = "gp", k = 500) + s(elev, k = 50) + ET + ST
+version mod8 s(x, y, bs = "gp", k = 500) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)
+package R 4.5.3
+package mgcv 1.9.4
+package sf 1.1.3

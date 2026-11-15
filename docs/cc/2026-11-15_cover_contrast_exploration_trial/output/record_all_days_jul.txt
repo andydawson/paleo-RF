@@ -1,0 +1,14 @@
+job: all_days_jul
+time: 2026-11-15 14:12:29 UTC
+commit: 06357f4af039201b212f9512ce387830329b9520
+branch: cover-contrasts
+uncommitted changes in R/, scripts/, config.R or this tool: FALSE
+input configuration /home/expert/Documents/contracting/Andria/paleo-RF-verify/1d31cfc/.rundirs/cv2-holdouts/config_used.R 7166904d1dc1fd19a9650253bfc1be4a
+input calibration_table /home/expert/Documents/contracting/Andria/paleo-RF-verify/1d31cfc/.rundirs/cv2-holdouts/data/calibration_modern_lct_interp_bluesky.RDS 67f258c3a2d97f729bb7139ae4940fc5
+input albedo_differences /home/expert/Documents/contracting/Andria/paleo-RF-verify/1d31cfc/.rundirs/cv2-holdouts/data/ALB_diffs_bluesky.RDS 2b7136049712ec99f38272edfc436719
+input albedo_modis_cells data/albedo_modis_cells.csv d73c54cca47b864284e430f87ef9ce3f
+version loc30_linear s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + ET + ST
+version loc100_linear s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + ET + ST
+package R 4.5.3
+package mgcv 1.9.4
+package sf 1.1.3
