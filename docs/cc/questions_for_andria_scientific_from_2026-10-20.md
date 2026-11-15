@@ -391,6 +391,23 @@ northeast’s own cells under a stipulated truth, not the real response.
    winter albedo for. Should those cell-months be shown, masked, or weighted out, given how little winter sun they
    receive? (Astra's check, section 7; the count is in the review, section 2.1.)
 
+**Andria's answer, and Chris's direction of 15 November.** In the shared Word document (her answers were
+there by the call of 12 November) Andria agrees that the calibration model should be chosen by testing on
+data the model has not seen, not by AIC. She thinks spatially blocked cross-validation makes sense and likes
+the idea of also using land-cover composition to choose the holdout folds. She wants the models compared with
+and without the location term, above all for cover mixes that are poorly represented today, and the northeast
+reversal understood before the final model is settled. From Chris's notes of the call: whether the location
+term is needed at all, what it is telling us (Andria thinks of it as a proxy for climate) and how it is built
+are to be explained.
+
+Protocol 2 does not yet do what she agreed to. Its folds are chosen by how unusual a cell's cover is; the
+scored cells lie within 250 km of a training cell (half of them within about 130 km); spatial structure
+enters only through the standard errors, which resample 5 x 5 degree blocks, and through one spatially
+blocked holdout that is reported for two models and not used to choose. Chris, 15 November: "I think we need
+to deal with spatial autocorrelation somehow and ideally would do it as a single CV method that handles that
+alongside the generalisation to unseen land cover." Parked on his instruction, to return to: nothing is
+designed or run. Until then protocol 2's choice of model is provisional.
+
 ## 9. Other regions and periods as test cases (10 November)
 
 *From Chris's direction of 10 November and the case-study search of the same day
@@ -420,3 +437,5 @@ prairie-forest border in the Midwest (10.5 to 8 ka; 4.5 to 0.5 ka).
    and 9 ka)? In two of the three pipeline runs the South-west and the Southern Plains supply much of the
    continental vegetation forcing between 6 and 0.5 ka, on very few pollen cells. (Search report, section 6.)
 
+**Call of 12 November.** Chris's note from the call asks the same thing ("Are there other events like hemlock
+decline?"). No answer from Andria is recorded yet; the search of 10 November is the starting list.
