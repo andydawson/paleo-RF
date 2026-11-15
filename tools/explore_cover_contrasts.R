@@ -95,19 +95,21 @@ exchange_cases = function(run, month) {
   hull = training_hull(cal[fitted, ])
   members = region_members(cal, run$domain)
   cases = list()
-  for (region in names(members)) for (i in seq_len(nrow(EXCHANGES))) {
+  for (region in names(members)) {
     in_region = members[[region]] & has_area
     use = in_region & fitted
-    exchange = fixed_exchange(cal[use, ], run$area[use], gains = EXCHANGES$to[i], loses = EXCHANGES$from[i])
-    exchange$support = exchange_support(exchange, hull)
-    eligible = exchange_subset(exchange, 'inside')
-    own = match(separation_cell_key(eligible$first), separation_cell_key(cal))   # the eligible cells' rows of the table
-    both = cal[own, EXCHANGES$from[i]] >= MIN_CLASS_SHARE & cal[own, EXCHANGES$to[i]] >= MIN_CLASS_SHARE
-    cases[[length(cases) + 1]] = list(exchange = eligible, support = data.frame(
-      region = region, exchange = EXCHANGES$exchange[i], region_cells = sum(in_region), fitted_cells = sum(use),
-      eligible_cells = length(own), area_share = sum(eligible$area) / sum(run$area[in_region]), cells_10pct = sum(both),
-      snowfree_share = stats::median(run$snowfree_share[[month]][own]),
-      snowy_share = stats::median(run$snowy_share[[month]][own])))
+    for (i in seq_len(nrow(EXCHANGES))) {
+      exchange = fixed_exchange(cal[use, ], run$area[use], gains = EXCHANGES$to[i], loses = EXCHANGES$from[i])
+      exchange$support = exchange_support(exchange, hull)
+      eligible = exchange_subset(exchange, 'inside')
+      own = match(separation_cell_key(eligible$first), separation_cell_key(cal))   # the eligible cells' rows of the table
+      both = cal[own, EXCHANGES$from[i]] >= MIN_CLASS_SHARE & cal[own, EXCHANGES$to[i]] >= MIN_CLASS_SHARE
+      cases[[length(cases) + 1]] = list(exchange = eligible, support = data.frame(
+        region = region, exchange = EXCHANGES$exchange[i], region_cells = sum(in_region), fitted_cells = sum(use),
+        eligible_cells = length(own), area_share = sum(eligible$area) / sum(run$area[in_region]), cells_10pct = sum(both),
+        snowfree_share = stats::median(run$snowfree_share[[month]][own]),
+        snowy_share = stats::median(run$snowy_share[[month]][own])))
+    }
   }
   cases
 }

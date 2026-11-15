@@ -22,6 +22,23 @@ stopifnot(identical(months_between('apr', 'may'), c('apr', 'may')), identical(mo
   equal(guide$guide, 0.10 * guide$difference), all(guide_for(published, 'snowy')$snow == 'snowy'),
   nrow(guide_for(published, 'snow_free')) == sum(published$snow == 'snow_free'))
 
+# The five columns added for this tool restate the table's own text, row by row; and each
+# difference is the first class's albedo minus the second's, wherever all three are numbers.
+rows = read.csv(PUBLISHED_FILE)
+stated = suppressWarnings(as.integer(sub('^Contrast ([123])[ .,].*$', '\\1', rows$note)))   # none for "Contrasts 2 and 3"
+first_word = tolower(sub('[ -].*$', '', rows$months))                                      # "June-August (6 ...)" gives "june"
+is_month = first_word %in% tolower(month.name)
+number = function(text) suppressWarnings(as.numeric(text))
+stopifnot(identical(rows$contrast, stated), all(rows$first_month[is_month] == substr(first_word[is_month], 1, 3)),
+  all(rows$first_month[first_word == 'annual'] == 'jan'), all(rows$last_month[first_word == 'annual'] == 'dec'),
+  all(rows$first_month[!is_month & first_word != 'annual'] == ''), all((rows$first_month == '') == (rows$last_month == '')),
+  all((rows$snow == 'snowy') == grepl('^snow-covered', rows$snow_state)),
+  all((rows$snow == 'snow_free') == (grepl('^snow-free', rows$snow_state) & !grepl('and snow-covered', rows$snow_state))),
+  all((rows$snow == 'all_days') == grepl('^all ', rows$snow_state)),
+  all((rows$broadband == 'no') == grepl('NOT broadband', rows$albedo_kind)),
+  all(abs(number(rows$difference_a_minus_b) - (number(rows$albedo_a) - number(rows$albedo_b))) < 5.1e-5, na.rm = TRUE),   # one is rounded to four decimals
+  sum(is.finite(number(rows$difference_a_minus_b))) == 96)
+
 # --- A run in which every number can be worked by hand -------------------------------------------
 # 160 background cells west of the named boxes set the month's range of cover mixes: every mix with
 # at least 2 % of each class (three near-pure cells are its corners). Six northeast cells follow.
