@@ -328,9 +328,9 @@ report = function(out_dir) {
     if (!length(files)) stop('no ', pattern, ' in ', out_dir, ': run the fit command first')
     do.call(rbind, lapply(files, utils::read.csv))
   }
-  contrasts = read_all('contrasts_*.csv')
-  contrasts = contrasts[order(match(contrasts$table, names(TABLE_LABELS)), match(contrasts$month, MONTHS)), ]
-  fits = read_all('fits_*.csv')
+  in_order = function(rows) rows[order(match(rows$table, names(TABLE_LABELS)), match(rows$month, MONTHS)), ]   # tables, then calendar months
+  contrasts = in_order(read_all('contrasts_*.csv'))
+  fits = in_order(read_all('fits_*.csv'))
   published = read_published()
   tables = unique(contrasts$table)
   write_with_header(contrasts, file.path(out_dir, 'cover_contrasts.csv'), CONTRASTS_HEADER)
