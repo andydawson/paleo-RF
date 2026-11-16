@@ -313,11 +313,13 @@ for (name in names(runs)) {
 
 # --- table 3: the northeast over the hemlock decline, every month ------------------------------------
 
-# One swap's columns: its contrast and standard error, and how far its ends reach outside the range.
+# One swap's columns: its contrast and standard error, and how far its ends reach outside the range,
+# at either end and at each (modern_swaps(): the first end is high evergreen, the second low).
 swap_columns = function(prefix, contrast, reach) setNames(
   data.frame(contrast[['contrast']], contrast[['se']], reach[['outside_share']], reach[['max_outside_distance']],
-             outside_band(reach[['max_outside_distance']])),
-  paste0(prefix, c('_open_land', '_open_land_se', '_outside_share', '_max_outside_distance', '_outside_band')))
+             outside_band(reach[['max_outside_distance']]), reach[['max_distance_first']], reach[['max_distance_second']]),
+  paste0(prefix, c('_open_land', '_open_land_se', '_outside_share', '_max_outside_distance', '_outside_band',
+                   '_high_evergreen_max_distance', '_low_evergreen_max_distance')))
 
 # The cross-validation's departure directions: in which of them, and how far, the northeast's past
 # mixes leave the range (R/cross_validation.R's own rule), to set beside what it tested there.
@@ -455,6 +457,7 @@ write_table(northeast_table, 'northeast_by_month.csv', c(
   '_se: the standard error of a swap, from the fit\'s coefficient covariance (conditional on its smoothing).',
   'position_4.5ka: the predicted 4.5 ka albedo against the range observed in the region today (observed_albedo_min, observed_albedo_max): a warning, not a bound.',
   'outside_share_*: the share of the region\'s area whose actual past mix is outside the month\'s training range at 6 ka, at 4.5 ka, and at any of 6, 5.5, 5 and 4.5 ka; swap_*_outside_share: with either end of the swap outside.',
+  'swap_*_max_outside_distance: the largest distance outside at either end of the swap; swap_*_high_evergreen_max_distance and swap_*_low_evergreen_max_distance: at each end (0: that end is inside everywhere).',
   'The matching northeast forcing is in forcing_by_period.csv (region northeast).', support_lines[3:4], northeast_reach))
 write_table(validation, 'validation_and_tested_limits.csv', c(
   'The cross-validation\'s errors and tested limits, to read beside the outside distances of the other tables (protocol 2, section 7).',

@@ -116,11 +116,13 @@ modern_swaps = function(cells_50bp, cells_6ka, low, high, area) {
 }
 
 # How far an exchange reaches outside a month's training range: the share of its area with either
-# end outside, and the largest distance outside at either end.
+# end outside, the largest distance outside at either end, and the largest at each end separately
+# (protocol 2, section 7, asks for the endpoint distances; 0 for an end inside everywhere).
 exchange_outside = function(exchange, hull) {
   support = exchange_support(exchange, hull)
   c(outside_share = sum(support$weight[support$outside]),
-    max_outside_distance = max(support$distance_first, support$distance_second))
+    max_outside_distance = max(support$distance_first, support$distance_second),
+    max_distance_first = max(support$distance_first), max_distance_second = max(support$distance_second))
 }
 
 # The hindcast's geographic support in one month, to read beside the cover-range flag: of the past

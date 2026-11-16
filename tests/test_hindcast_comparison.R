@@ -107,8 +107,13 @@ stopifnot(contrast_of(modern) > 0, equal(contrast_of(reversed), -contrast_of(mod
 hull = training_hull(data.frame(OL = c(0.2, 0.2, 0.6), ET = c(0.2, 0.6, 0.2), ST = c(0.6, 0.2, 0.2)))
 first = second = data.frame(x = c(-75, -74), y = c(42, 43), elev = c(100, 200), OL = 0.3, ET = 0.3, ST = 0.4)
 second$ET = c(0.4, 0.1); second$ST = 1 - second$OL - second$ET
+# The first end is inside everywhere (distance 0); reversing the ends swaps the two endpoint distances.
 reach = exchange_outside(freeze_exchange(first, second, c(1, 3)), hull)
-stopifnot(equal(reach[['outside_share']], 0.75), equal(reach[['max_outside_distance']], 0.1 * sqrt(3) / 2))
+reversed_reach = exchange_outside(freeze_exchange(second, first, c(1, 3)), hull)
+stopifnot(equal(reach[['outside_share']], 0.75), equal(reach[['max_outside_distance']], 0.1 * sqrt(3) / 2),
+          reach[['max_distance_first']] == 0, equal(reach[['max_distance_second']], 0.1 * sqrt(3) / 2),
+          equal(reversed_reach[['max_distance_first']], 0.1 * sqrt(3) / 2), reversed_reach[['max_distance_second']] == 0,
+          equal(reversed_reach[c('outside_share', 'max_outside_distance')], reach[c('outside_share', 'max_outside_distance')]))
 
 # Geographic support in one month. Four past cells of areas 1, 1, 2 and 4; the month's fitting cells
 # are the first two, the northernmost at 45 N. The third past cell (44 N) has no fitting cell at its
