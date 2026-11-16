@@ -8,7 +8,7 @@ same_inputs = sprintf(
   paste0("'", products, "'", collapse = ', '), run1)
 list(
   name     = 'cv2-holdouts',
-  commit   = 'TO_FILL',
+  commit   = '1d31cfcb2c63831d3eea81336739b9b7178807d7',
   config   = 'config.R',
   settings = list(analysis = list(draws = list(seed = 1549466984))),
   copy     = list(c(file.path(run1, 'data/ALB_diffs_bluesky.RDS'), 'data/ALB_diffs_bluesky.RDS')),

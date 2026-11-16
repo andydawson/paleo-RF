@@ -3,7 +3,7 @@
 # Shared inputs and outputs are in .rundirs/cv2-holdouts at the same frozen commit.
 list(
   name    = 'cv2-fit-inrange-oct-dec',
-  commit  = 'TO_FILL',
+  commit  = '1d31cfcb2c63831d3eea81336739b9b7178807d7',
   config  = 'config.R',
   scripts = character(),
   checks  = list(c('tools/cross_validate_albedo.R', 'fit', '.rundirs/cv2-holdouts', 'inrange', 'oct', 'nov', 'dec')),
