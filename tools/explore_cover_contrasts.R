@@ -41,8 +41,10 @@ EXCHANGES = data.frame(exchange = c('evergreen to summergreen', 'evergreen to op
                        from = c('ET', 'ET', 'ST'), to = c('ST', 'OL', 'OL'), contrast = 1:3)
 EXCHANGE_SIZE   = 2 * EXCHANGE_HALF_STEP   # 0.10 of the cell
 STUDY_AREA      = 'Study area'
-# Lejeune et al. (2020), p. 1213, keep a transition estimate only where each class covers at least
-# 10 % of the cell. Here such cells are counted beside every result; the rule is not applied.
+# Cells in which both exchanged classes cover at least 10 % are counted beside every result, not
+# used to filter. This adapts one element of the filter of Lejeune et al. (2020, sect. 2.3.1, p.
+# 1213), which joins low class fractions with a condition on the regression's error, after
+# neighbourhood filters of its own; it is not their rule.
 MIN_CLASS_SHARE = 0.10
 PUBLISHED_FILE  = 'docs/cc/2026-11-10_published_albedo_contrasts.csv'
 TABLE_LABELS    = c(all_days = 'all-days', snow_free = 'snow-free', snowy = 'snowy')
@@ -206,9 +208,10 @@ CONTRASTS_HEADER = c(
   'region_cells: the region\'s cells of the calibration table that have an area in script 7a\'s table.',
   'fitted_cells: those with albedo this month, the cells the versions were fitted to.',
   'eligible_cells: those whose two endpoints are valid fractions inside this month\'s continental range of cover mixes.',
-  'area_share: area of the eligible cells / area of the region\'s cells.',
-  'cells_10pct: eligible cells where both exchanged classes cover at least 10 % of the cell (the condition of',
-  '  Lejeune et al. 2020 for a transition estimate; counted here, not applied).',
+  'area_share: area of the eligible cells / area of the region\'s cells: the share of the modern calibration cells\' area that',
+  '  the result represents, not a share of the whole regional box.',
+  'cells_10pct: eligible cells where both exchanged classes cover at least 10 % of the cell. Counted, not applied: it adapts',
+  '  one element of the filter of Lejeune et al. (2020, sect. 2.3.1), which also has a condition on the regression\'s error.',
   'contrast: area-weighted mean of the predicted differences over the eligible cells.',
   'se: its standard error from the coefficient covariance, keeping the covariance between the two endpoints and between',
   '  cells. Approximate and conditional: it leaves out the uncertainty of the smoothing, spatial dependence, the cover',
@@ -218,6 +221,7 @@ CONTRASTS_HEADER = c(
   'snowfree_share, snowy_share: median over the eligible cells of the share of this month\'s accepted retrievals that',
   '  were flagged snow-free and snowy (the albedo build\'s cell table).',
   'converged: TRUE; FALSE = the fit failed or did not converge; NA = not fitted. fit_status says which and why.',
+  'The versions are fitted to the whole continent and evaluated at each region\'s cells.',
   'The eligible cells are the same for every version within a table, month, region and exchange. They differ between',
   'tables, months and exchanges, so a change of cells can look like a change of response. A result from one or three',
   'cells describes those cells, not the region.')
@@ -261,7 +265,9 @@ read_published = function(file = PUBLISHED_FILE) {
 
 # The published values set beside one albedo table's fits: those of its own snow state. Beside the
 # all-days fits, only the snow-free values of June to September, the months the design names as
-# comparable (section 3: the northeast then has no snowy retrievals). Multiplied by the size of
+# comparable (section 3). That holds for the northeast, which then has no snowy retrievals, not
+# for every region (in Alaska and Yukon most eligible cells have some in June), so the figure
+# shows each month's snowy share of retrievals beside the all-days fits. Multiplied by the size of
 # the exchange. Not the values the table marks as not for beside the model: a comparison with a
 # mixed mosaic is not a complete change from forest to open land.
 guide_for = function(published, table) {
@@ -273,16 +279,36 @@ guide_for = function(published, table) {
 
 month_axis = function() ggplot2::scale_x_continuous(breaks = 1:12, labels = substr(month.abb, 1, 1), limits = c(0.5, 12.5))
 
+# The share of retrievals shown under each panel: of the page's own snow state, and snowy beside
+# the all-days fits, where it says how much of an all-days mean rests on snowy retrievals.
+SHARE_SHOWN = c(all_days = 'snowy_share', snow_free = 'snowfree_share', snowy = 'snowy_share')
+
+# A share as a percentage for the figure: whole numbers, one significant digit below 1 %.
+percent = function(share) ifelse(is.na(share), '', ifelse(share > 0 & share < 0.01, sprintf('%.1g', 100 * share), sprintf('%.0f', 100 * share)))
+
+# What stands behind each month's result, as three lines of text under each panel: the eligible
+# cells, their share of the area of the region's calibration cells, and the share of retrievals
+# of SHARE_SHOWN. These do not depend on the version, and the function stops if they do.
+support_text = function(contrasts, table) {
+  share = SHARE_SHOWN[[table]]
+  support = unique(contrasts[, c('panel', 'month', 'eligible_cells', 'area_share', share)])
+  if (anyDuplicated(support[, c('panel', 'month')])) stop('the eligible cells differ between versions')
+  lines = list(as.character(support$eligible_cells), percent(support$area_share), percent(support[[share]]))
+  do.call(rbind, lapply(1:3, function(i) data.frame(support[, c('panel', 'month')], label = lines[[i]], vjust = -0.6 - 1.3 * (3 - i))))
+}
+
 # One page: an albedo table's contrasts against month, a line per version with its interval, a
-# panel per region and exchange, and the published guide as grey ticks.
+# panel per region and exchange, the published guide as grey ticks, and under each panel the
+# support of each month's result.
 plot_table = function(contrasts, guide, table) {
-  panels = unique(contrasts[, c('region', 'exchange')])
-  cells = sapply(seq_len(nrow(panels)), function(i)
-    paste(unique(range(contrasts$eligible_cells[contrasts$region == panels$region[i] & contrasts$exchange == panels$exchange[i]])), collapse = ' to '))
-  panels$panel = sprintf('%s\n%s; %s eligible cells', panels$region, panels$exchange, cells)
+  panels = unique(contrasts[, c('region', 'exchange', 'region_cells')])
+  panels$panel = sprintf('%s\n%s; %d calibration cells', panels$region, panels$exchange, panels$region_cells)
   panels$panel = factor(panels$panel, levels = panels$panel)
   contrasts = merge(contrasts, panels)
-  guide = merge(guide, panels)                    # by exchange: the same guide in every region's panel
+  guide = merge(guide, panels[, c('exchange', 'panel')])   # by exchange: the same guide in every region's panel
+  shown = c(snowy_share = 'snowy', snowfree_share = 'snow-free')[[SHARE_SHOWN[[table]]]]
+  all_days = if (table == 'all_days') paste('\nBeside these all-days fits only snow-free published values of June to September are drawn: the northeast has no snowy',
+    'retrievals then, but other regions can (Alaska and Yukon among them): see the third line under each panel.') else ''
   dodge = ggplot2::position_dodge(width = 0.6)
   ggplot2::ggplot(contrasts, ggplot2::aes(match(month, MONTHS), contrast, colour = factor(location_k), group = version)) +
     ggplot2::geom_hline(yintercept = 0, colour = 'grey60') +
@@ -293,6 +319,9 @@ plot_table = function(contrasts, guide, table) {
     ggplot2::geom_linerange(ggplot2::aes(ymin = contrast - 2 * se, ymax = contrast + 2 * se), position = dodge, alpha = 0.6, na.rm = TRUE) +
     ggplot2::geom_line(ggplot2::aes(linetype = cover_form), position = dodge, na.rm = TRUE) +
     ggplot2::geom_point(position = dodge, size = 0.9, na.rm = TRUE) +
+    ggplot2::geom_text(ggplot2::aes(match(month, MONTHS), -Inf, label = label, vjust = vjust), support_text(contrasts, table),
+                       inherit.aes = FALSE, size = 1.9, colour = 'grey25') +
+    ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.5, 0.05))) +   # room for the text under the lines
     ggplot2::facet_wrap(~ panel, ncol = nrow(EXCHANGES), scales = 'free_y') + month_axis() +
     ggplot2::scale_colour_manual('Location term, basis size', values = c('30' = '#D95F02', '100' = '#1B9E77', '500' = '#7570B3')) +
     ggplot2::scale_linetype_manual('Cover term', values = c(linear = 'solid', tp200 = 'dashed'),
@@ -300,11 +329,15 @@ plot_table = function(contrasts, guide, table) {
     ggplot2::theme_bw(9) + ggplot2::theme(legend.position = 'top') +
     ggplot2::labs(x = 'Month', y = 'Albedo change for a 10-point exchange of cover (positive: brighter)',
       title = sprintf('Fitted response to a 10-point exchange of cover: versions fitted to %s albedo', TABLE_LABELS[[table]]),
-      caption = paste('Lines: each version\'s predicted change, the area-weighted mean over the eligible cells. Bars: plus or minus two standard errors,',
-        'approximate and conditional on the fitted model.\nGrey ticks: published differences between whole classes multiplied by 0.10',
-        '("ideal linear mixing"): a guide for the eye, not a measurement, at the months each was published for; a circle marks one with a',
-        'qualification (a single day; a period the source does not state exactly): see the last page.\nCell counts: the fewest',
-        'and the most eligible cells in any month. A result from a few cells describes those cells, not the region. No pass or fail is implied.'))
+      caption = paste0('Lines: each version\'s predicted change, the area-weighted mean over the eligible cells. Bars: plus or minus two standard errors, ',
+        'approximate and conditional on the fitted model.\nThe versions are fitted to the whole continent and evaluated at each region\'s cells. ',
+        'Vertical scales differ between panels.\nGrey ticks: published differences between whole classes multiplied by 0.10 ',
+        '("ideal linear mixing"): a guide for the eye, not a measurement, at the months each was published for. The same published values are ',
+        'repeated\nin every region\'s panel, wherever they were measured. A circle marks one with a qualification (a single day; a period the source ',
+        'does not state exactly): see the last page.', all_days,
+        '\nUnder each panel, by month, the same for every version: the eligible cells; their share (%) of the area of the region\'s modern ',
+        'calibration cells (not of the whole box);\nthe median share (%) of the month\'s accepted retrievals at those cells that were flagged ', shown,
+        '. A result from a few cells describes those cells, not the region. No pass or fail is implied.'))
 }
 
 # The last page: the published differences themselves, in their own units and months. The shape
@@ -327,6 +360,7 @@ plot_published = function(published) {
     ggplot2::geom_point(ggplot2::aes(6.5, difference, shape = qualification), annual, size = 1.8) +
     ggplot2::facet_wrap(~ panel, ncol = nrow(EXCHANGES), scales = 'free_y', drop = FALSE) + month_axis() +
     ggplot2::theme_bw(9) + ggplot2::theme(legend.position = 'top', legend.box = 'vertical') +
+    ggplot2::guides(shape = ggplot2::guide_legend(ncol = 1)) +   # the qualifications are long
     ggplot2::labs(x = 'Month', y = 'Published albedo difference between two whole classes', colour = NULL, shape = 'Qualification',
       title = 'Published albedo differences between cover classes, in each source\'s own kind of albedo and months',
       subtitle = paste('"A to B" is the published albedo of class B minus that of class A. A value is drawn at every month of the period it was published for;',
