@@ -98,7 +98,7 @@ cat('cv-hindcast-comparison: every table check passed\\n')
 
 list(
   name    = 'cv-hindcast-comparison',
-  commit  = 'TO_FILL',
+  commit  = '6faebe354071a1cffee8cdde2f0db2e24d910bfc',
   config  = 'config.R',
   scripts = character(),
   checks  = list('tests/test_hindcast_comparison.R',
