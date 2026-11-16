@@ -32,8 +32,9 @@ Use: `Rscript tools/compare_cv_hindcasts.R <output-dir> <cv-output-dir> <baselin
    vegetation part, the ice part and the total of the partial-ice split, for every run, period, month and kernel,
    in one row. They are script 8's saved columns `veg_part`, `ice_part` and `veg_ice_parts`, summed by script 9's
    rule. Scripts 9 and 10 saved the study-area means only, so the months, the northeast and the hemlock interval
-   need the same sums again; **the tool stops unless it reproduces every number those scripts did save** (script
-   9's totals for three kernels, its HadGEM3 parts from the variant table, script 10's monthly means). Scripts 9
+   need the same sums again; **the tool stops unless it reproduces the study-area means those scripts saved** (script
+   9's totals for three kernels, its HadGEM3 parts from the variant table, script 10's monthly means with its latitude
+   bands combined; not their global equivalents, areas, other variants or single latitude bands). Scripts 9
    and 10 themselves are untouched (the protocol allows no pipeline change), so the period sum now exists in the
    tool's helper as well as in those scripts; the check guards against drift.
 5. **The hemlock interval for both regions**, labelled `4.5 - 6 ka` like the other periods (the protocol asks for the
@@ -113,5 +114,35 @@ count of 1,344 and 1,017 of 2,659 is over all cover cells in 27 to 74 N; four of
 The five test files; the tool on the three runs; the tool again with model 8 and the chosen model in reversed
 roles; then on the tables: every file written; the expected row counts; zero differences for the baseline; the
 vegetation and ice parts adding up to the total in every row; the April and May historical-size exchange equal to
-the capacity table's; the fitted and simulated 6 to 4.5 ka changes within 0.005; the geographic counts above;
+the capacity table's; the fitted and simulated 6 to 4.5 ka changes within 0.005 (replaced on 16 November by a
+plain report of their gap, below); the geographic counts above;
 and every difference changing sign when the roles are reversed.
+
+## Changes after Astra's review (16 November 2026)
+
+Astra's review (`2026-11-10_cv_hindcast_comparison_review_codex_gpt6astra.md`) found no numerical error and named
+six changes, which Chris approved; they were made and nothing else.
+
+1. **The tested directions in words.** The validation table gains `direction_in_words` (the cover that falls most
+   and the one that rises most along each direction, from the cross-validation's `directions.csv`). The headers say
+   that a tested limit applies to its own direction only and is over all months together (by month in the
+   cross-validation's `nearby_depth.csv`). The tool assigns the northeast's mixes over the hemlock interval to the
+   cross-validation's directions by its own rule and says, in the northeast and validation headers, that they all
+   leave the range towards less open land and more summergreen, as far as 0.107, where nearby testing reached 0.099.
+2. **The same rows with a value in every run.** The tool stops if the pipeline's albedo is missing anywhere in the
+   study area, or if the runs do not have forcing on the same rows (`check_common_availability()`; tested on
+   Astra's two-cell case).
+3. **Both endpoint distances of each swap**: `<swap>_high_evergreen_max_distance` and
+   `<swap>_low_evergreen_max_distance` in the northeast table, beside the either-end share, distance and band.
+4. **Both northeast endpoints checked against the fits** (6 and 4.5 ka), and the claims narrowed: choice 4 above,
+   the tool's preamble and the forcing header now say which saved numbers of scripts 9 and 10 are reproduced.
+5. **No 0.005 gate.** The spec reports the largest fitted-minus-simulated gap and the sign disagreements, and judges
+   neither; each column is checked against its own saved product by the tool.
+6. **Kernel coverage stated**: the forcing header says, from the table's own counts, that CACK has values in 2,646
+   study-area cells in January and 2,439 in December where every other kernel and month has 2,655. The map subtitle
+   is wrapped so that its clipping notice is no longer cut off.
+
+The spec checks the new statements and columns, the common denominators, and the forcing outside-part differences
+under reversed roles. A second trial on the same three runs gave tables whose existing columns are identical to the
+first trial's; only the new columns and header lines differ.
+
