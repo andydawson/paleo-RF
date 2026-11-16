@@ -22,7 +22,7 @@ snowy     = '../74b5482/.rundirs/run7-snowy'       # 4 November
 out_dir   = '.rundirs/cover-contrasts/cover_contrasts'
 list(
   name    = 'cover-contrasts',
-  commit  = 'TO_FILL',
+  commit  = '7c12534',
   config  = 'config.R',
   scripts = character(),
   checks  = list('tests/test_cv_separation.R',

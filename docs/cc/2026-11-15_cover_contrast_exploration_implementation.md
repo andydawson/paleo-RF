@@ -109,7 +109,7 @@ Each job's record lists these files with their MD5 sums, the commit, and the six
    shows separately.
 4. **Retrieval support** is two columns, the typical snow-free and snowy shares, for every table. One column for
    the table's own snow state would not help to read the all-days results.
-5. **Lejeune's 10 % condition** is counted beside each result and not applied (see section 7).
+5. **A count adapting one element of Lejeune et al.'s filter** (both classes at least 10 % of the cell) is shown beside each result and not applied (see section 7).
 6. **The spread** is weighted by area, like the mean.
 7. **A fit that did not converge after its retry** gets no numbers, as in the protocol's own contrasts.
 8. **Every job fits all six versions.** There is no option to choose versions.
@@ -178,7 +178,7 @@ cells of 2,623 and at most 225 eligible ones, and the typical snowy share of the
 ## 7. Closer to published practice, and what was left undecided
 
 Adopted, as conventions of reporting only: the naming and sign of a transition; the published values scaled by
-the fraction converted (0.10) beside the model; the 10 % condition of Lejeune et al. (2020, p. 1213) counted;
+the fraction converted (0.10) beside the model; a count adapting one element of Lejeune et al.'s filter (2020, p. 1213);
 the spread across cells kept apart from the standard error (Boisier et al. 2013, Table 2); the standard error
 described as Duveiller et al. (2018, equations 12 and 13) describe theirs; the kinds of albedo named beside the
 published values.
@@ -205,9 +205,10 @@ None is made here; the tool keeps the design's choice in each case. They are que
    they are. Astra advised against that because the models are curved on the albedo scale. Keep it as built?
 2. **A local rule for which cells count.** A cell counts if both ends of the exchange lie inside the range of
    cover mixes seen anywhere on the continent that month. The papers instead require both classes to be present
-   locally (Lejeune: each at least 10 % of the cell). The tool counts the cells that meet that 10 % condition
-   without applying it. In the trial it would remove none of the northeast's cells and 7 to 9 % of the study
-   area's in July for the two evergreen exchanges. Apply it, keep counting it, or drop it?
+   locally (Lejeune's filter includes a minimum share of each class, beside a regression-error condition). The
+   tool counts the cells in which both classes cover at least 10 %, as a rule of that kind, without applying it.
+   In the trial such a rule would remove none of the northeast's cells and 7 to 9 % of the study area's in July
+   for the two evergreen exchanges. Apply it, keep counting it, or drop it?
 3. **A recombined all-conditions number.** Should the tool also mix the snow-free and snowy contrasts by each
    cell's snow share and show that beside the all-days fit (Boisier's equation 1)?
 4. **Duveiller et al.'s one-degree monthly data set** as the observation-based comparison: still open from
@@ -240,6 +241,27 @@ section 8's item on Jin is done; questions 1 to 6 and 8 stay open. Branch `cover
 identical to that of 15 November. Whole jobs: snowy July and August 5 minutes 17 seconds, peak memory 0.76 GB; the
 two cheap jobs 54 and 50 seconds, about 1.0 GB. Report 7 seconds. The ten test files pass, and the three checks pass
 on the real data.
+
+**Astra's check of these changes** (`2026-11-16_cover_contrast_changes_check_codex_gpt6astra.md`): ready after three
+small changes to the spec and this note, made on 16 November: the spec names commit `7c12534`; two passages that
+still called the 10 % count Lejeune's condition now call it a count adapting one element of their filter; and the
+plan for the full run is recorded below. Chris approved the full run on 15 November ("Timing job then all"), once
+the changes are checked and verified, so question 8 of section 9 is answered.
+
+**The plan for the full run.** From the verified commit's worktree
+(`/home/expert/Documents/contracting/Andria/paleo-RF-verify/7c12534`), into a fresh output folder kept apart from
+the trial and the verification output, with one thread per job and `/usr/bin/time -v` around each:
+
+1. The timing job first: the all-days table, July, all six versions, including the two with a location term of
+   500. It is also the first of the 36 jobs. Its elapsed time, peak memory and saved-file sizes are recorded.
+2. The other 35 jobs, as many at once as free cores and memory allow, allowing 1.5 times the timing job's peak
+   memory per job (a judgement, not a measured guarantee) and watching the first batch.
+3. The report command, only after the completion checks: 36 jobs that exited without error; 216 fit-status
+   records; 4,536 contrast rows, unique by table, month, version, region and exchange; 36 case files and 212
+   saved fits; exactly four fits not made by design (the two versions with a location term of 500 in the snowy
+   table's July and August). Failed fits are reported apart from missing jobs, and numbers must be present exactly
+   where a converged fit has eligible cells. The report command stacks whatever files it finds, so it cannot
+   itself show that the run is complete.
 
 ## References
 
