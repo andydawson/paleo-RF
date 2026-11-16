@@ -1,6 +1,6 @@
 job: all_days_jul
-time: 2026-11-15 14:12:29 UTC
-commit: 06357f4af039201b212f9512ce387830329b9520
+time: 2026-11-16 17:04:16 UTC
+commit: b0d1db70345d861d28deddeb88b1a2d4d147c008
 branch: cover-contrasts
 uncommitted changes in R/, scripts/, config.R or this tool: FALSE
 input configuration /home/expert/Documents/contracting/Andria/paleo-RF-verify/1d31cfc/.rundirs/cv2-holdouts/config_used.R 7166904d1dc1fd19a9650253bfc1be4a

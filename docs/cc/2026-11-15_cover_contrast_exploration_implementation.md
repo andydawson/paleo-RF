@@ -6,6 +6,10 @@ recorded there: explore only, six versions, Fable builds and Astra reviews, "the
 the better". Astra has not reviewed this yet, the verification tool has not been run, and the exploration itself
 (all months, all three albedo tables, six versions) has not been run: that needs Chris's go-ahead.*
 
+*16 November: Astra's review (`2026-11-15_cover_contrast_exploration_review_codex_gpt6astra.md`, "ready after named
+changes") and the changes Chris approved from it are in section 10. Where an earlier section is out of date, section
+10 says so. The verification tool has still not been run, nor the exploration.*
+
 ## In brief
 
 - **What it is for.** It shows, by region and month, how each candidate model's fitted response to a change of
@@ -40,7 +44,7 @@ Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<mon
 Rscript tools/explore_cover_contrasts.R report <output-dir>
 ```
 
-- **fit** reads one finished run. The run's own configuration says which albedo its calibration table holds (all
+- **fit** reads one finished run (since 16 November it also saves each fit and the month's exchanges: section 10). The run's own configuration says which albedo its calibration table holds (all
   days, snow-free or snowy). For each month it fits the six versions afresh (REML, the ordinary fitter and its one
   retry) and writes `contrasts_<table>_<month>.csv`, `fits_<table>_<month>.csv` and a record. Jobs for different
   runs and months can run side by side. Nothing is written into the run that is read.
@@ -217,6 +221,25 @@ None is made here; the tool keeps the design's choice in each case. They are que
    Astra read them (+0.017 without snow, +0.081 with snow, November to January). Enter them on Astra's reading?
 8. **The full run.** It needs your go-ahead. The cheap fits are measured above; the fits with a location term of
    500 are not.
+
+## 10. Changes after Astra's review, 16 November
+
+Chris approved the review's changes for findings 1 to 6, and its answer on Jin, and nothing else (none of the five
+choices of section 7, no filter, no recombined number). So question 7 of section 9 (Jin) is answered yes, and
+section 8's item on Jin is done; questions 1 to 6 and 8 stay open. Branch `cover-contrasts`, five commits after
+`73fd063`.
+
+| Finding | What changed |
+|---|---|
+| 1 and 5: published references | The published table has two more columns (`qualification`, `beside_model`; its note says how they were set). Burakowski et al. (2015)'s two comparisons with a crop, forest, grass and shrub mosaic are no longer drawn beside the model, only, labelled, on the published page. That paper's four values are marked single-day (9 March 2013); Lutz and Howarth's three are annual means at separate sites, drawn once each as a line across the year; Burakowski et al. (2016)'s winter placement follows the paper's comparison window, the MODIS averaging period not being stated. On the published page the shape of each mark gives its qualification; beside the model a small circle marks a qualified guide. `published_guide.csv` keeps the classes, kind of albedo and qualification. Jin et al. (2002)'s two values are entered as Astra read them, and the table says that the builders did not see the paper. 58 of the 103 rows are now drawn (section 5, choice 9 said 56) |
+| 3 and 6: figure and wording | Under every panel, by month, the eligible cells, their share of the area of the region's calibration cells and the median share of retrievals in the page's snow state (snowy beside the all-days fits); the panel title gives the region's calibration cells instead of the fewest and most eligible cells (section 5, choice 11). The area share is said to be of the modern calibration cells represented, not of the box. Three qualifications in the caption: continental fits evaluated at regional cells; the same published values in every region; different vertical scales. June to September is no longer called snow-free everywhere (choice 10). The 10 % count is described as an adaptation of one element of Lejeune et al.'s filter, not their rule (section 3, section 7) |
+| 4: fitted models | The fit command saves what the fitter returned (the model and its attempts) as `fit_<table>_<month>_<version>.rds` whenever it ran, and the month's exchanges as `cases_<table>_<month>.rds`, in the output folder, outside git. In the trial a saved fit takes 0.6 to 4.4 MB |
+| 2: verification | `tools/check_cover_contrasts.R` (158 lines): `inputs` (the three runs, by recorded MD5 sums, and the same cells, cover, elevation and areas), `exchanges` (protocol 2's frozen exchanges at the verified commit), `job` (the snowy July and August output: 12 fit records, 8 converged and 4 not fitted; 252 uniquely identified rows; the same support for every version; numbers exactly where a converged fit has eligible cells; the known support of three regions; three numbers within 1e-6 in contrast and 0.1 % in standard error of the first trial; one saved fit reproducing its 21 contrasts and standard errors). The spec adds these and `tests/test_config.R` and `tests/test_paths.R`, and is to be launched from the main checkout. The tests cover every distinct start and end period of the published table. The README lists the tool and its check |
+
+**The trial repeated** (commit `b0d1db7`, the same six jobs; logs in the trial folder): every one of the 420 rows is
+identical to that of 15 November. Whole jobs: snowy July and August 5 minutes 17 seconds, peak memory 0.76 GB; the
+two cheap jobs 54 and 50 seconds, about 1.0 GB. Report 7 seconds. The ten test files pass, and the three checks pass
+on the real data.
 
 ## References
 

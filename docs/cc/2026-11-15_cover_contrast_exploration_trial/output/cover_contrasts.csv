@@ -8,9 +8,10 @@
 # region_cells: the region's cells of the calibration table that have an area in script 7a's table.
 # fitted_cells: those with albedo this month, the cells the versions were fitted to.
 # eligible_cells: those whose two endpoints are valid fractions inside this month's continental range of cover mixes.
-# area_share: area of the eligible cells / area of the region's cells.
-# cells_10pct: eligible cells where both exchanged classes cover at least 10 % of the cell (the condition of
-#   Lejeune et al. 2020 for a transition estimate; counted here, not applied).
+# area_share: area of the eligible cells / area of the region's cells: the share of the modern calibration cells' area that
+#   the result represents, not a share of the whole regional box.
+# cells_10pct: eligible cells where both exchanged classes cover at least 10 % of the cell. Counted, not applied: it adapts
+#   one element of the filter of Lejeune et al. (2020, sect. 2.3.1), which also has a condition on the regression's error.
 # contrast: area-weighted mean of the predicted differences over the eligible cells.
 # se: its standard error from the coefficient covariance, keeping the covariance between the two endpoints and between
 #   cells. Approximate and conditional: it leaves out the uncertainty of the smoothing, spatial dependence, the cover
@@ -20,6 +21,7 @@
 # snowfree_share, snowy_share: median over the eligible cells of the share of this month's accepted retrievals that
 #   were flagged snow-free and snowy (the albedo build's cell table).
 # converged: TRUE; FALSE = the fit failed or did not converge; NA = not fitted. fit_status says which and why.
+# The versions are fitted to the whole continent and evaluated at each region's cells.
 # The eligible cells are the same for every version within a table, month, region and exchange. They differ between
 # tables, months and exchanges, so a change of cells can look like a change of response. A result from one or three
 # cells describes those cells, not the region.

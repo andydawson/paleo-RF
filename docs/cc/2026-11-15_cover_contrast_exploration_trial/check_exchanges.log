@@ -1,0 +1,7 @@
+THREADS=1 tools/rscript.sh tools/check_cover_contrasts.R exchanges /home/expert/Documents/contracting/Andria/paleo-RF-verify/1d31cfc/.rundirs/cv2-holdouts at b0d1db7
+apr fixed      identical to the frozen exchange: TRUE
+apr historical identical to the frozen exchange: TRUE
+may fixed      identical to the frozen exchange: TRUE
+may historical identical to the frozen exchange: TRUE
+All four exchanges of protocol 2 are reproduced bit for bit.
+exit status: 0

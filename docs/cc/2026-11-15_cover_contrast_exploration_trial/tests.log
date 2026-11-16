@@ -1,4 +1,5 @@
-Tests run on 2026-11-15 14:13 UTC in the worktree of branch cover-contrasts at commit 06357f4, each with: THREADS=1 tools/rscript.sh tests/<name>.R
+Tests run on 2026-11-16 17:03 UTC in the worktree of branch cover-contrasts at commit b0d1db7, each with: THREADS=1 tools/rscript.sh tests/<name>.R
+(output/calibration/calibration_model_stats.csv, a frozen input test_paths.R reads, linked from the main checkout as the verify tool does)
 === tests/test_cv_separation.R
 CV separation: hand-worked checks passed (no fits).
 exit status: 0
@@ -19,7 +20,7 @@ exit status: 0
 test_cross_validation: all tests passed
 exit status: 0
 === tests/test_cross_validation_stages.R
-paths: run directory /tmp/RtmpDJWhVL/cv2_stages_35328d3ea88cb4/run; every product of this run is written there
+paths: run directory /tmp/RtmpwI6RAB/cv2_stages_2d7217ece87b/run; every product of this run is written there
 test_cross_validation_stages: all tests passed
 exit status: 0
 === tests/test_preparation_albedo.R
@@ -29,4 +30,10 @@ full_70: mixing identity on 28474 cell-months, largest departure 1.1e-06
 full_nocut: mixing identity on 31482 cell-months, largest departure 1.1e-06
 test_preparation_albedo: data/lct_modern_reveals_interp.RDS absent; the join with the modern cells skipped
 test_preparation_albedo: all tests passed
+exit status: 0
+=== tests/test_config.R
+test_config: all tests passed
+exit status: 0
+=== tests/test_paths.R
+test_paths: all tests passed
 exit status: 0
