@@ -1,0 +1,20 @@
+Snowy job's files copied alone into snowy_only/, as the verification spec's job would leave them; then report and the job check at b0d1db7
+Linking to GEOS 3.14.1, GDAL 3.13.3, PROJ 9.8.1; sf_use_s2() is TRUE
+       fit
+table   converged not fitted
+  snowy         8          4
+report exit status: 0
+12 fit records (8 converged, 4 not fitted); 252 uniquely identified contrast rows.
+Support the same for every version; 48 rows with numbers, 204 without, as expected.
+The known support counts and shares of the study area, the northeast and Alaska / Yukon are reproduced.
+                 exchange        contrast            se  trial_contrast
+ evergreen to summergreen -0.037102282184 0.01061128941 -0.037102282184
+   evergreen to open land -0.006146395338 0.00741295250 -0.006146395338
+ summergreen to open land  0.031727830304 0.01058519956  0.031727830304
+      trial_se
+ 0.01061128941
+ 0.00741295250
+ 0.01058519956
+Three results agree with the trial within 1e-06 in contrast and 0.1 % in standard error.
+8 fits saved; the saved July fit of loc100_linear, with the saved cases, gives back its 21 contrasts and standard errors.
+check exit status: 0

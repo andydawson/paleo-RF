@@ -48,11 +48,8 @@ separation_prepare = function(run_dir, source_run) {
   for (i in seq_along(files)) if (!isTRUE(all.equal(readRDS(files[i]), readRDS(old_files[i]), tolerance = 0)))
     stop('reused run differs in ', ids[i])
   cal = readRDS(files[['calibration_table']]); paleo = readRDS(files[['lct_paleo']])
-  diffs = readRDS(files[['albedo_differences']])
-  areas = unique(data.frame(x = diffs$x, y = diffs$y, area = as.numeric(diffs$area)))
-  rm(diffs)
-  if (anyDuplicated(separation_cell_key(areas))) stop('one cell has inconsistent areas')
-  cell_area = function(cells) areas$area[match(separation_cell_key(cells), separation_cell_key(areas))]
+  areas = cell_areas(readRDS(files[['albedo_differences']]))
+  cell_area = function(cells) area_of(cells, areas)
   past_cells = paleo[paleo$ages == 6000 & separation_northeast(paleo), c('x', 'y', 'elev')]
   historical = historical_exchange(past_cells, paleo, cell_area(past_cells))
   frozen = list(cal = cal, months = list(), config = cfg,

@@ -1,0 +1,20 @@
+rows: first 420, this 420, same keys TRUE
+table           identical: TRUE
+month           identical: TRUE
+version         identical: TRUE
+location_k      identical: TRUE
+cover_form      identical: TRUE
+region          identical: TRUE
+exchange        identical: TRUE
+region_cells    identical: TRUE
+fitted_cells    identical: TRUE
+eligible_cells  identical: TRUE
+area_share      identical: TRUE
+cells_10pct     identical: TRUE
+snowfree_share  identical: TRUE
+snowy_share     identical: TRUE
+converged       identical: TRUE
+fit_status      identical: TRUE
+contrast        largest absolute difference: 0
+se              largest absolute difference: 0
+spread          largest absolute difference: 0

@@ -1,0 +1,757 @@
+"table","month","region","exchange","region_cells","fitted_cells","eligible_cells","area_share","cells_10pct","snowfree_share","snowy_share"
+"all_days","jan","Study area","evergreen to summergreen",2623,1622,1126,0.485506697886288,1066,0.0025865,0.9974135
+"all_days","jan","Study area","evergreen to open land",2623,1622,1058,0.465913819657386,989,0.059897,0.940103
+"all_days","jan","Study area","summergreen to open land",2623,1622,1135,0.507428253363483,1130,0.160269,0.839731
+"all_days","jan","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.955576,0.044424
+"all_days","jan","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.956382,0.043618
+"all_days","jan","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.9536095,0.0463905
+"all_days","jan","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"all_days","jan","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"all_days","jan","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","jan","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","jan","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","jan","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","jan","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.0341535,0.9658465
+"all_days","jan","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.120981,0.879019
+"all_days","jan","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.038299,0.961701
+"all_days","jan","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.0223435,0.9776565
+"all_days","jan","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.090535,0.909465
+"all_days","jan","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.2295515,0.7704485
+"all_days","jan","Alaska / Yukon","evergreen to summergreen",445,48,31,0.0857715770379686,26,0,1
+"all_days","jan","Alaska / Yukon","evergreen to open land",445,48,25,0.0690331067578072,20,0.00011,0.99989
+"all_days","jan","Alaska / Yukon","summergreen to open land",445,48,23,0.0634299352240158,23,0.00011,0.99989
+"all_days","feb","Study area","evergreen to summergreen",2623,2289,1711,0.65533165889172,1629,0.000151,0.999849
+"all_days","feb","Study area","evergreen to open land",2623,2289,1639,0.634411093239102,1545,0.000284,0.999716
+"all_days","feb","Study area","summergreen to open land",2623,2289,1794,0.697730627473397,1789,0.0004725,0.9995275
+"all_days","feb","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.995375,0.004625
+"all_days","feb","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.99733,0.00267
+"all_days","feb","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.9951715,0.0048285
+"all_days","feb","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"all_days","feb","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"all_days","feb","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","feb","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","feb","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","feb","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","feb","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.0153935,0.9846065
+"all_days","feb","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.020737,0.979263
+"all_days","feb","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.028842,0.971158
+"all_days","feb","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.0006085,0.9993915
+"all_days","feb","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.000629,0.999371
+"all_days","feb","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.0953985,0.9046015
+"all_days","feb","Alaska / Yukon","evergreen to summergreen",445,364,304,0.704119299612928,291,0.000143,0.999857
+"all_days","feb","Alaska / Yukon","evergreen to open land",445,364,293,0.674478240044967,278,0.000139,0.999861
+"all_days","feb","Alaska / Yukon","summergreen to open land",445,364,331,0.760454901774426,331,6.3e-05,0.999937
+"all_days","mar","Study area","evergreen to summergreen",2623,2617,1896,0.700517240159429,1754,0.000801,0.999199
+"all_days","mar","Study area","evergreen to open land",2623,2617,1828,0.679796463131709,1670,0.0010245,0.9989755
+"all_days","mar","Study area","summergreen to open land",2623,2617,2122,0.771607306171546,2117,0.0003075,0.9996925
+"all_days","mar","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,0.99998,2e-05
+"all_days","mar","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.9999845,1.55e-05
+"all_days","mar","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.999974,2.6e-05
+"all_days","mar","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"all_days","mar","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"all_days","mar","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","mar","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","mar","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","mar","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","mar","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.312563,0.687437
+"all_days","mar","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.372667,0.627333
+"all_days","mar","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.3602045,0.6397955
+"all_days","mar","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.1268235,0.8731765
+"all_days","mar","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.227662,0.772338
+"all_days","mar","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.6149115,0.3850885
+"all_days","mar","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,3.7e-05,0.999963
+"all_days","mar","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,3.1e-05,0.999969
+"all_days","mar","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,4e-06,0.999996
+"all_days","apr","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,0.141959,0.858041
+"all_days","apr","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,0.170682,0.829318
+"all_days","apr","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,0.113234,0.886766
+"all_days","apr","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"all_days","apr","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"all_days","apr","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"all_days","apr","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"all_days","apr","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"all_days","apr","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","apr","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","apr","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","apr","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","apr","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.9859255,0.0140745
+"all_days","apr","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.992092,0.007908
+"all_days","apr","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.987546,0.012454
+"all_days","apr","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.9647215,0.0352785
+"all_days","apr","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.984956,0.015044
+"all_days","apr","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.9999505,4.95e-05
+"all_days","apr","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,0.007294,0.992706
+"all_days","apr","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,0.009639,0.990361
+"all_days","apr","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,0.004822,0.995178
+"all_days","may","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,0.909021,0.090979
+"all_days","may","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,0.925828,0.074172
+"all_days","may","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,0.86684,0.13316
+"all_days","may","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"all_days","may","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"all_days","may","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"all_days","may","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"all_days","may","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"all_days","may","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","may","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","may","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","may","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","may","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"all_days","may","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"all_days","may","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"all_days","may","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"all_days","may","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"all_days","may","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"all_days","may","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,0.493345,0.506655
+"all_days","may","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,0.514352,0.485648
+"all_days","may","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,0.47974,0.52026
+"all_days","jun","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,1,0
+"all_days","jun","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,1,0
+"all_days","jun","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,1,0
+"all_days","jun","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"all_days","jun","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"all_days","jun","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"all_days","jun","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"all_days","jun","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"all_days","jun","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","jun","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","jun","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","jun","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","jun","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"all_days","jun","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"all_days","jun","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"all_days","jun","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"all_days","jun","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"all_days","jun","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"all_days","jun","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,0.99437,0.00563
+"all_days","jun","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,0.995524,0.004476
+"all_days","jun","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,0.993393,0.006607
+"all_days","jul","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,1,0
+"all_days","jul","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,1,0
+"all_days","jul","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,1,0
+"all_days","jul","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"all_days","jul","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"all_days","jul","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"all_days","jul","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"all_days","jul","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"all_days","jul","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","jul","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","jul","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","jul","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","jul","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"all_days","jul","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"all_days","jul","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"all_days","jul","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"all_days","jul","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"all_days","jul","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"all_days","jul","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,1,0
+"all_days","jul","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,1,0
+"all_days","jul","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,1,0
+"all_days","aug","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,1,0
+"all_days","aug","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,1,0
+"all_days","aug","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,1,0
+"all_days","aug","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"all_days","aug","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"all_days","aug","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"all_days","aug","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"all_days","aug","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"all_days","aug","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","aug","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","aug","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","aug","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","aug","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"all_days","aug","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"all_days","aug","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"all_days","aug","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"all_days","aug","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"all_days","aug","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"all_days","aug","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,1,0
+"all_days","aug","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,1,0
+"all_days","aug","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,1,0
+"all_days","sep","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,1,0
+"all_days","sep","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,1,0
+"all_days","sep","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,1,0
+"all_days","sep","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"all_days","sep","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"all_days","sep","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"all_days","sep","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"all_days","sep","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"all_days","sep","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","sep","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","sep","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","sep","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","sep","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"all_days","sep","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"all_days","sep","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"all_days","sep","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"all_days","sep","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"all_days","sep","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"all_days","sep","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,0.993335,0.006665
+"all_days","sep","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,0.9927855,0.0072145
+"all_days","sep","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,0.993388,0.006612
+"all_days","oct","Study area","evergreen to summergreen",2623,2554,1874,0.69433655697753,1747,0.9861485,0.0138515
+"all_days","oct","Study area","evergreen to open land",2623,2554,1804,0.673859783008429,1663,0.982914,0.017086
+"all_days","oct","Study area","summergreen to open land",2623,2554,2059,0.759604799498731,2054,0.962881,0.037119
+"all_days","oct","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,1,0
+"all_days","oct","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"all_days","oct","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"all_days","oct","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"all_days","oct","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"all_days","oct","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","oct","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","oct","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","oct","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","oct","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"all_days","oct","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"all_days","oct","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"all_days","oct","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"all_days","oct","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"all_days","oct","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"all_days","oct","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,0.551147,0.448853
+"all_days","oct","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,0.53647,0.46353
+"all_days","oct","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,0.551493,0.448507
+"all_days","nov","Study area","evergreen to summergreen",2623,1762,1256,0.52785733232746,1194,0.725748,0.274252
+"all_days","nov","Study area","evergreen to open land",2623,1762,1183,0.506637088543911,1111,0.786135,0.213865
+"all_days","nov","Study area","summergreen to open land",2623,1762,1268,0.550737649109696,1263,0.8107435,0.1892565
+"all_days","nov","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.999971,2.9e-05
+"all_days","nov","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.999982,1.8e-05
+"all_days","nov","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.999965,3.5e-05
+"all_days","nov","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"all_days","nov","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"all_days","nov","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","nov","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","nov","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","nov","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","nov","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.9999905,9.5e-06
+"all_days","nov","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"all_days","nov","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"all_days","nov","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.8999035,0.1000965
+"all_days","nov","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.902276,0.097724
+"all_days","nov","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.9874055,0.0125945
+"all_days","nov","Alaska / Yukon","evergreen to summergreen",445,101,74,0.196204153534124,67,0.252575,0.747425
+"all_days","nov","Alaska / Yukon","evergreen to open land",445,101,63,0.166563093966163,55,0.322655,0.677345
+"all_days","nov","Alaska / Yukon","summergreen to open land",445,101,69,0.181464063386705,69,0.322655,0.677345
+"all_days","dec","Study area","evergreen to summergreen",2623,1312,837,0.381552019626597,782,0.337751,0.662249
+"all_days","dec","Study area","evergreen to open land",2623,1312,784,0.367452991224386,720,0.519864,0.480136
+"all_days","dec","Study area","summergreen to open land",2623,1312,863,0.409674136439893,858,0.622671,0.377329
+"all_days","dec","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.978626,0.021374
+"all_days","dec","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.981608,0.018392
+"all_days","dec","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.978107,0.021893
+"all_days","dec","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"all_days","dec","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"all_days","dec","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"all_days","dec","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"all_days","dec","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"all_days","dec","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"all_days","dec","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.3282915,0.6717085
+"all_days","dec","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.488155,0.511845
+"all_days","dec","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.4318375,0.5681625
+"all_days","dec","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.1880535,0.8119465
+"all_days","dec","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.274103,0.725897
+"all_days","dec","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.436435,0.563565
+"all_days","dec","Alaska / Yukon","evergreen to summergreen",445,0,0,0,0,NA,NA
+"all_days","dec","Alaska / Yukon","evergreen to open land",445,0,0,0,0,NA,NA
+"all_days","dec","Alaska / Yukon","summergreen to open land",445,0,0,0,0,NA,NA
+"snow_free","jan","Study area","evergreen to summergreen",2623,1123,650,0.300673307983622,595,0.3360725,0.6639275
+"snow_free","jan","Study area","evergreen to open land",2623,1123,662,0.313646252516969,598,0.5141545,0.4858455
+"snow_free","jan","Study area","summergreen to open land",2623,1123,749,0.359133420473075,744,0.712494,0.287506
+"snow_free","jan","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.955576,0.044424
+"snow_free","jan","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.956382,0.043618
+"snow_free","jan","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.9536095,0.0463905
+"snow_free","jan","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"snow_free","jan","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"snow_free","jan","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","jan","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","jan","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","jan","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","jan","Northeast (hemlock box)","evergreen to summergreen",83,68,45,0.544768288091535,45,0.131491,0.868509
+"snow_free","jan","Northeast (hemlock box)","evergreen to open land",83,68,32,0.394112652220683,32,0.251359,0.748641
+"snow_free","jan","Northeast (hemlock box)","summergreen to open land",83,68,17,0.209400657498065,17,0.238636,0.761364
+"snow_free","jan","Upper Midwest / Great Lakes","evergreen to summergreen",145,112,46,0.309920664812718,42,0.111146,0.888854
+"snow_free","jan","Upper Midwest / Great Lakes","evergreen to open land",145,112,34,0.230180925518512,30,0.111236,0.888764
+"snow_free","jan","Upper Midwest / Great Lakes","summergreen to open land",145,112,76,0.533342809161668,76,0.3329065,0.6670935
+"snow_free","jan","Alaska / Yukon","evergreen to summergreen",445,22,15,0.0421461354166219,11,0.160269,0.839731
+"snow_free","jan","Alaska / Yukon","evergreen to open land",445,22,13,0.0365412570538711,9,0.220696,0.779304
+"snow_free","jan","Alaska / Yukon","summergreen to open land",445,22,12,0.0336266984600517,12,0.2367,0.7633
+"snow_free","feb","Study area","evergreen to summergreen",2623,1513,999,0.417789263080728,937,0.056824,0.943176
+"snow_free","feb","Study area","evergreen to open land",2623,1513,972,0.415335252426124,900,0.1262415,0.8737585
+"snow_free","feb","Study area","summergreen to open land",2623,1513,1072,0.465260742503564,1067,0.218872,0.781128
+"snow_free","feb","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.995375,0.004625
+"snow_free","feb","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.99733,0.00267
+"snow_free","feb","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.9951715,0.0048285
+"snow_free","feb","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"snow_free","feb","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"snow_free","feb","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","feb","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","feb","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","feb","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","feb","Northeast (hemlock box)","evergreen to summergreen",83,75,47,0.564694470817601,47,0.02277,0.97723
+"snow_free","feb","Northeast (hemlock box)","evergreen to open land",83,75,34,0.413653721895881,34,0.103589,0.896411
+"snow_free","feb","Northeast (hemlock box)","summergreen to open land",83,75,19,0.231226839107449,19,0.091636,0.908364
+"snow_free","feb","Upper Midwest / Great Lakes","evergreen to summergreen",145,129,61,0.403638786074907,56,0.001131,0.998869
+"snow_free","feb","Upper Midwest / Great Lakes","evergreen to open land",145,129,39,0.260513368386066,34,0.001814,0.998186
+"snow_free","feb","Upper Midwest / Great Lakes","summergreen to open land",145,129,84,0.584314118103246,84,0.111127,0.888873
+"snow_free","feb","Alaska / Yukon","evergreen to summergreen",445,229,197,0.471588326669454,190,0.001254,0.998746
+"snow_free","feb","Alaska / Yukon","evergreen to open land",445,229,186,0.442256744727641,178,0.0014605,0.9985395
+"snow_free","feb","Alaska / Yukon","summergreen to open land",445,229,195,0.463407847467047,195,0.001251,0.998749
+"snow_free","mar","Study area","evergreen to summergreen",2623,1659,1146,0.475157693977291,1081,0.152997,0.847003
+"snow_free","mar","Study area","evergreen to open land",2623,1659,1095,0.462523567671192,1019,0.304221,0.695779
+"snow_free","mar","Study area","summergreen to open land",2623,1659,1190,0.509986016027857,1185,0.4584465,0.5415535
+"snow_free","mar","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.999979,2.1e-05
+"snow_free","mar","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.9999845,1.55e-05
+"snow_free","mar","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.999974,2.6e-05
+"snow_free","mar","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"snow_free","mar","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"snow_free","mar","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","mar","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","mar","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","mar","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","mar","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.312563,0.687437
+"snow_free","mar","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.372667,0.627333
+"snow_free","mar","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.3602045,0.6397955
+"snow_free","mar","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.1268235,0.8731765
+"snow_free","mar","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.227662,0.772338
+"snow_free","mar","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.6149115,0.3850885
+"snow_free","mar","Alaska / Yukon","evergreen to summergreen",445,246,213,0.50939338099791,204,0.00085,0.99915
+"snow_free","mar","Alaska / Yukon","evergreen to open land",445,246,204,0.484972399299926,193,0.001035,0.998965
+"snow_free","mar","Alaska / Yukon","summergreen to open land",445,246,215,0.511596302097124,215,0.00129,0.99871
+"snow_free","apr","Study area","evergreen to summergreen",2623,1925,1393,0.5579934834335,1321,0.654677,0.345323
+"snow_free","apr","Study area","evergreen to open land",2623,1925,1326,0.538822280621554,1245,0.80882,0.19118
+"snow_free","apr","Study area","summergreen to open land",2623,1925,1439,0.590317049105349,1434,0.855833,0.144167
+"snow_free","apr","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"snow_free","apr","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"snow_free","apr","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"snow_free","apr","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"snow_free","apr","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"snow_free","apr","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","apr","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","apr","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","apr","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","apr","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.9859255,0.0140745
+"snow_free","apr","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.992092,0.007908
+"snow_free","apr","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.987546,0.012454
+"snow_free","apr","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.9647215,0.0352785
+"snow_free","apr","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.984956,0.015044
+"snow_free","apr","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.9999505,4.95e-05
+"snow_free","apr","Alaska / Yukon","evergreen to summergreen",445,339,284,0.658791511208906,272,0.0272795,0.9727205
+"snow_free","apr","Alaska / Yukon","evergreen to open land",445,339,273,0.629150451640945,259,0.034539,0.965461
+"snow_free","apr","Alaska / Yukon","summergreen to open land",445,339,306,0.705116026849158,306,0.032998,0.967002
+"snow_free","may","Study area","evergreen to summergreen",2623,2373,1765,0.667652792158614,1668,0.95247,0.04753
+"snow_free","may","Study area","evergreen to open land",2623,2373,1691,0.645526879059275,1584,0.975284,0.024716
+"snow_free","may","Study area","summergreen to open land",2623,2373,1878,0.713073713034058,1873,0.9728515,0.0271485
+"snow_free","may","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"snow_free","may","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"snow_free","may","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"snow_free","may","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"snow_free","may","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"snow_free","may","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","may","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","may","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","may","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","may","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"snow_free","may","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"snow_free","may","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"snow_free","may","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"snow_free","may","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"snow_free","may","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"snow_free","may","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,0.493345,0.506655
+"snow_free","may","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,0.514352,0.485648
+"snow_free","may","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,0.47974,0.52026
+"snow_free","jun","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,1,0
+"snow_free","jun","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,1,0
+"snow_free","jun","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,1,0
+"snow_free","jun","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"snow_free","jun","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"snow_free","jun","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"snow_free","jun","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"snow_free","jun","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"snow_free","jun","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","jun","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","jun","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","jun","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","jun","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"snow_free","jun","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"snow_free","jun","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"snow_free","jun","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"snow_free","jun","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"snow_free","jun","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"snow_free","jun","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,0.99437,0.00563
+"snow_free","jun","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,0.995524,0.004476
+"snow_free","jun","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,0.993393,0.006607
+"snow_free","jul","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,1,0
+"snow_free","jul","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,1,0
+"snow_free","jul","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,1,0
+"snow_free","jul","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"snow_free","jul","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"snow_free","jul","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"snow_free","jul","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"snow_free","jul","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"snow_free","jul","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","jul","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","jul","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","jul","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","jul","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"snow_free","jul","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"snow_free","jul","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"snow_free","jul","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"snow_free","jul","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"snow_free","jul","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"snow_free","jul","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,1,0
+"snow_free","jul","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,1,0
+"snow_free","jul","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,1,0
+"snow_free","aug","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,1,0
+"snow_free","aug","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,1,0
+"snow_free","aug","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,1,0
+"snow_free","aug","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"snow_free","aug","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"snow_free","aug","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"snow_free","aug","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"snow_free","aug","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"snow_free","aug","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","aug","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","aug","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","aug","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","aug","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"snow_free","aug","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"snow_free","aug","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"snow_free","aug","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"snow_free","aug","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"snow_free","aug","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"snow_free","aug","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,1,0
+"snow_free","aug","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,1,0
+"snow_free","aug","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,1,0
+"snow_free","sep","Study area","evergreen to summergreen",2623,2619,1896,0.700517240159429,1754,1,0
+"snow_free","sep","Study area","evergreen to open land",2623,2619,1828,0.679796463131709,1670,1,0
+"snow_free","sep","Study area","summergreen to open land",2623,2619,2124,0.771997622923233,2119,1,0
+"snow_free","sep","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,64,0.551334168186766,52,1,0
+"snow_free","sep","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"snow_free","sep","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"snow_free","sep","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,42,0.359416138537193,24,1,0
+"snow_free","sep","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,42,0.359416138537193,24,1,0
+"snow_free","sep","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","sep","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","sep","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","sep","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","sep","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"snow_free","sep","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"snow_free","sep","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"snow_free","sep","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"snow_free","sep","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"snow_free","sep","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"snow_free","sep","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,0.993335,0.006665
+"snow_free","sep","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,0.9927855,0.0072145
+"snow_free","sep","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,0.993388,0.006612
+"snow_free","oct","Study area","evergreen to summergreen",2623,2491,1848,0.688462270140149,1730,0.987804,0.012196
+"snow_free","oct","Study area","evergreen to open land",2623,2491,1778,0.667985496171048,1646,0.9861165,0.0138835
+"snow_free","oct","Study area","summergreen to open land",2623,2491,1996,0.744578968087751,1991,0.975549,0.024451
+"snow_free","oct","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,1,0
+"snow_free","oct","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,1,0
+"snow_free","oct","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,1,0
+"snow_free","oct","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"snow_free","oct","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"snow_free","oct","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","oct","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","oct","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","oct","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","oct","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,1,0
+"snow_free","oct","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"snow_free","oct","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"snow_free","oct","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,1,0
+"snow_free","oct","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,1,0
+"snow_free","oct","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,1,0
+"snow_free","oct","Alaska / Yukon","evergreen to summergreen",445,442,357,0.802141979666809,339,0.551147,0.448853
+"snow_free","oct","Alaska / Yukon","evergreen to open land",445,442,346,0.772500920098848,326,0.53647,0.46353
+"snow_free","oct","Alaska / Yukon","summergreen to open land",445,442,409,0.90394496129696,409,0.554942,0.445058
+"snow_free","nov","Study area","evergreen to summergreen",2623,1672,1166,0.496517740784642,1104,0.7619105,0.2380895
+"snow_free","nov","Study area","evergreen to open land",2623,1672,1093,0.475297497001093,1021,0.811958,0.188042
+"snow_free","nov","Study area","summergreen to open land",2623,1672,1178,0.519398057566878,1173,0.858452,0.141548
+"snow_free","nov","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.999971,2.9e-05
+"snow_free","nov","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.999982,1.8e-05
+"snow_free","nov","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.999965,3.5e-05
+"snow_free","nov","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"snow_free","nov","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"snow_free","nov","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","nov","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","nov","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","nov","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","nov","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.9999905,9.5e-06
+"snow_free","nov","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,1,0
+"snow_free","nov","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,1,0
+"snow_free","nov","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.8999035,0.1000965
+"snow_free","nov","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.902276,0.097724
+"snow_free","nov","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.9874055,0.0125945
+"snow_free","nov","Alaska / Yukon","evergreen to summergreen",445,100,73,0.193670302978613,66,0.253971,0.746029
+"snow_free","nov","Alaska / Yukon","evergreen to open land",445,100,62,0.164029243410652,54,0.3245975,0.6754025
+"snow_free","nov","Alaska / Yukon","summergreen to open land",445,100,68,0.178930212831194,68,0.3245975,0.6754025
+"snow_free","dec","Study area","evergreen to summergreen",2623,1168,693,0.323514090337918,638,0.498092,0.501908
+"snow_free","dec","Study area","evergreen to open land",2623,1168,685,0.327828845096079,621,0.636387,0.363613
+"snow_free","dec","Study area","summergreen to open land",2623,1168,773,0.373693748821539,768,0.726694,0.273306
+"snow_free","dec","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,114,63,0.54211351630488,52,0.978626,0.021374
+"snow_free","dec","Southwest (AZ, NM, W Texas)","evergreen to open land",114,114,70,0.602273031013908,58,0.981608,0.018392
+"snow_free","dec","Southwest (AZ, NM, W Texas)","summergreen to open land",114,114,62,0.533356165904229,61,0.978107,0.021893
+"snow_free","dec","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,117,38,0.324559427538358,24,1,0
+"snow_free","dec","Southern Plains (TX, OK, KS)","evergreen to open land",117,117,39,0.33311760314842,24,1,0
+"snow_free","dec","Southern Plains (TX, OK, KS)","summergreen to open land",117,117,117,1,117,1,0
+"snow_free","dec","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,118,92,0.786303893622659,80,1,0
+"snow_free","dec","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,118,101,0.860594037185304,80,1,0
+"snow_free","dec","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,118,116,0.983696921453424,116,1,0
+"snow_free","dec","Northeast (hemlock box)","evergreen to summergreen",83,79,54,0.649940477292261,54,0.4092205,0.5907795
+"snow_free","dec","Northeast (hemlock box)","evergreen to open land",83,79,37,0.452852873615032,37,0.666667,0.333333
+"snow_free","dec","Northeast (hemlock box)","summergreen to open land",83,79,18,0.22106360866794,18,0.6904765,0.3095235
+"snow_free","dec","Upper Midwest / Great Lakes","evergreen to summergreen",145,134,65,0.43274203843485,60,0.274103,0.725897
+"snow_free","dec","Upper Midwest / Great Lakes","evergreen to open land",145,134,49,0.327776563635863,44,0.291955,0.708045
+"snow_free","dec","Upper Midwest / Great Lakes","summergreen to open land",145,134,92,0.638397867667122,92,0.449393,0.550607
+"snow_free","dec","Alaska / Yukon","evergreen to summergreen",445,0,0,0,0,NA,NA
+"snow_free","dec","Alaska / Yukon","evergreen to open land",445,0,0,0,0,NA,NA
+"snow_free","dec","Alaska / Yukon","summergreen to open land",445,0,0,0,0,NA,NA
+"snowy","jan","Study area","evergreen to summergreen",2623,1388,1003,0.418457491286443,971,6.4e-05,0.999936
+"snowy","jan","Study area","evergreen to open land",2623,1388,923,0.392350686822316,891,0.002996,0.997004
+"snowy","jan","Study area","summergreen to open land",2623,1388,936,0.399823737196208,933,0.012913,0.987087
+"snowy","jan","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,69,53,0.452778176060193,51,0.905149,0.094851
+"snowy","jan","Southwest (AZ, NM, W Texas)","evergreen to open land",114,69,57,0.486401709963297,56,0.930785,0.069215
+"snowy","jan","Southwest (AZ, NM, W Texas)","summergreen to open land",114,69,51,0.4352798235434,51,0.905023,0.094977
+"snowy","jan","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,46,15,0.123476086516647,11,0.939134,0.060866
+"snowy","jan","Southern Plains (TX, OK, KS)","evergreen to open land",117,46,15,0.123476086516647,11,0.939134,0.060866
+"snowy","jan","Southern Plains (TX, OK, KS)","summergreen to open land",117,46,41,0.335330456614855,41,0.989343,0.010657
+"snowy","jan","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,20,8,0.0661309374821133,5,0.9999965,3.5e-06
+"snowy","jan","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,20,12,0.0988411332957934,5,0.9999885,1.15e-05
+"snowy","jan","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,20,19,0.156109985649866,19,0.999877,0.000123
+"snowy","jan","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.0341535,0.9658465
+"snowy","jan","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.120981,0.879019
+"snowy","jan","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.038299,0.961701
+"snowy","jan","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.0223435,0.9776565
+"snowy","jan","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.090535,0.909465
+"snowy","jan","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.2295515,0.7704485
+"snowy","jan","Alaska / Yukon","evergreen to summergreen",445,48,31,0.0857715770379686,26,0,1
+"snowy","jan","Alaska / Yukon","evergreen to open land",445,48,25,0.0690331067578072,20,0.00011,0.99989
+"snowy","jan","Alaska / Yukon","summergreen to open land",445,48,23,0.0634299352240158,23,0.00011,0.99989
+"snowy","feb","Study area","evergreen to summergreen",2623,2020,1576,0.581739812425983,1526,3.4e-05,0.999966
+"snowy","feb","Study area","evergreen to open land",2623,2020,1491,0.553776935693803,1439,5e-05,0.99995
+"snowy","feb","Study area","summergreen to open land",2623,2020,1572,0.577791375582482,1569,3.95e-05,0.9999605
+"snowy","feb","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,58,50,0.426633056554592,48,0.9739005,0.0260995
+"snowy","feb","Southwest (AZ, NM, W Texas)","evergreen to open land",114,58,54,0.460256590457696,53,0.9739005,0.0260995
+"snowy","feb","Southwest (AZ, NM, W Texas)","summergreen to open land",114,58,48,0.409134704037799,48,0.9729325,0.0270675
+"snowy","feb","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,37,12,0.0983127014939428,10,0.950952,0.049048
+"snowy","feb","Southern Plains (TX, OK, KS)","evergreen to open land",117,37,12,0.0983127014939428,10,0.950952,0.049048
+"snowy","feb","Southern Plains (TX, OK, KS)","summergreen to open land",117,37,32,0.260143398635361,32,0.989517,0.010483
+"snowy","feb","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,7,1,0.00815153927328795,0,0.994851,0.005149
+"snowy","feb","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,7,4,0.0326061570931518,0,0.998246,0.001754
+"snowy","feb","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,7,7,0.0570607749130157,7,0.9965,0.0035
+"snowy","feb","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.0153935,0.9846065
+"snowy","feb","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.020737,0.979263
+"snowy","feb","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.028842,0.971158
+"snowy","feb","Upper Midwest / Great Lakes","evergreen to summergreen",145,145,76,0.503364364574855,71,0.0006085,0.9993915
+"snowy","feb","Upper Midwest / Great Lakes","evergreen to open land",145,145,51,0.340582281093311,46,0.000629,0.999371
+"snowy","feb","Upper Midwest / Great Lakes","summergreen to open land",145,145,94,0.65120358512457,94,0.0953985,0.9046015
+"snowy","feb","Alaska / Yukon","evergreen to summergreen",445,364,304,0.704119299612928,291,0.000143,0.999857
+"snowy","feb","Alaska / Yukon","evergreen to open land",445,364,293,0.674478240044967,278,0.000139,0.999861
+"snowy","feb","Alaska / Yukon","summergreen to open land",445,364,331,0.760454901774426,331,6.3e-05,0.999937
+"snowy","mar","Study area","evergreen to summergreen",2623,2266,1739,0.615215164083322,1632,0.000193,0.999807
+"snowy","mar","Study area","evergreen to open land",2623,2266,1655,0.585897604836074,1542,0.000157,0.999843
+"snowy","mar","Study area","summergreen to open land",2623,2266,1838,0.619604000648577,1835,0,1
+"snowy","mar","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,44,40,0.339973799443684,37,0.9986345,0.0013655
+"snowy","mar","Southwest (AZ, NM, W Texas)","evergreen to open land",114,44,43,0.365055609402927,41,0.998847,0.001153
+"snowy","mar","Southwest (AZ, NM, W Texas)","summergreen to open land",114,44,37,0.313726270668495,37,0.998014,0.001986
+"snowy","mar","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,11,5,0.040044129062934,3,0.999908,9.2e-05
+"snowy","mar","Southern Plains (TX, OK, KS)","evergreen to open land",117,11,5,0.040044129062934,3,0.999908,9.2e-05
+"snowy","mar","Southern Plains (TX, OK, KS)","summergreen to open land",117,11,9,0.0720563962239573,9,0.999908,9.2e-05
+"snowy","mar","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,2,1,0.00815153927328795,0,0.999997,3e-06
+"snowy","mar","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,2,2,0.0163030785465759,0,0.999998,2e-06
+"snowy","mar","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,2,2,0.0163030785465759,2,0.999998,2e-06
+"snowy","mar","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.312563,0.687437
+"snowy","mar","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.372667,0.627333
+"snowy","mar","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.3602045,0.6397955
+"snowy","mar","Upper Midwest / Great Lakes","evergreen to summergreen",145,142,76,0.503364364574855,71,0.1268235,0.8731765
+"snowy","mar","Upper Midwest / Great Lakes","evergreen to open land",145,142,51,0.340582281093311,46,0.227662,0.772338
+"snowy","mar","Upper Midwest / Great Lakes","summergreen to open land",145,142,91,0.62905052948566,91,0.587184,0.412816
+"snowy","mar","Alaska / Yukon","evergreen to summergreen",445,444,357,0.802141979666809,339,3.7e-05,0.999963
+"snowy","mar","Alaska / Yukon","evergreen to open land",445,444,346,0.772500920098848,326,3.1e-05,0.999969
+"snowy","mar","Alaska / Yukon","summergreen to open land",445,444,411,0.907380248816495,411,4e-06,0.999996
+"snowy","apr","Study area","evergreen to summergreen",2623,2097,1564,0.551649636317002,1526,0.0747335,0.9252665
+"snowy","apr","Study area","evergreen to open land",2623,2097,1497,0.524874563835391,1442,0.075615,0.924385
+"snowy","apr","Study area","summergreen to open land",2623,2097,1703,0.557120218476636,1700,0.014195,0.985805
+"snowy","apr","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,29,27,0.228109384176217,27,0.999839,0.000161
+"snowy","apr","Southwest (AZ, NM, W Texas)","evergreen to open land",114,29,29,0.24475711499017,29,0.999839,0.000161
+"snowy","apr","Southwest (AZ, NM, W Texas)","summergreen to open land",114,29,26,0.219360207917821,26,0.999846,0.000154
+"snowy","apr","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,0,0,0,0,NA,NA
+"snowy","apr","Southern Plains (TX, OK, KS)","evergreen to open land",117,0,0,0,0,NA,NA
+"snowy","apr","Southern Plains (TX, OK, KS)","summergreen to open land",117,0,0,0,0,NA,NA
+"snowy","apr","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,0,0,0,0,NA,NA
+"snowy","apr","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,0,0,0,0,NA,NA
+"snowy","apr","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,0,0,0,0,NA,NA
+"snowy","apr","Northeast (hemlock box)","evergreen to summergreen",83,61,42,0.495483237889511,42,0.9590085,0.0409915
+"snowy","apr","Northeast (hemlock box)","evergreen to open land",83,61,25,0.296599672528436,25,0.973913,0.026087
+"snowy","apr","Northeast (hemlock box)","summergreen to open land",83,61,13,0.15264967275016,13,0.948742,0.051258
+"snowy","apr","Upper Midwest / Great Lakes","evergreen to summergreen",145,86,58,0.378806255764113,58,0.933496,0.066504
+"snowy","apr","Upper Midwest / Great Lakes","evergreen to open land",145,86,37,0.243626487866596,37,0.972355,0.027645
+"snowy","apr","Upper Midwest / Great Lakes","summergreen to open land",145,86,41,0.270877504170487,41,0.980425,0.019575
+"snowy","apr","Alaska / Yukon","evergreen to summergreen",445,444,298,0.667359183500882,298,0.003577,0.996423
+"snowy","apr","Alaska / Yukon","evergreen to open land",445,444,296,0.657073475086524,296,0.004569,0.995431
+"snowy","apr","Alaska / Yukon","summergreen to open land",445,444,392,0.860619254073466,392,0.0036395,0.9963605
+"snowy","may","Study area","evergreen to summergreen",2623,1711,1258,0.425331109930249,1231,0.611082,0.388918
+"snowy","may","Study area","evergreen to open land",2623,1711,1212,0.405306406741173,1168,0.5880425,0.4119575
+"snowy","may","Study area","summergreen to open land",2623,1711,1393,0.435206773850646,1390,0.393822,0.606178
+"snowy","may","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,15,14,0.117835998576115,14,0.9999095,9.05e-05
+"snowy","may","Southwest (AZ, NM, W Texas)","evergreen to open land",114,15,15,0.126159863983092,15,0.999922,7.8e-05
+"snowy","may","Southwest (AZ, NM, W Texas)","summergreen to open land",114,15,13,0.109086822317719,13,0.999888,0.000112
+"snowy","may","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,0,0,0,0,NA,NA
+"snowy","may","Southern Plains (TX, OK, KS)","evergreen to open land",117,0,0,0,0,NA,NA
+"snowy","may","Southern Plains (TX, OK, KS)","summergreen to open land",117,0,0,0,0,NA,NA
+"snowy","may","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,0,0,0,0,NA,NA
+"snowy","may","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,0,0,0,0,NA,NA
+"snowy","may","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,0,0,0,0,NA,NA
+"snowy","may","Northeast (hemlock box)","evergreen to summergreen",83,7,3,0.0347725686868217,3,0.999999,1e-06
+"snowy","may","Northeast (hemlock box)","evergreen to open land",83,7,1,0.0116629511698758,1,0.999999,1e-06
+"snowy","may","Northeast (hemlock box)","summergreen to open land",83,7,1,0.0116629511698758,1,0.999999,1e-06
+"snowy","may","Upper Midwest / Great Lakes","evergreen to summergreen",145,4,4,0.0256114349148957,4,0.999946,5.4e-05
+"snowy","may","Upper Midwest / Great Lakes","evergreen to open land",145,4,2,0.0128057174574478,2,0.999404,0.000596
+"snowy","may","Upper Midwest / Great Lakes","summergreen to open land",145,4,2,0.0128057174574478,2,0.999404,0.000596
+"snowy","may","Alaska / Yukon","evergreen to summergreen",445,444,273,0.61301484091027,273,0.433659,0.566341
+"snowy","may","Alaska / Yukon","evergreen to open land",445,444,276,0.611253866809777,276,0.448374,0.551626
+"snowy","may","Alaska / Yukon","summergreen to open land",445,444,327,0.712788447973939,327,0.42087,0.57913
+"snowy","jun","Study area","evergreen to summergreen",2623,1168,773,0.245149939220248,751,0.969,0.031
+"snowy","jun","Study area","evergreen to open land",2623,1168,754,0.235390891864134,711,0.961682,0.038318
+"snowy","jun","Study area","summergreen to open land",2623,1168,926,0.268478772581255,926,0.9139065,0.0860935
+"snowy","jun","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,6,5,0.0416193270348813,5,0.99983,0.00017
+"snowy","jun","Southwest (AZ, NM, W Texas)","evergreen to open land",114,6,6,0.0499431924418575,6,0.9999075,9.25e-05
+"snowy","jun","Southwest (AZ, NM, W Texas)","summergreen to open land",114,6,5,0.0416193270348813,5,0.99983,0.00017
+"snowy","jun","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,0,0,0,0,NA,NA
+"snowy","jun","Southern Plains (TX, OK, KS)","evergreen to open land",117,0,0,0,0,NA,NA
+"snowy","jun","Southern Plains (TX, OK, KS)","summergreen to open land",117,0,0,0,0,NA,NA
+"snowy","jun","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,0,0,0,0,NA,NA
+"snowy","jun","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,0,0,0,0,NA,NA
+"snowy","jun","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,0,0,0,0,NA,NA
+"snowy","jun","Northeast (hemlock box)","evergreen to summergreen",83,0,0,0,0,NA,NA
+"snowy","jun","Northeast (hemlock box)","evergreen to open land",83,0,0,0,0,NA,NA
+"snowy","jun","Northeast (hemlock box)","summergreen to open land",83,0,0,0,0,NA,NA
+"snowy","jun","Upper Midwest / Great Lakes","evergreen to summergreen",145,0,0,0,0,NA,NA
+"snowy","jun","Upper Midwest / Great Lakes","evergreen to open land",145,0,0,0,0,NA,NA
+"snowy","jun","Upper Midwest / Great Lakes","summergreen to open land",145,0,0,0,0,NA,NA
+"snowy","jun","Alaska / Yukon","evergreen to summergreen",445,353,213,0.478005990321993,213,0.976769,0.023231
+"snowy","jun","Alaska / Yukon","evergreen to open land",445,353,204,0.446894098378296,204,0.982204,0.017796
+"snowy","jun","Alaska / Yukon","summergreen to open land",445,353,254,0.547314651256727,254,0.976784,0.023216
+"snowy","jul","Study area","evergreen to summergreen",2623,388,123,0.0376389288391834,119,0.999101,0.000899
+"snowy","jul","Study area","evergreen to open land",2623,388,140,0.0402016423234792,122,0.9984895,0.0015105
+"snowy","jul","Study area","summergreen to open land",2623,388,225,0.0565899298673898,225,0.996212,0.003788
+"snowy","jul","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,0,0,0,0,NA,NA
+"snowy","jul","Southwest (AZ, NM, W Texas)","evergreen to open land",114,0,0,0,0,NA,NA
+"snowy","jul","Southwest (AZ, NM, W Texas)","summergreen to open land",114,0,0,0,0,NA,NA
+"snowy","jul","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,0,0,0,0,NA,NA
+"snowy","jul","Southern Plains (TX, OK, KS)","evergreen to open land",117,0,0,0,0,NA,NA
+"snowy","jul","Southern Plains (TX, OK, KS)","summergreen to open land",117,0,0,0,0,NA,NA
+"snowy","jul","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,0,0,0,0,NA,NA
+"snowy","jul","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,0,0,0,0,NA,NA
+"snowy","jul","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,0,0,0,0,NA,NA
+"snowy","jul","Northeast (hemlock box)","evergreen to summergreen",83,0,0,0,0,NA,NA
+"snowy","jul","Northeast (hemlock box)","evergreen to open land",83,0,0,0,0,NA,NA
+"snowy","jul","Northeast (hemlock box)","summergreen to open land",83,0,0,0,0,NA,NA
+"snowy","jul","Upper Midwest / Great Lakes","evergreen to summergreen",145,0,0,0,0,NA,NA
+"snowy","jul","Upper Midwest / Great Lakes","evergreen to open land",145,0,0,0,0,NA,NA
+"snowy","jul","Upper Midwest / Great Lakes","summergreen to open land",145,0,0,0,0,NA,NA
+"snowy","jul","Alaska / Yukon","evergreen to summergreen",445,80,45,0.107328366860728,45,0.993406,0.006594
+"snowy","jul","Alaska / Yukon","evergreen to open land",445,80,41,0.0942282643323362,41,0.994205,0.005795
+"snowy","jul","Alaska / Yukon","summergreen to open land",445,80,41,0.0922767562322367,41,0.996212,0.003788
+"snowy","aug","Study area","evergreen to summergreen",2623,279,109,0.0327666726437839,108,0.999259,0.000741
+"snowy","aug","Study area","evergreen to open land",2623,279,101,0.0275019695923144,95,0.998644,0.001356
+"snowy","aug","Study area","summergreen to open land",2623,279,153,0.0375945587840278,153,0.997156,0.002844
+"snowy","aug","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,0,0,0,0,NA,NA
+"snowy","aug","Southwest (AZ, NM, W Texas)","evergreen to open land",114,0,0,0,0,NA,NA
+"snowy","aug","Southwest (AZ, NM, W Texas)","summergreen to open land",114,0,0,0,0,NA,NA
+"snowy","aug","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,0,0,0,0,NA,NA
+"snowy","aug","Southern Plains (TX, OK, KS)","evergreen to open land",117,0,0,0,0,NA,NA
+"snowy","aug","Southern Plains (TX, OK, KS)","summergreen to open land",117,0,0,0,0,NA,NA
+"snowy","aug","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,0,0,0,0,NA,NA
+"snowy","aug","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,0,0,0,0,NA,NA
+"snowy","aug","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,0,0,0,0,NA,NA
+"snowy","aug","Northeast (hemlock box)","evergreen to summergreen",83,0,0,0,0,NA,NA
+"snowy","aug","Northeast (hemlock box)","evergreen to open land",83,0,0,0,0,NA,NA
+"snowy","aug","Northeast (hemlock box)","summergreen to open land",83,0,0,0,0,NA,NA
+"snowy","aug","Upper Midwest / Great Lakes","evergreen to summergreen",145,0,0,0,0,NA,NA
+"snowy","aug","Upper Midwest / Great Lakes","evergreen to open land",145,0,0,0,0,NA,NA
+"snowy","aug","Upper Midwest / Great Lakes","summergreen to open land",145,0,0,0,0,NA,NA
+"snowy","aug","Alaska / Yukon","evergreen to summergreen",445,121,74,0.1689864744271,74,0.998785,0.001215
+"snowy","aug","Alaska / Yukon","evergreen to open land",445,121,75,0.164019391206018,75,0.998904,0.001096
+"snowy","aug","Alaska / Yukon","summergreen to open land",445,121,72,0.155498321661526,72,0.9987465,0.0012535
+"snowy","sep","Study area","evergreen to summergreen",2623,1009,595,0.17069402556911,578,0.993461,0.006539
+"snowy","sep","Study area","evergreen to open land",2623,1009,598,0.170098958842524,556,0.989948,0.010052
+"snowy","sep","Study area","summergreen to open land",2623,1009,715,0.18975647946323,715,0.973897,0.026103
+"snowy","sep","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,4,0,0,0,NA,NA
+"snowy","sep","Southwest (AZ, NM, W Texas)","evergreen to open land",114,4,4,0.0332954616279049,4,0.999995,5e-06
+"snowy","sep","Southwest (AZ, NM, W Texas)","summergreen to open land",114,4,0,0,0,NA,NA
+"snowy","sep","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,0,0,0,0,NA,NA
+"snowy","sep","Southern Plains (TX, OK, KS)","evergreen to open land",117,0,0,0,0,NA,NA
+"snowy","sep","Southern Plains (TX, OK, KS)","summergreen to open land",117,0,0,0,0,NA,NA
+"snowy","sep","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,0,0,0,0,NA,NA
+"snowy","sep","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,0,0,0,0,NA,NA
+"snowy","sep","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,0,0,0,0,NA,NA
+"snowy","sep","Northeast (hemlock box)","evergreen to summergreen",83,0,0,0,0,NA,NA
+"snowy","sep","Northeast (hemlock box)","evergreen to open land",83,0,0,0,0,NA,NA
+"snowy","sep","Northeast (hemlock box)","summergreen to open land",83,0,0,0,0,NA,NA
+"snowy","sep","Upper Midwest / Great Lakes","evergreen to summergreen",145,0,0,0,0,NA,NA
+"snowy","sep","Upper Midwest / Great Lakes","evergreen to open land",145,0,0,0,0,NA,NA
+"snowy","sep","Upper Midwest / Great Lakes","summergreen to open land",145,0,0,0,0,NA,NA
+"snowy","sep","Alaska / Yukon","evergreen to summergreen",445,403,250,0.556171962225049,250,0.989175,0.010825
+"snowy","sep","Alaska / Yukon","evergreen to open land",445,403,229,0.494116469046457,229,0.98682,0.01318
+"snowy","sep","Alaska / Yukon","summergreen to open land",445,403,258,0.548500032644152,258,0.985897,0.014103
+"snowy","oct","Study area","evergreen to summergreen",2623,1733,1279,0.436864559694699,1247,0.858312,0.141688
+"snowy","oct","Study area","evergreen to open land",2623,1733,1280,0.438857868184482,1233,0.8541445,0.1458555
+"snowy","oct","Study area","summergreen to open land",2623,1733,1417,0.45877944665069,1414,0.716586,0.283414
+"snowy","oct","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,22,20,0.168332926298784,20,0.9999595,4.05e-05
+"snowy","oct","Southwest (AZ, NM, W Texas)","evergreen to open land",114,22,22,0.184980657112737,22,0.9999595,4.05e-05
+"snowy","oct","Southwest (AZ, NM, W Texas)","summergreen to open land",114,22,20,0.168332926298784,20,0.9999595,4.05e-05
+"snowy","oct","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,0,0,0,0,NA,NA
+"snowy","oct","Southern Plains (TX, OK, KS)","evergreen to open land",117,0,0,0,0,NA,NA
+"snowy","oct","Southern Plains (TX, OK, KS)","summergreen to open land",117,0,0,0,0,NA,NA
+"snowy","oct","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,0,0,0,0,NA,NA
+"snowy","oct","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,0,0,0,0,NA,NA
+"snowy","oct","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,0,0,0,0,NA,NA
+"snowy","oct","Northeast (hemlock box)","evergreen to summergreen",83,6,2,0.0228933326941404,2,0.9997155,0.0002845
+"snowy","oct","Northeast (hemlock box)","evergreen to open land",83,6,0,0,0,NA,NA
+"snowy","oct","Northeast (hemlock box)","summergreen to open land",83,6,0,0,0,NA,NA
+"snowy","oct","Upper Midwest / Great Lakes","evergreen to summergreen",145,8,1,0.00633857549370492,1,0.999998,2e-06
+"snowy","oct","Upper Midwest / Great Lakes","evergreen to open land",145,8,1,0.00633857549370492,1,0.999998,2e-06
+"snowy","oct","Upper Midwest / Great Lakes","summergreen to open land",145,8,4,0.0266119712639488,4,0.9999985,1.5e-06
+"snowy","oct","Alaska / Yukon","evergreen to summergreen",445,443,274,0.614816877088502,274,0.5149995,0.4850005
+"snowy","oct","Alaska / Yukon","evergreen to open land",445,443,276,0.609989866651671,276,0.495702,0.504298
+"snowy","oct","Alaska / Yukon","summergreen to open land",445,443,339,0.73780843101615,339,0.504301,0.495699
+"snowy","nov","Study area","evergreen to summergreen",2623,1327,1038,0.414685412471701,1010,0.6189715,0.3810285
+"snowy","nov","Study area","evergreen to open land",2623,1327,961,0.389848781677149,934,0.681842,0.318158
+"snowy","nov","Study area","summergreen to open land",2623,1327,958,0.387908978021172,955,0.689345,0.310655
+"snowy","nov","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,45,39,0.331749678311158,38,0.999654,0.000346
+"snowy","nov","Southwest (AZ, NM, W Texas)","evergreen to open land",114,45,42,0.356939133068971,42,0.999666,0.000334
+"snowy","nov","Southwest (AZ, NM, W Texas)","summergreen to open land",114,45,38,0.323000502052762,38,0.9995925,0.0004075
+"snowy","nov","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,25,3,0.0238701175684765,1,0.999428,0.000572
+"snowy","nov","Southern Plains (TX, OK, KS)","evergreen to open land",117,25,3,0.0238701175684765,1,0.999428,0.000572
+"snowy","nov","Southern Plains (TX, OK, KS)","summergreen to open land",117,25,21,0.171040740813742,21,0.999836,0.000164
+"snowy","nov","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,2,1,0.00815153927328795,0,0.99993,7e-05
+"snowy","nov","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,2,2,0.0163030785465759,0,0.999957,4.3e-05
+"snowy","nov","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,2,2,0.0163030785465759,2,0.999957,4.3e-05
+"snowy","nov","Northeast (hemlock box)","evergreen to summergreen",83,42,25,0.291740012325436,25,0.959384,0.040616
+"snowy","nov","Northeast (hemlock box)","evergreen to open land",83,42,16,0.188280276627563,16,0.987884,0.012116
+"snowy","nov","Northeast (hemlock box)","summergreen to open land",83,42,6,0.0697507012174976,6,0.9789785,0.0210215
+"snowy","nov","Upper Midwest / Great Lakes","evergreen to summergreen",145,114,61,0.400169923441661,56,0.888839,0.111161
+"snowy","nov","Upper Midwest / Great Lakes","evergreen to open land",145,114,46,0.306027006119851,41,0.8999545,0.1000455
+"snowy","nov","Upper Midwest / Great Lakes","summergreen to open land",145,114,80,0.551570045704395,80,0.915702,0.084298
+"snowy","nov","Alaska / Yukon","evergreen to summergreen",445,100,73,0.193439375786061,66,0.251179,0.748821
+"snowy","nov","Alaska / Yukon","evergreen to open land",445,100,62,0.1637983162181,54,0.3189905,0.6810095
+"snowy","nov","Alaska / Yukon","summergreen to open land",445,100,67,0.176165435083131,67,0.315326,0.684674
+"snowy","dec","Study area","evergreen to summergreen",2623,1078,713,0.313830012845948,684,0.206874,0.793126
+"snowy","dec","Study area","evergreen to open land",2623,1078,651,0.29481455687046,620,0.37552,0.62448
+"snowy","dec","Study area","summergreen to open land",2623,1078,671,0.305609762407611,668,0.428517,0.571483
+"snowy","dec","Southwest (AZ, NM, W Texas)","evergreen to summergreen",114,65,50,0.426430903010553,48,0.9730905,0.0269095
+"snowy","dec","Southwest (AZ, NM, W Texas)","evergreen to open land",114,65,55,0.468903357446505,53,0.973293,0.026707
+"snowy","dec","Southwest (AZ, NM, W Texas)","summergreen to open land",114,65,48,0.408932550493761,48,0.97163,0.02837
+"snowy","dec","Southern Plains (TX, OK, KS)","evergreen to summergreen",117,52,15,0.123476086516647,11,0.999594,0.000406
+"snowy","dec","Southern Plains (TX, OK, KS)","evergreen to open land",117,52,15,0.123476086516647,11,0.999594,0.000406
+"snowy","dec","Southern Plains (TX, OK, KS)","summergreen to open land",117,52,47,0.386378989464804,47,0.999165,0.000835
+"snowy","dec","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to summergreen",118,23,10,0.082550750747312,5,0.9997995,0.0002005
+"snowy","dec","Southeast (AR, LA to FL, GA, Carolinas)","evergreen to open land",118,23,15,0.12341248583428,5,0.999501,0.000499
+"snowy","dec","Southeast (AR, LA to FL, GA, Carolinas)","summergreen to open land",118,23,22,0.180681338188352,22,0.997844,0.002156
+"snowy","dec","Northeast (hemlock box)","evergreen to summergreen",83,83,58,0.695727142680541,58,0.3282915,0.6717085
+"snowy","dec","Northeast (hemlock box)","evergreen to open land",83,83,41,0.498639539003312,41,0.488155,0.511845
+"snowy","dec","Northeast (hemlock box)","summergreen to open land",83,83,22,0.266850274056221,22,0.4318375,0.5681625
+"snowy","dec","Upper Midwest / Great Lakes","evergreen to summergreen",145,144,76,0.503364364574855,71,0.1880535,0.8119465
+"snowy","dec","Upper Midwest / Great Lakes","evergreen to open land",145,144,51,0.340582281093311,46,0.274103,0.725897
+"snowy","dec","Upper Midwest / Great Lakes","summergreen to open land",145,144,94,0.65120358512457,94,0.436435,0.563565
+"snowy","dec","Alaska / Yukon","evergreen to summergreen",445,0,0,0,0,NA,NA
+"snowy","dec","Alaska / Yukon","evergreen to open land",445,0,0,0,0,NA,NA
+"snowy","dec","Alaska / Yukon","summergreen to open land",445,0,0,0,0,NA,NA

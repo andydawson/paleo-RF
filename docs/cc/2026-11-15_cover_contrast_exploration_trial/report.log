@@ -1,0 +1,9 @@
+THREADS=1 tools/rscript.sh tools/explore_cover_contrasts.R report /tmp/claude-1000/-home-expert-Documents-contracting-Andria-paleo-RF/912627b7-1f54-4406-9a56-dc38e8ab3d9e/scratchpad/contrast_trial_2/output at b0d1db7
+Linking to GEOS 3.14.1, GDAL 3.13.3, PROJ 9.8.1; sf_use_s2() is TRUE
+           fit
+table       converged not fitted
+  all_days          4          0
+  snow_free         4          0
+  snowy             8          4
+elapsed 7.36 s
+exit status: 0
