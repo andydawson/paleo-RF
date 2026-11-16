@@ -424,6 +424,20 @@ write_table = function(table, name, header) {
   writeLines(paste('#', header), file)
   suppressWarnings(write.table(table, file, append = TRUE, sep = ',', row.names = FALSE, qmethod = 'double'))
 }
+
+# Kernels need not cover the same cells: where a kernel has no value in a cell and month, its mean
+# there rests on fewer cells than the others' (CACK in the north in winter). Said from the table's own
+# counts, because the comparison between models shares its cells and the comparison between kernels may not.
+kernel_coverage = function(table) {
+  monthly = unique(table[table$month != 'annual', c('region', 'kernel', 'month', 'cells')])
+  monthly$full = ave(monthly$cells, monthly$region, FUN = max)
+  fewer = monthly[monthly$cells < monthly$full, ]
+  if (!nrow(fewer)) return('Every kernel has values in the same cells in every month.')
+  c(paste('KERNELS DO NOT ALL COVER THE SAME CELLS. Every run has values on the same cells, so the differences between models rest on the same cells;',
+          'a comparison between kernels in the months below does not. The pipeline\'s calculation is kept as it is.'),
+    sapply(split(fewer, fewer$region), function(r) sprintf('%s: %s; every other kernel and month has %d cells.', r$region[1],
+      paste(sprintf('the %s kernel has values in %d cells in %s', r$kernel, r$cells, r$month), collapse = ', '), r$full[1])))
+}
 run_line = sprintf('Runs: %s. Baseline: %s; a column ending in _difference is the run minus the baseline.', paste(names(runs), collapse = ', '), baseline)
 support_lines = c(
   'outside_share: the share of the weight on cover mixes outside that month\'s training range; a period is outside in a cell and month if any end of any of its steps is.',
@@ -447,7 +461,8 @@ write_table(forcing_table, 'forcing_by_period.csv', c(
   sprintf('The period labelled "%s" runs to the oldest slice, %s, not to its label\'s older end (script 9, note A4).', tail(coarse_periods, 1), ka(max(slices))),
   paste('A period is the sum of its slice pairs; "annual" averages each cell over its months with a value, as script 9 does.',
         'The study-area means reproduce script 9\'s domain means (the total for each kernel, the HadGEM3 parts) and script 10\'s monthly means with its latitude bands combined.'),
-  'area_m2: the area of the cells with a value.', '<part>_outside_part: the part of <part>_forcing that comes from cells outside the training range.', support_lines))
+  'area_m2: the area of the cells with a value.', kernel_coverage(forcing_table),
+  '<part>_outside_part: the part of <part>_forcing that comes from cells outside the training range.', support_lines))
 write_table(geography, 'geographic_support_by_month.csv', c(
   'The hindcast\'s geographic support by month, to read beside the cover-range flag of the other tables.',
   'The calibration has no albedo for a cell in a month with too little sun there, so each month is fitted on its own cells (fitting_cells; the northernmost at northernmost_fitting_latitude, degrees N).',
@@ -496,7 +511,7 @@ difference_map = function(cells, title, subtitle, unit) {
   ggplot() + geom_tile(data = cells, aes(x, y, fill = pmax(pmin(difference, limit), -limit))) +
     boundary_layers(land, window, colour = 'grey60', linewidth = 0.1) + facet_grid(panel_row ~ panel_column) +
     scale_fill_gradient2(low = '#2166ac', mid = 'grey95', high = '#b2182b', name = unit) +
-    labs(title = title, subtitle = sprintf('%s Colour clipped at the 98th percentile (%.2g).', subtitle, limit), x = NULL, y = NULL) +
+    labs(title = title, subtitle = sprintf('%s\nColour clipped at the 98th percentile (%.2g).', subtitle, limit), x = NULL, y = NULL) +
     theme_bw(base_size = 9) + theme(strip.text = element_text(face = 'bold'))
 }
 
