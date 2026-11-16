@@ -11,9 +11,11 @@ cv       = file.path(verify, '1d31cfc/.rundirs/cv2-holdouts/output/cross_validat
 out      = '.rundirs/cv-hindcast-comparison/comparison'
 reversed = '.rundirs/cv-hindcast-comparison/comparison_reversed'
 
-# What the tables must satisfy beyond the tool's own stops (it already stops unless the study-area
-# forcing reproduces scripts 9 and 10, the northeast steps sum to the end-to-end change, every fit
-# used its month's calibration rows and the saved predictions are the saved fits').
+# What the tables must satisfy beyond the tool's own stops. The tool already stops unless the
+# study-area forcing reproduces script 9's domain means (the total for each kernel and period, the
+# HadGEM3 parts) and script 10's monthly means with its latitude bands combined; the northeast steps
+# sum to the end-to-end change; every fit used its month's calibration rows; and the saved fitted
+# northeast albedo at 6 and at 4.5 ka is that of the saved fit.
 table_checks = sprintf("
 read = function(dir, name) read.csv(file.path(dir, name), comment.char = '#')
 out = '%s'; reversed = '%s'; capacity = read.csv('%s')

@@ -52,8 +52,11 @@
 #      with a value, area-weighted, from the three saved variants of script 8's table (script 9, notes
 #      A1 and A2): the vegetation part and the ice part of the partial-ice split, and their total.
 #      Scripts 9 and 10 save the study-area means only; the months, the northeast and the hemlock
-#      interval need the same sums again, so the tool stops unless it reproduces every number those
-#      scripts did save. The hemlock interval is the three steps ending at 5500, 5000 and 4500 BP.
+#      interval need the same sums again, so the tool stops unless it reproduces script 9's
+#      study-area means (the total for each kernel and period, the HadGEM3 parts) and script 10's
+#      monthly means with its latitude bands combined. Their global equivalents, areas, other
+#      variants and single latitude bands are not compared. The hemlock interval is the three
+#      steps ending at 5500, 5000 and 4500 BP.
 #      The totals of the periods with ice can agree between runs while the vegetation parts differ,
 #      which is why the three are always given together.
 #   3. Support. A cover mix is outside the training range when it lies outside that month's own range
@@ -355,9 +358,11 @@ for (month in MONTHS) {
     fit = read_product(runs[[name]], 'calibration_prediction_fit', month = month)
     check_full_month_rows(fit, cal, month)   # fitted on exactly this month's calibration rows (R/cv_separation.R)
     fitted = deterministic[, name]
-    # The saved fitted albedo is this fit's: script 6 predicted from the model script 5 passed on.
-    if (max(abs(as.numeric(predict(fit, cells_at(r6), type = 'response')) - fitted[r6])) > 1e-8)
-      stop('run ', name, ', ', month, ': the saved predictions are not those of the saved prediction fit', call. = FALSE)
+    # The saved fitted albedo at both ends of the interval is this fit's: script 6 predicted from the
+    # model script 5 passed on, and the table's 6 to 4.5 ka change uses both ends.
+    ends_rows = c(r6, r4.5)
+    if (max(abs(as.numeric(predict(fit, cells_at(ends_rows), type = 'response')) - fitted[ends_rows])) > 1e-8)
+      stop('run ', name, ', ', month, ': the saved 6 or 4.5 ka predictions are not those of the saved prediction fit', call. = FALSE)
     swap = lapply(swaps, function(exchange) exchange_contrast(fit, exchange))
     exchange = exchange_contrast(fit, historical)
     northeast_table = rbind(northeast_table, data.frame(
@@ -440,7 +445,8 @@ write_table(forcing_table, 'forcing_by_period.csv', c(
   'READ THE THREE TOGETHER: where ice changed, the total can agree between runs while the vegetation part differs, even in sign. The forcing is as saved: its ice treatment is already inside.',
   sprintf('Periods are those of config.R, plus %s: the hemlock interval, the steps ending at 5500, 5000 and 4500 BP.', hemlock_period),
   sprintf('The period labelled "%s" runs to the oldest slice, %s, not to its label\'s older end (script 9, note A4).', tail(coarse_periods, 1), ka(max(slices))),
-  'A period is the sum of its slice pairs; "annual" averages each cell over its months with a value, as script 9 does. The study-area means reproduce the numbers scripts 9 and 10 saved.',
+  paste('A period is the sum of its slice pairs; "annual" averages each cell over its months with a value, as script 9 does.',
+        'The study-area means reproduce script 9\'s domain means (the total for each kernel, the HadGEM3 parts) and script 10\'s monthly means with its latitude bands combined.'),
   'area_m2: the area of the cells with a value.', '<part>_outside_part: the part of <part>_forcing that comes from cells outside the training range.', support_lines))
 write_table(geography, 'geographic_support_by_month.csv', c(
   'The hindcast\'s geographic support by month, to read beside the cover-range flag of the other tables.',
