@@ -62,6 +62,15 @@ period_support = function(pairs) {
     summarise(outside = any(outside_young | outside_old), distance = max(distance_young, distance_old), .groups = 'drop')
 }
 
+# Stop unless every run has a value on the same rows. A regional mean leaves out a row without a
+# value, so a row that one run has and another lacks would put different cells behind the two means,
+# and their difference would mix the change of model with a change of area (Astra's review of 10
+# November, item 2). `values`: one column per run.
+check_common_availability = function(values, what) {
+  available = is.finite(values)
+  if (any(available != available[, 1])) stop(what, ': the runs do not have values on the same rows', call. = FALSE)
+}
+
 # Each run's difference from the baseline run in the given columns, as new columns named
 # <column>_difference: the run minus the baseline on the rows that share the `by` columns (zero for
 # the baseline itself). Every run must hold the same rows as the baseline, once each.

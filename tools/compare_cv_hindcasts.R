@@ -181,6 +181,8 @@ for (name in names(runs)) {
       stop('run ', name, ', ', kernel, ': the vegetation and ice parts do not add up to the total', call. = FALSE)
   }
 }
+# Every run must have forcing on the same cells, pairs and months, so that its means share the baseline's denominators.
+for (column in forcing_columns) check_common_availability(sapply(forcing, function(table) table[[column]]), column)
 
 # Each cell-slice's area and ice-free fraction, and so the study area: the cells of script 8's table.
 slice_weights = slice_area_ice(forcing[[baseline]], slices)
@@ -191,6 +193,8 @@ albedo$weight = albedo$area * (1 - albedo$ice)
 albedo$cell = paste(albedo$x, albedo$y)
 albedo$northeast = separation_northeast(albedo)
 in_study_area = !is.na(at) & is.finite(albedo$weight)
+# Every albedo in the study area must have a value, so that every run's means rest on the same cells.
+if (!all(is.finite(simulated[in_study_area, ]))) stop('the pipeline\'s albedo is missing in the study area for some run', call. = FALSE)
 REGIONS = c('study area', 'northeast')
 in_region = function(region, northeast) if (region == 'northeast') northeast else rep(TRUE, length(northeast))
 

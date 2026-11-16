@@ -61,6 +61,16 @@ stopifnot(equal(from_a$v_difference, c(0, 0, 0.5, -1)), equal(from_b$v_differenc
           equal(from_a$v_difference[from_a$run == 'b'], -from_b$v_difference[from_b$run == 'a']),
           fails(add_differences(table[-4, ], 'k', 'v', 'a')), fails(add_differences(rbind(table, table[1, ]), 'k', 'v', 'a')))
 
+# The same rows with a value in every run (review of 10 November, item 2). Two cells of equal area: the
+# baseline has albedos 0.1 and 0.3, the other run 0.1 and none. The means would be 0.2 and 0.1, a
+# change of -0.1, where the change on the common cell is zero; the check stops instead. Values missing
+# in both runs at the same row pass.
+two_cells = data.frame(g = 'a', cell = 1:2, weight = 1, outside = FALSE, distance = 0)
+stopifnot(equal(mean_with_support(transform(two_cells, value = c(0.1, 0.3)), g)$mean - mean_with_support(transform(two_cells, value = c(0.1, NA)), g)$mean, 0.1),
+          fails(check_common_availability(cbind(baseline = c(0.1, 0.3), other = c(0.1, NA)), 'albedo')),
+          fails(check_common_availability(cbind(baseline = c(0.1, NA), other = c(0.1, 0.3)), 'albedo')),
+          is.null(check_common_availability(cbind(baseline = c(0.1, NA), other = c(0.2, NA)), 'albedo')))
+
 # Consecutive changes against the change between the ends (design of 5 November): albedos 0.20, 0.18,
 # 0.17 and 0.15 at 6, 5.5, 5 and 4.5 ka give changes of -0.02, -0.01 and -0.02, which sum to -0.05, the
 # 4.5 ka albedo minus the 6 ka one. A cell missing from the ends stops the check.
