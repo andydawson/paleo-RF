@@ -23,6 +23,22 @@ of the new one). They were derived by rule from `note`, `months`, `snow_state` a
 - `snow`: `snow_free`, `snowy`, or `all_days` for all conditions.
 - `broadband`: `no` for Bright's single spectral bands; empty where the kind of albedo was not read; else `yes`.
 
+**Added 16 November 2026, after Astra's review of the exploration (findings 1 and 5, and its answer on Jin).**
+Two more columns at the end, and Jin's two values entered; no other field changed.
+
+- `qualification`: what a reader must know to place a value in time or class, shown beside it on the tool's
+  published page. Burakowski et al. (2015): a single day (9 March 2013), and for the two Table 7 rows an open
+  class that is a crop, forest, grass and shrub mosaic. Burakowski et al. (2016): December to March is the paper's
+  model comparison window; the averaging period of the MODIS statistics is not stated. Lutz and Howarth (2015):
+  annual means at separate sites. Empty elsewhere.
+- `beside_model`: `no` for the two mosaic rows of Burakowski et al. (2015), which are not a complete change from
+  forest to open land and so are not drawn beside the model; they stay on the published page. `yes` elsewhere.
+- Jin et al. (2002), Table 1 and paragraph 9: deciduous broadleaf minus evergreen needleleaf forest, November to
+  January, 40 to 50 N, black-sky albedo at local noon: +0.017 without snow (0.122 - 0.105) and +0.081 with snow
+  (0.294 - 0.213). Read in the paper by Astra (10 November, and again in its review of 15 November); the builders
+  could not obtain the paper and have not seen it. The table's `read_from`, `checked` and `note` columns say so. 98
+  rows now hold a number read in the source.
+
 | Paper | Obtained | What it gave |
 |---|---|---|
 | Hollinger et al. (2010), doi:10.1111/j.1365-2486.2009.02028.x | Forest Service repository | Table 2, p. 701: snow-free tower means by season for deciduous, evergreen (northerly and southerly), grassland and crop. Fig. 2, p. 700: Bartlett and Howland, digitised |
@@ -32,7 +48,7 @@ of the new one). They were derived by rule from `note`, `months`, `snow_state` a
 | Burakowski et al. (2015), doi:10.1016/j.rse.2014.11.023 | Forest Service repository | Tables 5 and 7, pp. 474-475: New Hampshire, 9 March 2013, snow-covered pasture against dormant deciduous canopy |
 | Euskirchen et al. (2016), doi:10.1088/1748-9326/11/10/105003 | Publisher, open access | Table 1: tower albedo for boreal evergreen, young deciduous, post-burn and tundra in four snow periods (Alaska and north-west Canada) |
 | Lutz and Howarth (2015), doi:10.1088/1748-9326/10/6/064013 | Publisher, open access | Table 1: annual albedo of cleared and mature stands, White Mountains, New Hampshire |
-| Jin et al. (2002); Barnes and Roy (2010); Ghimire et al. (2014) | Not obtained: the publisher's pages need a browser | Placeholders only. Astra read Jin's Table 1 on 10 November and confirmed +0.017 without snow and +0.081 with snow (0.122 - 0.105; 0.294 - 0.213) |
+| Jin et al. (2002); Barnes and Roy (2010); Ghimire et al. (2014) | Not obtained: the publisher's pages need a browser | Placeholders, except Jin's two values from Table 1, entered on 16 November as Astra read them (+0.017 without snow, +0.081 with snow; see above) |
 | Zhao and Jackson (2014) | Not obtained: closed access | Placeholder only |
 
 **Hollinger's values are confirmed exactly:** deciduous 0.145, 0.152, 0.146 for April-May, June-August,

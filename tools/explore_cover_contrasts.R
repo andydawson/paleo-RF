@@ -239,8 +239,10 @@ months_between = function(first, last) {
 
 # The published class differences that can be set on a month axis: a number read in its source,
 # for one of the three contrasts, of broadband albedo, in one snow state, for calendar months.
-# One row per value and month it covers. The rest of the table (values not read, single spectral
-# bands, snow periods that are not calendar months) stays in the table only.
+# One row per value and month it covers, keeping the original classes, the kind of albedo and the
+# table's qualification (a single day, annual means, an uncertain period), so that no value is
+# read as more than it is. The rest of the table (values not read, single spectral bands, snow
+# periods that are not calendar months) stays in the table only.
 read_published = function(file = PUBLISHED_FILE) {
   rows = utils::read.csv(file)
   rows$difference = suppressWarnings(as.numeric(rows$difference_a_minus_b))   # "not read" and the like become missing
@@ -248,7 +250,8 @@ read_published = function(file = PUBLISHED_FILE) {
                   rows$snow %in% names(TABLE_LABELS) & rows$first_month %in% MONTHS & rows$last_month %in% MONTHS, ]
   by_month = do.call(rbind, lapply(seq_len(nrow(usable)), function(i) {
     months = months_between(usable$first_month[i], usable$last_month[i])
-    data.frame(usable[rep(i, length(months)), c('source', 'locator', 'months', 'snow', 'difference')],
+    data.frame(usable[rep(i, length(months)), c('source', 'locator', 'months', 'snow', 'difference', 'class_a', 'class_b',
+                                                 'albedo_kind', 'qualification', 'beside_model')],
                source_region = usable$region[i],     # not `region`, which names the project's regions in the model's table
                exchange = EXCHANGES$exchange[match(usable$contrast[i], EXCHANGES$contrast)], month = months, row.names = NULL)
   }))
@@ -259,10 +262,12 @@ read_published = function(file = PUBLISHED_FILE) {
 # The published values set beside one albedo table's fits: those of its own snow state. Beside the
 # all-days fits, only the snow-free values of June to September, the months the design names as
 # comparable (section 3: the northeast then has no snowy retrievals). Multiplied by the size of
-# the exchange.
+# the exchange. Not the values the table marks as not for beside the model: a comparison with a
+# mixed mosaic is not a complete change from forest to open land.
 guide_for = function(published, table) {
-  beside = if (table == 'all_days') published$snow == 'snow_free' & published$month %in% c('jun', 'jul', 'aug', 'sep')
-           else published$snow == table
+  same_state = if (table == 'all_days') published$snow == 'snow_free' & published$month %in% c('jun', 'jul', 'aug', 'sep')
+               else published$snow == table
+  beside = same_state & published$beside_model == 'yes'
   data.frame(published[beside, ], guide = EXCHANGE_SIZE * published$difference[beside])
 }
 
@@ -283,6 +288,8 @@ plot_table = function(contrasts, guide, table) {
     ggplot2::geom_hline(yintercept = 0, colour = 'grey60') +
     ggplot2::geom_segment(ggplot2::aes(x = match(month, MONTHS) - 0.4, xend = match(month, MONTHS) + 0.4, y = guide, yend = guide),
                           guide, inherit.aes = FALSE, colour = 'grey45', linewidth = 0.5) +
+    ggplot2::geom_point(ggplot2::aes(match(month, MONTHS), guide), guide[guide$qualification != '', ],   # see the published page
+                        inherit.aes = FALSE, colour = 'grey30', shape = 1, size = 1.2) +
     ggplot2::geom_linerange(ggplot2::aes(ymin = contrast - 2 * se, ymax = contrast + 2 * se), position = dodge, alpha = 0.6, na.rm = TRUE) +
     ggplot2::geom_line(ggplot2::aes(linetype = cover_form), position = dodge, na.rm = TRUE) +
     ggplot2::geom_point(position = dodge, size = 0.9, na.rm = TRUE) +
@@ -295,26 +302,39 @@ plot_table = function(contrasts, guide, table) {
       title = sprintf('Fitted response to a 10-point exchange of cover: versions fitted to %s albedo', TABLE_LABELS[[table]]),
       caption = paste('Lines: each version\'s predicted change, the area-weighted mean over the eligible cells. Bars: plus or minus two standard errors,',
         'approximate and conditional on the fitted model.\nGrey ticks: published differences between whole classes multiplied by 0.10',
-        '("ideal linear mixing"): a guide for the eye, not a measurement, at the months each was published for.\nCell counts: the fewest',
+        '("ideal linear mixing"): a guide for the eye, not a measurement, at the months each was published for; a circle marks one with a',
+        'qualification (a single day; a period the source does not state exactly): see the last page.\nCell counts: the fewest',
         'and the most eligible cells in any month. A result from a few cells describes those cells, not the region. No pass or fail is implied.'))
 }
 
-# The last page: the published differences themselves, in their own units and months.
+# The last page: the published differences themselves, in their own units and months. The shape
+# of each mark gives the table's qualification. An annual value is one line across the year, so
+# that it cannot be read as twelve monthly observations.
 plot_published = function(published) {
   values = attr(published, 'values')
   snow = c(snow_free = 'snow-free', snowy = 'snow-covered', all_days = 'all conditions')
   published$panel = paste(published$exchange, snow[published$snow], sep = '\n')
   published$panel = factor(published$panel, levels = paste(rep(EXCHANGES$exchange, times = 3), rep(snow, each = 3), sep = '\n'))
-  ggplot2::ggplot(published, ggplot2::aes(colour = source)) +
+  published$qualification[published$qualification == ''] = 'none recorded: a mean over the months shown'
+  annual = published$months == 'annual'
+  ticks = published[!annual, ]
+  annual = unique(published[annual, setdiff(names(published), 'month')])
+  ggplot2::ggplot(ticks, ggplot2::aes(colour = source)) +
     ggplot2::geom_hline(yintercept = 0, colour = 'grey60') +
     ggplot2::geom_segment(ggplot2::aes(x = match(month, MONTHS) - 0.4, xend = match(month, MONTHS) + 0.4, y = difference, yend = difference), linewidth = 0.7) +
+    ggplot2::geom_point(ggplot2::aes(match(month, MONTHS), difference, shape = qualification), size = 1.8) +
+    ggplot2::geom_segment(ggplot2::aes(x = 0.6, xend = 12.4, y = difference, yend = difference), annual, linewidth = 0.7) +
+    ggplot2::geom_point(ggplot2::aes(6.5, difference, shape = qualification), annual, size = 1.8) +
     ggplot2::facet_wrap(~ panel, ncol = nrow(EXCHANGES), scales = 'free_y', drop = FALSE) + month_axis() +
-    ggplot2::theme_bw(9) + ggplot2::theme(legend.position = 'top') +
-    ggplot2::labs(x = 'Month', y = 'Published albedo difference between two whole classes', colour = NULL,
+    ggplot2::theme_bw(9) + ggplot2::theme(legend.position = 'top', legend.box = 'vertical') +
+    ggplot2::labs(x = 'Month', y = 'Published albedo difference between two whole classes', colour = NULL, shape = 'Qualification',
       title = 'Published albedo differences between cover classes, in each source\'s own kind of albedo and months',
-      subtitle = '"A to B" is the published albedo of class B minus that of class A. A value is drawn at every month of the period it was published for.',
+      subtitle = paste('"A to B" is the published albedo of class B minus that of class A. A value is drawn at every month of the period it was published for;',
+                       'an annual value is one line across the year.'),
       caption = paste(sprintf('%d of the %d rows of %s are drawn; the others were not read, are single spectral bands, or are for periods that are not calendar months.',
           values[['drawn']], values[['in_table']], PUBLISHED_FILE),
+        'The two comparisons with a mosaic of crops, forest, grass and shrub (Burakowski 2015) are on this page only, not beside the model: they are not a complete',
+        'change from forest to open land.',
         'These are classes, sites or neighbouring pairs; the model pages show a response around mixed one-degree cells. Summergreen there includes larch and shrubs,',
         'and open land mixes crops, grass, tundra and bare ground. Some sources use the same MODIS observations as the project: independently published,',
         'not wholly independent. Their spreads and the model\'s standard errors measure different things. The project\'s albedo is the monthly mean of',

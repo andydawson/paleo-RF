@@ -13,31 +13,67 @@ hollinger = published[published$source == 'Hollinger 2010' & published$months ==
 stopifnot(identical(months_between('apr', 'may'), c('apr', 'may')), identical(months_between('dec', 'feb'), c('dec', 'jan', 'feb')),
   all(published$month %in% MONTHS), all(published$snow %in% names(TABLE_LABELS)), all(is.finite(published$difference)),
   setequal(published$exchange, EXCHANGES$exchange),
-  !any(published$source %in% c('Bright 2015', 'Euskirchen 2016', 'Jin 2002')),   # spectral bands; snow periods; not read
+  !any(published$source %in% c('Bright 2015', 'Euskirchen 2016')),   # spectral bands; snow periods
   # the two tower groups of Hollinger's Table 2, each at both months, as published (deciduous minus evergreen)
   nrow(hollinger) == 4, setequal(hollinger$difference, c(0.061, 0.034)), setequal(hollinger$month, c('apr', 'may')),
   all(hollinger$snow == 'snow_free'),
   # beside the all-days fits: snow-free values, June to September only; beside the others: their own snow state
   nrow(guide) > 0, all(guide$snow == 'snow_free'), all(guide$month %in% c('jun', 'jul', 'aug', 'sep')),
   equal(guide$guide, 0.10 * guide$difference), all(guide_for(published, 'snowy')$snow == 'snowy'),
-  nrow(guide_for(published, 'snow_free')) == sum(published$snow == 'snow_free'))
+  nrow(guide_for(published, 'snow_free')) == sum(published$snow == 'snow_free'),
+  # the classes, the kind of albedo and the qualification travel with every guide
+  all(c('class_a', 'class_b', 'albedo_kind', 'qualification') %in% names(guide)), attr(published, 'values')[['drawn']] == 58)
+
+# The values Astra's review asked to qualify (findings 1 and 5) and Jin's two values.
+by_source = function(source) published[published$source == source, ]
+burakowski = by_source('Burakowski 2015')
+mosaic = grepl('mosaic', burakowski$class_a)
+beside_snowy = guide_for(published, 'snowy')
+lutz = by_source('Lutz 2015')
+jin = by_source('Jin 2002')
+stopifnot(
+  # four single-day values, all 9 March 2013; the two mosaic comparisons drawn on the published page but never beside the model
+  nrow(burakowski) == 4, all(burakowski$month == 'mar'), all(startsWith(burakowski$qualification, 'single day (9 March 2013)')),
+  setequal(burakowski$difference[mosaic], c(0.12, 0.15)), setequal(burakowski$difference[!mosaic], c(0.54, 0.52)),
+  !any(grepl('mosaic', unlist(lapply(names(TABLE_LABELS), function(t) guide_for(published, t)$class_a)))),
+  equal(sort(beside_snowy$guide[beside_snowy$source == 'Burakowski 2015']), c(0.052, 0.054)),
+  # Lutz: three annual means at separate sites, all conditions, so beside no model page
+  length(unique(lutz$difference)) == 3, all(lutz$qualification == 'annual mean; separate sites'), all(lutz$months == 'annual'),
+  # Burakowski 2016: the placement follows the paper's comparison window
+  all(grepl('comparison window', by_source('Burakowski 2016')$qualification)),
+  # Jin: two values, November to January, read by Astra only
+  nrow(jin) == 6, setequal(jin$difference, c(0.017, 0.081)), setequal(jin$month, c('nov', 'dec', 'jan')),
+  all(jin$beside_model == 'yes'), all(jin$qualification == ''))
 
 # The five columns added for this tool restate the table's own text, row by row; and each
 # difference is the first class's albedo minus the second's, wherever all three are numbers.
 rows = read.csv(PUBLISHED_FILE)
 stated = suppressWarnings(as.integer(sub('^Contrast ([123])[ .,].*$', '\\1', rows$note)))   # none for "Contrasts 2 and 3"
-first_word = tolower(sub('[ -].*$', '', rows$months))                                      # "June-August (6 ...)" gives "june"
-is_month = first_word %in% tolower(month.name)
 number = function(text) suppressWarnings(as.numeric(text))
-stopifnot(identical(rows$contrast, stated), all(rows$first_month[is_month] == substr(first_word[is_month], 1, 3)),
-  all(rows$first_month[first_word == 'annual'] == 'jan'), all(rows$last_month[first_word == 'annual'] == 'dec'),
-  all(rows$first_month[!is_month & first_word != 'annual'] == ''), all((rows$first_month == '') == (rows$last_month == '')),
+# Every distinct period of the table, with the first and last calendar month it must have; any
+# other period (Euskirchen's snow periods, values not read) has none.
+periods = data.frame(
+  period = c('April-May', 'June-August', 'September-October', 'December-March', 'December-February', 'November-January',
+             'annual', 'January', 'February', 'March', 'April', 'May', 'November'),
+  first  = c('apr', 'jun', 'sep', 'dec', 'dec', 'nov', 'jan', 'jan', 'feb', 'mar', 'apr', 'may', 'nov'),
+  last   = c('may', 'aug', 'oct', 'mar', 'feb', 'jan', 'dec', 'jan', 'feb', 'mar', 'apr', 'may', 'nov'))
+expected = periods[match(sub(' \\(.*$', '', rows$months), periods$period), ]          # "March (9 March 2013)" is "March"
+calendar = !is.na(expected$period)
+stopifnot(identical(rows$first_month[calendar], expected$first[calendar]), identical(rows$last_month[calendar], expected$last[calendar]),
+  all(rows$first_month[!calendar] == '' & rows$last_month[!calendar] == ''), setequal(expected$period[calendar], periods$period),
+  identical(lengths(lapply(seq_len(nrow(periods)), function(i) months_between(periods$first[i], periods$last[i]))),
+            c(2L, 3L, 2L, 4L, 3L, 3L, 12L, rep(1L, 6))))
+stopifnot(identical(rows$contrast, stated),
   all((rows$snow == 'snowy') == grepl('^snow-covered', rows$snow_state)),
   all((rows$snow == 'snow_free') == (grepl('^snow-free', rows$snow_state) & !grepl('and snow-covered', rows$snow_state))),
   all((rows$snow == 'all_days') == grepl('^all ', rows$snow_state)),
   all((rows$broadband == 'no') == grepl('NOT broadband', rows$albedo_kind)),
   all(abs(number(rows$difference_a_minus_b) - (number(rows$albedo_a) - number(rows$albedo_b))) < 5.1e-5, na.rm = TRUE),   # one is rounded to four decimals
-  sum(is.finite(number(rows$difference_a_minus_b))) == 96)
+  sum(is.finite(number(rows$difference_a_minus_b))) == 98,
+  # the two added columns: a qualification only where the review asked for one; only the mosaic comparisons kept from beside the model
+  identical(rows$source[rows$qualification != ''], rep(c('Burakowski 2016', 'Burakowski 2015', 'Lutz 2015'), c(6, 4, 3))),
+  identical(which(rows$beside_model == 'no'), which(grepl('mosaic', rows$class_a))), all(rows$beside_model %in% c('yes', 'no')),
+  sum(rows$beside_model == 'no') == 2, all(grepl('read by Astra', rows$read_from[rows$source == 'Jin 2002' & rows$checked != 'abstract only'])))
 
 # --- A run in which every number can be worked by hand -------------------------------------------
 # 160 background cells west of the named boxes set the month's range of cover mixes: every mix with
