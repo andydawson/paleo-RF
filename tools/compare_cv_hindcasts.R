@@ -436,7 +436,8 @@ kernel_coverage = function(table) {
   c(paste('KERNELS DO NOT ALL COVER THE SAME CELLS. Every run has values on the same cells, so the differences between models rest on the same cells;',
           'a comparison between kernels in the months below does not. The pipeline\'s calculation is kept as it is.'),
     sapply(split(fewer, fewer$region), function(r) sprintf('%s: %s; every other kernel and month has %d cells.', r$region[1],
-      paste(sprintf('the %s kernel has values in %d cells in %s', r$kernel, r$cells, r$month), collapse = ', '), r$full[1])))
+      paste(sapply(split(r, r$kernel), function(k) sprintf('the %s kernel has values in %s', k$kernel[1], paste(k$cells, 'cells in', k$month, collapse = ' and '))),
+            collapse = '; '), r$full[1])))
 }
 run_line = sprintf('Runs: %s. Baseline: %s; a column ending in _difference is the run minus the baseline.', paste(names(runs), collapse = ', '), baseline)
 support_lines = c(
@@ -511,7 +512,8 @@ difference_map = function(cells, title, subtitle, unit) {
   ggplot() + geom_tile(data = cells, aes(x, y, fill = pmax(pmin(difference, limit), -limit))) +
     boundary_layers(land, window, colour = 'grey60', linewidth = 0.1) + facet_grid(panel_row ~ panel_column) +
     scale_fill_gradient2(low = '#2166ac', mid = 'grey95', high = '#b2182b', name = unit) +
-    labs(title = title, subtitle = sprintf('%s\nColour clipped at the 98th percentile (%.2g).', subtitle, limit), x = NULL, y = NULL) +
+    labs(title = title, x = NULL, y = NULL,   # wrapped to fit the narrowest figure, one panel column wide
+         subtitle = paste(strwrap(sprintf('%s Colour clipped at the 98th percentile (%.2g).', subtitle, limit), width = 90), collapse = '\n')) +
     theme_bw(base_size = 9) + theme(strip.text = element_text(face = 'bold'))
 }
 
