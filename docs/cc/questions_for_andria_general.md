@@ -1,8 +1,9 @@
 # Open questions for Andria: general
 
 Maintained by Chris with Claude Code; kept current as work proceeds (see
-AGENTS.md). Technical and scientific questions are in
-`questions_for_andria_scientific.md`. Updated 2026-09-18. Only questions
+AGENTS.md). Current technical and scientific questions are in
+`questions_for_andria_scientific_from_2026-10-20.md`; the earlier file is frozen.
+Reviewed 2026-11-06 for CV protocol 2 and its implementation: no new logistical questions. Only questions
 that are still open are listed; answered or superseded items are removed
 (e.g. the REVEALS and interpolation code, now agreed to be out of scope;
 the point / non-interp path, now dropped; the interpolated posteriors and
@@ -19,6 +20,25 @@ bins before that. Which set of slices should the paper use, and are the
 slice boundaries in the file the ones the REVEALS reconstruction was
 actually run on? Also, does each slice value in the file represent a bin
 centre or a bin edge?
+
+**Answered by Andria (shared Word document, read 15 November 2026).** Use the 25 slices: they follow the
+PAGES LandCover6k specification, so that the product is consistent across the Northern Hemisphere, and are
+described in her Climate of the Past paper. The slice values are names of intervals, roughly their centres:
+
+| Period (ka BP) | Calendar years | Length |
+|---|---|---|
+| 11.7 to 0.7 | 10,250 BCE to 1250 CE | 500-year intervals |
+| 0.7 to 0.35 | 1250 to 1600 CE | 350 years |
+| 0.35 to 0.1 | 1600 to 1850 CE | 250 years |
+| 0.1 to -0.074 | 1850 to 2020 CE | 174 years |
+
+Our reading, to confirm: the 50 BP slice is 1850 CE to the present (after Euro-American settlement; recent
+decades alone hold too few pollen samples for a complete map), 200 BP is 1600 to 1850 CE, 500 BP is 1250 to
+1600 CE, and 1,000 to 11,500 BP are 22 bins of 500 years (0.7 to 1.2 ka up to 11.2 to 11.7 ka), each name 50
+years older than its bin's centre. Still to do (Chris's notes from the call of 12 November): check the bins
+in the Climate of the Past paper (the table's last row says 2020 CE, but -0.074 ka BP and 174 years both give
+2024), and reason through the mismatch between a modern slice that spans 1850 to the 2020s and satellite
+albedo of 2000 to 2009.
 
 ## 2. Content of `veg_posts_interp_ice.RDS`
 

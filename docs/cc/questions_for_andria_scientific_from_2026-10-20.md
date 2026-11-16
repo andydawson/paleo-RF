@@ -313,21 +313,129 @@ the fitted model implies the opposite sign in spring and summer. Nothing has bee
    labelled lower quality. Did your raster keep all qualities, or only the full inversions? (Its winter values reach
    as far north as a noon sun 80-85 degrees from overhead, so it kept at least some low-sun retrievals.)
 
-## 8. What the cross-validation's score can and cannot show (3 November)
+## 8. What the cross-validation's score can and cannot show (updated 10 November)
 
 *From Astra's answer on the northeast and its design for the geographic gap, and Fable's reviews (branch
 `cv-design`: `docs/cc/2026-11-03_cv_northeast_question_codex_gpt6astra.md`,
-`2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`; issue #24). No model has been fitted yet.*
+`2026-11-03_cv_geographic_sensitivity_design_codex_gpt6astra.md`; issue #24).
+Updated from [CV protocol 2](2026-11-06_cv_protocol_v2.md) and Fable’s reviews
+(`2026-11-06_cv_protocol_v2_review_fable.md`, `2026-11-06_cv_deep_band_review_fable.md`).*
+
+Implementation check, 6 November: the code follows these decisions.
+
+**Results, 6 to 7 November, and their review, 10 November**
+(`2026-11-10_cv_protocol_v2_results_review_fable.md`, revised after Astra's check of the same day,
+`2026-11-10_cv_protocol_v2_results_review_check_codex_gpt6astra.md`). Chris chose on 10 November to explore the
+cover contrasts against published values, with no pass or fail, and to build the hindcast comparison tool.
+
+- The rule chose location term 100 with straight-line cover (`loc100_linear`). Its pipeline run passed.
+- Its lead over the flexible location term (500) comes mostly from four blocks in Alaska; elsewhere the two tie.
+  Under this test the no-location and coarse-location versions and model 8's 200-basis cover term score clearly
+  worse.
+- The total forcing for 6 to 10 ka agrees across model 8, the coarse-location model and the chosen model because
+  ice dominates it. The vegetation part differs between them in every period, and in sign from 4 to 12 ka
+  (study-area mean, HadGEM3, W/m²: 4 to 6 ka -0.56, -0.25, +0.11; 6 to 8 ka -0.07, +0.27, +0.08; 8 to 10 ka
+  -0.22, +0.30, -0.05; 10 to 12 ka +1.14, +0.91, -0.03).
+- Set against published forest contrasts (Hollinger et al. 2010; Jin et al. 2002), the chosen model's
+  evergreen-against-summergreen response agrees in June to October and has the opposite sign in November to
+  January; model 8's northeast response has the opposite sign from March to October. On snow-free albedo the
+  chosen model's sign matches the published one in eleven of twelve months. These last are exploratory fits, not
+  yet reproduced, and they do not isolate snow as the cause: the snow-free table differs in its cells and in how
+  well each is observed.
+- From October to February the hindcast predicts north of the northernmost cell the calibration has an albedo
+  for (north of 53.5 N in December, for half of the past cells).
 
 The cross-validation chooses the calibration model by how well it predicts modern cells whose cover mixes lie outside
 the range of the cells it was fitted on. Because unusual mixes are clustered in space, withholding them also leaves a
-geographic gap: in the northeast, the matching holdout withholds 82 of the 83 cells, so every model must predict
+geographic gap: in the first run’s northeast holdout, 82 of the 83 cells were withheld, so every model had to predict
 170-520 km from its nearest training cell. The hindcast, by contrast, predicts new cover at places the model was fitted
-on. So the score measures transfer to unfamiliar cover across a geographic gap, not "new cover at the same place",
-which today's data cannot observe directly (one albedo per cell and month). Chris decided to keep the choice rule and
-report beside it how each model's advantage depends on distance from training, and a geographic-only holdout for the
-models that differ only in their location term; the rule's tie-break leans towards models without a location term, and
-that is stated rather than corrected.
+on. Today's data cannot observe changed cover at the same place directly (one albedo per cell and month).
 
-**Question.** Do you accept this as the basis for choosing the model (with its limits reported), or would you rather
-the paper keep model 8 and show the cross-validation's choice as a sensitivity?
+**Decided by Chris, 6 November, after the first CV run:** version 2 tunes fifteen configurations using only
+withheld observations less than 250 km from training; farther observations are reported beside the score. This
+replaces the 3 November rule. It also compares the northeast response across location capacities and tests recovery
+of known synthetic effects. Recovery failure prevents a northeast sign claim without changing predictive selection.
+
+The nearby observations test the northeast’s less-open-land departure direction through the 0.05–0.10 cover-distance
+band, but not at 0.10 or more. The nearby deep band carries 1.5% of the score’s weight on two blocks, all in another
+direction; Chris accepts this with the limit reported. Synthetic recovery tests the historical-size exchange at the
+northeast’s own cells under a stipulated truth, not the real response.
+
+**Questions.**
+
+1. Do you accept this basis for choosing the model, with its limits reported, or should the paper keep model 8 and
+   show the chosen model as a sensitivity? In particular, is nearby modern skill below 0.10 plus synthetic recovery
+   under a stipulated truth enough for the paper’s northeast claim? (Deep-band review, 6 November.)
+2. Is a common cover response across regions acceptable for interpreting the northeast? The real-data capacity
+   comparison and synthetic recovery test examine its stability and capability, but cannot establish the real
+   regional response. (Protocol-2 review and separation tests, 6 November.)
+3. Does the paper need a concurvity diagnostic at all? For the thin-plate cover forms it cannot be computed:
+   the three cover fractions sum to one, so that basis is rank-deficient (744 of 748 on the April model-8 fit;
+   established 6 November) and mgcv's worst-case value is meaningless (4.36 where the range is 0 to 1). Chris chose
+   to leave those entries blank with the reason; predictions and standard errors are unaffected. Source:
+   `2026-11-06_cv2_code_review_fable.md` and `2026-11-06_cv2_code_review_codex_gpt6astra.md`.
+4. Would you accept calibrating snow-free and snowy albedo separately and mixing them by snow fraction (Barnes and
+   Roy 2010; Ghimire et al. 2014), instead of one model of all-days albedo? And should the vegetation forcing hold
+   modern snow fixed, or represent past changes in snow? That choice decides what such a mixture would estimate.
+   On all-days albedo every version tested has the opposite sign to published evergreen-against-summergreen
+   contrasts in some season. (Review of 10 November, sections 2.4 and 2.5; Astra's check, section 4.)
+5. For the northeast hemlock decline, may observations of broadleaf-deciduous against needleleaf-evergreen forest
+   stand for your reconstructed groups, which include shrubs and larch: for sign, for size, or for neither? Which
+   sources would you use for the northeast? (Same review, recommendation 2; Astra's check.)
+6. How should the paper present the vegetation forcing, which depends on the model version in every period: one
+   model with the range across versions shown as model sensitivity, with the vegetation and ice parts separately?
+   (Same review, section 2.3; Astra's check, section 2.)
+7. Is one continental cover response acceptable for interpreting the northeast, given that its summer estimate
+   changes when only the albedo of cells elsewhere changes? (Astra's check, section 4. This sharpens question 2.)
+8. In October to February the pipeline predicts albedo for past cells north of every cell the calibration has a
+   winter albedo for. Should those cell-months be shown, masked, or weighted out, given how little winter sun they
+   receive? (Astra's check, section 7; the count is in the review, section 2.1.)
+
+**Andria's answer, and Chris's direction of 15 November.** In the shared Word document (her answers were
+there by the call of 12 November) Andria agrees that the calibration model should be chosen by testing on
+data the model has not seen, not by AIC. She thinks spatially blocked cross-validation makes sense and likes
+the idea of also using land-cover composition to choose the holdout folds. She wants the models compared with
+and without the location term, above all for cover mixes that are poorly represented today, and the northeast
+reversal understood before the final model is settled. From Chris's notes of the call: whether the location
+term is needed at all, what it is telling us (Andria thinks of it as a proxy for climate) and how it is built
+are to be explained.
+
+Protocol 2 does not yet do what she agreed to. Its folds are chosen by how unusual a cell's cover is; the
+scored cells lie within 250 km of a training cell (half of them within about 130 km); spatial structure
+enters only through the standard errors, which resample 5 x 5 degree blocks, and through one spatially
+blocked holdout that is reported for two models and not used to choose. Chris, 15 November: "I think we need
+to deal with spatial autocorrelation somehow and ideally would do it as a single CV method that handles that
+alongside the generalisation to unseen land cover." Parked on his instruction, to return to: nothing is
+designed or run. Until then protocol 2's choice of model is provisional.
+
+## 9. Other regions and periods as test cases (10 November)
+
+*From Chris's direction of 10 November and the case-study search of the same day
+(`2026-11-10_case_study_candidates.md`, a search agent's report, not yet reviewed).*
+
+Chris, 10 November: "I don't want to get too hung up on the north east and the hemlock decline. It is one
+interesting feature to look at because we know something happened then with the vegetation and we know the effect
+it should have had on Albedo. So it makes a good test case for the modelling. But there might be other times and
+regions where we can also say something interesting based on what we know happened in the past there with the
+vegetation or the climate - so we should explore those options too."
+
+The search ranked eleven candidates. Its first three beside the hemlock decline: the land clearance at European
+settlement in the eastern United States (500 to 50 BP); the rise of spruce in Quebec and Labrador (6 to 2.5 ka),
+with north-west Canada (10 to 8 ka) as a second region; and the prairie's advance and retreat at the
+prairie-forest border in the Midwest (10.5 to 8 ka; 4.5 to 0.5 ka).
+
+**Questions.**
+
+1. Which of these would you accept as test cases, and are there others you would add from what you know of the
+   reconstruction? (Search report, sections 1 and 2.)
+2. What does the 50 BP slice (samples of 1850 to 2024) stand for in the eastern United States: the peak of
+   clearing, or today's regrown forest? The land-clearance case depends on it. (Search report, questions.)
+3. Why does the rise of pine in the south-east hardly show as evergreen cover in the reconstruction? (Same.)
+4. How much does leaving poplar and aspen out lower early-Holocene summergreen cover in Alaska and north-west
+   Canada? (Same.)
+5. Is the single-slice jump of evergreen cover in the South-west at 9.5 ka real (0.29, 0.57 and 0.32 at 10, 9.5
+   and 9 ka)? In two of the three pipeline runs the South-west and the Southern Plains supply much of the
+   continental vegetation forcing between 6 and 0.5 ka, on very few pollen cells. (Search report, section 6.)
+
+**Call of 12 November.** Chris's note from the call asks the same thing ("Are there other events like hemlock
+decline?"). No answer from Andria is recorded yet; the search of 10 November is the starting list.

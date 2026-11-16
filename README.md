@@ -121,10 +121,17 @@ What each script reads and writes:
 | `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS`<br>`data/ipcc-ar6/*.csv` | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
 | `10_forcing_breakdown.R` | `output/forcing/RF_holocene_all_cases.RDS`<br>`output/forcing/forcing_by_period.csv` | `output/forcing/forcing_by_month_latitude.csv`<br>`figures/forcing_by_month_latitude.pdf` |
 
-The cross-validation that is to choose the calibration model is a tool, not a pipeline
-script: three commands, `Rscript tools/cross_validate_albedo.R holdouts`, `fit` and `score`, on a
-run folder (the tool's header gives their arguments), writing to `output/cross_validation/` of
-the run folder. Its protocol is `docs/cc/2026-11-02_cv_protocol.md`.
+The cross-validation that chooses the calibration model is a tool, not a pipeline script.
+Protocol 2 is [the approved 6 November protocol](docs/cc/2026-11-06_cv_protocol_v2.md);
+the first experiment remains reproducible at the commits in its verification specs.
+
+| Tool | Reads | Writes in the run folder |
+|---|---|---|
+| `tools/cross_validate_albedo.R` (`holdouts`, `fit`, `score`) | run configuration; calibration table; historical cover; script 7a's area and ice fractions | `output/cross_validation_v2/`: frozen holdouts and target weights, predictions, fit summaries, selection scores, distance/direction reports and winner/model-8 in-range diagnostic |
+| `tools/check_cv_separation.R` (`prepare`, `capacity`, `recovery`, `summarize`) | the same inputs; run 1's April–May REML prediction fits; the CV winner | `output/cross_validation_v2/separation/`: frozen exchanges and synthetic responses, full-data capacity contrasts and conditional AIC, recovery replicates and pass rules |
+
+The [CV2 run order](docs/cc/2026-11-06_cv2_run_order.md) gives the verification specs and
+dependencies for single-thread jobs. Scripts 1–10 still run unchanged for the selected model.
 
 Scripts from earlier stages (the abandoned climate and snow branch, early
 pollen scripts and the model-structure check) are kept unchanged in

@@ -1,5 +1,5 @@
 # Cross-validation that chooses the albedo model on its accuracy for land-cover mixes beyond the
-# modern range: the protocol Chris approved on 2 November 2026 (docs/cc/2026-11-02_cv_protocol.md).
+# modern range: protocol 2 (docs/cc/2026-11-06_cv_protocol_v2.md).
 #
 # Why: the hindcast predicts albedo for past cover mixes, some of them outside the range of the
 # modern (training) mixes, the northeast's high evergreen cover most of all. Ordinary or spatial
@@ -25,9 +25,36 @@ CV_MIN_BLOCKS     = 10                          # the scored withheld cells (pos
 CV_MAX_DIRECTIONS = 3
 CV_RESAMPLES      = 1000
 CV_KM_BANDS       = c(0, 100, 250, 500, Inf)    # distance to the nearest training cell (km), for the geographic report
-# The candidates fitted on the in-range holdout besides the chosen one: the pairs that differ only in
-# the location term (Chris, 3 November; protocol, geographic amendment).
-CV_INRANGE_MODELS = c('mod8', 'cover_elev', 'mod8_coarse_loc', 'lin_cover', 'lin_cover_noloc')
+CV_NEARBY_KM      = 250                         # strict: a cell at exactly 250 km is far
+CV_INRANGE_MODELS = 'mod8'                      # plus the winner, after selection
+
+# The same positive-target, nearby mask freezes feasibility and selection before any fit.
+cv_scoring_rows = function(rows, target) {
+  is.finite(rows$km) & rows$km < CV_NEARBY_KM & rows$group %in% target$group[target$weight > 0]
+}
+
+# Maxima accompany the quantiles without implying that an infeasible month was tested.
+cv_distance_maxima = function(rows, target, feasible = TRUE) {
+  selected = cv_scoring_rows(rows, target)
+  c(max_cover_distance_nearby = if (feasible && any(selected)) max(rows$distance[selected]) else NA_real_,
+    max_cover_distance_all = if (feasible && nrow(rows)) max(rows$distance) else NA_real_)
+}
+
+# Missing historical groups keep their own weight: no other direction supplies their error.
+cv_represented_weight = function(group, target) {
+  represented = sum(target$weight[target$group %in% group]) / sum(target$weight)
+  c(represented = represented, missing = 1 - represented)
+}
+
+# Training-row and nearby-block requirements are independent: far blocks cannot rescue a fold.
+cv_feasibility = function(training_rows, largest_model, valid, target) {
+  scored = cv_scoring_rows(valid, target)
+  blocks = length(unique(cv_block(valid$x[scored], valid$y[scored])))
+  data.frame(training_rows = training_rows, largest_model = largest_model,
+             withheld_cells = nrow(valid), nearby_cells = sum(valid$km < CV_NEARBY_KM),
+             nearby_scored_cells = sum(scored), far_cells = sum(valid$km >= CV_NEARBY_KM), blocks = blocks,
+             feasible = training_rows >= largest_model && blocks >= CV_MIN_BLOCKS)
+}
 
 # The target (protocol, section 2, as amended 3 November): the past cell-slices in the forcing's
 # latitude window (script 8 keeps lat_min < latitude < lat_max), each weighted so that every slice
@@ -45,11 +72,23 @@ cv_target_weights = function(paleo, diffs, slices, n_months, lat_min, lat_max) {
   oldest = pairs[pairs$year == slices[length(slices) - 1], ]
   ice = rbind(data.frame(x = pairs$x, y = pairs$y, ages = pairs$year, area = as.numeric(pairs$area), ice = pairs$ice_frac_young),
               data.frame(x = oldest$x, y = oldest$y, ages = max(slices), area = as.numeric(oldest$area), ice = oldest$ice_frac_old))
-  past = paleo[paleo$ages %in% slices[-1] & paleo$y > lat_min & paleo$y < lat_max, ]
-  past = merge(past, ice[!is.na(ice$ice), ], by = c('x', 'y', 'ages'))
+  historical_slices = setdiff(slices, 50)
+  past = paleo[paleo$ages %in% historical_slices & paleo$y > lat_min & paleo$y < lat_max, ]
+  past = merge(past, ice, by = c('x', 'y', 'ages'), all.x = TRUE)
   if (anyDuplicated(past[, c('x', 'y', 'ages')])) stop('a past cell-slice has two ice fractions')
+  missing_area = !is.finite(past$area) | past$area <= 0
+  missing_ice = !is.finite(past$ice) | past$ice < 0 | past$ice > 1
+  missing_cover = !stats::complete.cases(past[, c('OL', 'ET', 'ST')])
+  excluded = missing_area | missing_ice | missing_cover
+  exclusions = data.frame(cell_slices = nrow(past), missing_or_invalid_area = sum(missing_area),
+                          missing_or_invalid_ice = sum(missing_ice), missing_cover = sum(missing_cover),
+                          excluded = sum(excluded), retained = sum(!excluded))
+  past = past[!excluded, ]
   ice_free_area = past$area * (1 - past$ice)
-  past$weight = ice_free_area / ave(ice_free_area, past$ages, FUN = sum) / length(unique(past$ages)) / n_months
+  total = ave(ice_free_area, past$ages, FUN = sum)
+  # A wholly iced slice has no usable target; do not transfer its equal share to another slice.
+  past$weight = ifelse(total > 0, ice_free_area / total / length(historical_slices) / n_months, 0)
+  attr(past, 'exclusions') = exclusions
   past
 }
 
@@ -168,6 +207,8 @@ cv_by_region = function(predictions, low_open_land) {
 # Returns the scores, the represented share of the target, and the resampled scores (a matrix,
 # one row per resample, one column per model).
 cv_score = function(errors, target, models, seed, resamples = CV_RESAMPLES) {
+  if (!nrow(errors)) return(list(score = setNames(rep(NA_real_, length(models)), models), represented = 0,
+    resampled = matrix(NA_real_, resamples, length(models), dimnames = list(NULL, models)), resamples_missing_a_group = resamples))
   weight = target$weight[match(errors$group, target$group)]
   if (anyNA(weight)) stop('cv_score: withheld cells in groups with no target weight')
   score_of = function(multiplicity) {
@@ -198,16 +239,26 @@ cv_score = function(errors, target, models, seed, resamples = CV_RESAMPLES) {
 # output row; a model with no usable row in a band has missing values there. For the geographic report
 # (protocol, amendment of 3 November): reported only, never used to choose. `errors` as for cv_score
 # (block, one squared-error column per model, one row per cell, month and holdout).
-cv_paired_by_band = function(errors, bands, models, baseline, seed, resamples = CV_RESAMPLES) {
+cv_paired_by_band = function(errors, bands, models, baseline, seed, resamples = CV_RESAMPLES, signed_errors = NULL, target = NULL) {
   # One band's rows `i` and one model: the comparison with the baseline on their common rows.
   compare = function(i, m) {
     pair = unique(c(m, baseline))
     ok = i[stats::complete.cases(errors[i, pair, drop = FALSE])]
-    out = data.frame(bands[i[1], , drop = FALSE], model = m, cell_month_holdouts = length(ok), blocks = length(unique(errors$block[ok])),
-                     mse = NA_real_, difference = NA_real_, se_difference = NA_real_, row.names = NULL)
+    out = data.frame(bands[i[1], , drop = FALSE], model = m, cell_month_holdouts = length(ok),
+                     missing_prediction_pairs = length(i) - length(ok), blocks = length(unique(errors$block[ok])),
+                     mse = NA_real_, rmse = NA_real_, signed_error = NA_real_, difference = NA_real_, se_difference = NA_real_, row.names = NULL)
+    if (all(c('x', 'y') %in% names(errors))) out$cells = nrow(unique(errors[ok, c('x', 'y')]))
+    if (!is.null(target)) {
+      out$positive_target_count = sum(errors$group[ok] %in% target$group[target$weight > 0])
+      coverage = cv_represented_weight(errors$group[ok], target)
+      out$represented = coverage[['represented']]
+      out$missing = coverage[['missing']]
+    }
     if (length(ok)) {
       s = cv_score(transform(errors[ok, ], group = 'all'), data.frame(group = 'all', weight = 1), pair, seed, resamples)
       out$mse = s$score[[m]]
+      out$rmse = sqrt(out$mse)
+      if (!is.null(signed_errors)) out$signed_error = mean(signed_errors[[m]][ok])
       out$difference = s$score[[m]] - s$score[[baseline]]
       out$se_difference = stats::sd(s$resampled[, m] - s$resampled[, baseline])
     }
@@ -221,9 +272,45 @@ cv_paired_by_band = function(errors, bands, models, baseline, seed, resamples = 
 
 # Each band's share of the selection score's weight: a row's weight is its group's target weight shared
 # equally among the group's rows (as in cv_score), summed within the band and divided by the total.
-cv_weight_share = function(group, target, bands) {
-  row_weight = target$weight[match(group, target$group)] / ave(rep(1, length(group)), group, FUN = sum)
-  aggregate(list(score_weight_share = row_weight / sum(row_weight)), bands, sum)
+cv_weight_share = function(group, target, bands, selected = rep(TRUE, length(group))) {
+  row_weight = rep(0, length(group))
+  if (any(selected)) {
+    g = group[selected]
+    row_weight[selected] = target$weight[match(g, target$group)] / ave(rep(1, length(g)), g, FUN = sum)
+    row_weight = row_weight / sum(row_weight)
+  }
+  aggregate(list(score_weight_share = row_weight), bands, sum)
+}
+
+# Depth evidence stays separate for every direction and month; absent combinations have NA depth.
+# All rows are already on feasible holdouts. Positive-target nearby rows support selection.
+cv_nearby_depth = function(rows, target, directions, months) {
+  grid = expand.grid(month = months, own_direction = directions, stringsAsFactors = FALSE)
+  do.call(rbind, lapply(seq_len(nrow(grid)), function(i) {
+    r = rows[rows$month == grid$month[i] & rows$own_direction == grid$own_direction[i] &
+               cv_scoring_rows(rows, target), ]
+    deep = r[r$distance >= 0.10, ]
+    data.frame(grid[i, ], cell_month_holdouts = nrow(r), cells = nrow(unique(r[, c('x', 'y')])),
+               blocks = length(unique(cv_block(r$x, r$y))),
+               max_cover_distance_nearby = if (nrow(r)) max(r$distance) else NA_real_,
+               deep_cell_month_holdouts = nrow(deep), deep_cells = nrow(unique(deep[, c('x', 'y')])),
+               deep_blocks = length(unique(cv_block(deep$x, deep$y))))
+  }))
+}
+
+# Pooled nearby coverage makes the small deep-band weight and its actual block count explicit
+# before fitting. Shares use historical group weights divided among their selected observations.
+cv_nearby_coverage = function(rows, target) {
+  selected = rows[cv_scoring_rows(rows, target), ]
+  empty = data.frame(own_direction = character(), cover_band = character(), cell_month_holdouts = integer(),
+                     cells = integer(), blocks = integer(), max_cover_distance_nearby = numeric(), score_weight_share = numeric())
+  if (!nrow(selected)) return(empty)
+  bands = data.frame(own_direction = selected$own_direction, cover_band = as.character(distance_band(selected$distance)))
+  parts = split(seq_len(nrow(selected)), do.call(paste, bands), drop = TRUE)
+  counts = do.call(rbind, lapply(parts, function(i) data.frame(bands[i[1], ],
+    cell_month_holdouts = length(i), cells = nrow(unique(selected[i, c('x', 'y')])),
+    blocks = length(unique(cv_block(selected$x[i], selected$y[i]))), max_cover_distance_nearby = max(selected$distance[i]))))
+  merge(counts, cv_weight_share(selected$group, target, bands), sort = FALSE)
 }
 
 # One squared error (or other `value`) per row of `ids` and one column per model; a model with no row
@@ -245,7 +332,7 @@ withr_seed = function(seed, expr) {
   expr
 }
 
-# The protocol's choice: among the eligible models (not a baseline, every required fit
+# The protocol's choice: among the eligible models (every required fit
 # converged), the lowest score, unless a simpler eligible model's score is within one standard
 # error of the paired difference (the resampled scores' standard deviation of the difference);
 # simpler means fewer coefficients, then earlier in CV_MODELS. No model is chosen if none is
@@ -254,14 +341,21 @@ withr_seed = function(seed, expr) {
 # standard error, whether it is comparable, and the choice.
 cv_choose = function(scored, coefficients, eligible) {
   models = names(scored$score)
-  if (!any(eligible)) stop('cv_choose: no eligible model')
-  best = models[eligible][which.min(scored$score[eligible])]
-  difference = scored$score - scored$score[best]
-  se = apply(scored$resampled, 2, function(s) stats::sd(s - scored$resampled[, best]))
-  supported = all(is.finite(scored$resampled[, eligible]))
-  comparable = eligible & is.finite(se) & difference <= se
-  order_simple = order(!comparable, coefficients, match(models, CV_MODELS))
+  eligible = eligible & is.finite(scored$score)
+  difference = se = rep(NA_real_, length(models))
+  comparable = chosen = rep(FALSE, length(models))
+  if (any(eligible)) {
+    best = models[eligible][which.min(scored$score[eligible])]
+    difference = scored$score - scored$score[best]
+    se = apply(scored$resampled, 2, function(s) stats::sd(s - scored$resampled[, best]))
+    supported = all(is.finite(scored$resampled[, eligible])) && all(is.finite(se[eligible]))
+    comparable = eligible & is.finite(se) & difference <= se
+    if (supported && any(comparable)) {
+      order_simple = order(!comparable, coefficients, match(models, CV_MODELS))
+      chosen[order_simple[1]] = TRUE
+    }
+  }
   data.frame(model = models, score = scored$score, rmse = sqrt(scored$score), difference = difference,
              se_difference = se, coefficients = coefficients, eligible = eligible, comparable = comparable,
-             chosen = supported & models == models[order_simple[1]], row.names = NULL)
+             chosen = chosen, row.names = NULL)
 }

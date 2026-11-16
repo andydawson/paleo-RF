@@ -62,15 +62,44 @@ CALIBRATION_MODELS = list(
                           rhs = ~ s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)),
   mod8_small_cover = list(label = 'model 8 with a smaller cover term (triangle position, k = 50)',
                           rhs = ~ s(x, y, bs = "gp", k = 500) + s(elev, k = 50) +
-                                  s(I(ST + ET / 2), I(ET * sqrt(3) / 2), k = 50)))
+                                  s(I(ST + ET / 2), I(ET * sqrt(3) / 2), k = 50)),
+  # Protocol 2 crosses location capacity with cover form. The original five ids above keep
+  # their formulas; the smaller cover smooth here uses the same basis as model 8.
+  loc0_tp50 = list(label = 'model: elevation + tp(OL, ET, ST), cover k = 50',
+                   rhs = ~ s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 50)),
+  loc12_linear = list(label = 'model: location k = 12 + elevation + ET + ST',
+                      rhs = ~ s(x, y, bs = "gp", k = 12) + s(elev, k = 50) + ET + ST),
+  loc12_tp50 = list(label = 'model: location k = 12 + elevation + cover k = 50',
+                    rhs = ~ s(x, y, bs = "gp", k = 12) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 50)),
+  loc12_tp200 = list(label = 'model: location k = 12 + elevation + cover k = 200',
+                     rhs = ~ s(x, y, bs = "gp", k = 12) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)),
+  loc30_linear = list(label = 'model: location k = 30 + elevation + ET + ST',
+                      rhs = ~ s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + ET + ST),
+  loc30_tp50 = list(label = 'model: location k = 30 + elevation + cover k = 50',
+                    rhs = ~ s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 50)),
+  loc100_linear = list(label = 'model: location k = 100 + elevation + ET + ST',
+                       rhs = ~ s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + ET + ST),
+  loc100_tp50 = list(label = 'model: location k = 100 + elevation + cover k = 50',
+                     rhs = ~ s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 50)),
+  loc100_tp200 = list(label = 'model: location k = 100 + elevation + cover k = 200',
+                      rhs = ~ s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)),
+  loc500_tp50 = list(label = 'model: location k = 500 + elevation + cover k = 50',
+                     rhs = ~ s(x, y, bs = "gp", k = 500) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 50)))
 
 LADDER_MODELS  = paste0('mod', 1:8)
 # Written out, so that a model added for the cross-validation is not fitted by script 4.
 SPATIAL_MODELS = c('spatial_elev_cover', 'spatial', 'elev', 'spatial_elev', 'spatial_cover', 'cover', 'cover_elev')
-# The cross-validation's thirteen candidates; the baselines (no cover term) are scored but
-# never chosen, because they predict no change from vegetation by construction.
-CV_MODELS    = c(LADDER_MODELS, 'cover_elev', 'lin_cover', 'lin_cover_noloc', 'mod8_coarse_loc', 'mod8_small_cover')
-CV_BASELINES = c('mod1', 'mod2')
+# The table order is the final tie-break in protocol 2 (6 November 2026, section 6).
+CV_MODELS = c('lin_cover_noloc', 'loc0_tp50', 'cover_elev',
+              'loc12_linear', 'loc12_tp50', 'loc12_tp200',
+              'loc30_linear', 'loc30_tp50', 'mod8_coarse_loc',
+              'loc100_linear', 'loc100_tp50', 'loc100_tp200',
+              'lin_cover', 'loc500_tp50', 'mod8')
+CV_COEFFICIENTS = setNames(c(52L, 99L, 249L, 63L, 110L, 260L, 81L, 128L, 278L,
+                            151L, 198L, 348L, 551L, 598L, 748L), CV_MODELS)
+# These describe the same table for the capacity plot and recovery's location-free counterpart.
+CV_LOCATION_K = setNames(rep(c(0L, 12L, 30L, 100L, 500L), each = 3), CV_MODELS)
+CV_COVER_FORM = setNames(rep(c('linear', 'tp50', 'tp200'), 5), CV_MODELS)
 
 # The predictors any calibration model uses (x, y, elev, OL, ET, ST).
 CALIBRATION_PREDICTORS = unique(unlist(lapply(CALIBRATION_MODELS, function(model) all.vars(model$rhs))))
