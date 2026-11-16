@@ -38,6 +38,9 @@ for the coauthor change log. Living document, updated as each issue merges.
 | I15b Readability: names in the R/ helpers | #22 | merged 2026-10-15 | d8c32c0 |
 | I15c Readability: scripts, one branch per script | #18 | scripts merged 2026-10-15; last renames merged 2026-11-03; closed | |
 | I15 Readability cleanup | #18 | filed 2026-10-13; four figure slips marked in scripts 2 and 7 | df0d28f (comments only) |
+| Cross-validation protocol 2: fifteen versions, a nearby score, two separation tests; results and reviews | #24 | verified 2026-11-07; merge pending | |
+| Hindcast comparison tool | #24 | verified 2026-11-16; merge pending | |
+| Cover-contrast exploration beside published contrasts | #24 | verified 2026-11-16; merge pending | |
 
 ---
 
@@ -1678,3 +1681,243 @@ protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amend
 - Reviewed by the change-reviewer (its two wording points made; the rest not worth doing). Verified:
   `docs/cc/verification/2026-11-04_review-fixes-2_report.md` (PASS; scripts 1-3, the holdouts stage byte-identical to
   earlier runs, all tests).
+
+## Cross-validation protocol 2: fifteen versions, a nearby score and two separation tests (#24), verified 2026-11-07; merge pending
+
+Branch `cv-v2`, made from `feature/single-config` at c86e4b5 on 5 November; its code is final at 1d31cfc
+(6 November), later commits are documents.
+
+**Purpose.** The first cross-validation (the entry "Cross-validation that chooses the albedo model", above) chose
+among thirteen fixed candidates. On 6 November Chris asked for proper tuning instead: a grid of model versions, a
+direct test of whether the fitted models can tell the effect of evergreen cover from the effect of location, and
+support graded by how far outside today's range a cover mix lies. Protocol 2 (`2026-11-06_cv_protocol_v2.md`) was
+drafted by Astra, reviewed by Fable and approved by Chris on 6 November, before any fit.
+
+**Decisions** (Chris, 6 November; commit messages and the protocol):
+- Fifteen versions: the location term at five sizes (none, 12, 30, 100 or 500 basis functions) crossed with three
+  forms of the cover term (a straight line, or a thin-plate smooth with 50 or 200 basis functions). Model 8 is
+  location 500 with the 200-basis cover.
+- The choice uses only withheld cells less than 250 km from the training cells. The farther cells, and the deep
+  cover band (0.10 or more outside today's range) by direction, are reported beside the score. One level of tuning,
+  no nesting.
+- Both separation tests, with their pass rules fixed first: the northeast's response compared across location sizes
+  on the real data (April and May), and a synthetic recovery test with stated truths.
+- REML within each fit; the cross-validation chooses; conditional AIC of the April and May full-data fits is reported
+  beside it, not used to choose.
+- The chosen model's pipeline runs unchanged, with no new switch. The northeast swap is reported at both 50 BP and
+  6 ka open land.
+- Astra writes the code, Fable reviews it, Astra reviews again, then the verification tool runs it.
+- After both code reviews: concurvity of the thin-plate cover forms is left blank, with the reason. The three cover
+  fractions sum to one, so that cover basis is rank-deficient and mgcv's value is meaningless. Each fit's rank and
+  coefficient counts are kept. Predictions and standard errors are unaffected.
+
+**Changes.**
+- `R/model_registry.R`: the ten new versions; every existing formula unchanged; the cross-validation's candidates
+  are the fifteen, in the order that serves as the last tie-break. `R/config_schema.R` accepts them as
+  `calibration$model_id` and still accepts the first run's smaller-cover model in saved configurations.
+- `R/calibration_fit.R` (new): one fitter for every cross-validation and separation fit (common complete rows, REML,
+  one retry on non-convergence, term summaries). The pipeline keeps its own fitter.
+- `R/cross_validation.R`, `tools/cross_validate_albedo.R`: the nearby score; coverage and depth by direction and
+  cover band; handling of a month where no version can be chosen; the in-range diagnostic. Output in
+  `output/cross_validation_v2/` of a run folder.
+- `R/cv_separation.R`, `tools/check_cv_separation.R` (new): the frozen cover exchanges, contrasts with their
+  covariance, conditional AIC, the synthetic truths and the recovery pass rules (commands `prepare`, `capacity`,
+  `recovery`, `summarize`).
+- Tests: `tests/test_calibration_fit.R` and `tests/test_cv_separation.R` (new); additions to the registry, config,
+  cross-validation and stage tests. Hand-worked cases; stand-ins for the fits.
+- README: both tools, with what they read and write. Run order: `2026-11-06_cv2_run_order.md`. Implementation
+  record: `2026-11-06_cv2_implementation.md`. The redesign, its domain precedent and the role of AIC, the
+  protocol's draft and reviews, and both code reviews are filed under `docs/cc/2026-11-05_*` and `2026-11-06_*`.
+
+**Results** (6 and 7 November) **and their review** (Fable, 10 November,
+`2026-11-10_cv_protocol_v2_results_review_fable.md`, revised the same day after Astra's check,
+`2026-11-10_cv_protocol_v2_results_review_check_codex_gpt6astra.md`):
+- The rule chose location 100 with straight-line cover (`loc100_linear`). Its pipeline run, scripts 1 to 10, passed.
+- The review recomputed the score from the saved predictions with separate code (equal for all fourteen scored
+  versions) and found no arithmetic defect.
+- 61% of the chosen model's margin over model 8 comes from four blocks in western and interior Alaska (50 cells).
+  Without them the version with location 500 and straight-line cover ties it. With or without them, no location
+  term, location 12 or 30, and model 8's 200-basis cover score worse.
+- The total forcing for 6 to 10 ka agrees across model 8, the coarse-location model (the first run's choice) and the
+  chosen model because ice dominates it. The vegetation part differs between them in every period, and in sign from
+  4 to 12 ka.
+- Synthetic recovery: the chosen model and model 8 each pass 12 of the 12 required checks; the no-location control
+  passes 5. This holds under the stated truths; it does not establish the real response.
+- Against published forest contrasts, every version has the opposite sign in some months on all-days albedo.
+  Exploratory fits on the snow-free and snowy tables (58 small fits, outside the protocol, not saved) show a
+  pattern whose cause is not isolated.
+- From October to February the hindcast predicts north of the northernmost cell with a calibration albedo (in
+  December 1,344 of 2,659 past cells).
+
+After the review Chris chose (10 November) to explore the fitted cover response beside published contrasts, with no
+pass or fail (the cover-contrast entry below), and to build the hindcast comparison tool (next entry).
+
+**Also on the branch.** Three background reports of 10 November, filed unreviewed: eleven ranked case-study
+candidates besides the hemlock decline (`2026-11-10_case_study_candidates.md`, with its scripts and tables); how
+published studies compute the albedo change between cover classes (`2026-11-10_precedent_methods_report.md`); a table
+of 103 published albedo contrasts between cover types, with a note (`2026-11-10_published_albedo_contrasts.*`). And
+the design of the cover-contrast exploration with Astra's check of it.
+
+**Question files.** Section 8 of the scientific file now gives the results, eight questions for Andria from the
+reviews, her answers from the shared document, and Chris's direction of 15 November: handle spatial
+autocorrelation in the folds, ideally in one cross-validation method together with generalisation to unseen cover.
+Protocol 2's folds are not spatially blocked. That redesign is parked on his instruction, so protocol 2's choice of
+model is provisional. A new section 9 asks which other regions and periods Andria would accept as test cases. The
+general file records her answer on the 25 time slices.
+
+**Effect on the outputs.** None on the pipeline's own outputs. No script, `config.R` or `configs/` file changes. The
+registry keeps every existing formula (its test compares model 8's design matrices and penalties), and scripts 1 and
+2 reproduced exactly the calibration and past-cover tables of the model-8 pipeline run under the current settings
+(`run1-main`; `identical()`, holdouts job). The tools write only
+into their run folders, outside git. The first cross-validation is reproducible at the commits in its specs, not
+with this code.
+
+**Verification** (`tools/verify_change.R` at 1d31cfc; 53 jobs from 6 November 13:51 to 7 November 22:50 UTC, all
+PASS, none with a failure; reports and specs `docs/cc/verification/2026-11-06_cv2-*` and `2026-11-07_cv2-winner*`):
+
+| Jobs | What | Time each |
+|---|---|---|
+| `cv2-tests` | 12 test files | under 1 min |
+| `cv2-holdouts` | scripts 1 and 2, their two products identical to run 1's; the holdouts; separation preparation | 2 min |
+| `cv2-fit-d1`, `-d2`, `-d3` by month (36) | the fifteen versions on each direction's holdout | 10 to 408 min |
+| `cv2-fit-inrange-*` (4) | the in-range holdout, three months each | 15 to 25 min |
+| `cv2-capacity-apr`, `-may` | the northeast's response across location sizes | 7 to 8 min |
+| `cv2-recovery-*` (6) | synthetic recovery, April and May, three truths | 57 to 66 min |
+| `cv2-score`, `cv2-summary` | the score; the separation summary | 35 min |
+| `cv2-winner` | the chosen model's pipeline, scripts 1 to 10, seed 1549466984; three test files | 1,373 min (script 4: 1,229) |
+
+A PASS here means the job ran cleanly at the frozen commit with its input checks; only the tests and the holdouts
+jobs check content (the review's caution). Before the merge, on 16 November, every test file passed on the branch,
+run one at a time, with two frozen inputs linked from the main checkout as the verification tool links them.
+
+**Slips.** The 53 reports stayed uncommitted in the main checkout from 7 to 16 November, and the branch held its specs
+with `commit = 'TO_FILL'`. Both were committed on the branch before the merge (09ef17a), each spec as it ran. The review of 10 November
+corrected five statements made to Chris on 7 to 9 November; Astra's check then corrected the review itself in six
+places (listed at its head). The 58 exploratory fits were not reproduced: Astra's sandbox cannot start R.
+
+## The hindcast comparison tool (#24), verified 2026-11-16; merge pending
+
+Branch `cv-compare-tool`, made from `cv-v2` at ff1614e on 10 November; its code is final at 6faebe3 (16 November),
+later commits are documents.
+
+**Purpose.** Protocol 2's section 7: set finished pipeline runs side by side, so that Chris and Andria can see what
+the choice of calibration model does to the albedo, to the forcing by period and to the northeast over the hemlock
+decline, with the cross-validation's tested limits beside the numbers. Chris chose its form on 5, 6 and 10 November
+and had Fable build it and Astra review it.
+
+**Changes.**
+- `tools/compare_cv_hindcasts.R` (new). It reads each run's saved products by the names in `R/paths.R` and writes,
+  in its own output folder only: five tables (albedo by month and slice; forcing by period, with the vegetation part,
+  the ice part and the total side by side for every run, period, month and kernel; the northeast by month; the
+  cross-validation's errors and tested limits by direction, named in words; geographic support by month), four
+  figures and a record with the MD5 sum of every file read. Any number of runs; the first is the baseline.
+- It stops unless the runs differ only in the calibration model and share cells, cover, areas and ice; every run has
+  values on the same rows; each fit used exactly its month's calibration rows; each saved fit, predicting at both
+  ends of the hemlock interval (6 and 4.5 ka), gives the saved northeast albedo; and it reproduces script 9's
+  study-area totals and HadGEM3 parts and script 10's monthly means.
+- `R/hindcast_comparison.R` (new): the arithmetic as small functions, each with a hand-worked test in
+  `tests/test_hindcast_comparison.R`. They cover area-weighted means with the share resting on mixes outside the
+  training range, script 9's period sums kept per cell and month, differences from the baseline, the northeast swaps
+  at 50 BP and 6 ka open land, and geographic support.
+- Shared helpers moved, not changed: `cells_with_evergreen()` from the northeast figure tool to
+  `R/training_support.R` (the figure tool's two calls now pass its cells); `slice_area_ice()` out of
+  `cv_target_weights()` (the lines unchanged; the target weights and existing tests the same). A test for each.
+- README: a row for the tool.
+
+**Reviews.** Astra (10 November) recomputed all 1,950 albedo means, all 5,616 forcing values, the northeast changes,
+the distances and the geographic counts from the saved products, to 1e-13 or better, and found no numerical error.
+It asked for six changes:
+- name the tested directions in words, and say where the northeast goes beyond what was tested (its past mixes reach
+  0.107 outside today's range, in the direction of less open land, where nearby testing reached 0.099);
+- require every run to have values on the same rows;
+- keep each swap's two endpoint distances;
+- check both northeast endpoints against the fits, and narrow two claims;
+- report the gap between the fitted and simulated changes instead of a 0.005 gate;
+- state the kernels' smaller coverage in January and December (CACK: 2,646 and 2,439 of 2,655 study-area cells).
+
+Chris approved them on 15 November. Astra checked them on 16 November (every earlier table value identical, 110,622
+values) and asked for one title to be wrapped, which Chris approved.
+
+**Effect on the outputs.** None: no pipeline script or setting changes, and the tool writes nothing into a run
+folder. The figure tool `tools/plotting/plot_northeast_cover_and_location.R` was parsed after the move, not rerun
+(it needs a run folder with the model-8 fits).
+
+**Verification.** `docs/cc/verification/2026-11-16_cv-hindcast-comparison_report.md`, PASS at 6faebe3, 11 minutes:
+five test files; the tool on the three finished runs (model 8 as the baseline, the chosen model, the coarse-location
+model), and again with model 8 and the chosen model in reversed roles; then checks of the written tables: row
+counts, zero differences for the baseline, the vegetation and ice parts adding up to the total in every row, the
+same cells and areas for every run, the kernel coverage, the endpoint distances, the northeast reach line, the April
+and May exchange equal to the capacity table's, the geographic counts, and every difference changing sign when the
+roles are reversed. Before the merge, on 16 November, every test file passed on the branch.
+
+## Exploration of the fitted cover response beside published contrasts (#24), verified 2026-11-16; merge pending
+
+Branch `cover-contrasts`, made from `cv-v2` at 88f0599 on 15 November; its code is final at 7c12534 (16 November),
+later commits are documents.
+
+**Purpose.** The three finished pipeline runs disagree about the vegetation forcing in every period. This tool shows
+the response behind that directly: how each fitted model's albedo changes for a small exchange of cover, by month and
+region, with published forest albedo contrasts beside it as a guide. It is a description only, with no pass or fail
+and no effect on the choice of model: Chris chose on 10 November to explore the contrasts first and decide from the
+results whether they go into the paper. Fable designed it and Astra checked the design. Chris chose six versions,
+asked for it to follow published practice as closely as it can, and asked that the work not centre on the northeast
+alone; the tool reports the study area and six regions.
+
+**Changes.**
+- `tools/explore_cover_contrasts.R` (new), two commands.
+  - `fit` reads a finished run's calibration table (all-days, snow-free or snowy albedo, as the run's own
+    configuration says) and fits the six versions afresh for each month (REML, the ordinary fitter with its one
+    retry). It evaluates three exchanges of 10 points of cover, centred on each cell's own mix: evergreen to
+    summergreen, evergreen to open land, summergreen to open land.
+  - For the study area and each of the six named regions it writes the area-weighted mean change with its standard
+    error and the spread across cells. Beside each number: the cells, the eligible cells and their share of the
+    area, how many have at least 10% of each of the two classes (a count adapting one element of Lejeune et al.'s
+    2020 filter, not applied), and the typical snowy share of retrievals.
+  - Each fit and the month's exchanges are saved in the tool's own output folder, outside git.
+  - `report` stacks the months and tables into one table and draws a page per albedo table and a page of the
+    published values.
+- `R/cv_separation.R`: the exchange helpers take any two cover classes, with the third held. The defaults are
+  protocol 2's exchange, so its callers are unchanged. The cell-area lookup is now a function, used by
+  `tools/check_cv_separation.R` too.
+- `tools/check_cover_contrasts.R` (new): the checks on real data that the verification runs (`inputs`, `exchanges`,
+  `job`).
+- `docs/cc/2026-11-10_published_albedo_contrasts.csv`:
+  - columns a script can read (contrast, months, snow state, band), a qualification, and whether a value is drawn
+    beside the model;
+  - Jin et al. (2002)'s two values, entered as Astra read them (the builders did not see the paper);
+  - Burakowski et al. (2015)'s two comparisons of forest with a crop and forest mosaic, kept off the guides.
+- Tests: `tests/test_explore_cover_contrasts.R` (new) and additions to `tests/test_cv_separation.R`. README rows for
+  both tools.
+
+**Reviews.** Astra (15 November) found no error in the exchange arithmetic, the area weighting, the support counts or
+the changed helpers: it recomputed all 756 support cases and audited the published rows drawn. It asked for six
+changes to what readers are shown and what is kept:
+- qualify the published references;
+- make the verification assert results, not only exit status;
+- show each month's support in the figure;
+- keep the fitted models;
+- draw annual and uncertain-period values as such;
+- describe the 10% count as part of Lejeune's filter, not their rule.
+
+Chris approved these and the Jin values on 15 November, and nothing else. Astra checked the changes on 16 November
+and asked for three small changes to the spec and the note, which were made. The five method choices that the reading
+of the published methods left open stay with Chris as questions (`2026-11-15_cover_contrast_exploration_implementation.md`,
+section 9).
+
+**Effect on the outputs.** None on the pipeline: no script or setting changes, and the tool writes only to its own
+output folder. The generalised exchange helpers reproduce protocol 2's frozen northeast exchanges bit for bit
+(checked in the verification).
+
+**Verification.** `docs/cc/verification/2026-11-16_cover-contrasts_report.md`, PASS at 7c12534, 7 minutes:
+- ten test files;
+- the inputs check: the three runs by their recorded MD5 sums, with the same cells, cover, elevation and areas;
+- protocol 2's frozen exchanges reproduced;
+- one small real job (the snowy table, July and August) and its report;
+- the job check: 12 fit records (8 converged; 4 not fitted, the two versions with location 500 having more
+  coefficients than those months have cells), 252 contrast rows, the known support counts, three numbers within
+  stated tolerances of the trial, and one saved fit giving back its contrasts and standard errors.
+
+On 16 November every test file passed on the branch, run one at a time.
+
+**Not yet.** The exploration itself (36 jobs, 212 fits), approved by Chris on 15 November, is running from the
+verified commit's worktree.
