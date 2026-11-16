@@ -38,9 +38,9 @@ for the coauthor change log. Living document, updated as each issue merges.
 | I15b Readability: names in the R/ helpers | #22 | merged 2026-10-15 | d8c32c0 |
 | I15c Readability: scripts, one branch per script | #18 | scripts merged 2026-10-15; last renames merged 2026-11-03; closed | |
 | I15 Readability cleanup | #18 | filed 2026-10-13; four figure slips marked in scripts 2 and 7 | df0d28f (comments only) |
-| Cross-validation protocol 2: fifteen versions, a nearby score, two separation tests; results and reviews | #24 | verified 2026-11-07; merge pending | |
-| Hindcast comparison tool | #24 | verified 2026-11-16; merge pending | |
-| Cover-contrast exploration beside published contrasts | #24 | verified 2026-11-16; merge pending | |
+| Cross-validation protocol 2: fifteen versions, a nearby score, two separation tests; results and reviews | #24 | merged 2026-11-16 | 326ea11 |
+| Hindcast comparison tool | #24 | merged 2026-11-16 | c254734 |
+| Cover-contrast exploration beside published contrasts | #24 | verified 2026-11-16; merge pending (the combined code needs its own verification) | |
 
 ---
 
@@ -1682,10 +1682,10 @@ protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amend
   `docs/cc/verification/2026-11-04_review-fixes-2_report.md` (PASS; scripts 1-3, the holdouts stage byte-identical to
   earlier runs, all tests).
 
-## Cross-validation protocol 2: fifteen versions, a nearby score and two separation tests (#24), verified 2026-11-07; merge pending
+## Cross-validation protocol 2: fifteen versions, a nearby score and two separation tests (#24), merged 2026-11-16
 
 Branch `cv-v2`, made from `feature/single-config` at c86e4b5 on 5 November; its code is final at 1d31cfc
-(6 November), later commits are documents.
+(6 November), later commits are documents; merged 16 November (326ea11).
 
 **Purpose.** The first cross-validation (the entry "Cross-validation that chooses the albedo model", above) chose
 among thirteen fixed candidates. On 6 November Chris asked for proper tuning instead: a grid of model versions, a
@@ -1795,10 +1795,10 @@ with `commit = 'TO_FILL'`. Both were committed on the branch before the merge (0
 corrected five statements made to Chris on 7 to 9 November; Astra's check then corrected the review itself in six
 places (listed at its head). The 58 exploratory fits were not reproduced: Astra's sandbox cannot start R.
 
-## The hindcast comparison tool (#24), verified 2026-11-16; merge pending
+## The hindcast comparison tool (#24), merged 2026-11-16
 
 Branch `cv-compare-tool`, made from `cv-v2` at ff1614e on 10 November; its code is final at 6faebe3 (16 November),
-later commits are documents.
+later commits are documents; merged 16 November (c254734).
 
 **Purpose.** Protocol 2's section 7: set finished pipeline runs side by side, so that Chris and Andria can see what
 the choice of calibration model does to the albedo, to the forcing by period and to the northeast over the hemlock
@@ -1848,7 +1848,8 @@ model), and again with model 8 and the chosen model in reversed roles; then chec
 counts, zero differences for the baseline, the vegetation and ice parts adding up to the total in every row, the
 same cells and areas for every run, the kernel coverage, the endpoint distances, the northeast reach line, the April
 and May exchange equal to the capacity table's, the geographic counts, and every difference changing sign when the
-roles are reversed. Before the merge, on 16 November, every test file passed on the branch.
+roles are reversed. Before the merge, on 16 November, every test file passed on the branch; after both merges all
+25 test files passed on the trunk (c254734), one at a time.
 
 ## Exploration of the fitted cover response beside published contrasts (#24), verified 2026-11-16; merge pending
 
@@ -1921,3 +1922,9 @@ On 16 November every test file passed on the branch, run one at a time.
 
 **Not yet.** The exploration itself (36 jobs, 212 fits), approved by Chris on 15 November, is running from the
 verified commit's worktree.
+
+**Merge held.** On 16 November, after the two entries above had merged, the merge check refused this merge. The
+trunk's code would then combine this branch's changes with the hindcast comparison tool's, and no verification report
+covers that combination: each branch's report covers its own code only. The two branches change different files; all
+26 test files passed on the combined code, but its real-data checks were not run. The merge waits for a verification
+of the combined code.
