@@ -40,7 +40,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | I15 Readability cleanup | #18 | filed 2026-10-13; four figure slips marked in scripts 2 and 7 | df0d28f (comments only) |
 | Cross-validation protocol 2: fifteen versions, a nearby score, two separation tests; results and reviews | #24 | merged 2026-11-16 | 326ea11 |
 | Hindcast comparison tool | #24 | merged 2026-11-16 | c254734 |
-| Cover-contrast exploration beside published contrasts | #24 | verified 2026-11-16; merge pending (the combined code needs its own verification) | |
+| Cover-contrast exploration beside published contrasts | #24 | merged 2026-11-16 | c7d2aab |
 
 ---
 
@@ -1851,7 +1851,7 @@ and May exchange equal to the capacity table's, the geographic counts, and every
 roles are reversed. Before the merge, on 16 November, every test file passed on the branch; after both merges all
 25 test files passed on the trunk (c254734), one at a time.
 
-## Exploration of the fitted cover response beside published contrasts (#24), verified 2026-11-16; merge pending
+## Exploration of the fitted cover response beside published contrasts (#24), merged 2026-11-16
 
 Branch `cover-contrasts`, made from `cv-v2` at 88f0599 on 15 November; its code is final at 7c12534 (16 November),
 later commits are documents.
@@ -1926,5 +1926,10 @@ verified commit's worktree.
 **Merge held.** On 16 November, after the two entries above had merged, the merge check refused this merge. The
 trunk's code would then combine this branch's changes with the hindcast comparison tool's, and no verification report
 covers that combination: each branch's report covers its own code only. The two branches change different files; all
-26 test files passed on the combined code, but its real-data checks were not run. The merge waits for a verification
-of the combined code.
+26 test files passed on the combined code, but its real-data checks were not run. Branch `merge-cover-contrasts`
+therefore merged this branch on top of the two merges and verified the combined code (commit 1ae8ecc): PASS, all 19
+checks of both tools' specs (`docs/cc/verification/2026-11-16_merge-cover-contrasts_report.md`). It merged at c7d2aab.
+
+**Full run.** Completed on 16 November from the verified commit 7c12534: 36 jobs, 216 fit records, 4,536 rows, all
+212 attempted fits converged, and the 4 fits not made by design (the two versions with a location term of 500 in
+the snowy table's July and August). The longest fit took 72 minutes; the largest job peaked at 1.24 GB.
