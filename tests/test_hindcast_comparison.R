@@ -126,4 +126,21 @@ limits = validation_limits(by_distance, coverage, 'm1')
 stopifnot(nrow(limits) == 1, limits$model == 'm1', limits$cell_month_holdouts == 8, equal(limits$rmse, sqrt(0.025)),
           equal(limits$signed_error, (2 * 0.04 - 6 * 0.02) / 8), limits$cells == 5, limits$blocks == 3, limits$max_cover_distance_nearby == 0.049)
 
+# Directions in words. At 0 degrees a mix gains summergreen at fixed evergreen, so loses open land;
+# at 90 it gains evergreen, losing open land and summergreen alike (the first named wins the tie); at
+# -90 it loses evergreen, regaining both. The three directions of the cross-validation (angles -68.8,
+# 17.2 and 156.5 degrees) read as below.
+stopifnot(identical(direction_in_words(c(0, 90, -90, 180)), c('less open land and more summergreen', 'less open land and more evergreen',
+                                                              'less evergreen and more open land', 'less summergreen and more open land')),
+          identical(direction_in_words(c(-68.76, 17.23, 156.53)), c('less evergreen and more summergreen', 'less open land and more summergreen',
+                                                                     'less summergreen and more open land')))
+
+# A region's reach in each direction against the tested limit there: mixes 0.03 and 0.107 outside in
+# d2 and 0.01 in d1, one inside; d2 was tested to 0.099 at most (over its bands), d1 to 0.126. The
+# larger d1 limit does not lift d2's; a direction not tested at all has no limit.
+validation = data.frame(own_direction = c('d1', 'd2', 'd2', 'd2'), max_cover_distance_nearby = c(0.126, 0.02, 0.099, NA))
+reach = reach_by_direction(c(0.03, 0.107, 0.01, 0), c('d2', 'd2', 'd1', NA), validation)
+stopifnot(identical(reach$direction, c('d1', 'd2')), equal(reach$farthest, c(0.01, 0.107)), equal(reach$tested, c(0.126, 0.099)),
+          is.na(reach_by_direction(0.05, 'd3', validation)$tested))
+
 cat('test_hindcast_comparison: all tests passed\n')

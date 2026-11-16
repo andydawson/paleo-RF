@@ -147,3 +147,25 @@ validation_limits = function(by_distance, nearby_coverage, models) {
   limits = nearby_coverage[, c('own_direction', 'cover_band', 'cells', 'blocks', 'max_cover_distance_nearby')]
   as.data.frame(left_join(pooled, limits, by = c('own_direction', 'cover_band')))
 }
+
+# A departure direction in plain words, because the cross-validation's names d1, d2 and d3 say
+# nothing on their own: the cover that falls most and the cover that rises most as a mix moves at
+# `angle` on the cover triangle (degrees; 0 = towards more summergreen at fixed evergreen, 90 =
+# towards more evergreen, as departure_angle() in R/cross_validation.R measures it).
+direction_in_words = function(angle) {
+  evergreen = sinpi(angle / 180) * 2 / sqrt(3)       # cover_triangle_xy() turned round
+  summergreen = cospi(angle / 180) - evergreen / 2
+  change = cbind('open land' = -evergreen - summergreen, evergreen = evergreen, summergreen = summergreen)
+  paste('less', colnames(change)[apply(change, 1, which.min)], 'and more', colnames(change)[apply(change, 1, which.max)])
+}
+
+# How far a region's past mixes reach outside the training range in each direction in which they
+# leave it, beside the farthest the cross-validation tested in that direction near training (over
+# all months together; `validation` from validation_limits()). A tested limit says nothing about
+# another direction. `distance` and `direction`: one per mix; direction NA for a mix inside.
+reach_by_direction = function(distance, direction, validation) {
+  outside = !is.na(direction)
+  reach = tapply(distance[outside], direction[outside], max)
+  tested = tapply(validation$max_cover_distance_nearby, validation$own_direction, max, na.rm = TRUE)
+  data.frame(direction = names(reach), farthest = as.vector(reach), tested = as.vector(tested[names(reach)]))
+}

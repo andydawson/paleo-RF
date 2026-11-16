@@ -24,7 +24,7 @@
 #       month and pair of slices
 #   output/forcing/forcing_by_period.csv, forcing_by_period_variant_sensitivity.csv and
 #       forcing_by_month_latitude.csv                             scripts 9 and 10, as a check
-# and from the cross-validation's output directory: by_distance.csv and nearby_coverage.csv.
+# and from the cross-validation's output directory: by_distance.csv, nearby_coverage.csv and directions.csv.
 #
 # WHAT GOES OUT, into <output-dir> (each table starts with comment lines, marked #, that say what it
 # holds and state the signs; read it with read.csv(file, comment.char = '#'))
@@ -315,7 +315,10 @@ swap_columns = function(prefix, contrast, reach) setNames(
              outside_band(reach[['max_outside_distance']])),
   paste0(prefix, c('_open_land', '_open_land_se', '_outside_share', '_max_outside_distance', '_outside_band')))
 
-northeast_table = curves = curve_points = curve_ends = NULL
+# The cross-validation's departure directions: in which of them, and how far, the northeast's past
+# mixes leave the range (R/cross_validation.R's own rule), to set beside what it tested there.
+directions = read_noted(file.path(cv_dir, 'directions.csv'), read.csv)
+northeast_table = curves = curve_points = curve_ends = departures = NULL
 for (month in MONTHS) {
   training = cal[complete_rows(cal, month), ]
   training = training[separation_northeast(training), ]
@@ -337,7 +340,10 @@ for (month in MONTHS) {
   historical = historical_exchange(cells_at(r6)[, c('x', 'y', 'elev')], transform(albedo[region_rows, ], ages = year), area)
   swap_reach = lapply(swaps, exchange_outside, hull = hull)
   outside_any = albedo$outside[r6] | albedo$outside[r5.5] | albedo$outside[r5] | albedo$outside[r4.5]
-  distance_any = max(albedo$distance[c(r6, r5.5, r5, r4.5)])
+  interval_rows = c(r6, r5.5, r5, r4.5)
+  distance_any = max(albedo$distance[interval_rows])
+  departures = rbind(departures, data.frame(distance = albedo$distance[interval_rows],
+    direction = nearest_direction(departure_angle(albedo[interval_rows, c('OL', 'ET', 'ST')], hull), directions)))
 
   for (name in names(runs)) {
     fit = read_product(runs[[name]], 'calibration_prediction_fit', month = month)
@@ -387,6 +393,17 @@ northeast_table = add_differences(northeast_table, 'month', c('change_6_to_4.5ka
 
 validation = validation_limits(read_noted(file.path(cv_dir, 'by_distance.csv'), read.csv),
                                read_noted(file.path(cv_dir, 'nearby_coverage.csv'), read.csv), names(runs))
+directions$in_words = direction_in_words(directions$angle)
+validation = data.frame(validation['own_direction'], direction_in_words = directions$in_words[match(validation$own_direction, directions$direction)],
+                        validation[names(validation) != 'own_direction'])
+
+# The northeast's reach in each direction against the tested limit there, in words for the headers.
+reach = reach_by_direction(departures$distance, departures$direction, validation)
+northeast_reach = sprintf(paste('In the northeast over the hemlock interval (6, 5.5, 5 and 4.5 ka, every month), past mixes leave the range in direction %s (%s),',
+                                'as far as %.3f outside; near training the cross-validation tested that direction up to %.3f%s'),
+                          reach$direction, directions$in_words[match(reach$direction, directions$direction)], reach$farthest, reach$tested,
+                          ifelse(is.na(reach$tested) | reach$farthest > reach$tested,
+                                 ': the northeast reaches FURTHER OUTSIDE THAN WAS TESTED in this direction, and a larger limit in another direction does not cover it.', '.'))
 
 # --- the tables, each with its header ---------------------------------------------------------------
 
@@ -401,7 +418,8 @@ support_lines = c(
   'outside_share: the share of the weight on cover mixes outside that month\'s training range; a period is outside in a cell and month if any end of any of its steps is.',
   'The _outside_part of a mean is the part that comes from those cells, on the whole mean\'s denominator: the inside part is the rest.',
   'max_outside_distance and outside_band: the largest distance outside (cover-triangle units; 0.05 is about 5 percentage points of cover) and its band.',
-  'Compare the bands with validation_and_tested_limits.csv: the cross-validation tested each direction only up to the distance given there.')
+  paste('Compare the distances with validation_and_tested_limits.csv: for each direction in which past cover leaves today\'s range (described in words there),',
+        'the farthest the cross-validation tested near training. A limit applies to its own direction only; these tables do not say in which direction a mix leaves the range.'))
 write_table(albedo_table, 'albedo_by_month_slice.csv', c(
   'The pipeline\'s albedo (the mean of the simulated albedo, which the forcing is made from), by region, slice (age_bp, years BP) and month.',
   'SIGNS: albedo is a fraction, 0 to 1; a positive albedo_difference means the run is BRIGHTER than the baseline.',
@@ -433,12 +451,16 @@ write_table(northeast_table, 'northeast_by_month.csv', c(
   '_se: the standard error of a swap, from the fit\'s coefficient covariance (conditional on its smoothing).',
   'position_4.5ka: the predicted 4.5 ka albedo against the range observed in the region today (observed_albedo_min, observed_albedo_max): a warning, not a bound.',
   'outside_share_*: the share of the region\'s area whose actual past mix is outside the month\'s training range at 6 ka, at 4.5 ka, and at any of 6, 5.5, 5 and 4.5 ka; swap_*_outside_share: with either end of the swap outside.',
-  'The matching northeast forcing is in forcing_by_period.csv (region northeast).', support_lines[3:4]))
+  'The matching northeast forcing is in forcing_by_period.csv (region northeast).', support_lines[3:4], northeast_reach))
 write_table(validation, 'validation_and_tested_limits.csv', c(
   'The cross-validation\'s errors and tested limits, to read beside the outside distances of the other tables (protocol 2, section 7).',
   'For each direction in which past cover leaves today\'s range (own_direction) and band of distance outside (cover_band): each model\'s error on the withheld cells less than 250 km from training.',
+  'direction_in_words: the cover that falls most and the cover that rises most along the direction (its angle on the cover triangle is in the cross-validation\'s directions.csv).',
   'rmse and signed_error (predicted minus observed albedo) are pooled over those predictions (cell_month_holdouts): diagnostic errors, not the selection score.',
-  'cells, blocks and max_cover_distance_nearby: what the selection rested on there, and the largest distance tested (empty where the group has no weight in the selection). A direction and band not listed was not tested near training.'))
+  'cells, blocks and max_cover_distance_nearby: what the selection rested on there, and the largest distance tested (empty where the group has no weight in the selection). A direction and band not listed was not tested near training.',
+  'A tested limit applies to its own direction only: a mix that leaves the range in another direction is not covered by it, however far that other direction was tested.',
+  'max_cover_distance_nearby is the farthest over all months together; in a given month it can be less (the cross-validation\'s nearby_depth.csv gives it by month and direction).',
+  northeast_reach))
 
 # --- figures --------------------------------------------------------------------------------------------
 
