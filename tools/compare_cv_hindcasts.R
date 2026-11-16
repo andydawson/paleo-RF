@@ -512,7 +512,7 @@ difference_map = function(cells, title, subtitle, unit) {
   ggplot() + geom_tile(data = cells, aes(x, y, fill = pmax(pmin(difference, limit), -limit))) +
     boundary_layers(land, window, colour = 'grey60', linewidth = 0.1) + facet_grid(panel_row ~ panel_column) +
     scale_fill_gradient2(low = '#2166ac', mid = 'grey95', high = '#b2182b', name = unit) +
-    labs(title = title, x = NULL, y = NULL,   # wrapped to fit the narrowest figure, one panel column wide
+    labs(title = paste(strwrap(title, width = 70), collapse = '\n'), x = NULL, y = NULL,   # both wrapped to fit the narrowest figure, one panel column wide
          subtitle = paste(strwrap(sprintf('%s Colour clipped at the 98th percentile (%.2g).', subtitle, limit), width = 90), collapse = '\n')) +
     theme_bw(base_size = 9) + theme(strip.text = element_text(face = 'bold'))
 }
