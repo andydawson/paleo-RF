@@ -9,7 +9,10 @@
 #       calibration table holds: all days, snow-free or snowy. For each month the six versions are
 #       fitted afresh to that table (REML, the ordinary fitter and its one retry) and the three
 #       exchanges are evaluated in the study area and the six named regions. Jobs for different
-#       runs and months can run side by side. Nothing is written into <run-dir>.
+#       runs and months can run side by side. Nothing is written into <run-dir>. Each fit made is
+#       saved, with its attempts, as fit_<table>_<month>_<version>.rds, and the month's exchanges
+#       as cases_<table>_<month>.rds, so that a result can be examined without fitting again.
+#       Keep <output-dir> outside git: the fits are large.
 #   Rscript tools/explore_cover_contrasts.R report <output-dir>
 #       stacks every table and month found in <output-dir> into cover_contrasts.csv and fits.csv,
 #       and draws cover_contrasts.pdf: a page per albedo table, then the published values.
@@ -176,11 +179,15 @@ write_record = function(out_dir, job, files) {
 fit_months = function(run, out_dir, months, fit_model = fit_calibration_retry) {
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   for (month in months) {
+    job = paste(run$table, month, sep = '_')
     cases = exchange_cases(run, month)
+    saveRDS(cases, file.path(out_dir, sprintf('cases_%s.rds', job)))
     contrasts = fits = NULL
     for (version in CONTRAST_VERSIONS) {
       fitted = fit_version(version, month, run$cal, fit_model)
       cat(sprintf('%s %s %s: %.1f min; %s\n', run$table, month, version, fitted$minutes, fitted$status))
+      if (!is.na(fitted$converged))                 # the fitter ran: keep what it returned, failed or not
+        saveRDS(fitted, file.path(out_dir, sprintf('fit_%s_%s.rds', job, version)))
       contrasts = rbind(contrasts, version_rows(version, fitted, cases))
       fits = rbind(fits, data.frame(version = version, complete_cells = complete_model_rows(run$cal, month),
                                     coefficients = CV_COEFFICIENTS[[version]], converged = fitted$converged,
@@ -188,7 +195,6 @@ fit_months = function(run, out_dir, months, fit_model = fit_calibration_retry) {
                                     warnings = fitted$warnings))
       rm(fitted); gc(verbose = FALSE)
     }
-    job = paste(run$table, month, sep = '_')
     utils::write.csv(cbind(table = run$table, month = month, contrasts), file.path(out_dir, sprintf('contrasts_%s.csv', job)), row.names = FALSE)
     utils::write.csv(cbind(table = run$table, month = month, fits), file.path(out_dir, sprintf('fits_%s.csv', job)), row.names = FALSE)
     write_record(out_dir, job, run$files)

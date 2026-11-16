@@ -148,6 +148,15 @@ stopifnot(nrow(contrasts) == 6 * 7 * 3, all(contrasts$table == 'snowy'), all(con
   all(is.na(contrasts$se[contrasts$version != 'loc30_linear'])), !any(is.na(fitted$contrast[fitted$eligible_cells > 0])),
   all(is.na(fitted$contrast[fitted$eligible_cells == 0])),
   file.exists(file.path(out_dir, 'record_snowy_apr.txt')))
+# What the fitter returned is saved for the two versions it ran for, the failure too, and the
+# month's exchanges once; the saved fit gives back the table's numbers exactly.
+saved = readRDS(file.path(out_dir, 'fit_snowy_apr_loc30_linear.rds'))
+saved_cases = readRDS(file.path(out_dir, 'cases_snowy_apr.rds'))
+again = t(sapply(saved_cases, function(case) exchange_contrast(saved$fit, case$exchange)))
+stopifnot(setequal(list.files(out_dir, '[.]rds$'), c('cases_snowy_apr.rds', 'fit_snowy_apr_loc30_linear.rds', 'fit_snowy_apr_loc100_linear.rds')),
+  identical(saved$status, 'stand-in'), identical(coef(saved$fit), coef(kept)), identical(saved_cases, cases),
+  is.null(readRDS(file.path(out_dir, 'fit_snowy_apr_loc100_linear.rds'))$fit),
+  equal(again[, 'contrast'], fitted$contrast), equal(again[, 'se'], fitted$se))
 # Every version is described at the same cells.
 same_cells = c('region', 'exchange', 'region_cells', 'fitted_cells', 'eligible_cells', 'area_share', 'cells_10pct')
 for (version in CONTRAST_VERSIONS)
