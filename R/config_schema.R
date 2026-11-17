@@ -25,6 +25,9 @@ kernel_variable = function(kernel) function(v) check_choice(v, KERNEL_VARIABLES$
 # The ice-albedo columns of data/albedo_glacier_monthly.csv.
 GLACIER_ALBEDO_COLUMNS = c('ice_albedo', 'ice_albedo_fixed', 'ice_albedo_sc')
 
+# The ice-fraction files script 7a can read, by their ids in R/paths.R.
+ICE_FRACTION_SOURCES = c('dalton_ice', 'nadi1_optimal', 'nadi1_minimum', 'nadi1_maximum')
+
 # Script 8 computes every forcing as rf_<kernel>_<variant>; these are the ten variants
 # (scripts/8_radiative.R, the rf_* columns) and the three kernels.
 FORCING_VARIANTS = c('veg_thresh', 'ice_thresh', 'icesc_thresh',
@@ -170,6 +173,7 @@ CONFIG_SCHEMA = list(
       lat_max        = function(v) check_numbers(v, len = 1, range = c(-90, 90)),
       lon_max_coarse = function(v) check_numbers(v, len = 1, range = c(-180, 180))),
     ice = list(
+      fraction_source = function(v) check_choice(v, ICE_FRACTION_SOURCES, single = TRUE),
       threshold     = function(v) check_numbers(v, len = 1, range = c(0, 1)),
       difference_method = function(v) check_choice(v, c('endpoint', 'legacy_components'), single = TRUE),
       albedo_coarse = function(v) check_choice(v, GLACIER_ALBEDO_COLUMNS, single = TRUE),

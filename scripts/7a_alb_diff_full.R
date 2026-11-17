@@ -43,12 +43,23 @@ if (length(missing_slices)) {
        '; the table has ', paste(sort(unique(alb_interp_preds$year)), collapse = ', '))
 }
 
-ice_dalton_interp = read_input(run, path_file(paths, 'dalton_ice'), rast)
-ice_dalton_years = as.numeric(sapply(names(ice_dalton_interp), function(layer_name) strsplit(layer_name, 'yr|bp')[[1]][2]))
+# The ice fraction of each cell, one band per slice named yr<age>bp, from the file config.R
+# chooses (analysis$ice$fraction_source: the old Dalton raster or a NADI-1 reconstruction).
+ice_fractions = read_input(run, path_file(paths, cfg$analysis$ice$fraction_source), rast)
+ice_fraction_years = as.numeric(sapply(names(ice_fractions), function(layer_name) strsplit(layer_name, 'yr|bp')[[1]][2]))
 
 alb_interp_preds$ice_frac = NA
 
 alb_preds_ages = unique(alb_interp_preds$year)
+
+# CM: every slice of the prediction table must have exactly one band, or match() below would
+# silently take the first of two bands, or stop on a missing one with an unclear error.
+bands_per_slice = sapply(alb_preds_ages, function(age) sum(ice_fraction_years == age))
+if (any(bands_per_slice != 1)) {
+  stop('the ice-fraction file (config.R analysis$ice$fraction_source = "', cfg$analysis$ice$fraction_source,
+       '") needs exactly one band per slice; slices without one band: ',
+       paste(alb_preds_ages[bands_per_slice != 1], collapse = ', '))
+}
 
 for (i in 1:length(alb_preds_ages)){
 
@@ -58,8 +69,8 @@ for (i in 1:length(alb_preds_ages)){
   coords_veg  = SpatialPoints(alb_interp_preds[idx_age,c('x', 'y')],
                               proj4string=CRS(proj_WGS84))
 
-  ice_layer_index = match(alb_preds_ages[i], ice_dalton_years)
-  ice_layer = project(ice_dalton_interp[[ice_layer_index]], proj_WGS84)
+  ice_layer_index = match(alb_preds_ages[i], ice_fraction_years)
+  ice_layer = project(ice_fractions[[ice_layer_index]], proj_WGS84)
 
   coords_veg_spat = vect(coords_veg)
   coords_veg_spat_proj = project(coords_veg_spat, crs(ice_layer))

@@ -120,6 +120,13 @@ list(
     # script 7a the other two; the file's source and the meaning of the columns are
     # question C0a.
     ice = list(
+      # The ice fractions script 7a reads, one file per choice (R/paths.R; Chris, 16 November
+      # 2026: one setting, to compare the reconstructions). "dalton_ice": the raster used so
+      # far, data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif (Dalton et al. 2020's margins
+      # interpolated to the slices, by whom and how is question C0b). "nadi1_optimal",
+      # "nadi1_minimum" or "nadi1_maximum": the three reconstructions of NADI-1 (Dalton et al.
+      # 2023) on the same grid, data/nadi1_fractions/, made by tools/build_nadi1_fractions.R.
+      fraction_source = "dalton_ice",
       threshold = 0.5,
       # How script 7a turns each pair of slices into an albedo change, for the threshold
       # variants: "endpoint" takes each slice's albedo (ice or vegetation) and subtracts,

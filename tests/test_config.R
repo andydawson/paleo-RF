@@ -130,6 +130,14 @@ stopifnot(
   refuses("lat_min must be below lat_max", with_setting("analysis$domain$lat_max", 27, with_setting("analysis$domain$lat_min", 74))),
   refuses("lon_min must be west of lon_max_coarse", with_setting("analysis$domain$lon_min", -50)),
   refuses("domain\\$lat_max must lie between", with_setting("analysis$domain$lat_max", 95)),
+  # the ice-fraction file (Chris, 16 November 2026): the old raster in both files, a NADI-1
+  # reconstruction by choice
+  identical(cfg$analysis$ice$fraction_source, "dalton_ice"),
+  identical(legacy$analysis$ice$fraction_source, "dalton_ice"),
+  accepts(with_setting("analysis$ice$fraction_source", "nadi1_optimal")),
+  accepts(with_setting("analysis$ice$fraction_source", "nadi1_maximum")),
+  refuses("fraction_source has 'nadi1'", with_setting("analysis$ice$fraction_source", "nadi1")),
+  refuses("fraction_source must be a single value", with_setting("analysis$ice$fraction_source", c("dalton_ice", "nadi1_minimum"))),
   accepts(with_setting("analysis$ice$threshold", 0.6)),
   refuses("ice\\$threshold must lie between 0 and 1", with_setting("analysis$ice$threshold", 1.5)),
   accepts(with_setting("analysis$ice$albedo_coarse", "ice_albedo_sc")),

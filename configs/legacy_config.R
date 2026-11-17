@@ -99,6 +99,8 @@ list(
     # script 7a the other two; the file's source and the meaning of the columns are
     # question C0a.
     ice = list(
+      # The ice fractions script 7a reads: the original raster (config.R lists the choices).
+      fraction_source = "dalton_ice",
       threshold = 0.5,
       # How script 7a turns each pair of slices into an albedo change, for the threshold
       # variants: "endpoint" takes each slice's albedo (ice or vegetation) and subtracts,

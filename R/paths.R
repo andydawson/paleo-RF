@@ -55,6 +55,12 @@ PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
   c('glacier_shapes',           'data/map-data/ice/glacier_shapefiles_21-1k.RDS',                     'input',   NA),
   c('glacier_albedo',           'data/albedo_glacier_monthly.csv',                                    'input',   NA),
   c('dalton_ice',               'data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif',              'input',   NA),
+  # The NADI-1 ice fractions on the same grid, one file per reconstruction, made by
+  # tools/build_nadi1_fractions.R (committed); config.R's analysis$ice$fraction_source chooses
+  # which of these four ice files script 7a reads.
+  c('nadi1_optimal',            'data/nadi1_fractions/nadi1_optimal.tif',                             'input',   NA),
+  c('nadi1_minimum',            'data/nadi1_fractions/nadi1_minimum.tif',                             'input',   NA),
+  c('nadi1_maximum',            'data/nadi1_fractions/nadi1_maximum.tif',                             'input',   NA),
   c('kernel_hadgem',            'data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc',             'input',   NA),
   c('kernel_cam5',              'data/radiative-kernels/CAM5/alb.kernel.nc',                          'input',   NA),
   c('kernel_cack',              'data/radiative-kernels/CACKv1.0/CACKv1.0.nc',                        'input',   NA),
