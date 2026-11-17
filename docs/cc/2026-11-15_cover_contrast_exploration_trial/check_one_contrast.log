@@ -1,0 +1,4 @@
+evergreen to summergreen  cells 58 (tool 58)  contrast +0.008228 (tool +0.008228)  spread 0.000526 (tool 0.000526)  se by simulation 0.000963 (tool 0.000949)
+evergreen to open land    cells 41 (tool 41)  contrast +0.008702 (tool +0.008702)  spread 0.000464 (tool 0.000464)  se by simulation 0.000652 (tool 0.000640)
+summergreen to open land  cells 22 (tool 22)  contrast +0.000200 (tool +0.000200)  spread 0.000012 (tool 0.000012)  se by simulation 0.000765 (tool 0.000752)
+The three northeast rows agree with the plain recomputation; the standard errors agree with simulation within 5 %.

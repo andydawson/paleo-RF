@@ -1,0 +1,45 @@
+1. Mean albedo in the four Alaskan blocks, by month:
+                      jan   feb   mar   apr   may   jun   jul   aug   sep   oct
+observed            0.372 0.365 0.426 0.405 0.229 0.138 0.133 0.130 0.131 0.204
+chosen              0.352 0.372 0.428 0.443 0.297 0.154 0.130 0.139 0.138 0.193
+rival_loc500_linear 0.841 0.439 0.556 0.573 0.506 0.344 0.167 0.166 0.174 0.369
+model8              0.838 0.455 0.570 0.553 0.470 0.293 0.161 0.155 0.170 0.329
+no_location         0.287 0.422 0.461 0.400 0.298 0.176 0.137 0.136 0.146 0.247
+                      nov dec
+observed            0.282  NA
+chosen              0.276  NA
+rival_loc500_linear 0.475  NA
+model8              0.469  NA
+no_location         0.187  NA
+rows per month:
+
+jan feb mar apr may jun jul aug sep oct nov dec 
+  4  56  59  59  59  59  59  59  59  59  14   0 
+
+2. Past cells north of the northernmost fitting cell, by month (27-74 N window; any slice):
+    fitting_cells northernmost_fitting_latitude past_cells
+jan          1726                          58.5       2659
+feb          2397                          67.5       2659
+mar          2806                          78.5       2659
+apr          2808                          78.5       2659
+may          2808                          78.5       2659
+jun          2808                          78.5       2659
+jul          2808                          78.5       2659
+aug          2808                          78.5       2659
+sep          2808                          78.5       2659
+oct          2662                          71.5       2659
+nov          1866                          60.5       2659
+dec          1416                          53.5       2659
+    past_cells_north_of_it past_cells_without_a_fitting_cell
+jan                   1017                              1037
+feb                    288                               366
+mar                      0                                38
+apr                      0                                36
+may                      0                                36
+jun                      0                                36
+jul                      0                                36
+aug                      0                                36
+sep                      0                                36
+oct                     69                               101
+nov                    879                               897
+dec                   1344                              1347

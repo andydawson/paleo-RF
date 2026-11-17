@@ -152,8 +152,9 @@ CONFIG_SCHEMA = list(
       statistic = function(v) check_choice(v, names(ALBEDO_STATISTICS), single = TRUE),
       version   = function(v) check_choice(v, ALBEDO_VERSIONS, single = TRUE)),
     calibration = list(
-      # The ladder, or a candidate the cross-validation may choose (R/model_registry.R, CV_MODELS).
-      model_id = function(v) check_choice(v, union(LADDER_MODELS, CV_MODELS), single = TRUE),
+      # Keep run 1's smaller triangle smooth usable in saved configurations, although it
+      # is outside protocol 2's grid. The pipeline otherwise accepts the ladder and CV ids.
+      model_id = function(v) check_choice(v, c(union(LADDER_MODELS, CV_MODELS), 'mod8_small_cover'), single = TRUE),
       comparison_method = function(v) check_choice(v, c('ML', 'REML'), single = TRUE),
       ice_mask = function(v) check_choice(v, c('centre_in_1ka_polygon', 'none'), single = TRUE)),
     draws = list(

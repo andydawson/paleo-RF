@@ -4,7 +4,7 @@
 # Why a function: the calibration model is fitted on today's cover mixes, so a prediction
 # for a past mix unlike any modern one is an extrapolation. Three diagnostic figures
 # (tools/plotting/plot_training_support.R, plot_forcing_vs_training_support.R and
-# plot_northeast_cover_and_location.R) flag such mixes; they must flag the same cells, so
+# plot_northeast_cover_and_location.R) and tools/compare_cv_hindcasts.R flag such mixes; they must flag the same cells, so
 # the rule, and the reading of the inputs it is applied to, are defined once, here.
 #
 # The rule. The three cover fractions (OL open land, ET evergreen, ST summergreen) sum to
@@ -49,6 +49,16 @@ training_support = function(cover, hull) {
   if (any(outside))
     distance_outside[outside] = as.numeric(st_distance(points[outside, ], st_cast(st_sfc(hull_polygon), 'LINESTRING')))
   data.frame(outside = outside, distance_outside = distance_outside)
+}
+
+# Cells with their evergreen share set to one value: open land, location and elevation as given,
+# summergreen the rest. This is the evergreen-summergreen swap at fixed open land that the northeast
+# figure (plot_northeast_cover_and_location.R) and the comparison of hindcasts
+# (tools/compare_cv_hindcasts.R) both draw, so both must build it the same way.
+cells_with_evergreen = function(cells, evergreen) {
+  cells$ET = evergreen
+  cells$ST = 1 - cells$OL - evergreen
+  cells
 }
 
 # The inputs the three diagnostic figures share, read through the run (R/run_manifest.R) so

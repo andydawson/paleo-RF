@@ -1,0 +1,6 @@
+THREADS=1 tools/rscript.sh tools/check_cover_contrasts.R inputs <three runs under paleo-RF-verify> at b0d1db7
+all_days  table all_days  MD5 sums as recorded: TRUE; same cells, cover, elevation and areas as all days: TRUE
+snow_free table snow_free MD5 sums as recorded: TRUE; same cells, cover, elevation and areas as all days: TRUE
+snowy     table snowy     MD5 sums as recorded: TRUE; same cells, cover, elevation and areas as all days: TRUE
+The three inputs are those traced; 2,812 calibration cells, 2,808 with an area.
+exit status: 0

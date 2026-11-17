@@ -1,0 +1,3 @@
+snow_free against all_days: every cell's area the same: TRUE | cells, cover and elevation the same: TRUE
+snowy against all_days: every cell's area the same: TRUE | cells, cover and elevation the same: TRUE
+2866 cells have an area; 2808 of the 2812 calibration cells are among them.
