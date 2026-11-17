@@ -40,6 +40,15 @@ in the Climate of the Past paper (the table's last row says 2020 CE, but -0.074 
 2024), and reason through the mismatch between a modern slice that spans 1850 to the 2020s and satellite
 albedo of 2000 to 2009.
 
+**Checked against your paper, 16 November** (Dawson et al. 2025, Climate of the Past 21, 2031-2060, section 2.2;
+Astra's check `2026-11-16_time_bins_codex_gpt6astra.md` on branch `ice-nadi1`): the 25 bins are as you describe. Two
+slips in the table: 11.7 ka BP is about 9750 BCE, not 10,250 BCE; and the youngest bin ends in 2024 CE, as the paper
+prints, not 2020. Each name from 1,000 to 11,500 stands for the bin from 200 years older to 300 years younger
+("1000" is 1,200 to 700 BP, centred on 950). Decided by Chris, 16 November: keep calibrating the youngest bin
+against 2000-2009 albedo and state the assumption in the methods; label the oldest slice 11.5 ka and its period
+10 to 11.5 ka (done with the ice work; the forcing numbers do not change). Parked for later: asking you for a
+summary of the sample ages and pollen counts in the youngest bin, to see which decades dominate it.
+
 ## 2. Content of `veg_posts_interp_ice.RDS`
 
 - The `ice` column is NA for the rows we looked at. What values does it

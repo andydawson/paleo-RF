@@ -439,3 +439,41 @@ prairie-forest border in the Midwest (10.5 to 8 ka; 4.5 to 0.5 ka).
 
 **Call of 12 November.** Chris's note from the call asks the same thing ("Are there other events like hemlock
 decline?"). No answer from Andria is recorded yet; the search of 10 November is the starting list.
+
+**Checked, and decided, 16 November.** Astra checked the candidates against the land cover the pipeline uses
+(`2026-11-16_case_studies_check_codex_gpt6astra.md`): the four leading changes are clearly visible, with 95%
+interpolation intervals from the posterior draws (points of cover, younger minus older): land clearance, 500 to 50
+BP, open land +11.8 [5.6, 17.4] over 215 cells; Quebec-Labrador, 6 to 2.5 ka, evergreen +18.0 [11.0, 25.4] and
+summergreen -17.5; hemlock decline, 6 to 4.5 ka, evergreen -18.0 and summergreen +18.7; prairie advance, 10.5 to 8 ka,
+open land +19.6 [12.6, 26.2], and its retreat, 4.5 to 0.5 ka, -9.7. The land clearance ends at the calibration slice,
+and the eastern United States partly reforested afterwards, so it can only show whether the model responds
+plausibly to opening; 500 to 200 BP on the Atlantic seaboard (open land +13.7 points, 58 cells) avoids the fitted
+end. Chris chose the hemlock decline, Quebec-Labrador and the prairie advance and return as the main diagnostic
+cases, with the land clearance as a secondary check; and to judge each case's expected albedo change as the
+vegetation's effect under today's snow, as the pipeline models it, "until/if we start including past snow changes
+in the model".
+
+6. Where summergreen cover includes shrubs (Quebec-Labrador especially), would you accept forest albedo analogues
+   only as a qualitative check, or do you know of shrub or woodland albedo evidence that would allow a quantitative
+   comparison? (Astra's check, question 4.)
+
+## 10. Glacier albedo: what the literature supports (16 November)
+
+*From your answer of 12 November and Astra's search (`2026-11-16_glacier_albedo_codex_gpt6astra.md`).*
+
+You asked for literature-supported values with a seasonal cycle, and sensitivity analyses; you also said the two
+seasonal columns in `albedo_glacier_monthly.csv` were essentially made up. Astra found no published twelve-month
+albedo series for the deglacial North American ice sheets. The fixed 0.68 has numerical precedent: the North
+American ice-sheet mean in the FAMOUS-ice simulations (Gandy et al. 2023, JGR Earth Surface, Table 2; ensemble 0.56
+to 0.75) and Greenland's summer ablation-area albedo from MODIS (Alexander et al. 2014, The Cryosphere, Table 3).
+Bradley et al. 2024 give 0.50 to 0.55 over exposed ice in summer and above 0.80 over dry snow (21 ka).
+
+**Decided, 16 November (Chris):** keep 0.68 for now, with 0.50 and 0.80 as sensitivity cases shown prominently, and
+keep trying to source seasonal cycles and more justifiable values: "we know there is variation during the year and
+with latitude so we shouldn't ignore it." Astra is looking, read-only, for monthly ice albedo by latitude from
+transient deglacial simulations (for example Kapsch et al. 2021). The glacier albedo does not enter the vegetation
+part of the forcing, under either split rule: it changes only the ice part and the total.
+
+1. Do you know a modelling group whose deglacial simulations (about 12 to 8 ka) could supply monthly ice-sheet
+   albedo, ideally by latitude?
+
