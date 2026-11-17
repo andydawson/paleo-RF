@@ -15,4 +15,4 @@ list(
               'scripts/9_forcing_barplot.R', 'scripts/10_forcing_breakdown.R'),
   anchors = c('tests/anchors/interp-tail-2026-09-21', 'tests/anchors/interp-forcing-2026-10-08'),
   rscript = 'tools/rscript.sh',
-  env     = c(THREADS = '1', CORES = '21'))
+  env     = c(THREADS = '8', CORES = '8-15'))   # 8 threads, as the regression contract asks of comparison runs; any free 8 cores

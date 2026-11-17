@@ -65,9 +65,10 @@ the six verification specs below, for the main session to run.
 | `ice-nadi1-optimal`, `-minimum`, `-maximum` | as the replay with only the ice changed; the comparison beside the headline | about 80 min each |
 | `ice-comparison` | no scripts: the meeting's tables and figures from the four runs | about 1 min, after the four runs |
 
-The first five can run side by side, one core each. Start one first and the others once its
-scripts are running: two verifications starting together on the same commit can collide while
-the first makes the shared worktree and links its inputs.
+The first five can run side by side, each with eight threads on its own eight cores (the
+regression contract's thread count for comparison runs; scripts 7a to 10 use one core). Start one
+first and the others once its scripts are running: two verifications starting together on the
+same commit can collide while the first makes the shared worktree and links its inputs.
 
 ## Worth knowing
 

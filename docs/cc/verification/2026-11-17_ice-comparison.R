@@ -13,4 +13,4 @@ list(
   checks  = list(c('tools/compare_ice.R', out, runs),
                  c('tools/check_compare_ice.R', out, runs[1])),
   rscript = 'tools/rscript.sh',
-  env     = c(THREADS = '1', CORES = '25'))
+  env     = c(THREADS = '8', CORES = '40-47'))   # 8 threads, as the regression contract asks of comparison runs; any free 8 cores
