@@ -160,6 +160,9 @@ years_df = data.frame(year = ages)
 
 alb_diff_colnames = c('cell_id', 'lat', 'long', 'x', 'y', 'year', 'month', 'area', 'area_km2')
 
+# With difference_method "endpoint", pair_albedo_differences() adds two more columns, the
+# second split of the partial-ice total: alb_diff_veg_part_exposed and alb_diff_ice_part_exposed
+# (R/differences.R). This empty table only names the columns: rbind() drops it once rows come.
 alb_diff_df = data.frame(matrix(NA, nrow=0, ncol=length(alb_diff_colnames)+12))
 
 colnames(alb_diff_df) = c(alb_diff_colnames,

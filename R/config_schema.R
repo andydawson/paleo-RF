@@ -28,12 +28,14 @@ GLACIER_ALBEDO_COLUMNS = c('ice_albedo', 'ice_albedo_fixed', 'ice_albedo_sc')
 # The ice-fraction files script 7a can read, by their ids in R/paths.R.
 ICE_FRACTION_SOURCES = c('dalton_ice', 'nadi1_optimal', 'nadi1_minimum', 'nadi1_maximum')
 
-# Script 8 computes every forcing as rf_<kernel>_<variant>; these are the ten variants
-# (scripts/8_radiative.R, the rf_* columns) and the three kernels.
+# Script 8 computes every forcing as rf_<kernel>_<variant>; these are the twelve variants
+# (scripts/8_radiative.R, the rf_* columns; the last two, the second split of the partial-ice
+# total, with difference_method "endpoint" only) and the three kernels.
 FORCING_VARIANTS = c('veg_thresh', 'ice_thresh', 'icesc_thresh',
                      'veg_ice_thresh', 'veg_icesc_thresh',
                      'veg_part', 'ice_part', 'icesc_part',
-                     'veg_ice_parts', 'veg_icesc_parts')
+                     'veg_ice_parts', 'veg_icesc_parts',
+                     'veg_part_exposed', 'ice_part_exposed')
 FORCING_KERNELS  = c('hadgem', 'cam5', 'cack')
 # The headline (analysis$forcing$variant) must be one of the four totals, vegetation plus
 # ice: a vegetation-only or ice-only part is not the forcing of the whole surface. (The
@@ -223,5 +225,11 @@ config_combination_errors = function(cfg) {
     errs = c(errs, 'analysis$albedo: with source "legacy_raster" (one albedo per month), statistic must be "all_days" and version "full_75"')
   if (!'hadgem' %in% cfg$analysis$forcing$report_kernels)
     errs = c(errs, 'analysis$forcing$report_kernels must include hadgem: script 9 draws its headline figure and the variant sensitivity with it')
+  # The second split of the partial-ice total is made with the "endpoint" difference method
+  # only (R/differences.R); script 9 would otherwise leave these variants out without a word.
+  exposed = intersect(a$forcing$sensitivity_variants, c('veg_part_exposed', 'ice_part_exposed'))
+  if (length(exposed) && a$ice$difference_method != 'endpoint')
+    errs = c(errs, sprintf('analysis$forcing$sensitivity_variants: %s need analysis$ice$difference_method "endpoint"',
+                           paste(exposed, collapse = ' and ')))
   errs
 }

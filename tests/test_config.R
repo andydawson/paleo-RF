@@ -197,6 +197,13 @@ stopifnot(
   accepts(with_setting("analysis$forcing$variant", "veg_icesc_thresh")),
   refuses("forcing\\$variant has 'veg_thresh'", with_setting("analysis$forcing$variant", "veg_thresh")),
   refuses("forcing\\$variant has 'ice_part'", with_setting("analysis$forcing$variant", "ice_part")),
+  # the second split of the partial-ice total (Chris, 16 November 2026): in the sensitivity
+  # table of config.R, not of the legacy file, and only with the "endpoint" difference method
+  all(c("veg_part_exposed", "ice_part_exposed") %in% cfg$analysis$forcing$sensitivity_variants),
+  !any(grepl("exposed", legacy$analysis$forcing$sensitivity_variants)),
+  refuses("forcing\\$variant has 'veg_part_exposed'", with_setting("analysis$forcing$variant", "veg_part_exposed")),
+  refuses("veg_part_exposed and ice_part_exposed need analysis\\$ice\\$difference_method \"endpoint\"",
+          with_setting("analysis$ice$difference_method", "legacy_components")),
   # unsupported combinations
   refuses("report_kernels must include hadgem", with_setting("analysis$forcing$report_kernels", c("cam5", "cack"))),
   # every problem is reported at once, not just the first

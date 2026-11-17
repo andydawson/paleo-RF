@@ -176,9 +176,14 @@ list(
       # veg_part + ice_part = veg_ice_parts, by area share). With the "endpoint"
       # difference method (ice above), script 9 sets a threshold part that does not
       # apply to 0, so cells with both kinds of step stay in (R/forcing_components.R).
+      # The last two split the partial-ice total by a second rule, so that Andria can choose
+      # (Chris, 16 November 2026): veg_part_exposed is the vegetation change only on the land
+      # ice-free at both slices, ice_part_exposed the rest of the total (R/differences.R;
+      # made with the "endpoint" difference method only).
       sensitivity_variants = c("veg_thresh", "ice_thresh", "veg_ice_thresh",
                                "veg_part", "ice_part", "veg_ice_parts",
-                               "veg_icesc_thresh", "veg_icesc_parts"),
+                               "veg_icesc_thresh", "veg_icesc_parts",
+                               "veg_part_exposed", "ice_part_exposed"),
       # Script 10: the width of the latitude bands its breakdown uses, degrees (bands
       # start at multiples of it; the outer two are cut at the domain's limits). Shapes a
       # breakdown only, never a total (Chris, 2026-10-15, question B2d).
