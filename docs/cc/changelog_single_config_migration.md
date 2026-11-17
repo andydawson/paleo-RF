@@ -41,6 +41,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Cross-validation protocol 2: fifteen versions, a nearby score, two separation tests; results and reviews | #24 | merged 2026-11-16 | 326ea11 |
 | Hindcast comparison tool | #24 | merged 2026-11-16 | c254734 |
 | Cover-contrast exploration beside published contrasts | #24 | merged 2026-11-16 | c7d2aab |
+| Comparison of the cover contrasts with Duveiller et al. (2018) | #24 | merged 2026-11-17 | d7159f3 |
 
 ---
 
@@ -1933,3 +1934,35 @@ checks of both tools' specs (`docs/cc/verification/2026-11-16_merge-cover-contra
 **Full run.** Completed on 16 November from the verified commit 7c12534: 36 jobs, 216 fit records, 4,536 rows, all
 212 attempted fits converged, and the 4 fits not made by design (the two versions with a location term of 500 in
 the snowy table's July and August). The longest fit took 72 minutes; the largest job peaked at 1.24 GB.
+
+## Comparison of the cover contrasts with Duveiller et al. (2018) (#24), merged 2026-11-17
+
+**What it is for.** The cover-contrast exploration sets the fitted response to a 10-point exchange of cover beside
+published forest albedo differences. This adds a satellite comparison on the same cells: Duveiller, Hooker and
+Cescatti's published one-degree monthly albedo change for complete conversion between land-cover classes (MODIS
+2008-2012, land cover of 2010; Scientific Data 5, 180014, doi:10.1038/sdata.2018.14). It is an exploration: no pass
+or fail, and no effect on the choice of model.
+
+**What changed.**
+- `tools/explore_cover_contrasts.R`: a `duveiller` command reads the saved all-days cases and fits (no refit) and the
+  file `albedo_IGBPdet.nc` (Figshare doi:10.6084/m9.figshare.5217709, CC0; kept in `data/duveiller2018/`, outside git,
+  with its provenance note). It restricts each eligible case to cells with a published estimate, renormalises the area
+  weights there, and computes both means on the same cells for all three exchanges: evergreen to summergreen
+  (needleleaf evergreen to broadleaf deciduous forest, transition 23 reversed), evergreen to open land (to grassland,
+  transition 38), summergreen to open land (broadleaf deciduous forest to grassland, transition 28). It writes a
+  1,512-row table, one figure page and a record, with the common cells and two coverage shares beside every mean.
+  Four small plotting helpers are now shared with the report command; its pages are pixel-identical after the change.
+- `tools/check_cover_contrasts.R`: a `duveiller` check of the real output; tests for reading, matching, weights, empty
+  intersections and a shifted grid, which fail on four deliberately broken copies of the code.
+
+**Decisions (Chris, 16-17 November).** Compare all three exchanges. Leave out any summary of the published cell
+uncertainties for now: the file gives no covariance between cells, so a regional interval would need an assumption;
+recorded in `docs/cc/2026-11-17_duveiller_comparison_decisions.md` to return to.
+
+**Reviews and verification.** Designed and reviewed by Astra (`2026-11-16_duveiller_comparison_design_codex_gpt6astra.md`,
+`2026-11-17_duveiller_review_codex_gpt6astra.md`); built by an Opus agent. Verified at fa9e465: PASS, 12 checks
+(`docs/cc/verification/2026-11-17_duveiller-comparison_report.md`). The full run took 2 minutes.
+
+**First look.** Coverage is partial: typically a quarter to a third of the eligible cells' area has a published
+estimate. Northeast, evergreen to summergreen, location term 100 with straight-line cover: July +0.0069 per 10 points
+beside Duveiller's +0.0036 (40 cells); January -0.021 beside +0.006 (20 cells).
