@@ -1,5 +1,6 @@
 # The exploration of the fitted cover response: hand-worked cells, a stand-in fitter (one small
-# parametric fit; none of the six versions is fitted) and the tracked table of published values.
+# parametric fit; none of the six versions is fitted), the tracked table of published values, and a
+# miniature of Duveiller et al.'s file for the comparison command.
 suppressMessages(source('tools/explore_cover_contrasts.R'))
 suppressPackageStartupMessages(library(mgcv))
 equal = function(a, b) isTRUE(all.equal(a, b, check.attributes = FALSE))
@@ -89,8 +90,10 @@ northeast = data.frame(x = -75.5 + 0:5, y = 42.5, elev = 300,
 northeast$ST = 1 - northeast$OL - northeast$ET
 south = data.frame(x = -85.5, y = 25.5, elev = 10, OL = .3, ET = .3, ST = .4)   # in the Southeast box, south of the study area
 cal = rbind(northeast, background, south)
-# A known response: open land brightest, evergreen darkest, so all three exchanges brighten.
-cal$apr = plogis(-0.5 - 2 * cal$ET - cal$ST + 0.0003 * cal$elev + 0.05 * sin(seq_len(nrow(cal))))
+# A known response: open land brightest, evergreen darkest, so all three exchanges brighten, with a
+# little noise that differs between months (the comparison command below needs all twelve).
+albedo_of = function(cal, month) plogis(-0.5 - 2 * cal$ET - cal$ST + 0.0003 * cal$elev + 0.05 * sin(seq_len(nrow(cal)) + match(month, MONTHS) - 4))
+cal$apr = albedo_of(cal, 'apr')
 cal$apr[4] = NA                                   # the fourth northeast cell has no albedo in April
 area = c(1, 3, 2, 4, NA, 5, rep(2, 161))          # the fifth has no area
 flat = function(value) setNames(data.frame(matrix(value, nrow(cal), length(MONTHS))), MONTHS)
@@ -204,4 +207,139 @@ albedo$jul[2] = albedo$jul[2] + 0.001             # a table from another build: 
 saveRDS(data.frame(real, albedo), file.path(run_dir, 'data', 'calibration_modern_lct_interp_bluesky.RDS'))
 stopifnot(fails(read_run(run_dir)))
 unlink(run_dir, recursive = TRUE)
-cat('Cover contrasts: hand-worked checks passed (none of the six versions fitted).\n')
+# --- The duveiller command: a miniature of the published file ------------------------------------
+# More longitudes than latitudes, and latitudes descending as in the real file; the months stored
+# from December back to January, and the transitions out of order with one code more. So a
+# position taken for a value, or a grid read the wrong way round, gives other numbers. Each value
+# tells its cell, month and transition apart and is a multiple of 2^-24, exact in the file's 32-bit
+# floats. The counts are everywhere, also where there is no estimate, as in the real file.
+LON = seq(-124.5, -70.5); LAT = seq(49.5, 25.5)                         # every cell of the hand-made run
+STORED_MONTHS = 12:1; STORED_TRANSITIONS = c(38, 12, 28, 99, 23)
+value = function(lon, lat, month, transition) (lon + 125.5 + 64 * (lat - 24.5) + 4096 * month + 65536 * transition) / 2^24
+grid = expand.grid(lon = LON, lat = LAT, month = STORED_MONTHS, transition = STORED_TRANSITIONS)
+shape = c(length(LON), length(LAT), length(STORED_MONTHS), length(STORED_TRANSITIONS))
+change = array(value(grid$lon, grid$lat, grid$month, grid$transition), shape)
+samples = array(20 + (grid$lat - 24.5) + (grid$lon + 125.5) %% 7, shape)    # 21 to 51
+jan = STORED_MONTHS == 1; t23 = STORED_TRANSITIONS == 23
+change[LON == -75.5, LAT == 42.5, jan, t23] = NaN                       # January: no estimate at the first northeast cell,
+change[LON == -74.5, LAT == 42.5, jan, t23] = 0                         # and an estimate of zero at the second
+change[LON > -100, , STORED_MONTHS == 7, STORED_TRANSITIONS == 38] = NaN  # July, transition 38: none east of 100 W
+write_source = function(change, samples, lon = LON, dims = c('lon', 'lat', 'mon', 'iTr')) {
+  file = tempfile('duveiller-', fileext = '.nc')
+  axes = list(lon = ncdf4::ncdim_def('lon', 'degreesE', lon), lat = ncdf4::ncdim_def('lat', 'degreesN', LAT),
+              mon = ncdf4::ncdim_def('mon', 'months', STORED_MONTHS), iTr = ncdf4::ncdim_def('iTr', '', STORED_TRANSITIONS))
+  nc = ncdf4::nc_create(file, list(ncdf4::ncvar_def('Delta_albedo', '', axes[dims], NaN, prec = 'float'),
+                                   ncdf4::ncvar_def('N_Delta_albedo', 'samples', axes[dims], NaN, prec = 'float')))
+  order = match(dims, names(axes))
+  ncdf4::ncvar_put(nc, 'Delta_albedo', aperm(change, order))
+  ncdf4::ncvar_put(nc, 'N_Delta_albedo', aperm(samples, order))
+  ncdf4::nc_close(nc)
+  file
+}
+fails_with = function(expression, pattern) {
+  result = try(force(expression), silent = TRUE)
+  inherits(result, 'try-error') && grepl(pattern, result)
+}
+source_file = write_source(change, samples)
+nc = ncdf4::nc_open(source_file)
+check_duveiller_file(nc)
+# Each transition turned to the exchange's direction and multiplied by 0.10, latitudes the right way up.
+turned = function(month, transition, sign) EXCHANGE_SIZE * sign * outer(LON, LAT, value, month = month, transition = transition)
+reversed = turned(1, 23, -1)
+reversed[LON == -75.5, LAT == 42.5] = NaN; reversed[LON == -74.5, LAT == 42.5] = 0
+july = turned(7, 38, 1); july[LON > -100, ] = NaN
+january = read_duveiller_month(nc, 'jan')
+stopifnot(identical(names(january), EXCHANGES$exchange), equal(january[['evergreen to summergreen']]$change, reversed),
+  equal(january[['evergreen to open land']]$change, turned(1, 38, 1)), equal(january[['summergreen to open land']]$change, turned(1, 28, 1)),
+  equal(read_duveiller_month(nc, 'jul')[['evergreen to open land']]$change, july),
+  equal(january[['evergreen to summergreen']]$samples, samples[, , jan, t23]),
+  # a missing estimate stays missing, a zero stays an estimate, and only the change is reversed
+  !is.finite(january[['evergreen to summergreen']]$change[LON == -75.5, LAT == 42.5]),
+  identical(january[['evergreen to summergreen']]$change[LON == -74.5, LAT == 42.5], 0),
+  all(january[['evergreen to summergreen']]$change[LON < -100, ] < 0), all(january[['evergreen to summergreen']]$samples > 0))
+# The layout is checked by name, the grid by its spacing, the counts against the estimates.
+swapped = ncdf4::nc_open(write_source(change, samples, dims = c('lat', 'lon', 'mon', 'iTr')))
+half = ncdf4::nc_open(write_source(change, samples, lon = seq(-124.5, by = 0.5, length.out = length(LON))))
+few = samples; few[LON == -73.5, LAT == 42.5, jan, t23] = 19
+too_few = ncdf4::nc_open(write_source(change, few))
+stopifnot(fails_with(check_duveiller_file(swapped), 'dimensions lon, lat, mon, iTr'), fails_with(check_duveiller_file(half), 'not a one-degree grid'),
+  fails_with(read_duveiller_month(too_few, 'jan'), 'without 20 samples'), !fails(read_duveiller_month(too_few, 'feb')))
+for (opened in list(swapped, half, too_few)) ncdf4::nc_close(opened)
+
+# --- The duveiller command: the saved job of the hand-made run, all twelve months ----------------
+# The run above with all-days albedo in every month (the fourth northeast cell has none), fitted by
+# the stand-in: loc30_linear fitted, loc100_linear failed, the other four not fitted.
+all_days = run
+all_days$table = 'all_days'
+for (month in MONTHS) all_days$cal[[month]] = albedo_of(cal, month)
+all_days$cal[4, MONTHS] = NA
+saved_dir = tempfile('saved-')
+invisible(capture.output(fit_months(all_days, saved_dir, MONTHS, fit_model = stand_in)))
+comparison_dir = tempfile('duveiller-')
+invisible(capture.output(suppressMessages(compare_duveiller(saved_dir, source_file, comparison_dir))))
+compared = read.csv(file.path(comparison_dir, 'cover_contrasts_duveiller.csv'), comment.char = '#')
+source_columns = c('month', 'region', 'exchange', 'region_cells', 'eligible_cells', 'common_cells', 'common_area_m2',
+                   'share_of_eligible_area', 'share_of_region_area', 'min_samples', 'max_samples', 'duveiller_contrast')
+stopifnot(nrow(compared) == 12 * 6 * 7 * 3, !anyDuplicated(compared[, c('month', 'version', 'region', 'exchange')]),
+  identical(unique(compared$month), MONTHS), identical(unique(compared$version), CONTRAST_VERSIONS),
+  nrow(unique(compared[, source_columns])) == 12 * 7 * 3,       # the published side and the coverage are the same for every version
+  grepl('^# ', readLines(file.path(comparison_dir, 'cover_contrasts_duveiller.csv'), 1)),
+  file.size(file.path(comparison_dir, 'cover_contrasts_duveiller.pdf')) > 0)
+# Northeast, January, evergreen to summergreen, by hand. The eligible cells are the first three
+# (areas 1, 3 and 2): the first has no published estimate and the second an estimate of zero, so
+# two common cells weighted 3/5 and 2/5, and the published mean is 2/5 of the third cell's value
+# reversed and multiplied by 0.10. The region's calibration cells have an area of 1 + 3 + 2 + 4 + 5.
+ne_jan = compared[compared$month == 'jan' & compared$region == 'Northeast (hemlock box)' & compared$exchange == 'evergreen to summergreen', ]
+stopifnot(nrow(ne_jan) == 6, all(ne_jan$eligible_cells == 3), all(ne_jan$common_cells == 2), all(ne_jan$common_area_m2 == 5),
+  equal(ne_jan$share_of_eligible_area, rep(5 / 6, 6)), equal(ne_jan$share_of_region_area, rep(5 / 15, 6)),
+  equal(ne_jan$duveiller_contrast, rep(2 / 5 * -0.1 * value(-73.5, 42.5, 1, 23), 6)), all(ne_jan$min_samples == 40), all(ne_jan$max_samples == 41))
+# The common cells' two endpoints are the saved ones, subset alike, and the weights are renormalised.
+jan_cases = readRDS(file.path(saved_dir, 'cases_all_days_jan.rds'))
+k = which(sapply(jan_cases, function(case) case$support$region == 'Northeast (hemlock box)' && case$support$exchange == 'evergreen to summergreen'))
+matched = duveiller_cases(jan_cases, january, nc)[[k]]$exchange
+stopifnot(identical(matched$first, jan_cases[[k]]$exchange$first[2:3, ]), identical(matched$second, jan_cases[[k]]$exchange$second[2:3, ]),
+  equal(matched$weight, c(3, 2) / 5), equal(jan_cases[[k]]$exchange$weight, c(1, 3, 2) / 6))
+# A region with calibration cells but none eligible (as Alaska and Yukon in December): none of its
+# area is represented, and there is no share of an eligible area to give.
+none = jan_cases[k]
+none[[1]]$exchange = freeze_exchange(none[[1]]$exchange$first[0, ], none[[1]]$exchange$second[0, ], numeric(0))
+none[[1]]$support[, c('eligible_cells', 'area_share')] = 0
+none = duveiller_cases(none, january, nc)[[1]]$support
+stopifnot(none$common_cells == 0, is.na(none$share_of_eligible_area), none$share_of_region_area == 0, is.na(none$duveiller_contrast))
+# The fitted version's mean on those two cells with those weights, from its own predictions, and not
+# its saved mean over all three; the failed and the unfitted versions have no numbers.
+fit = readRDS(file.path(saved_dir, 'fit_all_days_jan_loc30_linear.rds'))$fit
+cells = all_days$cal[2:3, ]
+ne_difference = as.numeric(predict(fit, endpoint(cells, 'ST', 'ET'), type = 'response') - predict(fit, endpoint(cells, 'ET', 'ST'), type = 'response'))
+saved_row = read.csv(file.path(saved_dir, 'contrasts_all_days_jan.csv'))
+saved_row = saved_row[saved_row$version == 'loc30_linear' & saved_row$region == 'Northeast (hemlock box)' & saved_row$exchange == 'evergreen to summergreen', ]
+restricted = ne_jan[ne_jan$version == 'loc30_linear', ]
+stopifnot(equal(restricted$contrast, sum(c(3, 2) / 5 * ne_difference)), !equal(restricted$contrast, saved_row$contrast), restricted$se > 0,
+  all(is.na(ne_jan$contrast[ne_jan$version != 'loc30_linear'])), ne_jan$fit_status[ne_jan$version == 'loc100_linear'] == 'ERROR: stipulated failure',
+  all(grepl('^not fitted', ne_jan$fit_status[!ne_jan$version %in% c('loc30_linear', 'loc100_linear')])))
+# July, evergreen to open land: no published estimate at the northeast's two eligible cells, so the
+# rows stay, without means. Alaska and Yukon have no cells at all, so no shares either.
+empty = compared[compared$month == 'jul' & compared$region == 'Northeast (hemlock box)' & compared$exchange == 'evergreen to open land', ]
+alaska_rows = compared[compared$region == 'Alaska / Yukon', ]
+stopifnot(nrow(empty) == 6, all(empty$eligible_cells == 2), all(empty$common_cells == 0), all(empty$common_area_m2 == 0),
+  all(empty$share_of_eligible_area == 0), all(empty$share_of_region_area == 0), all(is.na(empty$duveiller_contrast)),
+  all(is.na(empty$min_samples) & is.na(empty$max_samples)), all(is.na(empty$contrast) & is.na(empty$se) & is.na(empty$spread)),
+  all(alaska_rows$eligible_cells == 0), all(is.na(alaska_rows$share_of_eligible_area) & is.na(alaska_rows$share_of_region_area)),
+  # numbers exactly where there are common cells (and, for a version, a converged fit)
+  identical(is.finite(compared$duveiller_contrast), compared$common_cells > 0),
+  identical(is.finite(compared$contrast), compared$common_cells > 0 & compared$version == 'loc30_linear'))
+record = readLines(file.path(comparison_dir, 'record_duveiller.txt'))
+stopifnot('job: duveiller' %in% record, length(grep('^input ', record)) == 1 + 12 + 12 + 24,   # the file, cases, status tables and the 24 fits made
+  paste('input published_change', source_file, tools::md5sum(source_file)) %in% record,
+  'transition: evergreen to summergreen beside transition 23, sign -1' %in% record, length(grep('^transition: ', record)) == 3,
+  any(grepl('^package ncdf4 ', record)), length(grep('^time .*: [0-9.]+ s$', record)) == 4)
+# A shifted grid, and saved fits that do not match their status tables, stop the comparison with a reason.
+tampered = file.path(saved_dir, 'fit_all_days_jun_loc30_linear.rds')
+jun_fit = readRDS(tampered); jun_fit$status = 'another fit'; saveRDS(jun_fit, tampered)
+stopifnot(fails_with(compare_duveiller(saved_dir, write_source(change, samples, lon = LON + 0.5), tempfile()), 'do not line up'),
+  fails_with(compare_duveiller(saved_dir, source_file, tempfile()), 'is not the fit its status table describes'))
+invisible(file.remove(file.path(saved_dir, 'fit_all_days_mar_loc30_linear.rds')))
+stopifnot(fails_with(compare_duveiller(saved_dir, source_file, tempfile()), 'do not match their status tables'))
+ncdf4::nc_close(nc)
+unlink(c(saved_dir, comparison_dir), recursive = TRUE)
+cat('Cover contrasts and the comparison with Duveiller et al.: hand-worked checks passed (none of the six versions fitted).\n')
