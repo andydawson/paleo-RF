@@ -12,6 +12,12 @@
 #   Rscript tools/check_cover_contrasts.R job <output-dir>
 #       The fit and report commands' output for the snowy table's July and August: the expected
 #       records, rows and support, a few numbers, and one saved fit that gives its numbers back.
+#   Rscript tools/check_cover_contrasts.R duveiller <output-dir> <saved-contrast-dir> <netcdf-file>
+#       The duveiller command's output for the full saved run: the published file as recorded and
+#       consistent, with the design's value at one cell; 1,512 rows, the published side and the
+#       coverage the same for every version, numbers exactly where there are common cells; the
+#       design's counts; five means recomputed from the raw file and the saved fits; one page; a
+#       complete record.
 #
 # Paths are relative to the repository root or absolute. Nothing is written.
 
@@ -146,13 +152,125 @@ check_job = function(out_dir) {
   cat('8 fits saved; the saved July fit of loc100_linear, with the saved cases, gives back its 21 contrasts and standard errors.\n')
 }
 
+# --- duveiller ------------------------------------------------------------------------------------
+
+# The published file the design inspected: Figshare article 5217709, version 1
+# (data/duveiller2018/PROVENANCE.txt in the main checkout).
+DUVEILLER_MD5 = '96125db41154fa176c53b51596893ad6'
+
+# The northeast's common and eligible cells as the design's inspection of the same files counted
+# them (16 November).
+NORTHEAST_COMMON = data.frame(month = rep(c('jan', 'jul'), each = 3), exchange = rep(EXCHANGES$exchange, 2),
+                              common_cells = c(20, 1, 11, 40, 5, 12), eligible_cells = rep(c(58, 41, 22), 2))
+
+# Means recomputed here from the raw file and the saved fits' own predictions, without the tool's
+# functions: winter and summer, the three transitions with their signs written out again, three
+# versions.
+RECOMPUTED = data.frame(month = c('jan', 'jul', 'jan', 'jul', 'jul'),
+  region = c('Northeast (hemlock box)', 'Northeast (hemlock box)', STUDY_AREA, STUDY_AREA, 'Upper Midwest / Great Lakes'),
+  exchange = c('evergreen to summergreen', 'evergreen to summergreen', 'summergreen to open land', 'summergreen to open land', 'evergreen to open land'),
+  transition = c(23, 23, 28, 28, 38), sign = c(-1, -1, 1, 1, 1),
+  version = c('loc100_linear', 'loc100_linear', 'mod8', 'mod8', 'loc30_linear'))
+
+check_duveiller = function(out_dir, saved_dir, source_file) {
+  # The file: the one inspected, with an uncertainty and at least 20 samples wherever it has an
+  # estimate of the three transitions, and the design's value at 75.5 W, 45.5 N in January, as
+  # published and as the tool reads it (reversed and multiplied by 0.10).
+  nc = ncdf4::nc_open(source_file)
+  on.exit(ncdf4::nc_close(nc))
+  at = function(dim, value) match(value, nc$dim[[dim]]$vals)
+  for (code in DUVEILLER_TRANSITIONS$transition) {
+    every_month = function(variable) ncdf4::ncvar_get(nc, variable, start = c(1, 1, 1, at('iTr', code)), count = c(-1, -1, -1, 1))
+    estimate = is.finite(every_month('Delta_albedo'))
+    sd = every_month('SD_Delta_albedo')
+    stopifnot(all(is.finite(sd[estimate]) & sd[estimate] >= 0), all(every_month('N_Delta_albedo')[estimate] >= 20))
+  }
+  cell = c(at('lon', -75.5), at('lat', 45.5))
+  value = function(variable) ncdf4::ncvar_get(nc, variable, start = c(cell, at('mon', 1), at('iTr', 23)), count = c(1, 1, 1, 1))
+  read = read_duveiller_month(nc, 'jan')[['evergreen to summergreen']]
+  stopifnot(unname(tools::md5sum(source_file)) == DUVEILLER_MD5, abs(value('Delta_albedo') + 0.0444744043) < 1e-10,
+            abs(value('SD_Delta_albedo') - 0.0143031348) < 1e-10, value('N_Delta_albedo') == 39,
+            abs(read$change[cell[1], cell[2]] - 0.00444744043) < 1e-11, read$samples[cell[1], cell[2]] == 39)
+  cat('The published file has its recorded MD5 sum; every estimate of transitions 23, 38 and 28 has an uncertainty and at least\n',
+      '20 samples; at 75.5 W, 45.5 N in January transition 23 is -0.0444744043 (39 samples), read as +0.00444744043.\n', sep = '')
+
+  # The table: every month, version, region and exchange once; the published side and the coverage
+  # the same for every version; the saved results' cells, fits and area shares; numbers exactly
+  # where there are common cells (every all-days fit converged).
+  rows = utils::read.csv(file.path(out_dir, 'cover_contrasts_duveiller.csv'), comment.char = '#')
+  key = c('month', 'version', 'region', 'exchange')
+  saved = do.call(rbind, lapply(MONTHS, function(month) utils::read.csv(file.path(saved_dir, sprintf('contrasts_all_days_%s.csv', month)))))
+  same = merge(rows, saved, by = key, suffixes = c('', '_saved'))
+  per_case = unique(rows[, c('month', 'region', 'exchange', 'region_cells', 'eligible_cells', 'common_cells', 'common_area_m2',
+                             'share_of_eligible_area', 'share_of_region_area', 'min_samples', 'max_samples', 'duveiller_contrast')])
+  common = rows$common_cells > 0
+  eligible = same$eligible_cells > 0
+  stopifnot(nrow(rows) == 1512, !anyDuplicated(rows[, key]), setequal(rows$month, MONTHS), setequal(rows$version, CONTRAST_VERSIONS),
+            setequal(rows$exchange, EXCHANGES$exchange), length(unique(rows$region)) == 7, nrow(per_case) == 12 * 7 * 3,
+            nrow(same) == 1512, all(same$eligible_cells == same$eligible_cells_saved), all(same$region_cells == same$region_cells_saved),
+            identical(same$fit_status, same$fit_status_saved), all(rows$converged),
+            identical(is.finite(rows$duveiller_contrast), common), identical(is.finite(rows$contrast), common),
+            identical(is.finite(rows$se), common), identical(is.finite(rows$spread), common),
+            identical(is.finite(rows$min_samples), common), all(rows$min_samples[common] >= 20 & rows$min_samples[common] <= rows$max_samples[common]),
+            all(rows$common_cells <= rows$eligible_cells), identical(is.finite(same$share_of_eligible_area), eligible),
+            all(same$share_of_eligible_area[eligible] <= 1), all(same$share_of_region_area[!eligible] == 0),
+            all(abs(same$share_of_region_area - same$area_share * same$share_of_eligible_area)[eligible] < 1e-12))
+  cat(sprintf('1,512 uniquely identified rows; the published side and the coverage the same for every version; the saved results\' cells\n%s',
+              'and fits; numbers exactly where there are common cells; the shares of area consistent with the saved ones.\n'))
+
+  # What the design's inspection found: the northeast's counts in January and July; no common cells
+  # in Alaska and Yukon in January and December, and at most two for summergreen to open land.
+  ne = per_case[per_case$region == 'Northeast (hemlock box)', ]
+  ne = ne[match(paste(NORTHEAST_COMMON$month, NORTHEAST_COMMON$exchange), paste(ne$month, ne$exchange)), ]
+  alaska = per_case[per_case$region == 'Alaska / Yukon', ]
+  stopifnot(identical(as.numeric(ne$common_cells), NORTHEAST_COMMON$common_cells), identical(as.numeric(ne$eligible_cells), NORTHEAST_COMMON$eligible_cells),
+            all(alaska$common_cells[alaska$month %in% c('jan', 'dec')] == 0), all(alaska$common_cells[alaska$exchange == 'summergreen to open land'] <= 2))
+  cat('The common cells of the northeast and of Alaska and Yukon are those the design\'s inspection counted.\n')
+
+  # Five means recomputed, and the saved mean over all the eligible cells from the same predictions.
+  for (i in seq_len(nrow(RECOMPUTED))) {
+    pick = RECOMPUTED[i, ]
+    cases = readRDS(file.path(saved_dir, sprintf('cases_all_days_%s.rds', pick$month)))
+    case = cases[[which(vapply(cases, function(c) c$support$region == pick$region && c$support$exchange == pick$exchange, FALSE))]]$exchange
+    layer = ncdf4::ncvar_get(nc, 'Delta_albedo', start = c(1, 1, at('mon', match(pick$month, MONTHS)), at('iTr', pick$transition)), count = c(-1, -1, 1, 1))
+    published = layer[cbind(at('lon', case$first$x), at('lat', case$first$y))]
+    kept = is.finite(published)
+    weight = case$area[kept] / sum(case$area[kept])
+    fit = readRDS(file.path(saved_dir, sprintf('fit_all_days_%s_%s.rds', pick$month, pick$version)))$fit
+    difference = as.numeric(stats::predict(fit, case$second, type = 'response') - stats::predict(fit, case$first, type = 'response'))
+    row = rows[rows$month == pick$month & rows$version == pick$version & rows$region == pick$region & rows$exchange == pick$exchange, ]
+    before = saved[saved$month == pick$month & saved$version == pick$version & saved$region == pick$region & saved$exchange == pick$exchange, ]
+    again = c(published = sum(weight * 0.10 * pick$sign * published[kept]), model = sum(weight * difference[kept]), all_eligible = sum(case$weight * difference))
+    cat(sprintf('%s, %s, %s, %s: %d of %d cells; published %.6f (again %.6f), model %.6f (again %.6f); all eligible cells %.6f (saved %.6f)\n',
+                pick$month, pick$region, pick$exchange, pick$version, sum(kept), length(kept), row$duveiller_contrast, again[['published']],
+                row$contrast, again[['model']], again[['all_eligible']], before$contrast))
+    stopifnot(nrow(row) == 1, row$common_cells == sum(kept), abs(row$duveiller_contrast - again[['published']]) < 1e-12,
+              abs(row$contrast - again[['model']]) < 1e-12, abs(before$contrast - again[['all_eligible']]) < 1e-12)
+    rm(fit); gc(verbose = FALSE)
+  }
+  cat('Five means recomputed from the raw file and the saved fits agree within 1e-12, and so do the saved means over all eligible cells.\n')
+
+  # One page, and a complete record whose inputs still have their recorded MD5 sums.
+  pdf = file.path(out_dir, 'cover_contrasts_duveiller.pdf')
+  pages = length(grepRaw('/Type /Page ', readBin(pdf, 'raw', file.size(pdf)), fixed = TRUE, all = TRUE))
+  record = readLines(file.path(out_dir, 'record_duveiller.txt'))
+  inputs = do.call(rbind, strsplit(grep('^input ', record, value = TRUE), ' '))
+  stopifnot(pages == 1, 'job: duveiller' %in% record, nrow(inputs) == 1 + 12 + 12 + 72, inputs[1, 2] == 'published_change',
+            inputs[1, 4] == DUVEILLER_MD5, identical(unname(tools::md5sum(inputs[, 3])), inputs[, 4]),
+            length(grep('^transition: ', record)) == 3, any(grepl('^not reported: SD_Delta_albedo', record)),
+            any(grepl('^package ncdf4 ', record)), length(grep('^time .*: [0-9.]+ s$', record)) == 4)
+  cat('One page; the record lists the 97 inputs with their current MD5 sums, the mapping, the settings and four timings.\n')
+}
+
 if (sys.nframe() == 0L) {
   args = commandArgs(trailingOnly = TRUE)
   if (length(args) == 4 && args[1] == 'inputs') check_inputs(args[2:4])
   else if (length(args) == 2 && args[1] == 'exchanges') check_exchanges(args[2])
   else if (length(args) == 2 && args[1] == 'job') check_job(args[2])
+  else if (length(args) == 4 && args[1] == 'duveiller') check_duveiller(args[2], args[3], args[4])
   else {
-    cat('usage: Rscript tools/check_cover_contrasts.R inputs <all-days-run> <snow-free-run> <snowy-run> | exchanges <protocol-2-run> | job <output-dir>\n')
+    cat('usage: Rscript tools/check_cover_contrasts.R inputs <all-days-run> <snow-free-run> <snowy-run> | exchanges <protocol-2-run> | job <output-dir>',
+        '| duveiller <output-dir> <saved-contrast-dir> <netcdf-file>\n')
     quit(status = 2)
   }
 }
