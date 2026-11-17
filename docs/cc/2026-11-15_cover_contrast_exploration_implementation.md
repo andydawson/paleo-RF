@@ -10,6 +10,8 @@ the better". Astra has not reviewed this yet, the verification tool has not been
 changes") and the changes Chris approved from it are in section 10. Where an earlier section is out of date, section
 10 says so. The verification tool has still not been run, nor the exploration.*
 
+*17 November: the comparison with Duveiller et al. (2018) is built (section 11); it has not been reviewed or verified yet.*
+
 ## In brief
 
 - **What it is for.** It shows, by region and month, how each candidate model's fitted response to a change of
@@ -263,9 +265,90 @@ the trial and the verification output, with one thread per job and `/usr/bin/tim
    where a converged fit has eligible cells. The report command stacks whatever files it finds, so it cannot
    itself show that the run is complete.
 
+## 11. The comparison with Duveiller et al. (2018), 17 November
+
+*Built by an Opus agent to Astra's design (`2026-11-16_duveiller_comparison_design_codex_gpt6astra.md`) with Chris's
+decisions (`2026-11-17_duveiller_comparison_decisions.md`), which answer question 4 of section 9: the file was
+downloaded, and all three exchanges are compared. Not yet reviewed by Fable and Astra, and not yet run through the
+verification tool.*
+
+**What it is.** A third command of the tool, which sets the six versions' all-days results beside the monthly change in
+albedo that Duveiller et al. published for the nearest of their vegetation transitions, on the cells both cover:
+
+```
+Rscript tools/explore_cover_contrasts.R duveiller <saved-contrast-dir> <netcdf-file> <output-dir>
+```
+
+It reads the all-days cases and fits that the full run of 16 November saved (twelve months, 72 fits; nothing is
+refitted) and `albedo_IGBPdet.nc` (Figshare version 1, MD5 `96125db41154fa176c53b51596893ad6`, in `data/duveiller2018/`
+of the main checkout with its provenance note, not in git). For each month, region and exchange it keeps the saved
+eligible cells that have a published estimate (a finite `Delta_albedo`) for the matched transition, renormalises their
+areas into weights, and averages both estimates with those weights: the published change times 0.10 (Lejeune et al.
+2020, eq. 11), and each version's predicted change for the 10-point exchange, which is not scaled. The transitions are
+23 (needleleaf evergreen to broadleaf deciduous forest; the file holds it the other way round, so its sign is
+reversed), 38 (needleleaf evergreen forest to grassland) and 28 (broadleaf deciduous forest to grassland). Cells are
+matched by exact centre, months and transitions by their coordinate values. Beside each mean: the eligible and common
+cells, the common area, its share of the eligible area and of the region's calibration area, and the fewest and most
+published samples behind the common cells. It writes `cover_contrasts_duveiller.csv` (1,512 rows, with its
+explanation), `cover_contrasts_duveiller.pdf` (one page in the layout of the report's pages, the published means as
+black diamonds) and `record_duveiller.txt` (inputs with MD5 sums, the mapping and settings, the time of each step).
+
+| File | Lines | What changed |
+|---|---|---|
+| `tools/explore_cover_contrasts.R` | 681 (+291, -31) | The `duveiller` command. The six versions' styling, the panels and the support text are now four small functions shared by the report's pages and the comparison's page; the report's four pages are pixel-identical before and after. The record writer takes extra lines and MD5 sums computed earlier |
+| `tests/test_explore_cover_contrasts.R` | 345 (+142, -4) | A miniature of the published file written by the test; the saved job of the hand-made run for all twelve months; the guards |
+| `tools/check_cover_contrasts.R` | 276 (+119, -1) | `duveiller`: the check of the command's output on the full saved run |
+| `docs/cc/verification/2026-11-17_duveiller-comparison.R` | 33 (new) | The verification spec, its commit left as `TO_FILL` |
+| `README.md` | | The two rows of the tool table |
+
+**Choices made in building it.**
+
+1. **No summary of the published uncertainties** (Chris, 16 November). The tool does not read `SD_Delta_albedo`; the
+   check reads it only to confirm that every estimate of the three transitions has one. **Open, for Chris to return to
+   if he wants:** how, if at all, to summarise the published cell uncertainties for a region. The file gives a standard
+   deviation for each one-degree cell but no covariance between cells, so an interval for a regional mean needs an
+   assumption about how the cells' errors are related. Astra's proposal, not built: the area-weighted mean of the cells'
+   standard deviations multiplied by 0.10, labelled as describing the cells and not the regional mean; a project choice
+   with no published precedent found.
+2. **The share of the region's calibration area where no cell was eligible** (Alaska and Yukon in December, polar
+   night) is 0, as its definition gives (common area over the region's calibration area, which is not empty); the
+   design's shortcut (the saved area share times common over eligible area) would give 0/0 there. It is missing only
+   for a region without calibration cells. The share of the eligible area is missing wherever nothing was eligible.
+3. **The published method's rule of at least 20 samples** is checked, not used as a filter: the command stops if an
+   estimate rests on fewer. None does.
+4. **The region's calibration cells** are carried from the saved results into the table, for the panel titles.
+5. **The tests** are in the tool's own test file, so that they reuse its hand-made run and stand-in fitter.
+
+**The trial of 17 November** (commit `9c815d1`, the command as committed, on the full saved run; its outputs are kept
+outside git). 1,512 rows. Measured: hashing and reading the inputs 2.5 seconds; recomputing the six versions on the
+common cells 115.7 seconds; writing the table and figure 2.5 seconds; the whole command 2 minutes 1 second; peak memory
+0.48 GB. The check passes in 7 seconds, the test file in 38. The northeast's common cells are those the design's
+inspection counted (January 20, 1 and 11 of 58, 41 and 22 eligible; July 40, 5 and 12).
+
+**What the trial shows** (a description, not a verdict; changes per 10 points of cover):
+
+- **Coverage is partial.** Typically a quarter to a third of the eligible cells' area, and a tenth to a fifth of a
+  region's calibration area, has a published estimate. Some panels rest on very few cells: the northeast's evergreen to
+  open land on 1 cell in January and February and 4 or 5 otherwise; Alaska and Yukon's summergreen to open land on 0 to
+  2 cells all year; none of Alaska and Yukon's cases in January and December.
+- **The published changes are brightenings almost everywhere:** evergreen to open land +0.003 to +0.027, summergreen to
+  open land +0.001 to +0.038 (largest in winter), evergreen to summergreen +0.001 to +0.007, with three small negative
+  means (Alaska and Yukon in February, two cases in spring).
+- **Beside them**, the versions mostly share the sign for both changes to open land (80 to 96 % of version, region and
+  month combinations in each season) and are typically larger (median ratio 1.4 to 2.7, except summergreen to open land
+  in summer, 0.65). For evergreen to summergreen they share the sign in 42 % of the winter combinations, 48 % in spring,
+  77 % in summer and 65 % in autumn: in winter many versions predict a darkening where the published means are small
+  brightenings (northeast, January, location term 100 with straight-line cover: -0.021 beside +0.006), and in summer
+  the versions are about twice the published means (the same version in July: +0.0069 beside +0.0036).
+
+**Not done.** Fable's and Astra's reviews of the code, which the design asks for; the verification tool's run (the
+spec should then name the reviewed commit); the changelog entry; the GitHub issue; a registry check of the four
+references (the design's checks could not reach Crossref); and the update of the existing scientific question on how
+the classes correspond.
+
 ## References
 
-As in the design, plus:
+As in the design, plus (the comparison of section 11 cites the references of its own design):
 
 - Boisier, J. P., de Noblet-Ducoudré, N., & Ciais, P. (2013). Inferring past land use-induced changes in surface
   albedo from satellite observations: a useful tool to evaluate model simulations. *Biogeosciences*, 10,
