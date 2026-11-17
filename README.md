@@ -100,7 +100,7 @@ into `data/`.
 | `5_calibration_eval.R` | fit diagnostics; saves script 4's prediction fit as the selected model per month |
 | `6_prediction_model.R` | hindcast albedo per slice and month with 100 draws |
 | `7_plot_preds.R` | albedo, uncertainty and difference maps with ice overlays; coarse (7-period) albedo differences |
-| `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts, from the ice fractions of the file `ice$fraction_source` in `config.R` names (the old raster by default, or a NADI-1 reconstruction); with the `endpoint` method also the second split of the partial-ice total (vegetation change only on land ice-free at both slices) |
+| `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts, from the ice fractions of the file that `ice$fraction_source` in `config.R` names (the old raster by default, or a NADI-1 reconstruction); with the `endpoint` method also the second split of the partial-ice total (vegetation change only on land ice-free at both slices) |
 | `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants (twelve with the second split of the partial-ice total) |
 | `9_forcing_barplot.R` | continental forcing by period beside the IPCC AR6 agents, plus kernel-spread and variant-sensitivity figures; every aggregation choice is an explicit assumption in its header |
 | `10_forcing_breakdown.R` | script 9's period totals broken down by month and latitude band (where the forcing comes from, for the snow question); stops unless the parts add up to script 9 |
@@ -135,7 +135,7 @@ the first experiment remains reproducible at the commits in its verification spe
 
 The comparison of the old ice raster with the NADI-1 reconstruction (Dalton et al. 2023; Chris,
 16 November 2026; [design](docs/cc/2026-11-16_ice_redesign_simpler_codex_gpt6astra.md),
-[implementation note](docs/cc/2026-11-17_ice_implementation_note.md)) is made by two tools; the forcing
+[implementation note](docs/cc/2026-11-17_ice_implementation_note.md)) is made by the first two tools below, the third checks it; the forcing
 with NADI-1 ice is the pipeline's own, chosen by `ice$fraction_source` in `config.R`.
 
 | Tool | Reads | Writes |
