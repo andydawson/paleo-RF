@@ -14,6 +14,8 @@
 #   elevation$method          "centre_point"                       config.R: "land_mean"
 #   albedo$source             "legacy_raster"                      config.R: "modis_cells"
 #                                  (Chris, 2026-10-29, docs/cc/2026-10-29_refit_plan_decisions.md)
+#   coarse$ages, coarse$slice_alias  ending 12000, c(11500, 12000)    config.R: ending 11500, NULL
+#                                  (the oldest period labelled 10 - 11.5 ka; Chris, 2026-11-16)
 #   draws$seed                1   (the original was unseeded; seed 1 reproduces the seeded
 #                                  anchor and meets the unseeded anchor's tolerances; Chris)
 #   run$dir                   ".rundirs/legacy"

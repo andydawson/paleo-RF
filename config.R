@@ -95,17 +95,18 @@ list(
 
     # The coarse time slices, years BP. Consecutive pairs bound the seven periods of
     # the forcing summary (script 9) and of script 7's coarse differences; period
-    # labels such as '0.05 - 0.5 ka' are made from these numbers. The oldest is 12000
-    # although the oldest slice in the data is 11500: script 7 relabels 11500 as 12000
-    # to match it, via slice_alias below (question C7).
+    # labels such as '0.05 - 0.5 ka' are made from these numbers. The oldest is the oldest
+    # slice in the data, 11,500 BP, so the oldest period is labelled 10 - 11.5 ka (Chris,
+    # 16 November 2026; question C7). The legacy configuration keeps the original 12,000 BP
+    # and 10 - 12 ka for the same period, through slice_alias.
     coarse = list(
-      ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000),
-      # c(data slice, coarse age it stands for): script 7 treats the 11,500 BP slice as
-      # 12,000 BP. This also decides its ice outline: script 7 matches each age to the
-      # nearest ice-sheet polygon (1, 2, ... 21 ka), so 12,000 gets the 12 ka polygon,
-      # whereas 11,500 would get the 11 ka one. NULL is implemented, but is not a sensible
-      # choice: no slice is then at 12,000 and the oldest period (10-12 ka) drops out.
-      slice_alias = c(11500, 12000)),
+      ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500),
+      # c(data slice, coarse age it stands for), or NULL for none. The legacy configuration
+      # has c(11500, 12000): script 7 treats the 11,500 BP slice as 12,000 BP, which also
+      # decides its ice outline, since script 7 matches each age to the nearest ice-sheet
+      # polygon (1, 2, ... 21 ka): 12,000 gets the 12 ka polygon, whereas 11,500, halfway,
+      # gets the 11 ka one (the first of the two).
+      slice_alias = NULL),
 
     # The study domain, degrees. Script 7a drops cells west of lon_min; script 8 keeps
     # cells strictly between lat_min and lat_max before computing forcing; script 7 drops

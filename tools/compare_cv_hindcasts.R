@@ -459,7 +459,9 @@ write_table(forcing_table, 'forcing_by_period.csv', c(
   'vegetation_forcing + ice_forcing = total_forcing: the vegetation part, the ice part and the total of the partial-ice split (script 8\'s saved variants veg_part, ice_part and veg_ice_parts; script 9, notes A1 and A2).',
   'READ THE THREE TOGETHER: where ice changed, the total can agree between runs while the vegetation part differs, even in sign. The forcing is as saved: its ice treatment is already inside.',
   sprintf('Periods are those of config.R, plus %s: the hemlock interval, the steps ending at 5500, 5000 and 4500 BP.', hemlock_period),
-  sprintf('The period labelled "%s" runs to the oldest slice, %s, not to its label\'s older end (script 9, note A4).', tail(coarse_periods, 1), ka(max(slices))),
+  # Only where the label's older end is not the oldest slice (the legacy configuration's 10 - 12 ka).
+  if (tail(cfg$analysis$coarse$ages, 1) != max(slices))
+    sprintf('The period labelled "%s" runs to the oldest slice, %s, not to its label\'s older end (script 9, note A4).', tail(coarse_periods, 1), ka(max(slices))),
   paste('A period is the sum of its slice pairs; "annual" averages each cell over its months with a value, as script 9 does.',
         'The study-area means reproduce script 9\'s domain means (the total for each kernel, the HadGEM3 parts) and script 10\'s monthly means with its latitude bands combined.'),
   'area_m2: the area of the cells with a value.', kernel_coverage(forcing_table),

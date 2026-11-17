@@ -117,8 +117,8 @@ check("... when a nested analysis setting differs, naming it with old and new va
       r$status == 1 && m$status == "failed" &&
       grepl("forcing.earth_area_m2: [510100000000000] -> [520000000000000]", m$error, fixed = TRUE))
 
-alt_ages <- config_variant(tempfile(fileext = ".R"), "ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)",
-                           "ages = c(50, 500, 2000, 4000, 6000, 9000, 10000, 12000)")
+alt_ages <- config_variant(tempfile(fileext = ".R"), "ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500)",
+                           "ages = c(50, 500, 2000, 4000, 6000, 9000, 10000, 11500)")
 r <- run_toy("8_radiative", consumer_body, c("--config", alt_ages))
 check("... when one element of a vector setting differs",
       r$status == 1 && grepl("coarse.ages:", latest("8_radiative")$error, fixed = TRUE))

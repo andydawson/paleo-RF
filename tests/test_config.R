@@ -36,7 +36,8 @@ stopifnot(
   identical(names(cfg), c("analysis", "presentation", "run")),
   is.null(cfg$run$dir),
   "dir" %in% names(cfg$run),
-  identical(cfg$analysis$coarse$ages, c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)),
+  identical(cfg$analysis$coarse$ages, c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500)),
+  identical(legacy$analysis$coarse$ages, c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)),
   identical(cfg$analysis$forcing$earth_area_m2, 5.101e14),
   identical(cfg$analysis$forcing$latitude_band_width, 10),
   identical(cfg$presentation$map_windows$calibration, list(x = c(-172, -50), y = c(15, 80))),
@@ -53,8 +54,8 @@ stopifnot(
   { secret_variable_of_the_caller <- 1
     rejects("could not be read", 'earth_area_m2 = 5.101e14', 'earth_area_m2 = secret_variable_of_the_caller') },
   # allowed constructors and arithmetic evaluate as R would
-  identical(load_variant('ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000),',
-                         'ages = c(50, seq(500, 2000, by = 1500), 2 * 2000, 6000, 8000, 10000, 12000),')$analysis$coarse$ages,
+  identical(load_variant('ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500),',
+                         'ages = c(50, seq(500, 2000, by = 1500), 2 * 2000, 6000, 8000, 10000, 11500),')$analysis$coarse$ages,
             cfg$analysis$coarse$ages),
   identical(load_variant('earth_area_m2 = 5.101e14', 'earth_area_m2 = 5.101 * 10^14')$analysis$forcing$earth_area_m2,
             5.101 * 10^14),
@@ -118,7 +119,10 @@ stopifnot(
   # months, ages, slice alias, domain, ice and kernels (issue I04b)
   identical(cfg$analysis$months, MONTHS),
   identical(cfg$analysis$ages, c(50, 200, seq(500, 11500, by = 500))),
-  identical(cfg$analysis$coarse$slice_alias, c(11500, 12000)),
+  # the oldest slice labelled by its own age in config.R, by 12,000 in the legacy file (Chris, 2026-11-16)
+  is.null(cfg$analysis$coarse$slice_alias),
+  "slice_alias" %in% names(cfg$analysis$coarse),
+  identical(legacy$analysis$coarse$slice_alias, c(11500, 12000)),
   accepts(with_setting("analysis$months", c("feb", "may", "aug", "nov"))),
   refuses("months.*unknown month name", with_setting("analysis$months", c("jan", "January"))),
   refuses("months.*more than once", with_setting("analysis$months", c("jan", "jan"))),

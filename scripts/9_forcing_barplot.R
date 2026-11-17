@@ -83,9 +83,10 @@
 #     roughly half the HadGEM3 answer.
 #
 # A4. Periods. The seven periods are bounded by the coarse ages of config.R
-#     (analysis$coarse$ages; by default 50, 500, 2000, 4000, 6000, 8000, 10000, 12000 yr BP).
-#     CAVEAT: the oldest age in the data is 11,500 BP, so the bar labelled
-#     "10 - 12 ka" actually covers 10 to 11.5 ka.
+#     (analysis$coarse$ages; by default 50, 500, 2000, 4000, 6000, 8000, 10000, 11500 yr BP).
+#     The oldest is the oldest slice in the data, so its bar is labelled "10 - 11.5 ka"
+#     (Chris, 16 November 2026). The legacy configuration ends at 12000: its bar labelled
+#     "10 - 12 ka" covers the same 10 to 11.5 ka.
 #
 # A5. Combining slices within a period. Each row of the table is the forcing of
 #     one consecutive slice-pair. Within a period these are SUMMED, not averaged,
@@ -376,12 +377,15 @@ coarse_differences$rf = coarse_differences$alb_diff * 100 * coarse_differences$r
 coarse_differences$rf[!is.na(coarse_differences$ice_young) | !is.na(coarse_differences$ice_old)] = NA
 # CM: the recipe needs all four of its months; it is skipped, never computed on a subset,
 # when any is missing. It is compared with the slide's seven periods, so it is
-# skipped too when the coarse ages in config.R are not the slide's.
+# skipped too when the coarse ages in config.R are not the slide's. The slide labels its
+# oldest period 10 - 12 ka, as the legacy configuration does; config.R labels the same period
+# by its oldest slice, 10 - 11.5 ka (Chris, 16 November 2026).
 egu_months = c('feb','may','aug','nov')
 slide_ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)   # slide 18's periods, a fact of the slide
+slide_ages_relabelled = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500)
 if (!all(egu_months %in% unique(coarse_differences$month))) {
   message('EGU 2024 recipe skipped: needs ', paste(egu_months, collapse = '/'), ' in the data')
-} else if (!identical(ages_sub, slide_ages)) {
+} else if (!identical(ages_sub, slide_ages) && !identical(ages_sub, slide_ages_relabelled)) {
   message('EGU 2024 recipe skipped: the coarse ages in config.R are not the periods of slide 18')
 } else {
   egu = coarse_differences %>% filter(month %in% c('feb','may','aug','nov')) %>%

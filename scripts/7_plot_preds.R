@@ -88,8 +88,10 @@ map_theme = function(text_size = 12) {
 }
 
 alb_interp_preds = read_input(run, path_file(paths, 'prediction_summary'))
-# CM: the slice alias, config.R analysis$coarse$slice_alias (question C7): the
-# 11,500 BP slice is treated as 12,000 BP, which also gives it the 12 ka ice polygon below.
+# CM: the slice alias, analysis$coarse$slice_alias (question C7). The legacy configuration
+# treats the 11,500 BP slice as 12,000 BP, which also gives it the 12 ka ice polygon below.
+# config.R has none (Chris, 16 November 2026): the slice keeps its age and, halfway between
+# the 11 and 12 ka polygons, gets the first of the two, 11 ka (which.min()).
 slice_alias = cfg$analysis$coarse$slice_alias
 if (!is.null(slice_alias)) {
   alb_interp_preds$year[which(alb_interp_preds$year == slice_alias[1])] = slice_alias[2]
