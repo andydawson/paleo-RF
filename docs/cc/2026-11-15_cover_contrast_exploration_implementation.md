@@ -334,14 +334,12 @@ inspection counted (January 20, 1 and 11 of 58, 41 and 22 eligible; July 40, 5 a
 - **The published changes are brightenings almost everywhere:** evergreen to open land +0.003 to +0.027, summergreen to
   open land +0.001 to +0.038 (largest in winter), evergreen to summergreen +0.001 to +0.007, with three small negative
   means (Alaska and Yukon in February, two cases in spring).
-- **Beside them**, the versions mostly share the sign for both changes to open land (80 to 96 % of version, region and
-  month combinations in each season) and are typically larger (median ratio 1.4 to 2.7, except summergreen to open land
-  in summer, 0.65). For evergreen to summergreen they share the sign in 42 % of the winter combinations, 48 % in spring,
-  77 % in summer and 65 % in autumn: in winter many versions predict a darkening where the published means are small
-  brightenings (northeast, January, location term 100 with straight-line cover: -0.021 beside +0.006), and in summer
-  the versions are about twice the published means (the same version in July: +0.0069 beside +0.0036).
+- **Two examples beside them** (northeast, evergreen to summergreen, location term 100 with straight-line cover): in
+  January the version predicts -0.021 where the published mean is +0.006; in July +0.0069 beside +0.0036. No pooled
+  score is given: counting every version, region and month alike would weigh sparse panels and overlapping regions as
+  much as the rest (Astra's review of 17 November).
 
-**Not done.** Fable's and Astra's reviews of the code, which the design asks for; the verification tool's run (the
+**Not done.** Astra's review of the code (Chris's arrangement of 16 November: Astra reviews, no Fable review); the verification tool's run (the
 spec should then name the reviewed commit); the changelog entry; the GitHub issue; a registry check of the four
 references (the design's checks could not reach Crossref); and the update of the existing scientific question on how
 the classes correspond.
