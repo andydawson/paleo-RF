@@ -14,7 +14,7 @@ netcdf  = '/home/expert/Documents/contracting/Andria/paleo-RF/data/duveiller2018
 out_dir = '.rundirs/duveiller-comparison/comparison'
 list(
   name    = 'duveiller-comparison',
-  commit  = 'TO_FILL',
+  commit  = 'fa9e465be9781036e4468930538c1f5151406482',
   config  = 'config.R',
   scripts = character(),
   checks  = list('tests/test_cv_separation.R',
