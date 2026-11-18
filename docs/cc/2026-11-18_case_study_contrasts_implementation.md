@@ -75,4 +75,5 @@ are checked once, in the verification, where every new record's run files must h
   all 36 records; the 648 hemlock rows against the saved northeast rows; the Quebec-Labrador cells and
   area shares, selected again independently; 2,592 rows with complete keys, the four entries not fitted
   without numbers, four report pages; the Duveiller comparison's 864 rows, its hemlock rows against the
-  comparison verified on 17 November. Its report is filed beside it.
+  comparison verified on 17 November. Its report, filed beside it: PASS at 545479b (18 November), every
+  check exiting 0; the 648 hemlock rows identical to the saved ones.

@@ -27,7 +27,7 @@ check      = 'tools/check_cover_contrasts.R'
 jobs = lapply(runs, function(run) c(tool, 'case-studies', run, saved, out, '--fill-missing'))
 list(
   name    = 'case-study-cover-contrasts',
-  commit  = '<full reviewed implementation commit>',
+  commit  = '545479befafd203eaa5bdd0109d3ae1706a1e5b5',
   config  = 'config.R',
   scripts = character(),
   checks  = c(list('tests/test_cv_separation.R',
