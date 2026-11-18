@@ -41,8 +41,11 @@
 # partial_ice_differences() (R/differences.R).
 #
 # WORDS. A "net increase in ice coverage" is a cell whose ice fraction is larger at the younger
-# slice than at the older one. Fractions cannot show ice advancing on one side of a cell while it
-# retreats on another, and snapshots cannot date what happened between them.
+# slice than at the older one, by any amount: an exact positive difference, not an established
+# physical readvance. Some are tiny (the record counts those below 1e-6 of the cell, as a
+# diagnostic only), yet script 7a's averaging acts on them as on any other. Fractions cannot show
+# ice advancing on one side of a cell while it retreats on another, and snapshots cannot date what
+# happened between them.
 
 source('R/config.R')
 source('R/paths.R')
@@ -198,7 +201,8 @@ inventory = all_pairs %>% filter(raw_increase > 0 | coalesce(adjusted_increase >
          adjusted_old, adjusted_young, adjusted_increase, adjusted_area_increase_km2, averaging)
 # NA, not 0, where no run used that ice.
 counts = all_pairs %>% group_by(source) %>%
-  summarise(raw_increases = sum(raw_increase > 0), adjusted_increases = sum(adjusted_increase > 0),
+  summarise(raw_increases = sum(raw_increase > 0), tiny_raw_increases = sum(raw_increase > 0 & raw_increase < 1e-6),
+            adjusted_increases = sum(adjusted_increase > 0),
             retained = sum(averaging == 'retained'), removed = sum(averaging == 'removed'), created = sum(averaging == 'created'),
             cells_with_raw_increase = n_distinct(cell_id[raw_increase > 0]), .groups = 'drop') %>%
   mutate(across(c(retained, removed, created), ~ ifelse(is.na(adjusted_increases), NA, .x))) %>%
@@ -382,7 +386,8 @@ record = c(
     sprintf('  %s: %s', run$source, run$dir),
     if (!identical(run, old_run)) paste('    settings unlike the old-ice run:', c(analysis_differences(old_run$settings, run$settings), if (!length(analysis_differences(old_run$settings, run$settings))) 'none'))))),
   '', sprintf('SUPPORT: the %d forcing cells of the old-ice run (script 8\'s table), %.0f km2', nrow(cells), sum(cells$area_km2)),
-  '', 'NET INCREASES IN ICE COVERAGE, cell-pairs of consecutive slices on the forcing cells',
+  '', 'NET INCREASES IN ICE COVERAGE, cell-pairs of consecutive slices on the forcing cells: every exact positive difference in',
+  'coverage, however small, not established physical readvances (tiny_raw_increases: those below 1e-6 of the cell, a diagnostic)',
   printed(counts),
   if (nrow(old_counts) && !is.na(old_counts$adjusted_increases))
     sprintf('  old raster: %d raw, %d after averaging, of which %d created by it (the established audit: 186, 228 and 75)',
