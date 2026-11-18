@@ -42,6 +42,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Hindcast comparison tool | #24 | merged 2026-11-16 | c254734 |
 | Cover-contrast exploration beside published contrasts | #24 | merged 2026-11-16 | c7d2aab |
 | Comparison of the cover contrasts with Duveiller et al. (2018) | #24 | merged 2026-11-17 | d7159f3 |
+| Ice: the 2023 reconstruction (NADI-1), readvances, both split rules, fill_missing | #29 | merged 2026-11-18 | ed35d77 |
 
 ---
 
@@ -1966,3 +1967,40 @@ recorded in `docs/cc/2026-11-17_duveiller_comparison_decisions.md` to return to.
 **First look.** Coverage is partial: typically a quarter to a third of the eligible cells' area has a published
 estimate. Northeast, evergreen to summergreen, location term 100 with straight-line cover: July +0.0069 per 10 points
 beside Duveiller's +0.0036 (40 cells); January -0.021 beside +0.006 (20 cells).
+
+## Ice: the 2023 reconstruction (NADI-1), readvances and the forcing with the new ice (#29), merged 2026-11-18
+
+**What it is for.** Andria asked (call of 12 November) to compare the newer ice reconstruction of Dalton et al. (2023,
+NADI-1, doi:10.5281/zenodo.8161764) with the ice the pipeline used, to find when ice readvances, and to check whether
+readvances break the partial-ice albedo formula. Slides and an agenda for her were made from the results.
+
+**What changed.**
+- `analysis$ice$fraction_source` chooses the ice-fraction file: `"dalton_ice"` (the old raster, still the default),
+  or `"nadi1_optimal"`, `"nadi1_minimum"`, `"nadi1_maximum"`. The three NADI-1 rasters are built once by
+  `tools/build_nadi1_fractions.R` from the downloaded shapefiles (kept outside git) and tracked in
+  `data/nadi1_fractions/` with a provenance note; areas are measured in an equal-area projection (the spherical
+  method turned the 8.5 ka minimum inside out); NADI-1's snapshots match the slice names from 1,000 to 11,500 BP, and
+  the 1 ka ice is carried forward to 500, 200 and 50 BP.
+- `R/differences.R` and scripts 8 and 9 add the second split rule (`veg_part_exposed`, `ice_part_exposed`: vegetation
+  change only on land ice-free at both slices, which holds exactly when the ice footprints are nested); existing
+  columns are unchanged and the legacy configuration is untouched.
+- `config.R` labels the oldest slice 11.5 ka and its period 10 to 11.5 ka; script 7 keeps the 12 ka polygon for it, so
+  the change is label-only; `configs/legacy_config.R` keeps 12 ka.
+- `load_config(path, fill_missing = TRUE)` (or `--fill-missing` on the tools that reload finished runs) fills settings
+  missing from an old saved configuration from `HISTORICAL_SETTINGS` in `R/config_schema.R`, with a warning; strict
+  by default.
+- `tools/compare_ice.R` makes the meeting's tables and figures; `tools/check_ice_split.R` checks the new columns.
+
+**Results.** Total forcing, study-area mean, HadGEM3 (old / NADI-1 best / minimum / maximum), W/m2: 10 to 11.5 ka
+4.13 / 4.29 / 4.84 / 4.35; 8 to 10 ka 4.96 / 5.05 / 4.07 / 4.72; 6 to 8 ka 1.51 / 1.90 / 0.42 / 4.54; younger periods
+unchanged. The vegetation part hardly changes with the ice, and the two split rules' vegetation parts differ by at most
+0.0003 W/m2 in any period. Readvances (cell-pairs whose ice fraction grows): old raster 186 (228 after the averaging,
+75 of them created by it); NADI-1 best 142, minimum 35, maximum 231.
+
+**Verification.** At c0b6eda: old-ice replay (every headline number reproduced), legacy regression (all anchors
+match), NADI-1 optimal, minimum and maximum, comparison: all PASS. At 0ffa156 (with the trunk merged in): 30 of 30
+checks PASS. Reports in `docs/cc/verification/2026-11-18_ice-*_report.md`.
+
+**Left for Chris and Andria.** Whether NADI-1 becomes the default; the young slices' ice; which split rule the paper
+uses; whether to keep the readvance averaging; maps drawing ice from the forcing's fraction file (a later change).
+
