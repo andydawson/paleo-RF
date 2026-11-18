@@ -14,6 +14,13 @@
 #       saved, with its attempts, as fit_<table>_<month>_<version>.rds, and the month's exchanges
 #       as cases_<table>_<month>.rds, so that a result can be examined without fitting again.
 #       Keep <output-dir> outside git: the fits are large.
+#   Rscript tools/explore_cover_contrasts.R case-studies <run-dir> <saved-contrast-dir> <output-dir> [--fill-missing]
+#       the same for the four case-study boxes (CASE_STUDY_BOXES below), without fitting: for each
+#       month, the exchanges are rebuilt at the boxes from <run-dir>, and each version's fit that
+#       the fit command saved in <saved-contrast-dir> for the run's albedo table is evaluated
+#       there. Writes the month's cases, contrasts and record, and copies its fit status table
+#       unchanged (with the original fitting times). Run it once for each of the three runs, into
+#       the same <output-dir>, then run report on <output-dir>.
 #   Rscript tools/explore_cover_contrasts.R report <output-dir>
 #       stacks every table and month found in <output-dir> into cover_contrasts.csv and fits.csv,
 #       and draws cover_contrasts.pdf: a page per albedo table, then the published values.
@@ -99,13 +106,13 @@ region_members = function(cells, domain) {
 # stands behind them. Eligible: a cell with albedo that month and an area, whose two endpoints are
 # valid fractions inside the month's range of modern cover mixes over the whole continent (the
 # hull of the cells the versions are fitted to). The range says the mix is familiar; it does not
-# say that similar cells are nearby.
-exchange_cases = function(run, month) {
+# say that similar cells are nearby. `members` names the regions and says which cells are in each:
+# the study area and the six boxes of R/regions.R, unless the case-studies command gives its boxes.
+exchange_cases = function(run, month, members = region_members(run$cal, run$domain)) {
   cal = run$cal
   fitted = complete_rows(cal, month)
   has_area = is.finite(run$area) & run$area > 0
   hull = training_hull(cal[fitted, ])
-  members = region_members(cal, run$domain)
   cases = list()
   for (region in names(members)) {
     in_region = members[[region]] & has_area
@@ -562,13 +569,14 @@ duveiller_cases = function(cases, layers, nc) {
   })
 }
 
-# The fit status of the saved all-days job, a row per month and version, with the file of each
-# saved fit: there must be one exactly where the fitter ran (converged TRUE or FALSE, not NA).
-read_fit_status = function(saved_dir) {
-  status = do.call(rbind, lapply(MONTHS, function(month) utils::read.csv(file.path(saved_dir, sprintf('fits_all_days_%s.csv', month)))))
+# The fit status of one albedo table's saved jobs (all days unless `table` names another), a row
+# per month and version, with the file of each saved fit: there must be one exactly where the
+# fitter ran (converged TRUE or FALSE, not NA).
+read_fit_status = function(saved_dir, table = 'all_days') {
+  status = do.call(rbind, lapply(MONTHS, function(month) utils::read.csv(file.path(saved_dir, sprintf('fits_%s_%s.csv', table, month)))))
   if (!identical(paste(status$month, status$version), paste(rep(MONTHS, each = length(CONTRAST_VERSIONS)), CONTRAST_VERSIONS)))
     stop(saved_dir, ': its fit status tables do not hold the six versions for every month')
-  status$file = file.path(saved_dir, sprintf('fit_all_days_%s_%s.rds', status$month, status$version))
+  status$file = file.path(saved_dir, sprintf('fit_%s_%s_%s.rds', table, status$month, status$version))
   wrong = file.exists(status$file) != !is.na(status$converged)
   if (any(wrong)) stop('the saved fits do not match their status tables: ', paste(basename(status$file[wrong]), collapse = ', '))
   status
@@ -664,12 +672,69 @@ compare_duveiller = function(saved_dir, source_file, out_dir) {
   cat(sprintf('%d rows; %s\n', nrow(rows), paste(sprintf('%s %.1f s', names(times), times), collapse = '; ')))
 }
 
+# --- The case-studies command ---------------------------------------------------------------------
+# Design: docs/cc/2026-11-18_case_study_contrasts_design_codex_gpt6astra.md, approved by Chris on 18
+# November 2026 without its checks of the inputs at run time: the verification checks them once.
+
+# The four case-study boxes, each by its key in the table of the case-study search
+# (CASE_STUDY_FILE), with its name in the tables and figures. The hemlock box is the northeast box
+# of R/regions.R and keeps its name, so that its rows can be set beside those of the fit command.
+# The prairie's advance and its return share one box.
+CASE_STUDY_FILE  = 'docs/cc/2026-11-10_case_study_candidates/candidates.csv'
+CASE_STUDY_BOXES = c(hemlock_decline = 'Northeast (hemlock box)', quebec_spruce = 'Quebec-Labrador (spruce rise)',
+                     prairie_advance = 'Prairie-forest border', clearance_seaboard = 'Atlantic seaboard (clearance)')
+
+# Which cells are in each case-study box, with the bounds in CASE_STUDY_FILE. A box includes its
+# west and south edges and excludes its east and north edges, as in R/regions.R. Each box is a mask
+# of its own, not a region of R/regions.R, which gives each cell one region: there the prairie box
+# would take cells from the Upper Midwest box that other tools use.
+case_study_members = function(cells) {
+  boxes = utils::read.csv(CASE_STUDY_FILE)
+  boxes = boxes[match(names(CASE_STUDY_BOXES), boxes$key), ]
+  members = lapply(seq_len(nrow(boxes)), function(i)
+    cells$x >= boxes$lon_min[i] & cells$x < boxes$lon_max[i] & cells$y >= boxes$lat_min[i] & cells$y < boxes$lat_max[i])
+  setNames(members, CASE_STUDY_BOXES)
+}
+
+# The case-studies command, for a run as read_run() returns it. For every month: the exchanges at
+# the case-study boxes, and each version's fit that the fit command saved in `saved_dir` for the
+# run's albedo table evaluated there, one fit in memory at a time. Nothing is fitted; a version that
+# was not fitted keeps its rows, without numbers. The month's fit status table is copied unchanged,
+# so that it keeps the original fitting times.
+evaluate_case_studies = function(run, saved_dir, out_dir) {
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  members = case_study_members(run$cal)
+  status = read_fit_status(saved_dir, run$table)
+  for (month in MONTHS) {
+    started = Sys.time()
+    job = paste(run$table, month, sep = '_')
+    cases = exchange_cases(run, month, members)
+    saveRDS(cases, file.path(out_dir, sprintf('cases_%s.rds', job)))
+    fits = status[status$month == month, ]
+    contrasts = NULL
+    for (i in seq_len(nrow(fits))) {
+      fitted = saved_fit(fits[i, ])
+      contrasts = rbind(contrasts, version_rows(fits$version[i], fitted, cases))
+      rm(fitted); gc(verbose = FALSE)
+    }
+    utils::write.csv(cbind(table = run$table, month = month, contrasts), file.path(out_dir, sprintf('contrasts_%s.csv', job)), row.names = FALSE)
+    saved = c(file.path(saved_dir, sprintf('fits_%s.csv', job)), fits$file[!is.na(fits$converged)])
+    file.copy(saved[1], out_dir, overwrite = TRUE)
+    write_record(out_dir, job, c(run$files, case_study_boxes = CASE_STUDY_FILE, setNames(saved, basename(saved))),
+                 extra = paste('fits: read from', saved_dir, '(saved by the fit command), not refitted'))
+    cat(sprintf('%s: %d rows from the saved fits, %.1f s\n', job, nrow(contrasts), as.numeric(difftime(Sys.time(), started, units = 'secs'))))
+  }
+}
+
 if (sys.nframe() == 0L) {
   command = tool_command_line()
   args = command$args
   if (length(args) >= 4 && args[1] == 'fit') {
     suppressPackageStartupMessages(library(mgcv))
     fit_months(read_run(args[2], command$fill_missing), args[3], check_months(args[-(1:3)]))
+  } else if (length(args) == 4 && args[1] == 'case-studies') {
+    suppressPackageStartupMessages(library(mgcv))   # the saved fits are mgcv models
+    evaluate_case_studies(read_run(args[2], command$fill_missing), args[3], args[4])
   } else if (length(args) == 2 && args[1] == 'report') {
     report(args[2])
   } else if (length(args) == 4 && args[1] == 'duveiller') {
@@ -677,7 +742,7 @@ if (sys.nframe() == 0L) {
     compare_duveiller(args[2], args[3], args[4])
   } else {
     cat('usage: Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<month> ...] [--fill-missing] | report <output-dir>',
-        '| duveiller <saved-contrast-dir> <netcdf-file> <output-dir>\n')
+        '| case-studies <run-dir> <saved-contrast-dir> <output-dir> [--fill-missing] | duveiller <saved-contrast-dir> <netcdf-file> <output-dir>\n')
     quit(status = 2)
   }
 }
