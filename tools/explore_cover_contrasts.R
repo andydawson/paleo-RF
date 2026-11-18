@@ -17,6 +17,12 @@
 #   Rscript tools/explore_cover_contrasts.R report <output-dir>
 #       stacks every table and month found in <output-dir> into cover_contrasts.csv and fits.csv,
 #       and draws cover_contrasts.pdf: a page per albedo table, then the published values.
+#   Rscript tools/explore_cover_contrasts.R duveiller <saved-contrast-dir> <netcdf-file> <output-dir>
+#       sets the all-days results that the fit command saved in <saved-contrast-dir> (all twelve
+#       months: their cases and fits, which are not refitted) beside the monthly change in albedo
+#       published by Duveiller et al. (2018; <netcdf-file> is their albedo_IGBPdet.nc), on the cells
+#       both cover, and writes cover_contrasts_duveiller.csv, cover_contrasts_duveiller.pdf and
+#       record_duveiller.txt into <output-dir>. A comparison, with no pass or fail.
 #
 # The quantity. "A to B" is the predicted albedo with 5 points more of B and 5 fewer of A than a
 # cell's own mix, minus the predicted albedo with 5 points more of A and 5 fewer of B; the third
@@ -160,18 +166,20 @@ version_rows = function(version, fitted, cases) {
 }
 
 # One record per job: when, the code version, each input with its MD5 sum, the versions' terms and
-# the packages. code_version() watches R/, scripts/ and config.R for uncommitted changes, and any
-# further file it is given: here this tool.
-write_record = function(out_dir, job, files) {
+# the packages, then any `extra` lines (the comparison's settings and times). `md5` can be given
+# when the inputs were hashed earlier, as a timed step. code_version() watches R/, scripts/ and
+# config.R for uncommitted changes, and any further file it is given: here this tool.
+write_record = function(out_dir, job, files, extra = character(), md5 = tools::md5sum(files)) {
   code = code_version('tools/explore_cover_contrasts.R')
   packages = c('mgcv', 'sf')
   writeLines(c(paste('job:', job), paste('time:', format(Sys.time(), tz = 'UTC', usetz = TRUE)),
                paste('commit:', code$commit), paste('branch:', code$branch),
                paste('uncommitted changes in R/, scripts/, config.R or this tool:', code$dirty),
-               paste('input', names(files), files, unname(tools::md5sum(files))),
+               paste('input', names(files), files, unname(md5)),
                paste('version', CONTRAST_VERSIONS, vapply(CONTRAST_VERSIONS, calibration_terms, '')),
                paste('package R', getRversion()),
-               paste('package', packages, vapply(packages, function(p) as.character(utils::packageVersion(p)), ''))),
+               paste('package', packages, vapply(packages, function(p) as.character(utils::packageVersion(p)), '')),
+               extra),
              file.path(out_dir, paste0('record_', job, '.txt')))
 }
 
@@ -293,47 +301,68 @@ SHARE_SHOWN = c(all_days = 'snowy_share', snow_free = 'snowfree_share', snowy = 
 # A share as a percentage for the figure: whole numbers, one significant digit below 1 %.
 percent = function(share) ifelse(is.na(share), '', ifelse(share > 0 & share < 0.01, sprintf('%.1g', 100 * share), sprintf('%.0f', 100 * share)))
 
-# What stands behind each month's result, as three lines of text under each panel: the eligible
-# cells, their share of the area of the region's calibration cells, and the share of retrievals
-# of SHARE_SHOWN. These do not depend on the version, and the function stops if they do.
-support_text = function(contrasts, table) {
-  share = SHARE_SHOWN[[table]]
-  support = unique(contrasts[, c('panel', 'month', 'eligible_cells', 'area_share', share)])
-  if (anyDuplicated(support[, c('panel', 'month')])) stop('the eligible cells differ between versions')
-  lines = list(as.character(support$eligible_cells), percent(support$area_share), percent(support[[share]]))
-  do.call(rbind, lapply(1:3, function(i) data.frame(support[, c('panel', 'month')], label = lines[[i]], vjust = -0.6 - 1.3 * (3 - i))))
+# The pages of model results (one per albedo table, and the comparison with Duveiller et al.)
+# share the next four pieces, so that they look alike.
+
+# A panel per region and exchange, in the order of the rows, named with the region's calibration cells.
+panels_of = function(rows) {
+  panels = unique(rows[, c('region', 'exchange', 'region_cells')])
+  panels$panel = sprintf('%s\n%s; %d calibration cells', panels$region, panels$exchange, panels$region_cells)
+  panels$panel = factor(panels$panel, levels = panels$panel)
+  panels
 }
+
+# The six versions against month: colour for the size of the location term, line type for the
+# cover term, each month's value with plus or minus two standard errors, the versions side by side.
+version_layers = function() {
+  dodge = ggplot2::position_dodge(width = 0.6)
+  list(ggplot2::geom_linerange(ggplot2::aes(ymin = contrast - 2 * se, ymax = contrast + 2 * se), position = dodge, alpha = 0.6, na.rm = TRUE),
+       ggplot2::geom_line(ggplot2::aes(linetype = cover_form), position = dodge, na.rm = TRUE),
+       ggplot2::geom_point(position = dodge, size = 0.9, na.rm = TRUE),
+       ggplot2::scale_colour_manual('Location term, basis size', values = c('30' = '#D95F02', '100' = '#1B9E77', '500' = '#7570B3')),
+       ggplot2::scale_linetype_manual('Cover term', values = c(linear = 'solid', tp200 = 'dashed'),
+                                      labels = c(linear = 'straight lines', tp200 = 'thin plate, 200')))
+}
+
+# What stands behind each month's result, as three lines of text under each panel: the three
+# `columns` of `rows` named, a count of cells and two shares (shown as percentages). These do not
+# depend on the version, and the function stops if they do.
+support_layer = function(rows, columns) {
+  support = unique(rows[, c('panel', 'month', columns)])
+  if (anyDuplicated(support[, c('panel', 'month')])) stop('the cells behind a result differ between versions')
+  lines = list(as.character(support[[columns[1]]]), percent(support[[columns[2]]]), percent(support[[columns[3]]]))
+  text = do.call(rbind, lapply(1:3, function(i) data.frame(support[, c('panel', 'month')], label = lines[[i]], vjust = -0.6 - 1.3 * (3 - i))))
+  ggplot2::geom_text(ggplot2::aes(match(month, MONTHS), -Inf, label = label, vjust = vjust), text,
+                     inherit.aes = FALSE, size = 1.9, colour = 'grey25')
+}
+
+# Three panels to a row, each with its own vertical scale and room under the lines for the support
+# text, against the calendar months.
+panel_layout = function() list(
+  ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.5, 0.05))),   # room for the text under the lines
+  ggplot2::facet_wrap(~ panel, ncol = nrow(EXCHANGES), scales = 'free_y'), month_axis(),
+  ggplot2::theme_bw(9), ggplot2::theme(legend.position = 'top'))
 
 # One page: an albedo table's contrasts against month, a line per version with its interval, a
 # panel per region and exchange, the published guide as grey ticks, and under each panel the
-# support of each month's result.
+# support of each month's result: the eligible cells, their share of the area of the region's
+# calibration cells, and the share of retrievals of SHARE_SHOWN.
 plot_table = function(contrasts, guide, table) {
-  panels = unique(contrasts[, c('region', 'exchange', 'region_cells')])
-  panels$panel = sprintf('%s\n%s; %d calibration cells', panels$region, panels$exchange, panels$region_cells)
-  panels$panel = factor(panels$panel, levels = panels$panel)
+  panels = panels_of(contrasts)
   contrasts = merge(contrasts, panels)
   guide = merge(guide, panels[, c('exchange', 'panel')])   # by exchange: the same guide in every region's panel
   shown = c(snowy_share = 'snowy', snowfree_share = 'snow-free')[[SHARE_SHOWN[[table]]]]
   all_days = if (table == 'all_days') paste('\nBeside these all-days fits only snow-free published values of June to September are drawn: the northeast has no snowy',
     'retrievals then, but other regions can (Alaska and Yukon among them): see the third line under each panel.') else ''
-  dodge = ggplot2::position_dodge(width = 0.6)
   ggplot2::ggplot(contrasts, ggplot2::aes(match(month, MONTHS), contrast, colour = factor(location_k), group = version)) +
     ggplot2::geom_hline(yintercept = 0, colour = 'grey60') +
     ggplot2::geom_segment(ggplot2::aes(x = match(month, MONTHS) - 0.4, xend = match(month, MONTHS) + 0.4, y = guide, yend = guide),
                           guide, inherit.aes = FALSE, colour = 'grey45', linewidth = 0.5) +
     ggplot2::geom_point(ggplot2::aes(match(month, MONTHS), guide), guide[guide$qualification != '', ],   # see the published page
                         inherit.aes = FALSE, colour = 'grey30', shape = 1, size = 1.2) +
-    ggplot2::geom_linerange(ggplot2::aes(ymin = contrast - 2 * se, ymax = contrast + 2 * se), position = dodge, alpha = 0.6, na.rm = TRUE) +
-    ggplot2::geom_line(ggplot2::aes(linetype = cover_form), position = dodge, na.rm = TRUE) +
-    ggplot2::geom_point(position = dodge, size = 0.9, na.rm = TRUE) +
-    ggplot2::geom_text(ggplot2::aes(match(month, MONTHS), -Inf, label = label, vjust = vjust), support_text(contrasts, table),
-                       inherit.aes = FALSE, size = 1.9, colour = 'grey25') +
-    ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.5, 0.05))) +   # room for the text under the lines
-    ggplot2::facet_wrap(~ panel, ncol = nrow(EXCHANGES), scales = 'free_y') + month_axis() +
-    ggplot2::scale_colour_manual('Location term, basis size', values = c('30' = '#D95F02', '100' = '#1B9E77', '500' = '#7570B3')) +
-    ggplot2::scale_linetype_manual('Cover term', values = c(linear = 'solid', tp200 = 'dashed'),
-                                   labels = c(linear = 'straight lines', tp200 = 'thin plate, 200')) +
-    ggplot2::theme_bw(9) + ggplot2::theme(legend.position = 'top') +
+    version_layers() +
+    support_layer(contrasts, c('eligible_cells', 'area_share', SHARE_SHOWN[[table]])) +
+    panel_layout() +
     ggplot2::labs(x = 'Month', y = 'Albedo change for a 10-point exchange of cover (positive: brighter)',
       title = sprintf('Fitted response to a 10-point exchange of cover: versions fitted to %s albedo', TABLE_LABELS[[table]]),
       caption = paste0('Lines: each version\'s predicted change, the area-weighted mean over the eligible cells. Bars: plus or minus two standard errors, ',
@@ -408,6 +437,233 @@ report = function(out_dir) {
   print(stats::xtabs(~ table + fit, fits))
 }
 
+# --- The duveiller command ------------------------------------------------------------------------
+# Design: docs/cc/2026-11-16_duveiller_comparison_design_codex_gpt6astra.md. Chris's decisions
+# (docs/cc/2026-11-17_duveiller_comparison_decisions.md): all three exchanges, and no summary of
+# the published uncertainties for now.
+
+# The transitions of Duveiller et al. (2018) set beside the three exchanges, and the sign that turns
+# each into the exchange's direction: needleleaf evergreen to broadleaf deciduous forest, which the
+# file holds the other way round (transition 23, broadleaf deciduous to needleleaf evergreen), so
+# its sign is reversed; needleleaf evergreen forest to grassland (38); broadleaf deciduous forest to
+# grassland (28). Codes and reversal: Duveiller, Hooker & Cescatti (2018), Scientific Data 5,
+# 180014, p. 11. The analogues are approximate: summergreen includes larch and shrubs, and
+# grassland stands for open land.
+DUVEILLER_TRANSITIONS = data.frame(exchange = EXCHANGES$exchange, transition = c(23, 38, 28), sign = c(-1, 1, 1))
+# A published one-degree estimate rests on at least 20 samples (the method's own rule). The file is
+# checked for it; nothing is filtered by it.
+DUVEILLER_MIN_SAMPLES = 20
+
+DUVEILLER_HEADER = c(
+  'Albedo change for a 10-point exchange of cover on the same cells: as each fitted version predicts it, and as Duveiller et al. (2018)',
+  'published it (tools/explore_cover_contrasts.R duveiller; design: docs/cc/2026-11-16_duveiller_comparison_design_codex_gpt6astra.md).',
+  'A comparison of seasonal responses on the cells both cover: no pass or fail, and no effect on the choice of model. Positive is brighter.',
+  'The versions are the saved all-days fits behind cover_contrasts.csv, not refitted. A row per month, version, region and exchange.',
+  'month, version, location_k, cover_form, region, exchange, region_cells: as in cover_contrasts.csv.',
+  'eligible_cells: the cells of the saved all-days result for this month, region and exchange.',
+  'common_cells, common_area_m2: those with a published estimate (a finite Delta_albedo) for this month and the matched transition, and their area.',
+  'share_of_eligible_area: common area / eligible area: how much of the saved result is compared.',
+  'share_of_region_area: common area / area of the region\'s calibration cells: how much of the region\'s calibration support is represented.',
+  '  The first is missing where there are no eligible cells, the second only for a region without calibration cells.',
+  'min_samples, max_samples: the fewest and most published samples (N_Delta_albedo) behind the estimates of the common cells.',
+  'duveiller_contrast: the published change for the matched transition, times 0.10 (the size of the exchange), area-weighted over the common',
+  '  cells. Evergreen to summergreen is set beside needleleaf evergreen to broadleaf deciduous forest (the file holds transition 23, the other',
+  '  way round, so its sign is reversed); evergreen to open land beside needleleaf evergreen forest to grassland (38); summergreen to open land',
+  '  beside broadleaf deciduous forest to grassland (28). The 0.10 is a linear-mixing reference, not a claim that the model responds linearly.',
+  'contrast, se, spread: the version\'s area-weighted mean predicted change over the same common cells with the same weights, its standard',
+  '  error and the spread of the cells\' own changes, as in cover_contrasts.csv. Missing where there are no common cells.',
+  'converged, fit_status: of the saved fit.',
+  'Not the same quantity: the project\'s albedo is the 2000-2009 monthly blue-sky climatology; Duveiller et al.\'s is the mean of black- and',
+  '  white-sky albedo, calendar-month medians over 2008-2012 of retrievals near mid-month. The classes match only approximately (summergreen',
+  '  includes larch and shrubs; grassland stands for open land). Their one-degree values summarise local transitions, not the conversion of',
+  '  a whole cell. Both rest on MODIS observations. The common cells can change from month to month.',
+  'Agreement in sign, seasonal timing and broad magnitude would show consistency on these cells; disagreement marks a response to examine,',
+  '  without saying which estimate is wrong. Neither shows how the model behaves under Holocene climates or ice sheets.',
+  'The published uncertainties (SD_Delta_albedo) are not summarised here (Chris, 16 November 2026); they stay in the source file.')
+
+# The published file's layout, checked before anything is read from it: R shows its variables'
+# dimensions as lon, lat, mon, iTr (the reverse of their order on disk), and its grid must be a
+# one-degree grid (each coordinate unique and one degree from the next, within the globe).
+check_duveiller_file = function(nc) {
+  for (variable in c('Delta_albedo', 'N_Delta_albedo')) {
+    dims = vapply(nc$var[[variable]]$dim, function(d) d$name, '')
+    if (!identical(dims, c('lon', 'lat', 'mon', 'iTr')))
+      stop(nc$filename, ': expected ', variable, ' with the dimensions lon, lat, mon, iTr; found ', paste(dims, collapse = ', '))
+  }
+  one_degree = function(values, limit) !anyDuplicated(values) && all(abs(diff(values)) == 1) && all(abs(values) < limit)
+  if (!one_degree(nc$dim$lon$vals, 180) || !one_degree(nc$dim$lat$vals, 90))
+    stop(nc$filename, ': its longitudes and latitudes are not a one-degree grid')
+}
+
+# One month of the three transitions, as matrices of longitude by latitude: the published change
+# for a complete transition, turned to the exchange's direction and multiplied by the size of the
+# exchange (0.10: the fraction converted times the complete-transition value, Lejeune et al. 2020,
+# eq. 11), and the number of samples behind it. Months and transitions are looked up by their
+# coordinate values, not their positions. Only a finite Delta_albedo is an estimate (the file keeps
+# some counts where the estimate is missing); an estimate of exactly zero is kept.
+read_duveiller_month = function(nc, month) {
+  position = function(dim, value) {
+    found = match(value, nc$dim[[dim]]$vals)
+    if (is.na(found)) stop(nc$filename, ' has no ', dim, ' ', value)
+    found
+  }
+  layers = list()
+  for (i in seq_len(nrow(DUVEILLER_TRANSITIONS))) {
+    transition = DUVEILLER_TRANSITIONS$transition[i]
+    start = c(1, 1, position('mon', match(month, MONTHS)), position('iTr', transition))
+    read = function(variable) ncdf4::ncvar_get(nc, variable, start = start, count = c(-1, -1, 1, 1))
+    change = read('Delta_albedo')
+    samples = read('N_Delta_albedo')
+    if (any(is.finite(change) & !(is.finite(samples) & samples >= DUVEILLER_MIN_SAMPLES)))
+      stop(sprintf('%s, transition %g, %s: an estimate without %d samples behind it', nc$filename, transition, month, DUVEILLER_MIN_SAMPLES))
+    layers[[DUVEILLER_TRANSITIONS$exchange[i]]] = list(change = EXCHANGE_SIZE * DUVEILLER_TRANSITIONS$sign[i] * change, samples = samples)
+  }
+  layers
+}
+
+# The place of each cell in the published grid, by exact centre: no interpolation and no nearest
+# neighbour. Stops, naming a cell, if any centre is not one of the grid's.
+grid_index = function(nc, cells) {
+  index = cbind(match(cells$x, nc$dim$lon$vals), match(cells$y, nc$dim$lat$vals))
+  off = which(is.na(index[, 1]) | is.na(index[, 2]))
+  if (length(off)) stop(sprintf('%d cell centres, among them %g E %g N, are not centres of the grid of %s: the grids do not line up',
+                                length(off), cells$x[off[1]], cells$y[off[1]], nc$filename))
+  index
+}
+
+# The saved cases of one month restricted to their cells with a published estimate, and the
+# published mean there. Both endpoints and the areas are subset alike and the weights renormalised
+# over the common cells (freeze_exchange), so that the published mean and every version's mean
+# have the same cells and weights. A case without common cells keeps its row, without means. The
+# saved snow shares describe the saved cells, not the common ones, and are left behind.
+duveiller_cases = function(cases, layers, nc) {
+  lapply(cases, function(case) {
+    saved = case$exchange
+    k = match(case$support$exchange, EXCHANGES$exchange)
+    cell = grid_index(nc, saved$first)
+    change = layers[[case$support$exchange]]$change[cell]
+    samples = layers[[case$support$exchange]]$samples[cell]
+    common = is.finite(change)
+    matched = freeze_exchange(saved$first[common, ], saved$second[common, ], saved$area[common],
+                              held = held_class(EXCHANGES$to[k], EXCHANGES$from[k]))
+    if (matched$exclusions$excluded > 0) stop('a saved exchange lost cells when restricted to the common cells')
+    eligible_area = sum(saved$area)
+    share = if (eligible_area > 0) sum(matched$area) / eligible_area else NA_real_
+    # Of the region's calibration area: the saved share times the part kept; none of it where no cell
+    # was eligible (Alaska and Yukon in December), and missing only for a region without calibration cells.
+    region_share = if (eligible_area > 0) case$support$area_share * share else if (case$support$region_cells > 0) 0 else NA_real_
+    some = any(common)
+    list(exchange = matched, support = data.frame(
+      region = case$support$region, exchange = case$support$exchange, region_cells = case$support$region_cells,
+      eligible_cells = case$support$eligible_cells, common_cells = sum(common), common_area_m2 = sum(matched$area),
+      share_of_eligible_area = share, share_of_region_area = region_share,
+      min_samples = if (some) min(samples[common]) else NA_real_, max_samples = if (some) max(samples[common]) else NA_real_,
+      duveiller_contrast = if (some) sum(matched$weight * change[common]) else NA_real_))
+  })
+}
+
+# The fit status of the saved all-days job, a row per month and version, with the file of each
+# saved fit: there must be one exactly where the fitter ran (converged TRUE or FALSE, not NA).
+read_fit_status = function(saved_dir) {
+  status = do.call(rbind, lapply(MONTHS, function(month) utils::read.csv(file.path(saved_dir, sprintf('fits_all_days_%s.csv', month)))))
+  if (!identical(paste(status$month, status$version), paste(rep(MONTHS, each = length(CONTRAST_VERSIONS)), CONTRAST_VERSIONS)))
+    stop(saved_dir, ': its fit status tables do not hold the six versions for every month')
+  status$file = file.path(saved_dir, sprintf('fit_all_days_%s_%s.rds', status$month, status$version))
+  wrong = file.exists(status$file) != !is.na(status$converged)
+  if (any(wrong)) stop('the saved fits do not match their status tables: ', paste(basename(status$file[wrong]), collapse = ', '))
+  status
+}
+
+# One version's saved fit for one month, as its row of the status table describes it.
+saved_fit = function(row) {
+  if (is.na(row$converged)) return(list(fit = NULL, converged = NA, status = row$status))
+  fitted = readRDS(row$file)
+  if (!identical(fitted$converged, row$converged) || !identical(fitted$status, row$status))
+    stop(row$file, ' is not the fit its status table describes')
+  fitted
+}
+
+# The comparison's page: each version's change on the common cells, drawn as on the pages of the
+# report command, and the published mean on the same cells as a black diamond. Both come from the
+# same rows, so they are joined by region, month and exchange. Under each panel, by month: the
+# common cells, their share of the eligible cells' area and of the area of the region's
+# calibration cells.
+plot_duveiller = function(rows) {
+  rows = merge(rows, panels_of(rows))
+  published = unique(rows[, c('panel', 'month', 'duveiller_contrast')])
+  if (anyDuplicated(published[, c('panel', 'month')])) stop('the published means differ between versions')
+  ggplot2::ggplot(rows, ggplot2::aes(match(month, MONTHS), contrast, colour = factor(location_k), group = version)) +
+    ggplot2::geom_hline(yintercept = 0, colour = 'grey60') +
+    version_layers() +
+    ggplot2::geom_point(ggplot2::aes(match(month, MONTHS), duveiller_contrast, shape = 'Duveiller et al. (2018), times 0.10'),
+                        published, inherit.aes = FALSE, colour = 'black', size = 2.2, na.rm = TRUE) +
+    ggplot2::scale_shape_manual('Published, on the same cells', values = 18) +
+    support_layer(rows, c('common_cells', 'share_of_eligible_area', 'share_of_region_area')) +
+    panel_layout() +
+    ggplot2::labs(x = 'Month', y = 'Albedo change for a 10-point exchange of cover (positive: brighter)',
+      title = 'Fitted response beside Duveiller et al. (2018), on the cells both cover: versions fitted to all-days albedo',
+      caption = paste(sep = '\n',
+        'Lines and bars: each version\'s predicted change, the area-weighted mean over the common cells, plus or minus two standard errors (approximate and conditional on',
+        'the fitted model). The saved all-days fits of the exploration, not refitted: fitted to the whole continent and evaluated at each region\'s cells. Vertical scales differ.',
+        'Black diamonds: the published change of Duveiller et al. (2018) for the nearest of their transitions, times 0.10, averaged over the same cells with the same area',
+        'weights: needleleaf evergreen to broadleaf deciduous forest (their transition 23, reversed), needleleaf evergreen forest to grassland (38), broadleaf deciduous',
+        'forest to grassland (28). Common cells: the cells of the model\'s result with a published estimate that month; they can change from month to month.',
+        'Under each panel, by month: the common cells; their share (%) of the area of the model\'s eligible cells; their share (%) of the area of the region\'s calibration cells.',
+        'Not the same quantity: the project\'s albedo is the 2000-2009 monthly blue-sky climatology; Duveiller et al.\'s is the mean of black- and white-sky albedo,',
+        'calendar-month medians over 2008-2012 of retrievals near mid-month. The classes match only approximately (summergreen includes larch and shrubs; grassland stands',
+        'for open land). Their one-degree values summarise local transitions, not the conversion of a whole cell. Both rest on MODIS observations. The 0.10 is a linear-mixing',
+        'reference, not a claim that the model responds linearly. Agreement in sign, seasonal timing and broad magnitude would show consistency on these cells; disagreement',
+        'marks a response to examine, without saying which estimate is wrong. Neither shows how the model behaves under Holocene climates or ice sheets. No pass or fail.',
+        'The published uncertainties are not summarised here.'))
+}
+
+# The duveiller command: the all-days cases and fits that the fit command saved in `saved_dir`
+# (all twelve months; nothing is refitted) beside the published file, on the cells both cover.
+# Writes the table, its page and a record, with the time each step took, into `out_dir`. One saved
+# fit is in memory at a time.
+compare_duveiller = function(saved_dir, source_file, out_dir) {
+  started = Sys.time()
+  seconds = function(since) as.numeric(difftime(Sys.time(), since, units = 'secs'))
+  nc = ncdf4::nc_open(source_file)
+  on.exit(ncdf4::nc_close(nc))
+  check_duveiller_file(nc)
+  status = read_fit_status(saved_dir)
+  case_files = file.path(saved_dir, sprintf('cases_all_days_%s.rds', MONTHS))
+  files = c(source_file, case_files, file.path(saved_dir, sprintf('fits_all_days_%s.csv', MONTHS)), status$file[!is.na(status$converged)])
+  names(files) = c('published_change', basename(files[-1]))
+  md5 = tools::md5sum(files)
+  cases = lapply(setNames(seq_along(MONTHS), MONTHS), function(i) duveiller_cases(readRDS(case_files[i]), read_duveiller_month(nc, MONTHS[i]), nc))
+  times = c('hashing and reading the inputs' = seconds(started))
+
+  step = Sys.time()
+  rows = NULL
+  for (i in seq_len(nrow(status))) {
+    fitted = saved_fit(status[i, ])
+    rows = rbind(rows, data.frame(month = status$month[i], version_rows(status$version[i], fitted, cases[[status$month[i]]])))
+    rm(fitted); gc(verbose = FALSE)
+  }
+  times['recomputing the six versions on the common cells'] = seconds(step)
+
+  step = Sys.time()
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  write_with_header(rows, file.path(out_dir, 'cover_contrasts_duveiller.csv'), DUVEILLER_HEADER)
+  grDevices::pdf(file.path(out_dir, 'cover_contrasts_duveiller.pdf'), width = 12, height = 17)
+  print(plot_duveiller(rows))
+  grDevices::dev.off()
+  times['writing the table and the figure'] = seconds(step)
+  times['whole command'] = seconds(started)
+  write_record(out_dir, 'duveiller', files, md5 = md5, extra = c(
+    'comparison: the saved all-days cases and fits, not refitted, beside the published change in albedo of Duveiller et al. (2018)',
+    sprintf('transition: %s beside transition %g, sign %+d', DUVEILLER_TRANSITIONS$exchange, DUVEILLER_TRANSITIONS$transition, DUVEILLER_TRANSITIONS$sign),
+    'scale: the published change times 0.10, the size of the exchange; the versions\' changes are not scaled',
+    'matching: exact one-degree cell centres; common cells: the saved eligible cells with a finite Delta_albedo for the month and transition',
+    'weights: the saved cell areas renormalised over the common cells, the same for the published mean and every version',
+    'not reported: SD_Delta_albedo (Chris, 16 November 2026: no summary of the published uncertainties for now)',
+    paste('package ncdf4', utils::packageVersion('ncdf4')),
+    sprintf('time %s: %.1f s', names(times), times)))
+  cat(sprintf('%d rows; %s\n', nrow(rows), paste(sprintf('%s %.1f s', names(times), times), collapse = '; ')))
+}
+
 if (sys.nframe() == 0L) {
   command = tool_command_line()
   args = command$args
@@ -416,8 +672,12 @@ if (sys.nframe() == 0L) {
     fit_months(read_run(args[2], command$fill_missing), args[3], check_months(args[-(1:3)]))
   } else if (length(args) == 2 && args[1] == 'report') {
     report(args[2])
+  } else if (length(args) == 4 && args[1] == 'duveiller') {
+    suppressPackageStartupMessages(library(mgcv))   # the saved fits are mgcv models
+    compare_duveiller(args[2], args[3], args[4])
   } else {
-    cat('usage: Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<month> ...] [--fill-missing] | report <output-dir>\n')
+    cat('usage: Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<month> ...] [--fill-missing] | report <output-dir>',
+        '| duveiller <saved-contrast-dir> <netcdf-file> <output-dir>\n')
     quit(status = 2)
   }
 }
