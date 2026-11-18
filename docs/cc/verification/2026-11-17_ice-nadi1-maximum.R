@@ -13,8 +13,6 @@ list(
   copy     = list(c(file.path(headline, 'output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS'), 'output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS'),
                   c(file.path(headline, 'data/alb_interp_preds_diffs_bluesky.RDS'), 'data/alb_interp_preds_diffs_bluesky.RDS')),
   scripts  = c('scripts/7a_alb_diff_full.R', 'scripts/8_radiative.R', 'scripts/9_forcing_barplot.R', 'scripts/10_forcing_breakdown.R'),
-  checks   = list(c('tools/check_ice_split.R', run),
-                  c('tools/compare_ice.R', file.path(run, 'ice_comparison'), headline, run),
-                  c('tools/check_compare_ice.R', file.path(run, 'ice_comparison'), headline)),
+  checks   = list(c('tools/check_ice_split.R', run)),
   rscript  = 'tools/rscript.sh',
   env      = c(THREADS = '8', CORES = '32-39'))   # 8 threads, as the regression contract asks of comparison runs; any free 8 cores

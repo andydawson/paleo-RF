@@ -6,9 +6,9 @@
 # differences allowed are the new columns (the two second-split parts in scripts 7a and 8, their six
 # forcings in script 8, their 14 rows appended to the variant-sensitivity table) and the oldest period's
 # label, "10 - 12 ka" (and "10 - 12" in the EGU recipe) now "10 - 11.5 ka". Then the new columns' values
-# (tools/check_ice_split.R), the tests the work touches, and the comparison tool on this run, which must
-# find the established old-raster readvances (186, 228, 75; tools/check_compare_ice.R). Design:
-# docs/cc/2026-11-16_ice_redesign_simpler_codex_gpt6astra.md, section 3. Fill in the commit before running.
+# (tools/check_ice_split.R) and the tests the work touches. The comparison for the meeting is made once, by
+# ice-comparison. Design: docs/cc/2026-11-16_ice_redesign_simpler_codex_gpt6astra.md, section 3. Fill in
+# the commit before running.
 headline = '/home/expert/Documents/contracting/Andria/paleo-RF-verify/d5d5df5/.rundirs/run1-main'   # d5d5df5, PASS 2026-11-02
 run      = '.rundirs/ice-old-replay'
 
@@ -47,8 +47,6 @@ list(
   checks   = list(c('-e', replay_check), c('tools/check_ice_split.R', run),
                   'tests/test_config.R', 'tests/test_paths.R', 'tests/test_differences.R', 'tests/test_build_nadi1_fractions.R',
                   'tests/test_run_manifest.R', 'tests/test_calendar.R', 'tests/test_forcing_periods.R', 'tests/test_forcing_components.R',
-                  'tests/test_forcing_breakdown.R', 'tests/test_hindcast_comparison.R',
-                  c('tools/compare_ice.R', file.path(run, 'ice_comparison'), run),
-                  c('tools/check_compare_ice.R', file.path(run, 'ice_comparison'), run)),
+                  'tests/test_forcing_breakdown.R', 'tests/test_hindcast_comparison.R'),
   rscript  = 'tools/rscript.sh',
   env      = c(THREADS = '8', CORES = '0-7'))   # 8 threads, as the regression contract asks of comparison runs; any free 8 cores
