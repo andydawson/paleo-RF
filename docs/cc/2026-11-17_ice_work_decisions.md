@@ -19,3 +19,16 @@
   made with the ice work, the legacy configuration unchanged; the forcing numbers do not change.
 - **16 November, glacier albedo:** keep 0.68 with 0.50 and 0.80 as sensitivity cases; keep sourcing seasonal and
   latitudinal values (the vegetation part of the forcing does not depend on the glacier albedo).
+- **17 November:** run NADI-1 optimal, minimum and maximum side by side (with the old-ice replay and the legacy
+  regression); defer a run with the readvance averaging switched off.
+- **17 November, the builder's three points:** accept the equal-area method for the NADI-1 cell fractions (s2 turns
+  the 8.5 ka minimum inside out). For saved configurations that lack the new setting: "We shouldn't have to bodge this
+  every time we add a new config setting. Find an elegant fix - like fail with a warning, and then pass an argument (or
+  a legacy flag) to override missing config errors. Astra to design and keep it simple." Astra's design
+  (`2026-11-17_config_compatibility_codex_gpt6astra.md`): Chris asked for a Fable review of it before it is built.
+- **18 November, the oldest map's ice outline:** after Astra's review, keep the 12 ka outline under the 11.5 ka label,
+  so the relabel stays label-only, and fix the lost outline on the oldest difference map; later, as a separate change,
+  make script 7 draw the ice from the same fraction file as the forcing (Chris asked why outlines are not interpolated
+  to the exact dates: the forcing's fractions already are, at the slice ages; outline shapes cannot sensibly be
+  interpolated).
+
