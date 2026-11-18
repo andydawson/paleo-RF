@@ -1,0 +1,62 @@
+compare_ice.R, 2026-11-18 15:43 UTC, commit c0b6eda3573f0c8c4d8770d2b2494888cc433af7
+
+RUNS
+  old raster: .rundirs/ice-old-replay
+  NADI-1 optimal: .rundirs/ice-nadi1-optimal
+    settings unlike the old-ice run: ice.fraction_source: ["dalton_ice"] -> ["nadi1_optimal"]
+  NADI-1 minimum: .rundirs/ice-nadi1-minimum
+    settings unlike the old-ice run: ice.fraction_source: ["dalton_ice"] -> ["nadi1_minimum"]
+  NADI-1 maximum: .rundirs/ice-nadi1-maximum
+    settings unlike the old-ice run: ice.fraction_source: ["dalton_ice"] -> ["nadi1_maximum"]
+
+SUPPORT: the 2655 forcing cells of the old-ice run (script 8's table), 19223828 km2
+
+NET INCREASES IN ICE COVERAGE, cell-pairs of consecutive slices on the forcing cells: every exact positive difference in
+coverage, however small, not established physical readvances (tiny_raw_increases: those below 1e-6 of the cell, a diagnostic)
+         source raw_increases tiny_raw_increases adjusted_increases retained removed created cells_with_raw_increase
+     old raster           186                  0                228      153      33      75                      85
+ NADI-1 optimal           142                 38                197      100      42      97                     103
+ NADI-1 minimum            35                  5                  9        5      30       4                      32
+ NADI-1 maximum           231                 20                257      143      88     114                     161
+  old raster: 186 raw, 228 after averaging, of which 75 created by it (the established audit: 186, 228 and 75)
+
+TABLES
+  ice_by_slice.csv: age_bp, the slice; pollen_bin_older_bp and _younger_bp, the pollen bin behind its name; nadi1_snapshot_bp, the
+    NADI-1 snapshot used (1,000 BP carried forward to the three younger slices); <source>_km2, the ice area on the forcing cells,
+    the raw fraction times script 7a's cell area; nadi1_optimal_minus_old_km2.
+  readvance_inventory.csv: one row per source, cell and pair of consecutive slices whose ice fraction increases from the older
+    (year_old) to the younger (year_young) slice, raw or after script 7a's averaging (adjusted; empty without a run on that ice);
+    *_increase = younger minus older (positive = more ice), *_area_increase_km2 = the increase times the cell area; averaging:
+    retained (an increase before and after), removed (before only), created (after only), no run.
+  forcing_comparison.csv: script 9's forcing by period: quantity "total" is each kernel's headline variant (variant column), the
+    parts are HadGEM3's (veg_part + ice_part, and the second rule veg_part_exposed + ice_part_exposed, each adding up to
+    veg_ice_parts); domain_mean over the study area and global_equiv over the Earth, W/m2, positive = warming; *_minus_old,
+    the run minus the old-ice run. period is config.R's label; period_saved, the run's own (10 - 12 ka is 10 - 11.5 ka).
+
+FILES READ (md5)
+  26c339d52ddd05a5ab26bffa19bd8f87  .rundirs/ice-old-replay/runs/7a_alb_diff_full/20261118T143739.053Z_1465467.md
+  4480a3462eef1161f4e728d68ddd952e  .rundirs/ice-old-replay/runs/9_forcing_barplot/20261118T153926.362Z_1504909.md
+  cffde77b7cbd7e5df74b2f19aecf09b0  .rundirs/ice-nadi1-optimal/runs/7a_alb_diff_full/20261118T131816.818Z_1421015.md
+  4309eafe782fd8c61c3922b9331f9cb0  .rundirs/ice-nadi1-optimal/runs/9_forcing_barplot/20261118T142850.786Z_1461599.md
+  33c4ffb830d2c613de6ff3211f400d3c  .rundirs/ice-nadi1-minimum/runs/7a_alb_diff_full/20261118T131836.945Z_1421429.md
+  e4c0f121dbc26f293248051d4772600a  .rundirs/ice-nadi1-minimum/runs/9_forcing_barplot/20261118T143241.200Z_1463257.md
+  d435b5cda5f7cb0d14dd465215f53f8e  .rundirs/ice-nadi1-maximum/runs/7a_alb_diff_full/20261118T131856.971Z_1421713.md
+  22c8b95c527133e54ad44b0c7ac338b2  .rundirs/ice-nadi1-maximum/runs/9_forcing_barplot/20261118T141956.273Z_1457544.md
+  938091da8d405947e9f5689a9cfe6a68  .rundirs/ice-old-replay/output/forcing/RF_holocene_all_cases.RDS
+  9f381624b167b5b01868d5bd4c86db60  data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif
+  5a3e6d25e0380019bb154e668009ba99  data/nadi1_fractions/nadi1_optimal.tif
+  4720ef306ff08a8a5c87e4135c4f1acd  data/nadi1_fractions/nadi1_minimum.tif
+  b8202b39caeeb44484d8513c8e93b9d4  data/nadi1_fractions/nadi1_maximum.tif
+  83f93ca3fba39e61a6272ab281630bb1  .rundirs/ice-old-replay/data/ALB_diffs_bluesky.RDS
+  7f5783c5889040d74acaa3a0f0b46dff  .rundirs/ice-nadi1-optimal/data/ALB_diffs_bluesky.RDS
+  2dc26bfc75085ffa18f8f30ea7aa2d6e  .rundirs/ice-nadi1-minimum/data/ALB_diffs_bluesky.RDS
+  2b54d2095ae8ccdeac37c973c4c041a4  .rundirs/ice-nadi1-maximum/data/ALB_diffs_bluesky.RDS
+  487d451dbd2773271d0d8818bec1f3b3  .rundirs/ice-old-replay/output/forcing/forcing_by_period.csv
+  fb66b61f95c126530aae67bdf8f0c011  .rundirs/ice-old-replay/output/forcing/forcing_by_period_variant_sensitivity.csv
+  8a1bc3597ffc3a4aaeada6225e6dad8e  .rundirs/ice-nadi1-optimal/output/forcing/forcing_by_period.csv
+  96cbef08ad94d4e73d7d7fc077cd5bb0  .rundirs/ice-nadi1-optimal/output/forcing/forcing_by_period_variant_sensitivity.csv
+  94d4aa19033d86967cf83d2cf57221b6  .rundirs/ice-nadi1-minimum/output/forcing/forcing_by_period.csv
+  9f1e8377f7ec9e114fcbb81ed92ba096  .rundirs/ice-nadi1-minimum/output/forcing/forcing_by_period_variant_sensitivity.csv
+  6cf5fb6d1b2cad02755d9f2922f36097  .rundirs/ice-nadi1-maximum/output/forcing/forcing_by_period.csv
+  08eeafd16e88aad5a9c8fbf3c9bf433b  .rundirs/ice-nadi1-maximum/output/forcing/forcing_by_period_variant_sensitivity.csv
+  eae024438c458ee199d340480bba0ba1  data/map-data/geographic/pbs_ll.RDS
