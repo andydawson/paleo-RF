@@ -1,21 +1,41 @@
 # The ice work (branch ice-nadi1), 1 of 6: the default configuration with the old ice must reproduce the
-# saved headline run. Scripts 7a to 10 run from the headline's own prediction summary and coarse
-# differences (copied in), with its recorded seed, analysis$ice$fraction_source = "dalton_ice" written out,
-# and config.R as it stands at the commit: the oldest period labelled 10 - 11.5 ka and the second split of
-# the partial-ice forcing. Every column and number the headline has must come out identical; the only
+# saved headline run. Scripts 7 to 10 run from the headline's own prediction summary (copied in), with its
+# recorded seed, analysis$ice$fraction_source = "dalton_ice" written out, and config.R as it stands at the
+# commit: the oldest slice labelled 11.5 ka and its period 10 - 11.5 ka, and the second split of the
+# partial-ice forcing. Every column and number the headline has must come out identical; the only
 # differences allowed are the new columns (the two second-split parts in scripts 7a and 8, their six
-# forcings in script 8, their 14 rows appended to the variant-sensitivity table) and the oldest period's
-# label, "10 - 12 ka" (and "10 - 12" in the EGU recipe) now "10 - 11.5 ka". Then the new columns' values
-# (tools/check_ice_split.R) and the tests the work touches. The comparison for the meeting is made once, by
-# ice-comparison. Design: docs/cc/2026-11-16_ice_redesign_simpler_codex_gpt6astra.md, section 3. Fill in
-# the commit before running.
+# forcings in script 8, their 14 rows appended to the variant-sensitivity table) and the oldest slice's
+# labels: in script 7's four outputs its age 12000 now 11500, "12 ka" now "11.5 ka" and "10 - 12 ka" now
+# "10 - 11.5 ka"; in scripts 9 and 10 "10 - 12 ka" (and "10 - 12" in the EGU recipe) now "10 - 11.5 ka".
+# So the oldest slice keeps its ice mask and outline from the 12 ka polygon, and the oldest difference map
+# has its outline (Chris, 18 November 2026; review docs/cc/2026-11-17_ice_build_review_codex_gpt6astra.md).
+# Then the new columns' values (tools/check_ice_split.R) and the tests the work touches. The comparison for
+# the meeting is made once, by ice-comparison. Design: docs/cc/2026-11-16_ice_redesign_simpler_codex_gpt6astra.md,
+# section 3. Fill in the commit before running.
 headline = '/home/expert/Documents/contracting/Andria/paleo-RF-verify/d5d5df5/.rundirs/run1-main'   # d5d5df5, PASS 2026-11-02
 run      = '.rundirs/ice-old-replay'
 
+script7_check = paste0('headline = ', deparse(headline), '; run = ', deparse(run), '
+# Script 7: the headline\'s four outputs with only the oldest slice\'s labels changed. The coarse differences
+# hold its ice mask (ice_old of the oldest pair); the outlines are those of its 12 ka polygon.
+new_labels = c("12 ka" = "11.5 ka", "10 - 12 ka" = "10 - 11.5 ka")
+relabelled = function(table) {
+  if ("ages" %in% names(table)) table$ages[table$ages == 12000] = 11500
+  if ("facets" %in% names(table)) {
+    renamed = levels(table$facets) %in% names(new_labels)
+    levels(table$facets)[renamed] = unname(new_labels[levels(table$facets)[renamed]])
+  }
+  table
+}
+for (path in c("data/ice_fort.RDS", "data/ice_fort_diff_young.RDS", "data/ice_fort_diff_old.RDS", "data/alb_interp_preds_diffs_bluesky.RDS"))
+  stopifnot(identical(readRDS(file.path(run, path)), relabelled(readRDS(file.path(headline, path)))))
+stopifnot(any(readRDS(file.path(run, "data/ice_fort_diff_old.RDS"))$facets == "10 - 11.5 ka"))
+cat("ice-old-replay: script 7 as in the headline, labels aside; the oldest difference map has its outline\\n")
+')
+
 replay_check = paste0('headline = ', deparse(headline), '; run = ', deparse(run), '
-# The two copied inputs are the headline\'s.
-stopifnot(unname(tools::md5sum(file.path(run, "output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS"))) == "3ea14ce0680872ce9b99a6224747ac15",
-          unname(tools::md5sum(file.path(run, "data/alb_interp_preds_diffs_bluesky.RDS"))) == "73b556fd6fb63a08dcf3dde950a981e5")
+# The copied input is the headline\'s.
+stopifnot(unname(tools::md5sum(file.path(run, "output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS"))) == "3ea14ce0680872ce9b99a6224747ac15")
 # Scripts 7a and 8: the headline\'s columns identical (values, row order, attributes), only the named columns added.
 same_table = function(path, added) {
   old = readRDS(file.path(headline, path)); new = readRDS(file.path(run, path))
@@ -41,10 +61,10 @@ list(
   commit   = 'TO_FILL',   # the full commit of ice-nadi1 to verify
   config   = 'config.R',
   settings = list(analysis = list(draws = list(seed = 1549466984), ice = list(fraction_source = 'dalton_ice'))),
-  copy     = list(c(file.path(headline, 'output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS'), 'output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS'),
-                  c(file.path(headline, 'data/alb_interp_preds_diffs_bluesky.RDS'), 'data/alb_interp_preds_diffs_bluesky.RDS')),
-  scripts  = c('scripts/7a_alb_diff_full.R', 'scripts/8_radiative.R', 'scripts/9_forcing_barplot.R', 'scripts/10_forcing_breakdown.R'),
-  checks   = list(c('-e', replay_check), c('tools/check_ice_split.R', run),
+  copy     = list(c(file.path(headline, 'output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS'), 'output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS')),
+  scripts  = c('scripts/7_plot_preds.R', 'scripts/7a_alb_diff_full.R', 'scripts/8_radiative.R', 'scripts/9_forcing_barplot.R',
+               'scripts/10_forcing_breakdown.R'),
+  checks   = list(c('-e', script7_check), c('-e', replay_check), c('tools/check_ice_split.R', run),
                   'tests/test_config.R', 'tests/test_paths.R', 'tests/test_differences.R', 'tests/test_build_nadi1_fractions.R',
                   'tests/test_run_manifest.R', 'tests/test_calendar.R', 'tests/test_forcing_periods.R', 'tests/test_forcing_components.R',
                   'tests/test_forcing_breakdown.R', 'tests/test_hindcast_comparison.R'),
