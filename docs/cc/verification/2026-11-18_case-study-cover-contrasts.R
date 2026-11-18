@@ -38,7 +38,7 @@ list(
                    c(check, 'inputs', runs, '--fill-missing')),
               jobs,
               list(c(tool, 'report', out),
-                   c(check, 'case-studies', out, saved, runs, '--fill-missing'),
+                   c(check, 'case-studies', out, saved, runs[1], '--fill-missing'),
                    c(tool, 'duveiller', saved, netcdf, comparison, out),
                    c(check, 'duveiller-case-studies', comparison, file.path(earlier, 'cover_contrasts_duveiller.csv')),
                    c(check, 'duveiller', earlier, saved, netcdf))),

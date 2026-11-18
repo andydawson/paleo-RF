@@ -19,14 +19,13 @@
 #       coverage the same for every version, numbers exactly where there are common cells; the
 #       design's counts; five means recomputed from the raw file and the saved fits; one page; a
 #       complete record.
-#   Rscript tools/check_cover_contrasts.R case-studies <output-dir> <saved-contrast-dir> <all-days-run> <snow-free-run> <snowy-run> [--fill-missing]
+#   Rscript tools/check_cover_contrasts.R case-studies <output-dir> <saved-contrast-dir> <all-days-run> [--fill-missing]
 #       The case-studies command's output for the three runs, with its report, beside the saved run
 #       whose fits it evaluated: each record's run files have the MD5 sums of the saved run's
 #       record (the tool itself compares no checksums); the hemlock box gives back the saved
 #       northeast rows in all 36 table-months; the Quebec-Labrador cells, selected again here from
 #       the all-days run, give the tool's cell count and area denominator; 2,592 rows; the status
-#       tables copied unchanged; the four entries not fitted without numbers; four pages. The three
-#       runs are those the jobs read; only the all-days one is read again here.
+#       tables copied unchanged; the four entries not fitted without numbers; four pages.
 #   Rscript tools/check_cover_contrasts.R duveiller-case-studies <output-dir> <earlier-comparison-csv>
 #       The duveiller command's output on the case-studies cases: 864 rows, and the hemlock box's
 #       rows those of the comparison verified on 17 November (its cover_contrasts_duveiller.csv).
@@ -281,7 +280,7 @@ check_duveiller = function(out_dir, saved_dir, source_file) {
 
 # --- case-studies ---------------------------------------------------------------------------------
 
-check_case_studies = function(out_dir, saved_dir, run_dirs, fill_missing = FALSE) {
+check_case_studies = function(out_dir, saved_dir, all_days_run, fill_missing = FALSE) {
   jobs = paste(rep(names(TABLE_LABELS), each = length(MONTHS)), MONTHS, sep = '_')
   contrasts = utils::read.csv(file.path(out_dir, 'cover_contrasts.csv'), comment.char = '#')
   saved = utils::read.csv(file.path(saved_dir, 'cover_contrasts.csv'), comment.char = '#')
@@ -314,7 +313,7 @@ check_case_studies = function(out_dir, saved_dir, run_dirs, fill_missing = FALSE
   # 3. One new box, its cells selected again here with its bounds written out (Quebec-Labrador: 80 to
   # 55 W, 50 to 60 N, the west and south edges in): its calibration cells with an area, and their
   # area, give the tool's region_cells and the denominator of its area_share. All days, July.
-  run = read_run(run_dirs[1], fill_missing)
+  run = read_run(all_days_run, fill_missing)
   quebec = run$cal$x >= -80 & run$cal$x < -55 & run$cal$y >= 50 & run$cal$y < 60 & is.finite(run$area) & run$area > 0
   label = 'Quebec-Labrador (spruce rise)'
   cases = readRDS(file.path(out_dir, 'cases_all_days_jul.rds'))
@@ -377,12 +376,12 @@ if (sys.nframe() == 0L) {
   else if (length(args) == 2 && args[1] == 'exchanges') check_exchanges(args[2])
   else if (length(args) == 2 && args[1] == 'job') check_job(args[2])
   else if (length(args) == 4 && args[1] == 'duveiller') check_duveiller(args[2], args[3], args[4])
-  else if (length(args) == 6 && args[1] == 'case-studies') check_case_studies(args[2], args[3], args[4:6], command$fill_missing)
+  else if (length(args) == 4 && args[1] == 'case-studies') check_case_studies(args[2], args[3], args[4], command$fill_missing)
   else if (length(args) == 3 && args[1] == 'duveiller-case-studies') check_duveiller_case_studies(args[2], args[3])
   else {
     cat('usage: Rscript tools/check_cover_contrasts.R inputs <all-days-run> <snow-free-run> <snowy-run> [--fill-missing] | exchanges <protocol-2-run> | job <output-dir>',
         '| duveiller <output-dir> <saved-contrast-dir> <netcdf-file>',
-        '| case-studies <output-dir> <saved-contrast-dir> <all-days-run> <snow-free-run> <snowy-run> [--fill-missing]',
+        '| case-studies <output-dir> <saved-contrast-dir> <all-days-run> [--fill-missing]',
         '| duveiller-case-studies <output-dir> <earlier-comparison-csv>\n')
     quit(status = 2)
   }
