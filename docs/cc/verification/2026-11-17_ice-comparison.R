@@ -7,7 +7,7 @@ runs = file.path('.rundirs', c('ice-old-replay', 'ice-nadi1-optimal', 'ice-nadi1
 out  = '.rundirs/ice-comparison/meeting'
 list(
   name    = 'ice-comparison',
-  commit  = 'TO_FILL',   # the commit of specs 1 and 3 to 5
+  commit   = 'c0b6eda3573f0c8c4d8770d2b2494888cc433af7',   # the commit of specs 1 and 3 to 5
   config  = 'config.R',
   scripts = character(),
   checks  = list(c('tools/compare_ice.R', out, runs),

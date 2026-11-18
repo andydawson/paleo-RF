@@ -73,7 +73,7 @@ cat("ice-old-replay: the three NADI-1 files rebuilt with the committed checksums
 
 list(
   name     = 'ice-old-replay',
-  commit   = 'TO_FILL',   # the full commit of ice-nadi1 to verify
+  commit   = 'c0b6eda3573f0c8c4d8770d2b2494888cc433af7',   # the full commit of ice-nadi1 to verify
   config   = 'config.R',
   settings = list(analysis = list(draws = list(seed = 1549466984), ice = list(fraction_source = 'dalton_ice'))),
   copy     = list(c(file.path(headline, 'output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS'), 'output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS')),

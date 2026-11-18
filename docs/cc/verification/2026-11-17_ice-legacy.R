@@ -8,7 +8,7 @@
 # prediction summary. Fill in the commit before running.
 list(
   name    = 'ice-legacy',
-  commit  = 'TO_FILL',   # the full commit of ice-nadi1 to verify
+  commit   = 'c0b6eda3573f0c8c4d8770d2b2494888cc433af7',   # the full commit of ice-nadi1 to verify
   config  = 'configs/legacy_config.R',
   seed    = c('prediction_summary'),
   scripts = c('scripts/7_plot_preds.R', 'scripts/7a_alb_diff_full.R', 'scripts/8_radiative.R',
