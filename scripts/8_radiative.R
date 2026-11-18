@@ -139,9 +139,9 @@ alb_diff$rf_cack_veg_ice_parts = alb_diff$alb_diff_veg_ice_parts* (-alb_diff$rk_
 alb_diff$rf_cack_veg_icesc_parts = alb_diff$alb_diff_veg_icesc_parts* (-alb_diff$rk_cack)
 
 # The second split of the partial-ice total into a vegetation and an ice part (Chris, 16
-# November 2026: vegetation change only on the land ice-free at both slices, the rest to ice;
-# R/differences.R). Script 7a makes it with difference_method "endpoint" only, so that the
-# original analysis keeps its outputs exactly.
+# November 2026: vegetation change only on the smaller of the two slices' ice-free shares, the
+# rest to ice; R/differences.R). Script 7a makes it with difference_method "endpoint" only, so
+# that the original analysis keeps its outputs exactly.
 if ('alb_diff_veg_part_exposed' %in% names(alb_diff)) {
   alb_diff$rf_hadgem_veg_part_exposed = alb_diff$alb_diff_veg_part_exposed*100 * alb_diff$rk_hadgem
   alb_diff$rf_hadgem_ice_part_exposed = alb_diff$alb_diff_ice_part_exposed*100 * alb_diff$rk_hadgem

@@ -350,8 +350,11 @@ p_split = ggplot(split) +
   scale_fill_manual(values = c('ice' = '#2a78d6', 'ice-free land' = '#1baf7a', 'land whose vegetation change counts' = '#eb6834'), name = NULL) +
   labs(x = 'share of the cell', y = NULL, title = 'Why the total still works when ice advances',
        subtitle = sprintf('Albedo change = vegetation part + ice part. Vegetation albedo %.2f to %.2f, glacier albedo %.2f;\nthe numbers come from the pipeline\'s own arithmetic (R/differences.R)',
-                          EXAMPLE$veg_old, EXAMPLE$veg_young, EXAMPLE$glacier)) +
-  theme_slides() + theme(panel.grid = element_blank(), strip.text = element_text(hjust = 0))
+                          EXAMPLE$veg_old, EXAMPLE$veg_young, EXAMPLE$glacier),
+       caption = paste0('Drawn nested: each slice\'s ice starts at the left edge. Only for nested ice is the second rule\'s share,\n',
+                        '1 - max(older, younger ice fraction), the land ice-free at both slices; fractions do not say where in a cell the ice lies.')) +
+  theme_slides() + theme(panel.grid = element_blank(), strip.text = element_text(hjust = 0),
+                         plot.caption = element_text(hjust = 0), plot.caption.position = 'plot')
 save_png(p_split, 'split_diagram.png', 9, 7)
 
 # 5. How the forcing changes: HadGEM3, global equivalent, by period, the total and its parts.

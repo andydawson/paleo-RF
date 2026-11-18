@@ -129,9 +129,14 @@ pair_albedo_differences = function(alb_cell_filled, ice_threshold, difference_me
 #     ice-free at the OLDER slice, (1 - f_old) x (a_young - a_old), and the ice part
 #     (f_old - f_young) x (a_young - glacier albedo). When ice advances, the vegetation part
 #     includes land that ends under ice.
-#   *_part_exposed: the vegetation change only on the land ice-free at BOTH slices,
-#     (1 - max(f_old, f_young)) x (a_young - a_old); the ice part is the rest of the total.
-#     Where ice retreats or stays, the two rules agree.
+#   *_part_exposed: the vegetation change only on the smaller of the two slices' ice-free
+#     shares, (1 - max(f_old, f_young)) x (a_young - a_old); the ice part is the rest of the
+#     total. Where ice retreats or stays, the two rules agree. That share is the land ice-free
+#     at BOTH slices only if the ice footprints within a cell are nested (the smaller lies
+#     inside the larger): fractions do not say where in a cell the ice lies. With two disjoint
+#     footprints each covering half the cell, no land is ice-free at both slices, yet the share
+#     is one half (Astra's review of 17 November 2026). A convention for attributing the total,
+#     not a measured overlap.
 # The second rule splits the fixed-glacier-albedo total (veg_ice_parts) only, and is not made
 # under "legacy_components", so that the original analysis keeps its outputs exactly.
 partial_ice_differences = function(alb_cell_filled, ice_frac_young, ice_frac_old, difference_method) {

@@ -36,13 +36,19 @@ the six verification specs below, for the main session to run.
    stops unless each prediction slice has exactly one band. No output changes: for both
    configurations 7a still reads the same file with the same checksum.
 3. **Both splits of the partial-ice forcing.** Today's rule is unchanged; the second rule (vegetation
-   change only on land ice-free at both slices, the rest of the total to ice) adds
+   change only on the smaller of the two slices' ice-free shares, 1 - max(f_old, f_young), the rest
+   of the total to ice) adds
    `alb_diff_veg_part_exposed` and `alb_diff_ice_part_exposed` (script 7a), six `rf_*_exposed`
    forcings (script 8) and two rows per period in script 9's variant table. Made only with the
    `endpoint` method, so the legacy configuration's outputs stay exactly as they were. On all 34,392
    cell-months of the headline run, the old and new function give identical output under
    `legacy_components` and identical existing columns under `endpoint`, equal bit for bit to the
-   headline's saved table; the rules differ in the 2,844 cell-month rows where ice advances.
+   headline's saved table; the rules differ in the 2,844 cell-month rows where ice advances. The
+   smaller ice-free share is the land ice-free at both slices only if the ice footprints within a
+   cell are nested, the smaller inside the larger: fractions do not say where in a cell the ice lies.
+   With two disjoint footprints each covering half a cell, no land is ice-free at both slices, yet
+   the share is one half (Astra's review). The rule is a convention for attributing the total, not a
+   measured overlap; R/differences.R, the README and the comparison's split diagram say so.
 4. **The oldest slice labelled 11.5 ka** (config.R; the legacy file keeps 12,000 BP and its alias).
    The forcing groups the same rows into the same periods. Script 7 keeps the slice's 12 ka ice
    polygon (a small helper, `ice_match()`, matches 11,500 BP as 12,000 BP), so its ice mask, coarse

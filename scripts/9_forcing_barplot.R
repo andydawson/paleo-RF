@@ -63,9 +63,10 @@
 #         whose ice changed (a signed change: ice retreat or advance);
 #         _veg_part + _ice_part = _veg_ice_parts. A second rule for the same total (Chris,
 #         16 November 2026, so that Andria can choose; R/differences.R) counts the
-#         vegetation change only on the share ice-free at both slices and gives the rest to
-#         ice: _veg_part_exposed + _ice_part_exposed = _veg_ice_parts. The two rules differ
-#         only where ice advances. Made with difference_method = "endpoint" only.
+#         vegetation change only on the smaller of the two slices' ice-free shares (the land
+#         ice-free at both slices if the ice footprints within a cell are nested) and gives
+#         the rest to ice: _veg_part_exposed + _ice_part_exposed = _veg_ice_parts. The two
+#         rules differ only where ice advances. Made with difference_method = "endpoint" only.
 #     R/differences.R gives the threshold components NA where they do not apply (a
 #     vegetation step has no ice part and vice versa); R/forcing_components.R sets the
 #     part that does not apply to 0 before aggregating, the 'by kind of step'
@@ -236,7 +237,7 @@ variant_labels = c(veg_ice_thresh   = 'total, all-or-nothing ice, fixed glacier 
                    ice_part         = 'ice part, partial ice',
                    veg_icesc_thresh = 'total, all-or-nothing ice, month-by-month glacier albedo',
                    veg_icesc_parts  = 'total, partial ice, month-by-month glacier albedo',
-                   veg_part_exposed = 'vegetation part, partial ice, second rule: land ice-free at both slices',
+                   veg_part_exposed = 'vegetation part, partial ice, second rule: the smaller ice-free share',
                    ice_part_exposed = 'ice part, partial ice, second rule: the rest of the total')
 # The figures are means over the analysis months (A6); say which when they are not all twelve.
 months_note = if (months_label(cfg$analysis$months) == 'annual') '' else
