@@ -14,16 +14,21 @@ the six verification specs below, for the main session to run.
    NADI-1 snapshot of the same age, 500, 200 and 50 BP the 1,000 BP fractions. A cell's fraction is
    its area under ice over its whole area. Checks passed: fractions within 0 to 1, band names, grid
    and missing cells, the same prediction cells with a value as from the old raster, young bands
-   equal to 1 ka, area conserved (largest relative difference 1.8e-13). Built in 1.6 minutes, peak
-   memory 353 MB; a second run wrote byte-identical files; halving the edge step changes no fraction
-   by more than 2.7e-7.
+   equal to 1 ka, area conserved within the builder's own areas (largest relative difference
+   1.8e-13; see the departure below). Built in 1.6 minutes, peak memory 353 MB; a second run wrote
+   byte-identical files; halving the edge step changes no fraction by more than 2.7e-7.
    - **One departure from the design.** It asked for areas on the sphere with sf's s2 engine, as
      script 7a measures cell areas. s2 reads every polygon edge as a great circle rather than the
      straight line the file draws (NADI-1 has edges up to 12.7 degrees long), so some polygons cross
      themselves on the sphere, and it turns the 8.5 ka minimum inside out even after repair, which
      would cover the whole grid with ice. The polygons are therefore taken as drawn (GEOS) and the
      areas measured in an equal-area projection (EPSG:6931) after cutting edges every 0.01 degrees.
-     In the other 65 snapshots the two conventions differ by at most 0.0008 in any fraction. The
+     In the other 65 snapshots the two conventions differ by at most 0.0008 in any fraction. So two
+     area conventions meet: the builder measures on the WGS84 ellipsoid, while script 7a weights
+     cells by their area on a sphere (s2), as the forcing always has. With 7a's weights the
+     whole-mask ice totals come out 0.52 to 0.78% smaller than the builder's (Astra's review; the same
+     range checked again on 18 November over the 66 snapshots): the fractions conserve area within
+     the builder's convention, not exactly under 7a's. The pipeline keeps its weights. The
      merged areas match the data set's own `Area_Km2` totals within 0.01% in 58 of 66 snapshots;
      in the others the polygons overlap (6 ka optimal) or the attribute does not match its polygon.
    - Repairs, all reported in the provenance note: three rings the files leave open were closed (one

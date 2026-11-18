@@ -36,7 +36,10 @@
 #     edge is cut into pieces of at most EDGE_STEP degrees, so that the edges stay straight in
 #     longitude and latitude. Summed over the cells, fraction x cell area is then the ice area
 #     inside the grid: the fractions conserve area (Taylor 2024, Geosci. Model Dev. 17, 415-430,
-#     doi:10.5194/gmd-17-415-2024, section 2);
+#     doi:10.5194/gmd-17-415-2024, section 2), with the cell areas of this projection, on the
+#     WGS84 ellipsoid. Script 7a weights cells by their area on a sphere (sf's s2 engine), so ice
+#     totals made with its weights come out 0.5 to 0.8% smaller over the whole mask (checked 18
+#     November 2026); conservation holds within this tool's convention, not exactly under 7a's;
 #   - the grid, its extent and its missing cells are the old raster's
 #     (data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif: 116 x 62 one-degree cells, 2,866
 #     with values), so the pipeline keeps exactly its cells; 25 bands named as there, yr11500bp
