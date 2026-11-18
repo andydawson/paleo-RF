@@ -133,9 +133,8 @@ the first experiment remains reproducible at the commits in its verification spe
 | `tools/explore_cover_contrasts.R` (`fit`, `report`) | a finished run's configuration, calibration table and script 7a's cell areas; `data/albedo_modis_cells.csv`; `docs/cc/2026-11-10_published_albedo_contrasts.csv` | nothing in the run: an output folder of its own (outside git) with, per albedo table and month, the six versions' fits and exchange cases (`.rds`), contrasts, fit records and a record of inputs; the report stacks them into `cover_contrasts.csv`, `fits.csv`, `published_guide.csv` and `cover_contrasts.pdf`. An exploration of the fitted cover response beside published forest albedo contrasts: no pass or fail ([design](docs/cc/2026-11-10_cover_contrast_test_design_fable.md)) |
 | `tools/check_cover_contrasts.R` (`inputs`, `exchanges`, `job`) | the three runs the exploration reads; protocol 2's frozen exchanges; the output of a snowy July and August job | nothing: checks of the exploration's implementation for its verification spec |
 
-These tools read finished runs. A run saved before a setting existed lacks it in its `config_used.R`, and the tools then stop;
-with `--fill-missing` on the command line (from R, `load_config(path, fill_missing = TRUE)`) they fill it with what the pipeline
-did before (`HISTORICAL_SETTINGS` in `R/config_schema.R`) and warn, listing the values filled.
+These tools stop on a run whose `config_used.R` lacks a setting added since; with `--fill-missing` (from R, `load_config(path,
+fill_missing = TRUE)`) they fill it with what the pipeline did before (`HISTORICAL_SETTINGS`, `R/config_schema.R`) and warn.
 
 The comparison of the old ice raster with the NADI-1 reconstruction (Dalton et al. 2023; Chris,
 16 November 2026; [design](docs/cc/2026-11-16_ice_redesign_simpler_codex_gpt6astra.md),
