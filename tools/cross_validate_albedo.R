@@ -46,11 +46,16 @@ run_config = function(run_dir, fill_missing = FALSE) {
 }
 
 # The run's analysis settings must still be those the holdouts were made with. With fill_missing,
-# holdouts saved before a setting existed are completed in memory as the run's configuration is;
-# holdouts.rds itself is never rewritten, as the predictions are tied to its MD5.
+# holdouts saved before a setting existed are completed in memory as the run's configuration is,
+# with the same warning, so that a value assumed for them is never silent; holdouts.rds itself is
+# never rewritten, as the predictions are tied to its MD5.
 check_holdout_settings = function(run_dir, holdouts, fill_missing = FALSE) {
   saved = holdouts$analysis
-  if (fill_missing) saved = fill_missing_settings(saved, CONFIG_SCHEMA$analysis, HISTORICAL_SETTINGS$analysis)$settings
+  if (fill_missing) {
+    completed = fill_missing_settings(saved, CONFIG_SCHEMA$analysis, HISTORICAL_SETTINGS$analysis, path = 'cfg$analysis')
+    warn_filled(paste('holdout file', cv_file(run_dir, 'holdouts.rds')), completed$filled)
+    saved = completed$settings
+  }
   if (!identical(run_config(run_dir, fill_missing)$analysis, saved)) stop('analysis configuration changed since holdouts')
 }
 

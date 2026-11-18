@@ -63,6 +63,14 @@ fill_missing_settings = function(settings, schema, historical, path = 'cfg') {
   list(settings = settings, filled = filled)
 }
 
+# The one warning for settings filled in a saved file, none if nothing was filled; shown at once,
+# as a tool's long run would otherwise print it only at its end. `file` names the file ("config
+# file <path>"); `filled` is the list of values fill_missing_settings() filled.
+warn_filled = function(file, filled)
+  if (length(filled))
+    warning(file, ' was saved before some settings existed; filled with what the pipeline did before:\n  ',
+            paste(names(filled), '=', vapply(filled, deparse1, ''), collapse = '\n  '), call. = FALSE, immediate. = TRUE)
+
 # Which config file this run uses: config.R, unless the script was started with
 # `--config <file>` (or `--config=<file>`), e.g.
 #   Rscript scripts/6_prediction_model.R --config configs/median.R
@@ -110,10 +118,7 @@ load_config = function(path = config_path(), fill_missing = FALSE) {
       '\nor --fill-missing on the command line.') else ''
     stop('config file ', path, ':\n  ', paste(errs, collapse = '\n  '), hint, call. = FALSE)
   }
-  # Shown at once: a tool's long run would otherwise print it only at its end.
-  if (length(filled))
-    warning('config file ', path, ' was saved before some settings existed; filled with what the pipeline did before:\n  ',
-            paste(names(filled), '=', vapply(filled, deparse1, ''), collapse = '\n  '), call. = FALSE, immediate. = TRUE)
+  warn_filled(paste('config file', path), filled)
   cfg
 }
 

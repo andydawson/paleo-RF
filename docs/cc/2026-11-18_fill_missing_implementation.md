@@ -51,6 +51,9 @@ in the command line and the API"); it is explained concisely where users look.
   saves the configuration it loaded itself, so the filled values are loaded and announced once.
 - The README, under the table of these tools, says what the flag does; each tool's header and usage
   message mention it.
+- After the review: `check_holdout_settings()` names `holdouts.rds` and each value it fills, in one warning
+  (`warn_filled()`, shared with `load_config()`); the stage test covers a complete configuration with
+  old holdouts.
 
 ## Evidence
 

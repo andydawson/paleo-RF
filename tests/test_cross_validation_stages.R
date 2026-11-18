@@ -135,6 +135,18 @@ invisible(capture.output(suppressWarnings({ stage_fit(run_dir, paths, 'd1', mont
 stopifnot(identical(readLines(cv_file(run_dir, 'scores.csv')), score_before), identical(holdouts_md5(run_dir), saved_md5))
 config_lines[source_line] = '      fraction_source = "nadi1_optimal",'
 writeLines(config_lines, file.path(run_dir, 'config_used.R'))
-stopifnot(grepl('analysis configuration changed since holdouts', tryCatch({ stage_score(run_dir, paths, fill_missing = TRUE); '' }, error = conditionMessage)))
+stopifnot(grepl('analysis configuration changed since holdouts', tryCatch({ suppressWarnings(stage_score(run_dir, paths, fill_missing = TRUE)); '' }, error = conditionMessage)))
+# A complete configuration (the setting written out) against those old holdouts (change review,
+# 18 November): strictly they differ; with fill_missing they agree, with one warning that names the
+# holdout file and the value assumed for it (the complete configuration fills nothing, so warns
+# nothing). holdouts.rds is still not rewritten.
+config_lines[source_line] = '      fraction_source = "dalton_ice",'
+writeLines(config_lines, file.path(run_dir, 'config_used.R'))
+stopifnot(grepl('analysis configuration changed since holdouts', tryCatch({ stage_score(run_dir, paths); '' }, error = conditionMessage)))
+warned = character()
+invisible(capture.output(withCallingHandlers(stage_score(run_dir, paths, fill_missing = TRUE),
+                                             warning = function(w) { warned <<- c(warned, conditionMessage(w)); invokeRestart('muffleWarning') })))
+stopifnot(length(warned) == 1, grepl(cv_file(run_dir, 'holdouts.rds'), warned, fixed = TRUE),
+          grepl('analysis$ice$fraction_source = "dalton_ice"', warned, fixed = TRUE), identical(holdouts_md5(run_dir), saved_md5))
 unlink(dirname(run_dir), recursive = TRUE)
 cat('test_cross_validation_stages: all tests passed\n')
