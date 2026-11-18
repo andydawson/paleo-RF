@@ -247,8 +247,8 @@ age_axis = function(...) scale_x_reverse(limits = AGE_LIMITS, breaks = 0:12, ...
 place = function(x, y) sprintf('%.1f W, %.1f N', -x, y)
 
 # 1. Ice through time, and how the slices line up with the pollen bins and the NADI-1 snapshots.
-area = data.frame(age_bp = rep(SLICES, ncol(ice_area)), source = rep(colnames(ice_area), each = length(SLICES)),
-                  km2 = as.vector(ice_area), carried = SLICES < 1000 & rep(colnames(ice_area), each = length(SLICES)) != 'old raster')
+area = data.frame(age_bp = rep(SLICES, ncol(ice_area)), source = rep(colnames(ice_area), each = length(SLICES)), km2 = as.vector(ice_area))
+area$carried = area$age_bp < 1000   # the old raster too repeats its 1,000 BP band at 500, 200 and 50 BP
 shown = filter(area, source %in% c('old raster', 'NADI-1 optimal'))
 p_area = ggplot() +
   geom_ribbon(data = data.frame(age_bp = SLICES, low = ice_area[, 'NADI-1 minimum'], high = ice_area[, 'NADI-1 maximum']),
@@ -257,7 +257,7 @@ p_area = ggplot() +
   geom_point(data = shown, aes(ka(age_bp), km2 / 1e6, colour = source, shape = carried), size = 2.2) +
   scale_colour_manual(values = COLOURS, breaks = c('old raster', 'NADI-1 optimal'), name = NULL) +
   scale_fill_manual(values = c('NADI-1 minimum to maximum' = COLOURS[['NADI-1 optimal']]), name = NULL) +
-  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 1), labels = c('snapshot of the slice\'s own age', '1 ka carried forward'), name = NULL) +
+  scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 1), labels = c('ice of the slice\'s own age', '1 ka ice carried forward'), name = NULL) +
   guides(colour = guide_legend(order = 1), fill = guide_legend(order = 2), shape = guide_legend(order = 3)) +
   age_axis() +
   labs(x = NULL, y = 'ice on the forcing cells\n(million km2)', title = 'Ice through time: the old raster and NADI-1',

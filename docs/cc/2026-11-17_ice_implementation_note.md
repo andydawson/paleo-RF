@@ -78,7 +78,9 @@ the six verification specs below, for the main session to run.
    10.5 ka and 0 at 10 ka; the increase of 2.4e-7 makes the averaging replace the 10.5 ka fraction
    with 0.2862329781, the mean of its neighbours. The tiny change is in the source polygons, not
    made by rasterising them (Astra clipped the polygons themselves). The averaging stays as Chris
-   chose; no tolerance is added.
+   chose; no tolerance is added. The first figure now marks the 500, 200 and 50 BP values of the old
+   raster as 1 ka ice carried forward, as for NADI-1: its young bands repeat its 1,000 BP band
+   (corrected on 18 November; they were shown as the slice's own age).
 6. **Six verification specs** (`docs/cc/verification/2026-11-17_ice-*.R`, commit to fill in).
    Strengthened on 18 November (Astra's change 3): the replay now runs script 7 as well and checks
    its four outputs against the headline's, labels aside (the oldest mask and outline included);
