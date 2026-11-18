@@ -4,7 +4,9 @@ Branch `ice-nadi1`, from Chris's decisions (`2026-11-17_ice_work_decisions.md`) 
 (`2026-11-16_ice_redesign_simpler_codex_gpt6astra.md`, sections 1, 2 and 4), plus his two later
 decisions: compute both rules for splitting the forcing into a vegetation part and an ice part, and
 label the oldest slice 11.5 ka. No pipeline script was run on full data; the forcing runs are
-the six verification specs below, for the main session to run.
+the six verification specs below, for the main session to run. Updated on 18 November 2026 with
+Astra's review (`2026-11-17_ice_build_review_codex_gpt6astra.md`), its changes 1, 3 and 4: items 1
+and 3 to 6 and the verification runs below (its change 2: Worth knowing).
 
 ## What was built, one commit each
 
@@ -108,7 +110,8 @@ same commit can collide while the first makes the shared worktree and links its 
   `load_config()` now refuses it. Tools that load the configuration of an existing run
   (`compare_cv_hindcasts.R`, `explore_cover_contrasts.R`, `check_cv_separation.R`,
   `cross_validate_albedo.R`) stop on runs made before this branch. `compare_ice.R` reads the
-  run records instead and is not affected.
+  run records instead and is not affected. Astra's change 2 is designed separately
+  (`2026-11-17_config_compatibility_codex_gpt6astra.md`) and not built yet.
 - Script 7a reprojects each ice band before reading it, which rounds the double-precision NADI-1
   fractions to single precision (at most 3e-8). Harmless; `compare_ice.R` reads them the same way.
 - Not done here: the GitHub issue (design step 1), the reviews the change needs (the science of
