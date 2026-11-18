@@ -5,7 +5,8 @@
 #       The three finished runs the exploration reads are the ones traced in the implementation
 #       note (section 4): each file has its recorded MD5 sum, the repository's cell table
 #       reproduces each calibration table, and the three tables hold the same cells, cover,
-#       elevation and cell areas; only the albedo differs.
+#       elevation and cell areas; only the albedo differs. Add --fill-missing for runs saved before
+#       a setting existed (load_config() in R/config.R).
 #   Rscript tools/check_cover_contrasts.R exchanges <protocol-2-run>
 #       Protocol 2's own northeast exchanges (April and May, fixed and historical), rebuilt with
 #       the generalised helpers of R/cv_separation.R, are identical to those it froze.
@@ -35,8 +36,8 @@ INPUT_MD5 = list(
   snowy     = c(configuration = 'c547a726297bc6cb9f2298c7c763fbc8', calibration_table = 'c907790dc87b5b9d2a1c171550557b60',
                 albedo_differences = 'e1b6124d758c00d42576d1a6c76f1ef3', albedo_modis_cells = 'd73c54cca47b864284e430f87ef9ce3f'))
 
-check_inputs = function(run_dirs) {
-  runs = lapply(setNames(run_dirs, names(INPUT_MD5)), read_run)   # read_run stops unless the cell table reproduces the run's table
+check_inputs = function(run_dirs, fill_missing = FALSE) {
+  runs = lapply(setNames(run_dirs, names(INPUT_MD5)), read_run, fill_missing)   # read_run stops unless the cell table reproduces the run's table
   same = function(a, b) isTRUE(all.equal(a, b, check.attributes = FALSE, tolerance = 0))
   cover = c('x', 'y', 'elev', 'OL', 'ET', 'ST')
   for (table in names(runs)) {
@@ -263,13 +264,14 @@ check_duveiller = function(out_dir, saved_dir, source_file) {
 }
 
 if (sys.nframe() == 0L) {
-  args = commandArgs(trailingOnly = TRUE)
-  if (length(args) == 4 && args[1] == 'inputs') check_inputs(args[2:4])
+  command = tool_command_line()
+  args = command$args
+  if (length(args) == 4 && args[1] == 'inputs') check_inputs(args[2:4], command$fill_missing)
   else if (length(args) == 2 && args[1] == 'exchanges') check_exchanges(args[2])
   else if (length(args) == 2 && args[1] == 'job') check_job(args[2])
   else if (length(args) == 4 && args[1] == 'duveiller') check_duveiller(args[2], args[3], args[4])
   else {
-    cat('usage: Rscript tools/check_cover_contrasts.R inputs <all-days-run> <snow-free-run> <snowy-run> | exchanges <protocol-2-run> | job <output-dir>',
+    cat('usage: Rscript tools/check_cover_contrasts.R inputs <all-days-run> <snow-free-run> <snowy-run> [--fill-missing] | exchanges <protocol-2-run> | job <output-dir>',
         '| duveiller <output-dir> <saved-contrast-dir> <netcdf-file>\n')
     quit(status = 2)
   }

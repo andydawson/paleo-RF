@@ -1,0 +1,296 @@
+NADI-1 ice fractions on the old ice raster's grid: provenance
+
+Made:        2026-11-17 18:34 UTC by tools/build_nadi1_fractions.R (md5 46854296d568d995ac2db11b0917e24c), run at commit e951b2f
+Source:      Dalton, A. S., et al. (2023), Quaternary Science Reviews 321, 108345, doi:10.1016/j.quascirev.2023.108345;
+             data set "North American Deglacial Isochrones, version 1" (NADI-1), Zenodo doi:10.5281/zenodo.8161764
+             (CC-BY-4.0), file "NADI-1 shapefiles Dalton et al. QSR.zip" (md5 fde5b0c80e766183ba5ad87c611f3e56, as
+             Zenodo publishes it), unpacked; the 66 shapefiles used and the md5 of each .shp are listed below.
+Template:    data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif (md5 9f381624b167b5b01868d5bd4c86db60): its grid, extent and missing cells
+Ages:        the slices 11500 to 1000 BP take the NADI-1 snapshot of the same age (calendar years);
+             500, 200, 50 BP take the 1,000 BP fractions (carried forward, Chris, 16 November 2026)
+Bands:       yr11500bp yr11000bp yr10500bp yr10000bp yr9500bp yr9000bp yr8500bp yr8000bp yr7500bp yr7000bp yr6500bp yr6000bp yr5500bp yr5000bp yr4500bp yr4000bp yr3500bp yr3000bp yr2500bp yr2000bp yr1500bp yr1000bp yr500bp yr200bp yr50bp
+Geometry:    the polygons as drawn (straight edges in longitude and latitude), open rings closed,
+             sf::st_make_valid() and st_union() (GEOS); edges cut every 0.01 degrees, projected to EPSG:6931;
+             fraction = area(cell under ice) / area(cell) in that projection; whole-cell area; rounded to 12 decimals
+Software:    R 4.5.3, sf 1.1.3, terra 1.9.50; GEOS 3.14.1, GDAL 3.13.3, PROJ 9.8.1
+Files:       double-precision GeoTIFF, DEFLATE compression
+Runtime:     1.6 min in all: 1.6 min for the polygons and intersections, 0.00 min writing
+
+Outputs (md5, path, bytes):
+  5a3e6d25e0380019bb154e668009ba99  data/nadi1_fractions/nadi1_optimal.tif  68055
+  4720ef306ff08a8a5c87e4135c4f1acd  data/nadi1_fractions/nadi1_minimum.tif  54726
+  b8202b39caeeb44484d8513c8e93b9d4  data/nadi1_fractions/nadi1_maximum.tif  67752
+
+Checks passed: fractions within 0 to 1; band names; the template's grid and missing cells in every band;
+the same prediction cells (data/elev_interp_cells.RDS) get a value as from the template; 500, 200 and 50 BP equal 1,000 BP;
+area conserved for every snapshot (largest relative difference 1.8e-13). Per snapshot: the rings closed and
+polygons repaired; the data set's own total area (sum of Area_Km2), the merged ice area, the ice area inside the
+grid measured directly and from the fractions (km2):
+ reconstruction age_bp rings_closed polygons_repaired area_attribute_km2 ice_area_km2 ice_area_in_grid_km2 ice_area_from_fractions_km2   difference_km2
+        optimal  11500            0                 1       7642576.0925 7642576.0330        5391988.18607               5391988.18607 -9.313225746e-10
+        optimal  11000            0                 1       7131283.0868 7131275.2090        5016290.35151               5016290.35151  5.587935448e-09
+        optimal  10500            0                 0       6701345.3575 6701345.3059        4742736.43673               4742736.43673 -4.656612873e-09
+        optimal  10000            0                 0       6010689.2349 6010689.1936        4119269.32095               4119269.32095 -4.097819328e-08
+        optimal   9500            0                 0       5197544.1183 5197544.0871        3600074.03222               3600074.03222  1.909211278e-08
+        optimal   9000            0                 0       4435339.5182 4435339.4841        2981834.16885               2981834.16885 -4.470348358e-08
+        optimal   8500            0                 0       3053659.1308 3053659.1113        2125410.42884               2125410.42884 -4.516914487e-08
+        optimal   8000            0                 0       1884776.7152 1884776.6980        1491303.81233               1491303.81233  7.683411241e-09
+        optimal   7500            0                 0       1122163.3823 1122134.0685         855622.09951                855622.09951  4.307366908e-09
+        optimal   7000            0                 0        708318.5152  708318.5070         508880.23116                508880.23116 -1.094304025e-08
+        optimal   6500            0                 0        493109.7729  493109.7653         321896.92164                321896.92164 -2.374872565e-08
+        optimal   6000            1                 3        491970.2935  374563.5538         219790.21164                219790.21164 -1.006992534e-08
+        optimal   5500            1                 2        313009.1612  313009.1501         176456.05161                176456.05161 -1.606531441e-08
+        optimal   5000            0                 0        281195.7605  281195.7506         152708.83381                152708.83381 -6.635673344e-09
+        optimal   4500            0                 0        294355.4927  294355.4834         144140.95890                144140.95890 -3.696186468e-09
+        optimal   4000            0                 0        288499.6417  288499.6327         138285.10826                138285.10826  5.995389074e-09
+        optimal   3500            0                 0        272719.9620  272719.9528         130729.46431                130729.46431  4.263711162e-09
+        optimal   3000            0                 0        268439.0854  268439.0762         126448.58773                126448.58773  1.184525900e-08
+        optimal   2500            0                 0        264386.3522  264386.3425         122129.26793                122129.26793  1.041917130e-08
+        optimal   2000            0                 0        260801.2106  260801.2007         118544.12609                118544.12609  1.268927008e-08
+        optimal   1500            0                 0        255603.2850  255603.2748         113342.16735                113342.16735  1.412990969e-08
+        optimal   1000            0                 0        250394.0886  250394.0791         111141.71338                111141.71338  1.805892680e-08
+        minimum  11500            0                 0       6453181.1156 6453181.0700        4543798.24844               4543798.24844  1.862645149e-09
+        minimum  11000            0                 0       5921274.4434 5921274.4088        4060286.15382               4060286.15382  8.614733815e-08
+        minimum  10500            0                 0       5145775.5567 5145775.5251        3576331.06228               3576331.06228 -6.984919310e-09
+        minimum  10000            0                 0       4260534.0180 4260533.9849        2845663.18292               2845663.18292 -3.911554813e-08
+        minimum   9500            0                 0       2994843.6251 2994843.6050        2105729.86529               2105729.86529  6.519258022e-09
+        minimum   9000            0                 0       1815324.0128 1815294.6578        1463988.63215               1463988.63215 -7.916241884e-09
+        minimum   8500            1                 0       1071472.7764 1071443.4637         831570.38765                831570.38765 -2.339947969e-08
+        minimum   8000            0                 0        666209.3704  666209.3643         484813.29515                484813.29515 -1.321313903e-08
+        minimum   7500            0                 0        450988.4868  450988.4812         297827.06427                297827.06427 -1.542503014e-08
+        minimum   7000            0                 1        355329.3733  355329.3619         217300.55930                217300.55930 -1.801527105e-08
+        minimum   6500            0                 0        271806.1098  271806.1025         151299.01839                151299.01839 -1.143780537e-08
+        minimum   6000            0                 0        208316.8579  208316.8500          88276.80619                 88276.80619  1.615262590e-08
+        minimum   5500            0                 0        208316.8579  208316.8500          88276.80619                 88276.80619  1.615262590e-08
+        minimum   5000            0                 0        205512.2510  205512.2433          87916.95007                 87916.95007 -8.731149137e-10
+        minimum   4500            0                 0        205494.3851  205494.3773          87916.95007                 87916.95007 -5.966285244e-10
+        minimum   4000            0                 0        205512.2510  205512.2433          87916.95007                 87916.95007 -2.095475793e-09
+        minimum   3500            0                 0        205512.2510  205512.2433          87916.95007                 87916.95007 -2.095475793e-09
+        minimum   3000            0                 0        205512.2510  205512.2433          87916.95007                 87916.95007 -2.095475793e-09
+        minimum   2500            0                 0        205512.2510  205512.2433          87916.95007                 87916.95007 -2.095475793e-09
+        minimum   2000            0                 0        160903.9545  205512.2433          87916.95007                 87916.95007 -2.095475793e-09
+        minimum   1500            0                 0        205512.2461  205512.2383          87917.08623                 87917.08623  1.025910024e-08
+        minimum   1000            0                 0        205512.2461  205512.2383          87917.08623                 87917.08623  1.025910024e-08
+        maximum  11500            0                 0       9256866.6640 9256598.7229        6652895.19488               6652895.19488 -3.539025784e-08
+        maximum  11000            0                 1       8522874.1969 8522874.1374        6015819.94192               6015819.94192  7.543712854e-08
+        maximum  10500            0                 0       8286313.0861 8278689.2829        5849002.48936               5849002.48936  6.426125765e-08
+        maximum  10000            0                 0       7389237.9667 7518929.5647        5299381.41623               5299381.41623 -1.955777407e-08
+        maximum   9500            0                 1       7034263.0545 7034263.0085        5007304.57127               5007304.57127  3.073364496e-08
+        maximum   9000            0                 0       6592500.9729 6592500.9289        4650702.89758               4650702.89758 -3.445893526e-08
+        maximum   8500            0                 2       5336753.2766 5336732.9651        3720757.11885               3720757.11885  6.193295121e-08
+        maximum   8000            0                 0       4645368.9480 4645368.9158        3133246.78432               3133246.78432 -9.313225746e-09
+        maximum   7500            0                 0       3206617.7521 3206617.7322        2256433.69653               2256433.69653 -2.654269338e-08
+        maximum   7000            0                 0       2107263.7626 2107263.7452        1701353.51051               1701353.51051 -1.164153218e-09
+        maximum   6500            0                 0       1237478.4703 1237478.4593         944490.11216                944490.11216  6.286427379e-09
+        maximum   6000            0                 0        950371.2041  950341.8929         676871.16133                676871.16133 -1.851003617e-08
+        maximum   5500            0                 0        844964.1150  844934.8021         570685.17042                570685.17042 -9.662471712e-09
+        maximum   5000            0                 0        795887.8085  795858.4950         521608.69046                521608.69046  1.612352207e-08
+        maximum   4500            0                 0        786275.8924  786246.5788         512000.94390                512000.94390  1.932494342e-08
+        maximum   4000            0                 0        786280.0620  786250.7484         512000.94390                512000.94390  1.932494342e-08
+        maximum   3500            0                 0        786280.0620  786250.7484         512000.94390                512000.94390  1.932494342e-08
+        maximum   3000            0                 0        707099.0279  786250.7484         512000.94390                512000.94390  1.932494342e-08
+        maximum   2500            0                 0        707099.0279  786250.7484         512000.94390                512000.94390  1.932494342e-08
+        maximum   2000            0                 0        786280.0620  786250.7484         512000.94390                512000.94390  1.932494342e-08
+        maximum   1500            0                 0        707099.0052  786250.7262         512001.09456                512001.09456 -2.613523975e-08
+        maximum   1000            0                 0        707099.0052  786250.7262         512001.09456                512001.09456 -2.613523975e-08
+
+Order minimum <= optimal <= maximum, cell by cell at the 22 snapshot ages, tolerance 1e-09: 129 exceptions (reported, not repaired):
+               test age_bp      x    y          lower         upper
+ minimum <= optimal  11500  -65.5 66.5 0.759320009114 0.75931398620
+ minimum <= optimal  10000  -69.5 68.5 0.997934739512 0.99793455951
+ minimum <= optimal   9000  -68.5 70.5 0.011784115903 0.01178160785
+ minimum <= optimal   7000  -81.5 75.5 0.777445193875 0.77743763838
+ minimum <= optimal   6500  -81.5 75.5 0.777487808828 0.77743890675
+ minimum <= optimal   6000  -81.5 75.5 0.777487808828 0.77744519387
+ minimum <= optimal   6000  -72.5 71.5 0.266680031421 0.26509298470
+ minimum <= optimal   6000  -66.5 67.5 0.533550819308 0.52360349835
+ minimum <= optimal   5500  -79.5 76.5 0.664791458769 0.66478574007
+ minimum <= optimal   5500  -81.5 75.5 0.777487808828 0.77746119560
+ minimum <= optimal   5500  -72.5 71.5 0.266680031421 0.26509298470
+ minimum <= optimal   5000  -83.5 73.5 0.043604675408 0.04360241182
+ minimum <= optimal   5000  -80.5 73.5 0.139368591750 0.13936564772
+ minimum <= optimal   5000  -79.5 73.5 0.459280080832 0.45927738837
+ minimum <= optimal   5000  -78.5 73.5 0.510606963281 0.51059728864
+ minimum <= optimal   5000  -77.5 73.5 0.374575783686 0.37456881433
+ minimum <= optimal   5000  -77.5 72.5 0.302479786008 0.30247673873
+ minimum <= optimal   5000  -76.5 72.5 0.552338678489 0.55233457415
+ minimum <= optimal   5000  -75.5 72.5 0.277684955358 0.27768009394
+ minimum <= optimal   5000  -72.5 71.5 0.266680030912 0.26667248856
+ minimum <= optimal   5000  -70.5 70.5 0.394143144485 0.39413921820
+ minimum <= optimal   5000  -69.5 70.5 0.123467257656 0.12346321729
+ minimum <= optimal   5000  -68.5 69.5 0.244244661316 0.24424320622
+ minimum <= optimal   5000  -66.5 67.5 0.533550819079 0.53354464460
+ minimum <= optimal   5000  -65.5 67.5 0.488813598284 0.48880265164
+ minimum <= optimal   5000  -64.5 67.5 0.093511804182 0.09350642174
+ minimum <= optimal   4500  -83.5 73.5 0.043604675408 0.04360241182
+ minimum <= optimal   4500  -80.5 73.5 0.139368591750 0.13936564772
+ minimum <= optimal   4500  -79.5 73.5 0.459280080832 0.45927738837
+ minimum <= optimal   4500  -78.5 73.5 0.510606963281 0.51059728864
+ minimum <= optimal   4500  -77.5 73.5 0.374575783686 0.37456881433
+ minimum <= optimal   4500  -77.5 72.5 0.302479786008 0.30247673873
+ minimum <= optimal   4500  -76.5 72.5 0.552338678489 0.55233457415
+ minimum <= optimal   4500  -75.5 72.5 0.277684955358 0.27768009394
+ minimum <= optimal   4500  -72.5 71.5 0.266680030912 0.26667248856
+ minimum <= optimal   4500  -70.5 70.5 0.394143144485 0.39413921820
+ minimum <= optimal   4500  -69.5 70.5 0.123467257656 0.12346321729
+ minimum <= optimal   4500  -68.5 69.5 0.244244661316 0.24424320622
+ minimum <= optimal   4500  -68.5 67.5 0.001120649868 0.00112055929
+ minimum <= optimal   4500  -66.5 67.5 0.533550819079 0.53354464460
+ minimum <= optimal   4500  -65.5 67.5 0.488813598284 0.48880265164
+ minimum <= optimal   4500  -64.5 67.5 0.093511804182 0.09350642174
+ minimum <= optimal   4000  -83.5 73.5 0.043604675408 0.04360241182
+ minimum <= optimal   4000  -80.5 73.5 0.139368591750 0.13936564772
+ minimum <= optimal   4000  -79.5 73.5 0.459280080832 0.45927738837
+ minimum <= optimal   4000  -78.5 73.5 0.510606963281 0.51059728864
+ minimum <= optimal   4000  -77.5 73.5 0.374575783686 0.37456881433
+ minimum <= optimal   4000  -77.5 72.5 0.302479786008 0.30247673873
+ minimum <= optimal   4000  -76.5 72.5 0.552338678489 0.55233457415
+ minimum <= optimal   4000  -75.5 72.5 0.277684955358 0.27768009394
+ minimum <= optimal   4000  -72.5 71.5 0.266680030912 0.26667248856
+ minimum <= optimal   4000  -70.5 70.5 0.394143144485 0.39413921820
+ minimum <= optimal   4000  -69.5 70.5 0.123467257656 0.12346321729
+ minimum <= optimal   4000  -68.5 69.5 0.244244661316 0.24424320622
+ minimum <= optimal   4000  -68.5 67.5 0.001120649868 0.00112055929
+ minimum <= optimal   4000  -66.5 67.5 0.533550819079 0.53354464460
+ minimum <= optimal   4000  -65.5 67.5 0.488813598284 0.48880265164
+ minimum <= optimal   4000  -64.5 67.5 0.093511804182 0.09350642174
+ minimum <= optimal   3500  -83.5 73.5 0.043604675408 0.04360241182
+ minimum <= optimal   3500  -80.5 73.5 0.139368591750 0.13936564772
+ minimum <= optimal   3500  -79.5 73.5 0.459280080832 0.45927738837
+ minimum <= optimal   3500  -78.5 73.5 0.510606963281 0.51059728864
+ minimum <= optimal   3500  -77.5 73.5 0.374575783686 0.37456881433
+ minimum <= optimal   3500  -77.5 72.5 0.302479786008 0.30247673873
+ minimum <= optimal   3500  -76.5 72.5 0.552338678489 0.55233457415
+ minimum <= optimal   3500  -75.5 72.5 0.277684955358 0.27768009394
+ minimum <= optimal   3500  -78.5 71.5 0.015913374529 0.01591260905
+ minimum <= optimal   3500  -72.5 71.5 0.266680030912 0.26667248856
+ minimum <= optimal   3500  -70.5 70.5 0.394143144485 0.39413921820
+ minimum <= optimal   3500  -69.5 70.5 0.123467257656 0.12346321729
+ minimum <= optimal   3500  -68.5 69.5 0.244244661316 0.24424320622
+ minimum <= optimal   3500  -68.5 67.5 0.001120649868 0.00112055929
+ minimum <= optimal   3500  -66.5 67.5 0.533550819079 0.53354464460
+ minimum <= optimal   3500  -65.5 67.5 0.488813598284 0.48880265164
+ minimum <= optimal   3500  -64.5 67.5 0.093511804182 0.09350642174
+ minimum <= optimal   3000  -83.5 73.5 0.043604675408 0.04360241182
+ minimum <= optimal   3000  -80.5 73.5 0.139368591750 0.13936564772
+ minimum <= optimal   3000  -79.5 73.5 0.459280080832 0.45927738837
+ minimum <= optimal   3000  -78.5 73.5 0.510606963281 0.51059728864
+ minimum <= optimal   3000  -77.5 73.5 0.374575783686 0.37456881433
+ minimum <= optimal   3000  -77.5 72.5 0.302479786008 0.30247673873
+ minimum <= optimal   3000  -76.5 72.5 0.552338678489 0.55233457415
+ minimum <= optimal   3000  -75.5 72.5 0.277684955358 0.27768009394
+ minimum <= optimal   3000  -78.5 71.5 0.015913374529 0.01591260905
+ minimum <= optimal   3000  -72.5 71.5 0.266680030912 0.26667248856
+ minimum <= optimal   3000  -70.5 70.5 0.394143144485 0.39413921820
+ minimum <= optimal   3000  -69.5 70.5 0.123467257656 0.12346321729
+ minimum <= optimal   3000  -68.5 69.5 0.244244661316 0.24424320622
+ minimum <= optimal   3000  -68.5 67.5 0.001120649868 0.00112055929
+ minimum <= optimal   3000  -66.5 67.5 0.533550819079 0.53354464460
+ minimum <= optimal   3000  -65.5 67.5 0.488813598284 0.48880265164
+ minimum <= optimal   3000  -64.5 67.5 0.093511804182 0.09350642174
+ minimum <= optimal   2500  -83.5 73.5 0.043604675408 0.04360241182
+ minimum <= optimal   2500  -80.5 73.5 0.139368591750 0.13936564772
+ minimum <= optimal   2500  -79.5 73.5 0.459280080832 0.45927738837
+ minimum <= optimal   2500  -78.5 73.5 0.510606963281 0.51059728864
+ minimum <= optimal   2500  -77.5 73.5 0.374575783686 0.37456881433
+ minimum <= optimal   2500  -77.5 72.5 0.302479786008 0.30247673873
+ minimum <= optimal   2500  -76.5 72.5 0.552338678489 0.55233457415
+ minimum <= optimal   2500  -75.5 72.5 0.277684955358 0.27768009394
+ minimum <= optimal   2500  -78.5 71.5 0.015913374529 0.01591260905
+ minimum <= optimal   2500  -72.5 71.5 0.266680030912 0.26667248856
+ minimum <= optimal   2500  -70.5 70.5 0.394143144485 0.39413921820
+ minimum <= optimal   2500  -69.5 70.5 0.123467257656 0.12346321729
+ minimum <= optimal   2500  -68.5 69.5 0.244244661316 0.24424320622
+ minimum <= optimal   2500  -68.5 67.5 0.001120649868 0.00112055929
+ minimum <= optimal   2500  -66.5 67.5 0.533550819079 0.53354464460
+ minimum <= optimal   2500  -65.5 67.5 0.488813598284 0.48880265164
+ minimum <= optimal   2500  -64.5 67.5 0.093511804182 0.09350642174
+ minimum <= optimal   2000  -83.5 73.5 0.043604675408 0.04360241182
+ minimum <= optimal   2000  -80.5 73.5 0.139368591750 0.13936564772
+ minimum <= optimal   2000  -79.5 73.5 0.459280080832 0.45927738837
+ minimum <= optimal   2000  -78.5 73.5 0.510606963281 0.51059728864
+ minimum <= optimal   2000  -77.5 73.5 0.374575783686 0.37456881433
+ minimum <= optimal   2000  -77.5 72.5 0.302479786008 0.30247673873
+ minimum <= optimal   2000  -76.5 72.5 0.552338678489 0.55233457415
+ minimum <= optimal   2000  -75.5 72.5 0.277684955358 0.27768009394
+ minimum <= optimal   2000  -78.5 71.5 0.015913374529 0.01591260905
+ minimum <= optimal   2000  -72.5 71.5 0.266680030912 0.26667248856
+ minimum <= optimal   2000  -70.5 70.5 0.394143144485 0.39413921820
+ minimum <= optimal   2000  -69.5 70.5 0.123467257656 0.12346321729
+ minimum <= optimal   2000  -68.5 69.5 0.244244661316 0.24424320622
+ minimum <= optimal   2000  -68.5 67.5 0.001120649868 0.00112055929
+ minimum <= optimal   2000  -66.5 67.5 0.533550819079 0.53354464460
+ minimum <= optimal   2000  -65.5 67.5 0.488813598284 0.48880265164
+ minimum <= optimal   2000  -64.5 67.5 0.093511804182 0.09350642174
+ optimal <= maximum  11000 -129.5 61.5 0.480227949873 0.48012169458
+ optimal <= maximum  11000 -128.5 61.5 0.487758442971 0.48775797442
+ optimal <= maximum   8000  -68.5 70.5 0.011784115903 0.01178160786
+
+NADI-1 shapefiles used:
+ reconstruction age_bp                                          file                          shp_md5
+        optimal  11500 11.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp b01f23dba841ee8439297344dac297ad
+        optimal  11000   11ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 67047d7857b4fcb9502d0d7c5dd21698
+        optimal  10500 10.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 50c59c97c8824917406327b6f73c4e9e
+        optimal  10000   10ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 19ce91ff78a12d1ce0d70f6fb08cfcaa
+        optimal   9500  9.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 4d3139d7019e415882f61a050bac6bc7
+        optimal   9000    9ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp e33860fba1381f3ba0b31b4cfa3aa077
+        optimal   8500  8.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 59abebc9894524c69f5ef3abd2cc0dfa
+        optimal   8000    8ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp e166ed6dd128c2ddc6a28aa9ab461684
+        optimal   7500  7.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 4c0fa53b2cdfc8d0294bbf61d84787a7
+        optimal   7000    7ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 88fed603883f455312ff2458e7fb14d7
+        optimal   6500  6.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 3a64393b74507bee0ab726ecbe8d25ae
+        optimal   6000    6ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 7bf772b485d582e4a8b70e2852895492
+        optimal   5500  5.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 29f37f39a6d9777d9f9526d1b1f65dba
+        optimal   5000    5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 5bad72c6f071420f93c952b7c76b0c35
+        optimal   4500  4.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp e875e8f6736ac0413a65d4d8b7c08f30
+        optimal   4000    4ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 7540ed7bf03a339e1f408337c1f1a737
+        optimal   3500  3.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 346371052126e0893a883cf11f1229ef
+        optimal   3000    3ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 1922eb7d30f0dc5301ccf00ce6024a1c
+        optimal   2500  2.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 12286ac25e93a13982b55de473544372
+        optimal   2000    2ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 30216bed90d40651379aafcfa7d05fbc
+        optimal   1500  1.5ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 158d0f06558aa4616917ca08c0336bd9
+        optimal   1000    1ka_cal_OPTIMAL_NADI-1_Dalton_etal_QSR.shp 06549383269f4cc8b9d45d1cd8f3a436
+        minimum  11500     11.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 9776e1a85b0be3313325b9350482f1c7
+        minimum  11000       11ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 0d415e1d284d8c7f374f3905f8b252a3
+        minimum  10500     10.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp e277e054cdf338e9872e5d7d4fe34122
+        minimum  10000       10ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 9bcd5a27db892793771903c84c657c96
+        minimum   9500      9.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 8fbdd722cdcb1c4d567514a754981135
+        minimum   9000        9ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp e9186627296197308a76fc5ef9a79444
+        minimum   8500      8.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 8b0b0500be547a4ce50986d79cab366a
+        minimum   8000        8ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 339668124016ba949b76688d60a0bbd9
+        minimum   7500      7.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp dcc30617de888db132e3e47b9db416f8
+        minimum   7000        7ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 0abcf618b29cbff9c5191302606fd4c9
+        minimum   6500      6.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp d3a4327394dbb81ce262786c45b830dc
+        minimum   6000        6ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 429a0f3800a658f9377fd5d1b3bd4371
+        minimum   5500      5.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp a5191c5b725fd51fbab9518ec1274437
+        minimum   5000        5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp ab9623116409f066dd72dc7052358f92
+        minimum   4500      4.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp e0226e1b60870b250f60965db98e57a8
+        minimum   4000        4ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp a17cb4eac5c43b22172bf471f857fa9c
+        minimum   3500      3.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp a17cb4eac5c43b22172bf471f857fa9c
+        minimum   3000        3ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp a17cb4eac5c43b22172bf471f857fa9c
+        minimum   2500      2.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp a17cb4eac5c43b22172bf471f857fa9c
+        minimum   2000        2ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp a17cb4eac5c43b22172bf471f857fa9c
+        minimum   1500      1.5ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 2fd6746cc10cfedb49e68e1fc57990c2
+        minimum   1000        1ka_cal_MIN_NADI-1_Dalton_etal_QSR.shp 590979e5c079c1477d21f09e9f5d6443
+        maximum  11500     11.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 14c4aed62b172578a7b3678c5e5e1648
+        maximum  11000       11ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp d07e07804d9e371cf54921aeea6c4c9f
+        maximum  10500     10.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 0eaf4db40a711581c63e9e7399b994de
+        maximum  10000       10ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 2cfc69ae902519a8bea886f5bcf7767a
+        maximum   9500      9.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 22a986d21956373237a171eefc6fa7eb
+        maximum   9000        9ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp b3af0a2c676420827bc698bea569845d
+        maximum   8500      8.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 757e17a0da9c264f39254b1036e8c448
+        maximum   8000        8ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 191ff186d3fcb3964e1837077493c64a
+        maximum   7500      7.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 9a37afa71d6fdc32f5916a08fb4b7bdc
+        maximum   7000        7ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 922a7a1f94a92e5b787cb4a6a89cb955
+        maximum   6500      6.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 2196a0db3378e3834f2faf61410fc519
+        maximum   6000        6ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 753accbee9e27be2c954fc8827bfdefa
+        maximum   5500      5.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 6a369e89f38cd9794239bca0e2923a5c
+        maximum   5000        5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp b7acb86eb5c1d40cbaa41281af54adf3
+        maximum   4500      4.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 037574f96c0b12360c8061c02dbb6c03
+        maximum   4000        4ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 9644e7646e971fcc8b7699bf6656de4f
+        maximum   3500      3.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 9644e7646e971fcc8b7699bf6656de4f
+        maximum   3000        3ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 9644e7646e971fcc8b7699bf6656de4f
+        maximum   2500      2.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 9644e7646e971fcc8b7699bf6656de4f
+        maximum   2000        2ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp 9644e7646e971fcc8b7699bf6656de4f
+        maximum   1500      1.5ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp ba5fbe629f2be6206d339e01576e93c5
+        maximum   1000        1ka_cal_MAX_NADI-1_Dalton_etal_QSR.shp ba5fbe629f2be6206d339e01576e93c5

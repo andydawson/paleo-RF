@@ -18,11 +18,14 @@ cat_files <- catalogue_paths(base, PATH_CATALOGUE$id)
 added_files <- c(grep("output/calibration/calibration_prediction_fit_", cat_files, value = TRUE, fixed = TRUE),
                  "output/forcing/forcing_by_month_latitude.csv")
 # Inputs made since then by a preparation tool in tools/ and committed: the land-mean
-# elevation per cell (tools/prepare_land_elevation.R, issue I16c), and the rebuilt MODIS
+# elevation per cell (tools/prepare_land_elevation.R, issue I16c), the rebuilt MODIS
 # albedo per cell and month with its provenance note (tools/prepare_bluesky_albedo.R; the
-# refit, Chris, 2026-10-29).
+# refit, Chris, 2026-10-29), and the NADI-1 ice fractions (tools/build_nadi1_fractions.R;
+# Chris, 2026-11-16).
 prepared_inputs <- c("data/elev_land_mean_cells.csv",
-                     "data/albedo_modis_cells.csv", "data/albedo_modis_cells_provenance.txt")
+                     "data/albedo_modis_cells.csv", "data/albedo_modis_cells_provenance.txt",
+                     "data/nadi1_fractions/nadi1_optimal.tif", "data/nadi1_fractions/nadi1_minimum.tif",
+                     "data/nadi1_fractions/nadi1_maximum.tif")
 missing <- setdiff(cat_files, c(frozen, added_files, prepared_inputs))
 if (length(missing)) cat("catalogued but not in the frozen inventory:\n ", paste(missing, collapse = "\n  "), "\n")
 
@@ -61,6 +64,10 @@ stopifnot(
   identical(path_calibration_model(base, "cover_elev", "jan"), "output/calibration/calibration_mod_cover_elev_jan.RDS"),
   identical(path_calibration_model(base, "spatial_elev_cover", "jan"), "output/calibration/calibration_mod_spatial_elev_coverjan.RDS"),
   identical(path_file(base, "forcing"), "output/forcing/RF_holocene_all_cases.RDS"),
+  # every ice-fraction file config.R can choose is a catalogued input; the default is the old raster
+  all(ICE_FRACTION_SOURCES %in% input_ids),
+  identical(path_file(base, cfg$analysis$ice$fraction_source), "data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif"),
+  identical(path_file(alt, "nadi1_optimal"), "data/nadi1_fractions/nadi1_optimal.tif"),
   identical(path_figure(base, "x.pdf"), "figures/x.pdf"),
   identical(path_figure(base, "diagnostics", "x.png"), "figures/diagnostics/x.png"),
   identical(path_runs(base), "runs"),

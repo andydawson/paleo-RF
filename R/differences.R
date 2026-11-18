@@ -11,7 +11,8 @@
 # otherwise NA; read by "legacy_components" only).
 #
 # Output: one row per consecutive pair of slices, younger slice first: the ice fractions at
-# both ends and the ten albedo differences, each younger minus older. Two families:
+# both ends and the ten albedo differences, each younger minus older, and with "endpoint" two
+# more (partial_ice_differences() below). Two families:
 #   *_thresh  a slice is all ice or all vegetation, by ice_threshold;
 #   *_part(s) ice and vegetation albedo mixed by area fraction.
 #
@@ -34,7 +35,8 @@
 # younger slice, vegetation in the older) comes out as zero (3 cell-pairs). "endpoint"
 # classifies both ends from the adjusted fraction, takes each slice's albedo, ice or
 # vegetation, and subtracts (endpoint_albedo_differences() below); it never reads
-# alb_ice_thresh. The area-mixed *_part(s) variants are the same in both.
+# alb_ice_thresh. The area-mixed *_part(s) variants are the same in both; the second split
+# of their total (partial_ice_differences()) is made with "endpoint" only.
 pair_albedo_differences = function(alb_cell_filled, ice_threshold, difference_method = 'legacy_components') {
 
   # Guard here too, so a misspelt method can never fall through to the original arithmetic.
@@ -69,13 +71,7 @@ pair_albedo_differences = function(alb_cell_filled, ice_threshold, difference_me
     print(paste0('Increasing ice fraction: ', sum(is_ice_increase[!is_ice_missing], na.rm=TRUE)))
   }
 
-  alb_diff_veg_part = -diff(alb_cell_filled$alb_veg) * (1-ice_frac_old)
-
-  alb_diff_ice_part = (alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - alb_cell_filled$ice_albedo_fixed[2:nrow(alb_cell_filled)]) * (ice_frac_old-ice_frac_young)
-  alb_diff_icesc_part = (alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - alb_cell_filled$ice_albedo_sc[2:nrow(alb_cell_filled)]) * (ice_frac_old-ice_frac_young)
-
-  alb_diff_veg_ice_parts = rowSums(cbind(alb_diff_veg_part, alb_diff_ice_part))
-  alb_diff_veg_icesc_parts =  rowSums(cbind(alb_diff_veg_part, alb_diff_icesc_part))
+  partial_ice = partial_ice_differences(alb_cell_filled, ice_frac_young, ice_frac_old, difference_method)
 
   if (difference_method == 'endpoint') {
     n = nrow(alb_cell_filled)
@@ -117,11 +113,51 @@ pair_albedo_differences = function(alb_cell_filled, ice_threshold, difference_me
              alb_diff_veg_ice_thresh = alb_diff_veg_ice_thresh,
              alb_diff_icesc_thresh = alb_diff_icesc_thresh,
              alb_diff_veg_icesc_thresh = alb_diff_veg_icesc_thresh,
-             alb_diff_veg_part = alb_diff_veg_part,
-             alb_diff_ice_part = alb_diff_ice_part,
-             alb_diff_veg_ice_parts = alb_diff_veg_ice_parts,
-             alb_diff_icesc_part = alb_diff_icesc_part,
-             alb_diff_veg_icesc_parts = alb_diff_veg_icesc_parts)
+             partial_ice)
+}
+
+# The area-mixed (partial-ice) albedo changes of consecutive pairs, younger minus older: each
+# slice's albedo is its ice fraction times the glacier albedo plus the rest times its vegetation
+# albedo. ice_frac_young and ice_frac_old are the fractions at the two ends of each pair, after
+# the readvance adjustment of pair_albedo_differences(); the arithmetic is a function of its
+# own so that it can be tested on fractions that adjustment would change (tests/test_differences.R).
+#
+# Each total is split into a vegetation part and an ice part by two rules that add up to the
+# same total (Chris, 16 November 2026: compute both, so that Andria can choose; explained to
+# her in the document "Ice-Edge Albedo Split"):
+#   *_part, today's rule (script 7a's lines, moved unchanged): the vegetation change on the land
+#     ice-free at the OLDER slice, (1 - f_old) x (a_young - a_old), and the ice part
+#     (f_old - f_young) x (a_young - glacier albedo). When ice advances, the vegetation part
+#     includes land that ends under ice.
+#   *_part_exposed: the vegetation change only on the smaller of the two slices' ice-free
+#     shares, (1 - max(f_old, f_young)) x (a_young - a_old); the ice part is the rest of the
+#     total. Where ice retreats or stays, the two rules agree. That share is the land ice-free
+#     at BOTH slices only if the ice footprints within a cell are nested (the smaller lies
+#     inside the larger): fractions do not say where in a cell the ice lies. With two disjoint
+#     footprints each covering half the cell, no land is ice-free at both slices, yet the share
+#     is one half (Astra's review of 17 November 2026). A convention for attributing the total,
+#     not a measured overlap.
+# The second rule splits the fixed-glacier-albedo total (veg_ice_parts) only, and is not made
+# under "legacy_components", so that the original analysis keeps its outputs exactly.
+partial_ice_differences = function(alb_cell_filled, ice_frac_young, ice_frac_old, difference_method) {
+  alb_diff_veg_part = -diff(alb_cell_filled$alb_veg) * (1-ice_frac_old)
+
+  alb_diff_ice_part = (alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - alb_cell_filled$ice_albedo_fixed[2:nrow(alb_cell_filled)]) * (ice_frac_old-ice_frac_young)
+  alb_diff_icesc_part = (alb_cell_filled$alb_veg[1:(nrow(alb_cell_filled)-1)] - alb_cell_filled$ice_albedo_sc[2:nrow(alb_cell_filled)]) * (ice_frac_old-ice_frac_young)
+
+  alb_diff_veg_ice_parts = rowSums(cbind(alb_diff_veg_part, alb_diff_ice_part))
+  alb_diff_veg_icesc_parts =  rowSums(cbind(alb_diff_veg_part, alb_diff_icesc_part))
+
+  parts = data.frame(alb_diff_veg_part = alb_diff_veg_part,
+                     alb_diff_ice_part = alb_diff_ice_part,
+                     alb_diff_veg_ice_parts = alb_diff_veg_ice_parts,
+                     alb_diff_icesc_part = alb_diff_icesc_part,
+                     alb_diff_veg_icesc_parts = alb_diff_veg_icesc_parts)
+  if (difference_method == 'endpoint') {
+    parts$alb_diff_veg_part_exposed = -diff(alb_cell_filled$alb_veg) * (1 - pmax(ice_frac_old, ice_frac_young))
+    parts$alb_diff_ice_part_exposed = alb_diff_veg_ice_parts - parts$alb_diff_veg_part_exposed
+  }
+  parts
 }
 
 # Threshold albedo change for consecutive pairs from each slice's complete albedo state: a

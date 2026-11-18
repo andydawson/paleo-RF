@@ -36,6 +36,41 @@ config_schema_errors = function(value, schema, path = 'cfg') {
   errs
 }
 
+# Add to saved settings those they lack by name, from `historical` (HISTORICAL_SETTINGS, or a
+# group of it): what the pipeline did before each setting existed. A setting that is given, even
+# as NULL or with an illegal value, is left for the checks; a missing group is made from its
+# historical settings. Each addition goes after the entries the schema puts before it, so that the
+# result is identical() to the same settings written out in full. Returns the settings and the
+# values filled, named by their paths.
+fill_missing_settings = function(settings, schema, historical, path = 'cfg') {
+  filled = list()
+  if (!is.list(settings)) return(list(settings = settings, filled = filled))   # malformed: the checks report it
+  for (key in names(historical)) {
+    where = paste0(path, '$', key)
+    is_group = is.list(schema[[key]])
+    if (!key %in% names(settings)) {
+      value = if (is_group) list() else historical[[key]]
+      earlier = names(schema)[seq_len(match(key, names(schema)) - 1)]
+      settings = append(settings, setNames(list(value), key), after = max(0, which(names(settings) %in% earlier)))
+      if (!is_group) filled[where] = list(value)
+    }
+    if (is_group) {
+      inner = fill_missing_settings(settings[[key]], schema[[key]], historical[[key]], where)
+      settings[key] = list(inner$settings)
+      filled = c(filled, inner$filled)
+    }
+  }
+  list(settings = settings, filled = filled)
+}
+
+# The one warning for settings filled in a saved file, none if nothing was filled; shown at once,
+# as a tool's long run would otherwise print it only at its end. `file` names the file ("config
+# file <path>"); `filled` is the list of values fill_missing_settings() filled.
+warn_filled = function(file, filled)
+  if (length(filled))
+    warning(file, ' was saved before some settings existed; filled with what the pipeline did before:\n  ',
+            paste(names(filled), '=', vapply(filled, deparse1, ''), collapse = '\n  '), call. = FALSE, immediate. = TRUE)
+
 # Which config file this run uses: config.R, unless the script was started with
 # `--config <file>` (or `--config=<file>`), e.g.
 #   Rscript scripts/6_prediction_model.R --config configs/median.R
@@ -51,14 +86,39 @@ config_path = function(args = commandArgs(trailingOnly = TRUE)) {
   args[config_arg_index + 1]
 }
 
+# Tools that read finished runs take --fill-missing anywhere on their command line (see
+# load_config()). Returns the tool's other arguments and whether the flag was given.
+tool_command_line = function(args = commandArgs(trailingOnly = TRUE))
+  list(args = args[args != '--fill-missing'], fill_missing = '--fill-missing' %in% args)
+
 # Read, check and return the configuration as a list with sections analysis,
 # presentation and run. Stops with every problem found.
-load_config = function(path = config_path()) {
+#
+# fill_missing = TRUE is for reading a finished run: a configuration saved before a setting
+# existed lacks it, and is given what the pipeline did before (HISTORICAL_SETTINGS in
+# R/config_schema.R), with one warning that lists the values filled; everything is then checked
+# as usual. Tools that read finished runs ask for it with --fill-missing on the command line.
+# The pipeline itself always reads a complete configuration (the default, FALSE).
+load_config = function(path = config_path(), fill_missing = FALSE) {
   if (!file.exists(path)) stop('config file not found: ', path, call. = FALSE)
   cfg = tryCatch(source(path, local = new.env(parent = baseenv()))$value,
                  error = function(e) stop('config file ', path, ' could not be read: ', conditionMessage(e), call. = FALSE))
+  filled = list()
+  if (fill_missing) {
+    completed = fill_missing_settings(cfg, CONFIG_SCHEMA, HISTORICAL_SETTINGS)
+    cfg = completed$settings
+    filled = completed$filled
+  }
   errs = config_errors(cfg)
-  if (length(errs)) stop('config file ', path, ':\n  ', paste(errs, collapse = '\n  '), call. = FALSE)
+  if (length(errs)) {
+    hint = if (any(grepl('is missing key(s)', errs, fixed = TRUE))) paste0(
+      '\nA pipeline run needs every setting in its configuration file: add those missing. A tool reading a',
+      '\nfinished run saved before a setting existed can fill it with what the pipeline did before, if',
+      '\nHISTORICAL_SETTINGS (R/config_schema.R) has it: load_config(path, fill_missing = TRUE) from R,',
+      '\nor --fill-missing on the command line.') else ''
+    stop('config file ', path, ':\n  ', paste(errs, collapse = '\n  '), hint, call. = FALSE)
+  }
+  warn_filled(paste('config file', path), filled)
   cfg
 }
 

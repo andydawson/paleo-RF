@@ -138,6 +138,19 @@ alb_diff$rf_cack_icesc_part = alb_diff$alb_diff_icesc_part* (-alb_diff$rk_cack)
 alb_diff$rf_cack_veg_ice_parts = alb_diff$alb_diff_veg_ice_parts* (-alb_diff$rk_cack)
 alb_diff$rf_cack_veg_icesc_parts = alb_diff$alb_diff_veg_icesc_parts* (-alb_diff$rk_cack)
 
+# The second split of the partial-ice total into a vegetation and an ice part (Chris, 16
+# November 2026: vegetation change only on the smaller of the two slices' ice-free shares, the
+# rest to ice; R/differences.R). Script 7a makes it with difference_method "endpoint" only, so
+# that the original analysis keeps its outputs exactly.
+if ('alb_diff_veg_part_exposed' %in% names(alb_diff)) {
+  alb_diff$rf_hadgem_veg_part_exposed = alb_diff$alb_diff_veg_part_exposed*100 * alb_diff$rk_hadgem
+  alb_diff$rf_hadgem_ice_part_exposed = alb_diff$alb_diff_ice_part_exposed*100 * alb_diff$rk_hadgem
+  alb_diff$rf_cam5_veg_part_exposed = alb_diff$alb_diff_veg_part_exposed*100 * alb_diff$rk_cam5
+  alb_diff$rf_cam5_ice_part_exposed = alb_diff$alb_diff_ice_part_exposed*100 * alb_diff$rk_cam5
+  alb_diff$rf_cack_veg_part_exposed = alb_diff$alb_diff_veg_part_exposed* (-alb_diff$rk_cack)
+  alb_diff$rf_cack_ice_part_exposed = alb_diff$alb_diff_ice_part_exposed* (-alb_diff$rk_cack)
+}
+
 # Checks of the largest ice forcings, printed and plotted (to Rplots.pdf), not saved: the
 # June cell-pairs whose HadGEM3 ice forcing exceeds 100 W/m2.
 june_ice_forcing_over_100 = alb_diff[which((alb_diff$rf_hadgem_ice_thresh>100)&(alb_diff$month=='jun')),]

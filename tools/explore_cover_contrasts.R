@@ -4,9 +4,10 @@
 # at the modern cells, by month, region and albedo table. It describes how the fitted models
 # behave: no pass or fail, and no effect on the choice of model (Chris, 10 November 2026).
 #
-#   Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<month> ...]
+#   Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<month> ...] [--fill-missing]
 #       <run-dir> is a finished run; its configuration (config_used.R) says which albedo its
-#       calibration table holds: all days, snow-free or snowy. For each month the six versions are
+#       calibration table holds: all days, snow-free or snowy (--fill-missing for a run saved before
+#       a setting existed: load_config() in R/config.R). For each month the six versions are
 #       fitted afresh to that table (REML, the ordinary fitter and its one retry) and the three
 #       exchanges are evaluated in the study area and the six named regions. Jobs for different
 #       runs and months can run side by side. Nothing is written into <run-dir>. Each fit made is
@@ -65,8 +66,8 @@ TABLE_LABELS    = c(all_days = 'all-days', snow_free = 'snow-free', snowy = 'sno
 # cells) and, from the albedo build's cell table, the share of each cell-month's accepted
 # retrievals flagged snow-free and snowy. The cell table is the repository's, so it is first shown
 # to be the one the run's calibration table was made from.
-read_run = function(run_dir) {
-  cfg = load_config(file.path(run_dir, 'config_used.R'))
+read_run = function(run_dir, fill_missing = FALSE) {
+  cfg = load_config(file.path(run_dir, 'config_used.R'), fill_missing)
   albedo = cfg$analysis$albedo
   if (albedo$source != 'modis_cells') stop('the exploration needs a run on the MODIS cell albedo, not ', albedo$source)
   paths = c(redirected_paths(run_dir), list(tag = ALBEDO_TAG))   # only names files; makes no folder in the run
@@ -664,17 +665,18 @@ compare_duveiller = function(saved_dir, source_file, out_dir) {
 }
 
 if (sys.nframe() == 0L) {
-  args = commandArgs(trailingOnly = TRUE)
+  command = tool_command_line()
+  args = command$args
   if (length(args) >= 4 && args[1] == 'fit') {
     suppressPackageStartupMessages(library(mgcv))
-    fit_months(read_run(args[2]), args[3], check_months(args[-(1:3)]))
+    fit_months(read_run(args[2], command$fill_missing), args[3], check_months(args[-(1:3)]))
   } else if (length(args) == 2 && args[1] == 'report') {
     report(args[2])
   } else if (length(args) == 4 && args[1] == 'duveiller') {
     suppressPackageStartupMessages(library(mgcv))   # the saved fits are mgcv models
     compare_duveiller(args[2], args[3], args[4])
   } else {
-    cat('usage: Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<month> ...] | report <output-dir>',
+    cat('usage: Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<month> ...] [--fill-missing] | report <output-dir>',
         '| duveiller <saved-contrast-dir> <netcdf-file> <output-dir>\n')
     quit(status = 2)
   }

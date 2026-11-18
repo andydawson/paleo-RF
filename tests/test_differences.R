@@ -114,4 +114,42 @@ stopifnot(fails(diffs(ice_frac = c(0.9, 0.1), alb_veg = c(0.20, 0.25), method = 
 # 15. A misspelt method stops rather than falling back to the original arithmetic.
 stopifnot(fails(diffs(ice_frac = c(0, 0), alb_veg = c(0.20, 0.25), method = "endpiont")))
 
+# 16. The two splits of the partial-ice total (Chris, 16 November 2026), worked case of the
+#     explainer: ice advances from 0.3 (older) to 0.7 (younger), vegetation albedo rises from
+#     0.20 to 0.30, glacier albedo 0.68. Total, the same under both rules:
+#     (0.7 x 0.68 + 0.3 x 0.30) - (0.3 x 0.68 + 0.7 x 0.20) = 0.566 - 0.344 = 0.222.
+#     Today's rule: vegetation (1 - 0.3) x 0.10 = 0.070, ice (0.3 - 0.7) x (0.30 - 0.68) = 0.152.
+#     The second rule: vegetation (1 - 0.7) x 0.10 = 0.030, ice 0.222 - 0.030 = 0.192.
+#     Given the fractions directly: the readvance adjustment would change an advance.
+p <- partial_ice_differences(cell(ice_frac = c(0.7, 0.3), alb_veg = c(0.30, 0.20)),
+                             ice_frac_young = 0.7, ice_frac_old = 0.3, difference_method = "endpoint")
+stopifnot(same(p$alb_diff_veg_ice_parts, 0.222),
+          same(p$alb_diff_veg_part, 0.070), same(p$alb_diff_ice_part, 0.152),
+          same(p$alb_diff_veg_part_exposed, 0.030), same(p$alb_diff_ice_part_exposed, 0.192))
+
+# 17. A retreat, 0.7 to 0.3, through the whole function: both rules give vegetation
+#     (1 - 0.7) x 0.10 = 0.030 and ice (0.7 - 0.3) x (0.30 - 0.68) = -0.152; total -0.122.
+r <- diffs(ice_frac = c(0.3, 0.7), alb_veg = c(0.30, 0.20), method = "endpoint")
+stopifnot(same(r$alb_diff_veg_part, 0.030), same(r$alb_diff_ice_part, -0.152),
+          same(r$alb_diff_veg_part_exposed, 0.030), same(r$alb_diff_ice_part_exposed, -0.152),
+          same(r$alb_diff_veg_ice_parts, -0.122))
+
+# 18. On a cell with advances the readvance adjustment leaves or makes (case 6), both splits add
+#     up to the same total in every pair and agree wherever the ice does not advance.
+e <- diffs(ice_frac = c(0.95, 0.95, 0.9, 0.1, 0.4, 0.2), alb_veg = c(0.20, 0.25, 0.30, 0.35, 0.33, 0.31), method = "endpoint")
+advancing <- e$ice_frac_young > e$ice_frac_old
+stopifnot(any(advancing), !all(advancing),
+          same(e$alb_diff_veg_part_exposed + e$alb_diff_ice_part_exposed, e$alb_diff_veg_ice_parts),
+          same(e$alb_diff_veg_part + e$alb_diff_ice_part, e$alb_diff_veg_ice_parts),
+          same(e$alb_diff_veg_part_exposed[!advancing], e$alb_diff_veg_part[!advancing]))
+
+# 19. The second split is made with "endpoint" only: the original arithmetic keeps exactly its
+#     twelve columns, and its numbers are those of "endpoint" for today's split (case 9).
+legacy_columns <- c("ice_frac_young", "ice_frac_old", "alb_diff_veg_thresh", "alb_diff_ice_thresh",
+                    "alb_diff_veg_ice_thresh", "alb_diff_icesc_thresh", "alb_diff_veg_icesc_thresh",
+                    "alb_diff_veg_part", "alb_diff_ice_part", "alb_diff_veg_ice_parts",
+                    "alb_diff_icesc_part", "alb_diff_veg_icesc_parts")
+stopifnot(identical(names(diffs(ice_frac = c(0.3, 0.7), alb_veg = c(0.30, 0.20))), legacy_columns),
+          identical(names(r), c(legacy_columns, "alb_diff_veg_part_exposed", "alb_diff_ice_part_exposed")))
+
 cat("test_differences: all tests passed\n")

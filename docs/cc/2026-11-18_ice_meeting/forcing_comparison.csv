@@ -1,0 +1,197 @@
+"source","period","period_saved","kernel","variant","quantity","domain_mean","global_equiv","domain_mean_minus_old","global_equiv_minus_old"
+"old raster","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_ice_parts","total",-0.555526491835401,-0.0209357889721323,0,0
+"NADI-1 optimal","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_ice_parts","total",-0.555321494824633,-0.0209280633744868,0.000204997010768038,7.72559764549915e-06
+"NADI-1 minimum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_ice_parts","total",-0.555025977345614,-0.0209169263870177,0.000500514489787052,1.88625851145971e-05
+"NADI-1 maximum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_ice_parts","total",-0.540978050577996,-0.0203875107162526,0.0145484412574051,0.000548278255879699
+"old raster","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_ice_parts","total",-0.567483326847054,-0.0213863989398974,0,0
+"NADI-1 optimal","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_ice_parts","total",-0.567173037375094,-0.0213747052493161,0.000310289471960101,1.16936905813006e-05
+"NADI-1 minimum","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_ice_parts","total",-0.572489902543389,-0.021575078712675,-0.005006575696335,-0.000188679772777599
+"NADI-1 maximum","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_ice_parts","total",-0.570336666388413,-0.0214939310115118,-0.00285333954135891,-0.000107532071614399
+"old raster","2 - 4 ka","2 - 4 ka","hadgem","veg_ice_parts","total",0.345968969628569,0.0130383221061506,0,0
+"NADI-1 optimal","2 - 4 ka","2 - 4 ka","hadgem","veg_ice_parts","total",0.352307577064347,0.0132772013488204,0.00633860743577802,0.0002388792426698
+"NADI-1 minimum","2 - 4 ka","2 - 4 ka","hadgem","veg_ice_parts","total",0.34064538837065,0.0128376955376074,-0.00532358125791899,-0.000200626568543201
+"NADI-1 maximum","2 - 4 ka","2 - 4 ka","hadgem","veg_ice_parts","total",0.341586832651008,0.0128731751755225,-0.00438213697756101,-0.0001651469306281
+"old raster","4 - 6 ka","4 - 6 ka","hadgem","veg_ice_parts","total",-0.448045160086417,-0.0168852054031903,0,0
+"NADI-1 optimal","4 - 6 ka","4 - 6 ka","hadgem","veg_ice_parts","total",-0.48609601368138,-0.0183192047763646,-0.038050853594963,-0.0014339993731743
+"NADI-1 minimum","4 - 6 ka","4 - 6 ka","hadgem","veg_ice_parts","total",-0.569785928892522,-0.0214731757025166,-0.121740768806105,-0.0045879702993263
+"NADI-1 maximum","4 - 6 ka","4 - 6 ka","hadgem","veg_ice_parts","total",-0.166280640953837,-0.00626651736744158,0.28176451913258,0.0106186880357487
+"old raster","6 - 8 ka","6 - 8 ka","hadgem","veg_ice_parts","total",1.51077126179205,0.0569355175439807,0,0
+"NADI-1 optimal","6 - 8 ka","6 - 8 ka","hadgem","veg_ice_parts","total",1.89970375384668,0.0715929797851763,0.38893249205463,0.0146574622411956
+"NADI-1 minimum","6 - 8 ka","6 - 8 ka","hadgem","veg_ice_parts","total",0.419121374159147,0.0157951722772312,-1.0916498876329,-0.0411403452667495
+"NADI-1 maximum","6 - 8 ka","6 - 8 ka","hadgem","veg_ice_parts","total",4.54156777913771,0.171155302265648,3.03079651734566,0.114219784721667
+"old raster","8 - 10 ka","8 - 10 ka","hadgem","veg_ice_parts","total",4.96382698350318,0.187068728041128,0,0
+"NADI-1 optimal","8 - 10 ka","8 - 10 ka","hadgem","veg_ice_parts","total",5.04477201070816,0.190119254042702,0.0809450272049794,0.00305052600157399
+"NADI-1 minimum","8 - 10 ka","8 - 10 ka","hadgem","veg_ice_parts","total",4.06674175158917,0.153260822601161,-0.89708523191401,-0.033807905439967
+"NADI-1 maximum","8 - 10 ka","8 - 10 ka","hadgem","veg_ice_parts","total",4.71607874248955,0.177731990786814,-0.24774824101363,-0.009336737254314
+"old raster","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_ice_parts","total",4.1251909405007,0.155463561629144,0,0
+"NADI-1 optimal","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_ice_parts","total",4.29169399058469,0.161738460794182,0.16650305008399,0.00627489916503801
+"NADI-1 minimum","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_ice_parts","total",4.83557041830316,0.182235200886651,0.710379477802459,0.026771639257507
+"NADI-1 maximum","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_ice_parts","total",4.35361375514816,0.164071993295615,0.22842281464746,0.00860843166647102
+"old raster","0.05 - 0.5 ka","0.05 - 0.5 ka","cam5","veg_ice_parts","total",-0.557793241293667,-0.0210212145801068,0,0
+"NADI-1 optimal","0.05 - 0.5 ka","0.05 - 0.5 ka","cam5","veg_ice_parts","total",-0.556911727416583,-0.0209879935028443,0.000881513877084017,3.32210772624984e-05
+"NADI-1 minimum","0.05 - 0.5 ka","0.05 - 0.5 ka","cam5","veg_ice_parts","total",-0.55644879774706,-0.0209705473539882,0.00134444354660701,5.06672261186003e-05
+"NADI-1 maximum","0.05 - 0.5 ka","0.05 - 0.5 ka","cam5","veg_ice_parts","total",-0.531314401023457,-0.0200233226338697,0.0264788402702101,0.0009978919462371
+"old raster","0.5 - 2 ka","0.5 - 2 ka","cam5","veg_ice_parts","total",-0.565970859199938,-0.0213293994917116,0,0
+"NADI-1 optimal","0.5 - 2 ka","0.5 - 2 ka","cam5","veg_ice_parts","total",-0.565210326632636,-0.0213007377634781,0.000760532567301908,2.86617282335005e-05
+"NADI-1 minimum","0.5 - 2 ka","0.5 - 2 ka","cam5","veg_ice_parts","total",-0.572803010617459,-0.0215868786261995,-0.00683215141752103,-0.000257479134487898
+"NADI-1 maximum","0.5 - 2 ka","0.5 - 2 ka","cam5","veg_ice_parts","total",-0.570050158394731,-0.0214831335590361,-0.00407929919479311,-0.000153734067324499
+"old raster","2 - 4 ka","2 - 4 ka","cam5","veg_ice_parts","total",0.239495839898361,0.00902573403340288,0,0
+"NADI-1 optimal","2 - 4 ka","2 - 4 ka","cam5","veg_ice_parts","total",0.248016230353142,0.00934683680553549,0.00852039045478098,0.00032110277213261
+"NADI-1 minimum","2 - 4 ka","2 - 4 ka","cam5","veg_ice_parts","total",0.228640009936118,0.00861661697319574,-0.010855829962243,-0.00040911706020714
+"NADI-1 maximum","2 - 4 ka","2 - 4 ka","cam5","veg_ice_parts","total",0.231762163333705,0.00873427966909086,-0.00773367656465601,-0.00029145436431202
+"old raster","4 - 6 ka","4 - 6 ka","cam5","veg_ice_parts","total",-0.534631754918964,-0.0201483417321898,0,0
+"NADI-1 optimal","4 - 6 ka","4 - 6 ka","cam5","veg_ice_parts","total",-0.592990115106361,-0.0223476577532969,-0.058358360187397,-0.0021993160211071
+"NADI-1 minimum","4 - 6 ka","4 - 6 ka","cam5","veg_ice_parts","total",-0.721527740288881,-0.0271917770443669,-0.186895985369917,-0.0070434353121771
+"NADI-1 maximum","4 - 6 ka","4 - 6 ka","cam5","veg_ice_parts","total",-0.239801744228408,-0.00903726246380836,0.294830010690556,0.0111110792683814
+"old raster","6 - 8 ka","6 - 8 ka","cam5","veg_ice_parts","total",1.8021506651424,0.0679165558725293,0,0
+"NADI-1 optimal","6 - 8 ka","6 - 8 ka","cam5","veg_ice_parts","total",2.2892434551635,0.0862733255524719,0.4870927900211,0.0183567696799426
+"NADI-1 minimum","6 - 8 ka","6 - 8 ka","cam5","veg_ice_parts","total",0.534613999112196,0.020147672579901,-1.2675366660302,-0.0477688832926283
+"NADI-1 maximum","6 - 8 ka","6 - 8 ka","cam5","veg_ice_parts","total",5.27579050510834,0.198825507513068,3.47363983996594,0.130908951640539
+"old raster","8 - 10 ka","8 - 10 ka","cam5","veg_ice_parts","total",5.64074602321291,0.212579364122153,0,0
+"NADI-1 optimal","8 - 10 ka","8 - 10 ka","cam5","veg_ice_parts","total",5.76292213835891,0.217183741054171,0.122176115146,0.00460437693201798
+"NADI-1 minimum","8 - 10 ka","8 - 10 ka","cam5","veg_ice_parts","total",4.82109942468883,0.181689841352984,-0.81964659852408,-0.030889522769169
+"NADI-1 maximum","8 - 10 ka","8 - 10 ka","cam5","veg_ice_parts","total",5.01843630093329,0.189126756168377,-0.62230972227962,-0.023452607953776
+"old raster","10 - 11.5 ka","10 - 11.5 ka","cam5","veg_ice_parts","total",4.38424534013335,0.165226387205819,0,0
+"NADI-1 optimal","10 - 11.5 ka","10 - 11.5 ka","cam5","veg_ice_parts","total",4.54922507902299,0.171443878268504,0.16497973888964,0.00621749106268499
+"NADI-1 minimum","10 - 11.5 ka","10 - 11.5 ka","cam5","veg_ice_parts","total",5.26911793876929,0.198574042564357,0.88487259863594,0.033347655358538
+"NADI-1 maximum","10 - 11.5 ka","10 - 11.5 ka","cam5","veg_ice_parts","total",4.67250132574257,0.176089715189927,0.28825598560922,0.010863327984108
+"old raster","0.05 - 0.5 ka","0.05 - 0.5 ka","cack","veg_ice_parts","total",-0.499129979211878,-0.0188104079067769,0,0
+"NADI-1 optimal","0.05 - 0.5 ka","0.05 - 0.5 ka","cack","veg_ice_parts","total",-0.498067997080189,-0.0187703856321816,0.00106198213168901,4.0022274595302e-05
+"NADI-1 minimum","0.05 - 0.5 ka","0.05 - 0.5 ka","cack","veg_ice_parts","total",-0.497741082504167,-0.0187580654014166,0.00138889670771103,5.23425053603026e-05
+"NADI-1 maximum","0.05 - 0.5 ka","0.05 - 0.5 ka","cack","veg_ice_parts","total",-0.478700358011294,-0.0180404891998888,0.020429621200584,0.000769918706888102
+"old raster","0.5 - 2 ka","0.5 - 2 ka","cack","veg_ice_parts","total",-0.547546348915951,-0.0206350461802322,0,0
+"NADI-1 optimal","0.5 - 2 ka","0.5 - 2 ka","cack","veg_ice_parts","total",-0.546305599525818,-0.0205882868127117,0.00124074939013297,4.67593675205005e-05
+"NADI-1 minimum","0.5 - 2 ka","0.5 - 2 ka","cack","veg_ice_parts","total",-0.552388803616363,-0.020817540824871,-0.004842454700412,-0.000182494644638799
+"NADI-1 maximum","0.5 - 2 ka","0.5 - 2 ka","cack","veg_ice_parts","total",-0.550133126646079,-0.0207325324990157,-0.00258677773012805,-9.74863187835004e-05
+"old raster","2 - 4 ka","2 - 4 ka","cack","veg_ice_parts","total",0.313856431084347,0.0118281164000283,0,0
+"NADI-1 optimal","2 - 4 ka","2 - 4 ka","cack","veg_ice_parts","total",0.320225164338927,0.0120681309761058,0.00636873325457998,0.0002400145760775
+"NADI-1 minimum","2 - 4 ka","2 - 4 ka","cack","veg_ice_parts","total",0.305257084180014,0.0115040380442104,-0.00859934690433301,-0.0003240783558179
+"NADI-1 maximum","2 - 4 ka","2 - 4 ka","cack","veg_ice_parts","total",0.307735639008462,0.0115974458323301,-0.00612079207588501,-0.0002306705676982
+"old raster","4 - 6 ka","4 - 6 ka","cack","veg_ice_parts","total",-0.525142200588482,-0.0197907146706141,0,0
+"NADI-1 optimal","4 - 6 ka","4 - 6 ka","cack","veg_ice_parts","total",-0.56968639382888,-0.0214694245851201,-0.0445441932403979,-0.001678709914506
+"NADI-1 minimum","4 - 6 ka","4 - 6 ka","cack","veg_ice_parts","total",-0.671549320302028,-0.0253082707320966,-0.146407119713546,-0.0055175560614825
+"NADI-1 maximum","4 - 6 ka","4 - 6 ka","cack","veg_ice_parts","total",-0.271091676497472,-0.0102164671076285,0.25405052409101,0.0095742475629856
+"old raster","6 - 8 ka","6 - 8 ka","cack","veg_ice_parts","total",1.48089867037525,0.0558097273626941,0,0
+"NADI-1 optimal","6 - 8 ka","6 - 8 ka","cack","veg_ice_parts","total",1.8778378767257,0.0707689337750877,0.39693920635045,0.0149592064123936
+"NADI-1 minimum","6 - 8 ka","6 - 8 ka","cack","veg_ice_parts","total",0.430209872550014,0.0162130577709761,-1.05068879782524,-0.039596669591718
+"NADI-1 maximum","6 - 8 ka","6 - 8 ka","cack","veg_ice_parts","total",4.23874832374246,0.159743129654644,2.75784965336721,0.10393340229195
+"old raster","8 - 10 ka","8 - 10 ka","cack","veg_ice_parts","total",4.45640024978664,0.167945645394234,0,0
+"NADI-1 optimal","8 - 10 ka","8 - 10 ka","cack","veg_ice_parts","total",4.54990120900074,0.171469359167687,0.0935009592140998,0.00352371377345298
+"NADI-1 minimum","8 - 10 ka","8 - 10 ka","cack","veg_ice_parts","total",3.82239004173124,0.144052088350408,-0.6340102080554,-0.023893557043826
+"NADI-1 maximum","8 - 10 ka","8 - 10 ka","cack","veg_ice_parts","total",4.00242232322216,0.150836855429675,-0.453977926564479,-0.017108789964559
+"old raster","10 - 11.5 ka","10 - 11.5 ka","cack","veg_ice_parts","total",3.68078242496056,0.138715408236805,0,0
+"NADI-1 optimal","10 - 11.5 ka","10 - 11.5 ka","cack","veg_ice_parts","total",3.73094499446411,0.140605854479893,0.0501625695035504,0.00189044624308798
+"NADI-1 minimum","10 - 11.5 ka","10 - 11.5 ka","cack","veg_ice_parts","total",4.32584919302806,0.163025647132123,0.6450667680675,0.024310238895318
+"NADI-1 maximum","10 - 11.5 ka","10 - 11.5 ka","cack","veg_ice_parts","total",3.86551168148891,0.145677187357147,0.18472925652835,0.00696177912034199
+"old raster","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_part","vegetation part",-0.555526491835401,-0.0209357889721323,0,0
+"NADI-1 optimal","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_part","vegetation part",-0.555321494824633,-0.0209280633744868,0.000204997010768038,7.72559764549915e-06
+"NADI-1 minimum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_part","vegetation part",-0.555025977345614,-0.0209169263870177,0.000500514489787052,1.88625851145971e-05
+"NADI-1 maximum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_part","vegetation part",-0.540978050577996,-0.0203875107162526,0.0145484412574051,0.000548278255879699
+"old raster","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_part","vegetation part",-0.571784658614862,-0.0215485006137391,0,0
+"NADI-1 optimal","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_part","vegetation part",-0.572394939149484,-0.021571499885015,-0.000610280534621976,-2.29992712759003e-05
+"NADI-1 minimum","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_part","vegetation part",-0.572489910567586,-0.0215750790150781,-0.000705251952723973,-2.65784013389996e-05
+"NADI-1 maximum","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_part","vegetation part",-0.570336694023333,-0.0214939320529722,0.00144796459152907,5.45685607668996e-05
+"old raster","2 - 4 ka","2 - 4 ka","hadgem","veg_part","vegetation part",0.335750205374074,0.0126532137537455,0,0
+"NADI-1 optimal","2 - 4 ka","2 - 4 ka","hadgem","veg_part","vegetation part",0.340009798091538,0.0128137424333868,0.00425959271746396,0.0001605286796413
+"NADI-1 minimum","2 - 4 ka","2 - 4 ka","hadgem","veg_part","vegetation part",0.34064538837065,0.0128376955376074,0.00489518299657599,0.000184481783861899
+"NADI-1 maximum","2 - 4 ka","2 - 4 ka","hadgem","veg_part","vegetation part",0.341586832651008,0.0128731751755225,0.00583662727693396,0.000219961421777
+"old raster","4 - 6 ka","4 - 6 ka","hadgem","veg_part","vegetation part",-0.55580959479873,-0.0209464581013003,0,0
+"NADI-1 optimal","4 - 6 ka","4 - 6 ka","hadgem","veg_part","vegetation part",-0.551000444053266,-0.020765218562553,0.00480915074546406,0.0001812395387473
+"NADI-1 minimum","4 - 6 ka","4 - 6 ka","hadgem","veg_part","vegetation part",-0.569784834390617,-0.0214731344546891,-0.013975239591887,-0.000526676353388801
+"NADI-1 maximum","4 - 6 ka","4 - 6 ka","hadgem","veg_part","vegetation part",-0.503964353011981,-0.0189925980114414,0.0518452417867491,0.0019538600898589
+"old raster","6 - 8 ka","6 - 8 ka","hadgem","veg_part","vegetation part",-0.0684162608549027,-0.00257836200536229,0,0
+"NADI-1 optimal","6 - 8 ka","6 - 8 ka","hadgem","veg_part","vegetation part",-0.0886710477357358,-0.00334169183759336,-0.0202547868808331,-0.00076332983223107
+"NADI-1 minimum","6 - 8 ka","6 - 8 ka","hadgem","veg_part","vegetation part",-0.042820742373045,-0.00161375927003988,0.0255955184818577,0.00096460273532241
+"NADI-1 maximum","6 - 8 ka","6 - 8 ka","hadgem","veg_part","vegetation part",-0.137823493050964,-0.0051940701448529,-0.0694072321960613,-0.00261570813949061
+"old raster","8 - 10 ka","8 - 10 ka","hadgem","veg_part","vegetation part",-0.220708732149043,-0.00831771573181488,0,0
+"NADI-1 optimal","8 - 10 ka","8 - 10 ka","hadgem","veg_part","vegetation part",-0.233363830030483,-0.00879464070760163,-0.01265509788144,-0.00047692497578675
+"NADI-1 minimum","8 - 10 ka","8 - 10 ka","hadgem","veg_part","vegetation part",-0.20390533588177,-0.00768445635816293,0.016803396267273,0.000633259373651949
+"NADI-1 maximum","8 - 10 ka","8 - 10 ka","hadgem","veg_part","vegetation part",-0.29285061459949,-0.0110364829719602,-0.072141882450447,-0.00271876724014532
+"old raster","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_part","vegetation part",1.13824483762073,0.0428963408033247,0,0
+"NADI-1 optimal","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_part","vegetation part",1.1036526646496,0.041592686622912,-0.0345921729711298,-0.0013036541804127
+"NADI-1 minimum","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_part","vegetation part",1.20084271490885,0.0452554289265166,0.0625978772881202,0.0023590881231919
+"NADI-1 maximum","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_part","vegetation part",1.02884498061555,0.0387734549400873,-0.10939985700518,-0.0041228858632374
+"old raster","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","ice_part","ice part",0,0,0,0
+"NADI-1 optimal","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","ice_part","ice part",0,0,0,0
+"NADI-1 minimum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","ice_part","ice part",0,0,0,0
+"NADI-1 maximum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","ice_part","ice part",0,0,0,0
+"old raster","0.5 - 2 ka","0.5 - 2 ka","hadgem","ice_part","ice part",0.0043013317678076,0.000162101673841741,0,0
+"NADI-1 optimal","0.5 - 2 ka","0.5 - 2 ka","hadgem","ice_part","ice part",0.00522190177439018,0.000196794635698901,0.00092057000658258,3.469296185716e-05
+"NADI-1 minimum","0.5 - 2 ka","0.5 - 2 ka","hadgem","ice_part","ice part",8.02419675502246e-09,3.02403022003485e-10,-0.00430132374361084,-0.000162101371438719
+"NADI-1 maximum","0.5 - 2 ka","0.5 - 2 ka","hadgem","ice_part","ice part",2.76349202728659e-08,1.04146043005604e-09,-0.00430130413288733,-0.000162100632381311
+"old raster","2 - 4 ka","2 - 4 ka","hadgem","ice_part","ice part",0.0102187642544946,0.000385108352405012,0,0
+"NADI-1 optimal","2 - 4 ka","2 - 4 ka","hadgem","ice_part","ice part",0.0122977789728093,0.000463458915433592,0.0020790147183147,7.835056302858e-05
+"NADI-1 minimum","2 - 4 ka","2 - 4 ka","hadgem","ice_part","ice part",0,0,-0.0102187642544946,-0.000385108352405012
+"NADI-1 maximum","2 - 4 ka","2 - 4 ka","hadgem","ice_part","ice part",0,0,-0.0102187642544946,-0.000385108352405012
+"old raster","4 - 6 ka","4 - 6 ka","hadgem","ice_part","ice part",0.107764434712312,0.00406125269811,0,0
+"NADI-1 optimal","4 - 6 ka","4 - 6 ka","hadgem","ice_part","ice part",0.0649044303718863,0.0024460137861884,-0.0428600043404257,-0.0016152389119216
+"NADI-1 minimum","4 - 6 ka","4 - 6 ka","hadgem","ice_part","ice part",-1.09450190492491e-06,-4.12478275075567e-08,-0.107765529214217,-0.00406129394593751
+"NADI-1 maximum","4 - 6 ka","4 - 6 ka","hadgem","ice_part","ice part",0.337683712058145,0.0127260806439998,0.229919277345833,0.0086648279458898
+"old raster","6 - 8 ka","6 - 8 ka","hadgem","ice_part","ice part",1.57918752264696,0.059513879549343,0,0
+"NADI-1 optimal","6 - 8 ka","6 - 8 ka","hadgem","ice_part","ice part",1.98837480158242,0.0749346716227696,0.40918727893546,0.0154207920734266
+"NADI-1 minimum","6 - 8 ka","6 - 8 ka","hadgem","ice_part","ice part",0.461942116532192,0.0174089315472711,-1.11724540611477,-0.0421049480020719
+"NADI-1 maximum","6 - 8 ka","6 - 8 ka","hadgem","ice_part","ice part",4.67939127218868,0.176349372410501,3.10020374954172,0.116835492861158
+"old raster","8 - 10 ka","8 - 10 ka","hadgem","ice_part","ice part",5.18453571565222,0.195386443772943,0,0
+"NADI-1 optimal","8 - 10 ka","8 - 10 ka","hadgem","ice_part","ice part",5.27813584073864,0.198913894750304,0.0936001250864207,0.00352745097736099
+"NADI-1 minimum","8 - 10 ka","8 - 10 ka","hadgem","ice_part","ice part",4.27064708747094,0.160945278959324,-0.913888628181279,-0.034441164813619
+"NADI-1 maximum","8 - 10 ka","8 - 10 ka","hadgem","ice_part","ice part",5.00892935708904,0.188768473758774,-0.175606358563179,-0.006617970014169
+"old raster","10 - 11.5 ka","10 - 11.5 ka","hadgem","ice_part","ice part",2.98694610287996,0.112567220825819,0,0
+"NADI-1 optimal","10 - 11.5 ka","10 - 11.5 ka","hadgem","ice_part","ice part",3.18804132593509,0.12014577417127,0.20109522305513,0.00757855334545099
+"NADI-1 minimum","10 - 11.5 ka","10 - 11.5 ka","hadgem","ice_part","ice part",3.63472770339431,0.136979771960134,0.64778160051435,0.024412551134315
+"NADI-1 maximum","10 - 11.5 ka","10 - 11.5 ka","hadgem","ice_part","ice part",3.32476877453261,0.125298538355528,0.33782267165265,0.012731317529709
+"old raster","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.555526491835401,-0.0209357889721323,0,0
+"NADI-1 optimal","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.555321494824633,-0.0209280633744868,0.000204997010768038,7.72559764549915e-06
+"NADI-1 minimum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.555025977345614,-0.0209169263870177,0.000500514489787052,1.88625851145971e-05
+"NADI-1 maximum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.540978050577996,-0.0203875107162526,0.0145484412574051,0.000548278255879699
+"old raster","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.571777025639478,-0.0215482129544389,0,0
+"NADI-1 optimal","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.572395119504202,-0.0215715066819335,-0.000618093864724001,-2.32937274945999e-05
+"NADI-1 minimum","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.572489910566762,-0.021575079015047,-0.000712884927284052,-2.68660606080988e-05
+"NADI-1 maximum","0.5 - 2 ka","0.5 - 2 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.570336694555264,-0.0214939320730187,0.00144033108421393,5.4280881420201e-05
+"old raster","2 - 4 ka","2 - 4 ka","hadgem","veg_part_exposed","vegetation part, second rule",0.335749512364314,0.0126531876367083,0,0
+"NADI-1 optimal","2 - 4 ka","2 - 4 ka","hadgem","veg_part_exposed","vegetation part, second rule",0.340009802254749,0.0128137425902831,0.00426028989043503,0.000160554953574799
+"NADI-1 minimum","2 - 4 ka","2 - 4 ka","hadgem","veg_part_exposed","vegetation part, second rule",0.34064538837065,0.0128376955376074,0.00489587600633601,0.000184507900899099
+"NADI-1 maximum","2 - 4 ka","2 - 4 ka","hadgem","veg_part_exposed","vegetation part, second rule",0.341586832651008,0.0128731751755225,0.00583732028669398,0.000219987538814199
+"old raster","4 - 6 ka","4 - 6 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.55564136456702,-0.020940118110892,0,0
+"NADI-1 optimal","4 - 6 ka","4 - 6 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.550998127943666,-0.0207651312767393,0.00464323662335397,0.0001749868341527
+"NADI-1 minimum","4 - 6 ka","4 - 6 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.569784574658148,-0.0214731246663096,-0.0141432100911281,-0.0005330065554176
+"NADI-1 maximum","4 - 6 ka","4 - 6 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.503964340247581,-0.0189925975303972,0.051677024319439,0.0019475205804948
+"old raster","6 - 8 ka","6 - 8 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.0686610858247502,-0.00258758857507438,0,0
+"NADI-1 optimal","6 - 8 ka","6 - 8 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.0886710477328133,-0.00334169183748323,-0.0200099619080631,-0.00075410326240885
+"NADI-1 minimum","6 - 8 ka","6 - 8 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.0428242712511391,-0.00161389226072201,0.0258368145736111,0.00097369631435237
+"NADI-1 maximum","6 - 8 ka","6 - 8 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.137935741496359,-0.00519830038373402,-0.0692746556716088,-0.00261071180865964
+"old raster","8 - 10 ka","8 - 10 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.220737005588515,-0.00831878125572959,0,0
+"NADI-1 optimal","8 - 10 ka","8 - 10 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.233363890592626,-0.00879464298997028,-0.012626885004111,-0.00047586173424069
+"NADI-1 minimum","8 - 10 ka","8 - 10 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.20390533588177,-0.00768445635816293,0.016831669706745,0.000634324897566659
+"NADI-1 maximum","8 - 10 ka","8 - 10 ka","hadgem","veg_part_exposed","vegetation part, second rule",-0.293003923902145,-0.0110422606463916,-0.07226691831363,-0.00272347939066201
+"old raster","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_part_exposed","vegetation part, second rule",1.1382634703525,0.0428970430037525,0,0
+"NADI-1 optimal","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_part_exposed","vegetation part, second rule",1.10357637817388,0.0415898116609067,-0.03468709217862,-0.0013072313428458
+"NADI-1 minimum","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_part_exposed","vegetation part, second rule",1.20084271490015,0.0452554289261888,0.0625792445476498,0.0023583859224363
+"NADI-1 maximum","10 - 11.5 ka","10 - 11.5 ka","hadgem","veg_part_exposed","vegetation part, second rule",1.02852875810973,0.0387615376548682,-0.10973471224277,-0.0041355053488843
+"old raster","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","ice_part_exposed","ice part, second rule",0,0,0,0
+"NADI-1 optimal","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","ice_part_exposed","ice part, second rule",0,0,0,0
+"NADI-1 minimum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","ice_part_exposed","ice part, second rule",0,0,0,0
+"NADI-1 maximum","0.05 - 0.5 ka","0.05 - 0.5 ka","hadgem","ice_part_exposed","ice part, second rule",0,0,0,0
+"old raster","0.5 - 2 ka","0.5 - 2 ka","hadgem","ice_part_exposed","ice part, second rule",0.00429369879242394,0.000161814014541581,0,0
+"NADI-1 optimal","0.5 - 2 ka","0.5 - 2 ka","hadgem","ice_part_exposed","ice part, second rule",0.00522208212910826,0.000196801432617452,0.00092838333668432,3.4987418075871e-05
+"NADI-1 minimum","0.5 - 2 ka","0.5 - 2 ka","hadgem","ice_part_exposed","ice part, second rule",8.02337266002412e-09,3.02371964836577e-10,-0.00429369076905128,-0.000161813712169616
+"NADI-1 maximum","0.5 - 2 ka","0.5 - 2 ka","hadgem","ice_part_exposed","ice part, second rule",2.81668510373202e-08,1.0615069812036e-09,-0.0042936706255729,-0.0001618129530346
+"old raster","2 - 4 ka","2 - 4 ka","hadgem","ice_part_exposed","ice part, second rule",0.0102194572642545,0.000385134469442278,0,0
+"NADI-1 optimal","2 - 4 ka","2 - 4 ka","hadgem","ice_part_exposed","ice part, second rule",0.0122977748095988,0.00046345875853721,0.0020783175453443,7.8324289094932e-05
+"NADI-1 minimum","2 - 4 ka","2 - 4 ka","hadgem","ice_part_exposed","ice part, second rule",0,0,-0.0102194572642545,-0.000385134469442278
+"NADI-1 maximum","2 - 4 ka","2 - 4 ka","hadgem","ice_part_exposed","ice part, second rule",0,0,-0.0102194572642545,-0.000385134469442278
+"old raster","4 - 6 ka","4 - 6 ka","hadgem","ice_part_exposed","ice part, second rule",0.107596204480602,0.00405491270770167,0,0
+"NADI-1 optimal","4 - 6 ka","4 - 6 ka","hadgem","ice_part_exposed","ice part, second rule",0.0649021142622859,0.00244592650037477,-0.0426940902183161,-0.0016089862073269
+"NADI-1 minimum","4 - 6 ka","4 - 6 ka","hadgem","ice_part_exposed","ice part, second rule",-1.35423437392958e-06,-5.10362070721874e-08,-0.107597558714976,-0.00405496374390874
+"NADI-1 maximum","4 - 6 ka","4 - 6 ka","hadgem","ice_part_exposed","ice part, second rule",0.337683699293744,0.0127260801629556,0.230087494813142,0.00867116745525393
+"old raster","6 - 8 ka","6 - 8 ka","hadgem","ice_part_exposed","ice part, second rule",1.5794323476168,0.059523106119055,0,0
+"NADI-1 optimal","6 - 8 ka","6 - 8 ka","hadgem","ice_part_exposed","ice part, second rule",1.98837480157949,0.0749346716226595,0.40894245396269,0.0154115655036045
+"NADI-1 minimum","6 - 8 ka","6 - 8 ka","hadgem","ice_part_exposed","ice part, second rule",0.461945645410286,0.0174090645379532,-1.11748670220651,-0.0421140415811018
+"NADI-1 maximum","6 - 8 ka","6 - 8 ka","hadgem","ice_part_exposed","ice part, second rule",4.67950352063407,0.176353602649382,3.10007117301727,0.116830496530327
+"old raster","8 - 10 ka","8 - 10 ka","hadgem","ice_part_exposed","ice part, second rule",5.18456398909169,0.195387509296858,0,0
+"NADI-1 optimal","8 - 10 ka","8 - 10 ka","hadgem","ice_part_exposed","ice part, second rule",5.27813590130078,0.198913897032672,0.0935719122090894,0.00352638773581401
+"NADI-1 minimum","8 - 10 ka","8 - 10 ka","hadgem","ice_part_exposed","ice part, second rule",4.27064708747094,0.160945278959324,-0.91391690162075,-0.034442230337534
+"NADI-1 maximum","8 - 10 ka","8 - 10 ka","hadgem","ice_part_exposed","ice part, second rule",5.0090826663917,0.188774251433206,-0.17548132269999,-0.00661325786365199
+"old raster","10 - 11.5 ka","10 - 11.5 ka","hadgem","ice_part_exposed","ice part, second rule",2.9869274701482,0.112566518625391,0,0
+"NADI-1 optimal","10 - 11.5 ka","10 - 11.5 ka","hadgem","ice_part_exposed","ice part, second rule",3.1881176124108,0.120148649133275,0.2011901422626,0.00758213050788401
+"NADI-1 minimum","10 - 11.5 ka","10 - 11.5 ka","hadgem","ice_part_exposed","ice part, second rule",3.63472770340301,0.136979771960462,0.64780023325481,0.024413253335071
+"NADI-1 maximum","10 - 11.5 ka","10 - 11.5 ka","hadgem","ice_part_exposed","ice part, second rule",3.32508499703843,0.125310455640747,0.33815752689023,0.012743937015356

@@ -14,6 +14,8 @@
 #   elevation$method          "centre_point"                       config.R: "land_mean"
 #   albedo$source             "legacy_raster"                      config.R: "modis_cells"
 #                                  (Chris, 2026-10-29, docs/cc/2026-10-29_refit_plan_decisions.md)
+#   coarse$ages, coarse$slice_alias  ending 12000, c(11500, 12000)    config.R: ending 11500, NULL
+#                                  (the oldest period labelled 10 - 11.5 ka; Chris, 2026-11-16)
 #   draws$seed                1   (the original was unseeded; seed 1 reproduces the seeded
 #                                  anchor and meets the unseeded anchor's tolerances; Chris)
 #   run$dir                   ".rundirs/legacy"
@@ -80,10 +82,9 @@ list(
     coarse = list(
       ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000),
       # c(data slice, coarse age it stands for): script 7 treats the 11,500 BP slice as
-      # 12,000 BP. This also decides its ice outline: script 7 matches each age to the
-      # nearest ice-sheet polygon (1, 2, ... 21 ka), so 12,000 gets the 12 ka polygon,
-      # whereas 11,500 would get the 11 ka one. NULL is implemented, but is not a sensible
-      # choice: no slice is then at 12,000 and the oldest period (10-12 ka) drops out.
+      # 12,000 BP (its ice polygon is the 12 ka one either way). NULL is implemented, but is
+      # not a sensible choice: no slice is then at 12,000 and the oldest period (10-12 ka)
+      # drops out.
       slice_alias = c(11500, 12000)),
 
     # The study domain, degrees. Script 7a drops cells west of lon_min; script 8 keeps
@@ -99,6 +100,8 @@ list(
     # script 7a the other two; the file's source and the meaning of the columns are
     # question C0a.
     ice = list(
+      # The ice fractions script 7a reads: the original raster (config.R lists the choices).
+      fraction_source = "dalton_ice",
       threshold = 0.5,
       # How script 7a turns each pair of slices into an albedo change, for the threshold
       # variants: "endpoint" takes each slice's albedo (ice or vegetation) and subtracts,

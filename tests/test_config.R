@@ -36,7 +36,8 @@ stopifnot(
   identical(names(cfg), c("analysis", "presentation", "run")),
   is.null(cfg$run$dir),
   "dir" %in% names(cfg$run),
-  identical(cfg$analysis$coarse$ages, c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)),
+  identical(cfg$analysis$coarse$ages, c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500)),
+  identical(legacy$analysis$coarse$ages, c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000)),
   identical(cfg$analysis$forcing$earth_area_m2, 5.101e14),
   identical(cfg$analysis$forcing$latitude_band_width, 10),
   identical(cfg$presentation$map_windows$calibration, list(x = c(-172, -50), y = c(15, 80))),
@@ -53,8 +54,8 @@ stopifnot(
   { secret_variable_of_the_caller <- 1
     rejects("could not be read", 'earth_area_m2 = 5.101e14', 'earth_area_m2 = secret_variable_of_the_caller') },
   # allowed constructors and arithmetic evaluate as R would
-  identical(load_variant('ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000),',
-                         'ages = c(50, seq(500, 2000, by = 1500), 2 * 2000, 6000, 8000, 10000, 12000),')$analysis$coarse$ages,
+  identical(load_variant('ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500),',
+                         'ages = c(50, seq(500, 2000, by = 1500), 2 * 2000, 6000, 8000, 10000, 11500),')$analysis$coarse$ages,
             cfg$analysis$coarse$ages),
   identical(load_variant('earth_area_m2 = 5.101e14', 'earth_area_m2 = 5.101 * 10^14')$analysis$forcing$earth_area_m2,
             5.101 * 10^14),
@@ -118,7 +119,10 @@ stopifnot(
   # months, ages, slice alias, domain, ice and kernels (issue I04b)
   identical(cfg$analysis$months, MONTHS),
   identical(cfg$analysis$ages, c(50, 200, seq(500, 11500, by = 500))),
-  identical(cfg$analysis$coarse$slice_alias, c(11500, 12000)),
+  # the oldest slice labelled by its own age in config.R, by 12,000 in the legacy file (Chris, 2026-11-16)
+  is.null(cfg$analysis$coarse$slice_alias),
+  "slice_alias" %in% names(cfg$analysis$coarse),
+  identical(legacy$analysis$coarse$slice_alias, c(11500, 12000)),
   accepts(with_setting("analysis$months", c("feb", "may", "aug", "nov"))),
   refuses("months.*unknown month name", with_setting("analysis$months", c("jan", "January"))),
   refuses("months.*more than once", with_setting("analysis$months", c("jan", "jan"))),
@@ -130,6 +134,14 @@ stopifnot(
   refuses("lat_min must be below lat_max", with_setting("analysis$domain$lat_max", 27, with_setting("analysis$domain$lat_min", 74))),
   refuses("lon_min must be west of lon_max_coarse", with_setting("analysis$domain$lon_min", -50)),
   refuses("domain\\$lat_max must lie between", with_setting("analysis$domain$lat_max", 95)),
+  # the ice-fraction file (Chris, 16 November 2026): the old raster in both files, a NADI-1
+  # reconstruction by choice
+  identical(cfg$analysis$ice$fraction_source, "dalton_ice"),
+  identical(legacy$analysis$ice$fraction_source, "dalton_ice"),
+  accepts(with_setting("analysis$ice$fraction_source", "nadi1_optimal")),
+  accepts(with_setting("analysis$ice$fraction_source", "nadi1_maximum")),
+  refuses("fraction_source has 'nadi1'", with_setting("analysis$ice$fraction_source", "nadi1")),
+  refuses("fraction_source must be a single value", with_setting("analysis$ice$fraction_source", c("dalton_ice", "nadi1_minimum"))),
   accepts(with_setting("analysis$ice$threshold", 0.6)),
   refuses("ice\\$threshold must lie between 0 and 1", with_setting("analysis$ice$threshold", 1.5)),
   accepts(with_setting("analysis$ice$albedo_coarse", "ice_albedo_sc")),
@@ -189,6 +201,13 @@ stopifnot(
   accepts(with_setting("analysis$forcing$variant", "veg_icesc_thresh")),
   refuses("forcing\\$variant has 'veg_thresh'", with_setting("analysis$forcing$variant", "veg_thresh")),
   refuses("forcing\\$variant has 'ice_part'", with_setting("analysis$forcing$variant", "ice_part")),
+  # the second split of the partial-ice total (Chris, 16 November 2026): in the sensitivity
+  # table of config.R, not of the legacy file, and only with the "endpoint" difference method
+  all(c("veg_part_exposed", "ice_part_exposed") %in% cfg$analysis$forcing$sensitivity_variants),
+  !any(grepl("exposed", legacy$analysis$forcing$sensitivity_variants)),
+  refuses("forcing\\$variant has 'veg_part_exposed'", with_setting("analysis$forcing$variant", "veg_part_exposed")),
+  refuses("veg_part_exposed and ice_part_exposed need analysis\\$ice\\$difference_method \"endpoint\"",
+          with_setting("analysis$ice$difference_method", "legacy_components")),
   # unsupported combinations
   refuses("report_kernels must include hadgem", with_setting("analysis$forcing$report_kernels", c("cam5", "cack"))),
   # every problem is reported at once, not just the first
@@ -232,4 +251,73 @@ local({
 })
 
 for (id in CV_MODELS) stopifnot(accepts(with_setting("analysis$calibration$model_id", id)))
+
+# Configurations saved before a setting existed (Chris, 18 November 2026): refused, with a hint, by
+# default; with fill_missing = TRUE each missing setting is filled from HISTORICAL_SETTINGS at its
+# place in the schema, with one warning that lists the values filled.
+# Written so that adding a setting (with its line in HISTORICAL_SETTINGS) or changing config.R's
+# choice of ice needs no change here.
+old_file <- "results/run1-main/config_used.R"     # saved before analysis$ice$fraction_source existed
+old <- source(old_file, local = new.env(parent = baseenv()))$value
+saved_file <- function(settings) { f <- tempfile(fileext = ".R"); dput(settings, f); f }   # as a run saves them
+load_message <- function(...) tryCatch({ load_config(...); "" }, error = conditionMessage)
+# The value of an expression and the warnings it gave.
+with_warnings <- function(expr) {
+  seen <- character()
+  value <- withCallingHandlers(expr, warning = function(w) { seen <<- c(seen, conditionMessage(w)); invokeRestart("muffleWarning") })
+  list(value = value, warnings = seen)
+}
+filled <- with_warnings(load_config(old_file, fill_missing = TRUE))
+ice <- filled$value$analysis$ice
+without_source <- cfg
+without_source$analysis$ice$fraction_source <- NULL
+no_history <- old
+no_history$analysis$ice$threshold <- NULL
+nulls <- suppressWarnings(load_config(saved_file(with_setting("run$dir", NULL, with_setting("analysis$coarse$slice_alias", NULL, old))),
+                                      fill_missing = TRUE))
+kept_null <- function(group, key) key %in% names(group) && is.null(group[[key]])
+stopifnot(
+  # by default the setting is named, with the hint; filled, the saved values are kept and the filled one is in its place
+  grepl("cfg$analysis$ice is missing key(s) fraction_source", load_message(old_file), fixed = TRUE),
+  grepl("load_config(path, fill_missing = TRUE)", load_message(old_file), fixed = TRUE),
+  grepl("--fill-missing on the command line", load_message(old_file), fixed = TRUE),
+  identical(ice$fraction_source, "dalton_ice"),
+  identical(names(ice), names(CONFIG_SCHEMA$analysis$ice)),
+  identical(ice[names(old$analysis$ice)], old$analysis$ice),
+  length(filled$warnings) == 1,
+  grepl('cfg$analysis$ice$fraction_source = "dalton_ice"', filled$warnings, fixed = TRUE),
+  # filled, a configuration is identical() to the same one written out in full
+  identical(suppressWarnings(load_config(saved_file(without_source), fill_missing = TRUE)),
+            with_setting("analysis$ice$fraction_source", "dalton_ice")),
+  # a complete configuration: nothing filled, no warning; every explicit choice of ice kept
+  identical(with_warnings(load_config("config.R", fill_missing = TRUE)), list(value = cfg, warnings = character())),
+  all(vapply(ICE_FRACTION_SOURCES, function(choice) {
+    chosen <- with_setting("analysis$ice$fraction_source", choice)
+    identical(with_warnings(load_config(saved_file(chosen), fill_missing = TRUE)), list(value = chosen, warnings = character()))
+  }, TRUE)),
+  # a missing setting with no historical value is still refused
+  grepl("cfg$analysis$ice is missing key(s) threshold\n", load_message(saved_file(no_history), fill_missing = TRUE), fixed = TRUE),
+  # a setting given as NULL, or with an illegal value, is refused, not filled; the two legal NULLs are kept
+  grepl("fraction_source must be text, not empty",
+        load_message(saved_file(with_setting("analysis$ice$fraction_source", NULL, old)), fill_missing = TRUE), fixed = TRUE),
+  grepl("fraction_source has 'nadi1'",
+        load_message(saved_file(with_setting("analysis$ice$fraction_source", "nadi1", old)), fill_missing = TRUE), fixed = TRUE),
+  kept_null(nulls$run, "dir"),
+  kept_null(nulls$analysis$coarse, "slice_alias")
+)
+# The fill knows no setting by name: a made-up schema whose table adds a setting inside a group and a
+# whole group (one of its settings NULL before), each in its schema place, every value valid.
+toy_schema <- list(a = list(first = check_flag, new = check_flag, last = check_flag),
+                   b = list(alias = check_slice_alias, x = check_flag),
+                   c = check_flag)
+toy <- fill_missing_settings(list(a = list(first = TRUE, last = TRUE), c = TRUE), toy_schema,
+                             list(a = list(new = FALSE), b = list(alias = NULL, x = TRUE)))
+stopifnot(identical(toy$settings, list(a = list(first = TRUE, new = FALSE, last = TRUE), b = list(alias = NULL, x = TRUE), c = TRUE)),
+          identical(toy$filled, list(`cfg$a$new` = FALSE, `cfg$b$alias` = NULL, `cfg$b$x` = TRUE)),
+          !length(config_schema_errors(toy$settings, toy_schema)))
+# Every finished run kept in results/ loads with fill_missing: a setting added to the schema without
+# its line in HISTORICAL_SETTINGS fails here.
+saved_runs <- Sys.glob("results/*/config_used.R")
+stopifnot(length(saved_runs) > 0)
+for (f in saved_runs) suppressWarnings(load_config(f, fill_missing = TRUE))
 cat("test_config: all tests passed\n")

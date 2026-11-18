@@ -100,8 +100,8 @@ into `data/`.
 | `5_calibration_eval.R` | fit diagnostics; saves script 4's prediction fit as the selected model per month |
 | `6_prediction_model.R` | hindcast albedo per slice and month with 100 draws |
 | `7_plot_preds.R` | albedo, uncertainty and difference maps with ice overlays; coarse (7-period) albedo differences |
-| `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts |
-| `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants |
+| `7a_alb_diff_full.R` | consecutive-slice albedo differences split into vegetation and ice parts, from the ice fractions of the file that `ice$fraction_source` in `config.R` names (the old raster by default, or a NADI-1 reconstruction); with the `endpoint` method also the second split of the partial-ice total (the vegetation change only on the smaller of the two slices' ice-free shares, 1 - max(f_old, f_young), which is the land ice-free at both slices only if the ice footprints within a cell are nested, the smaller inside the larger; fractions do not say where in a cell the ice lies) |
+| `8_radiative.R` | forcing = albedo change x kernel, three kernels, ten variants (twelve with the second split of the partial-ice total) |
 | `9_forcing_barplot.R` | continental forcing by period beside the IPCC AR6 agents, plus kernel-spread and variant-sensitivity figures; every aggregation choice is an explicit assumption in its header |
 | `10_forcing_breakdown.R` | script 9's period totals broken down by month and latitude band (where the forcing comes from, for the snow question); stops unless the parts add up to script 9 |
 
@@ -116,7 +116,7 @@ What each script reads and writes:
 | `5_calibration_eval.R` | the fits above and the calibration table | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS` (a copy of the prediction fit)<br>`calibration_model_stats.csv`<br>figures |
 | `6_prediction_model.R` | selected models<br>`data/lct_paleo_reveals_interp.RDS` | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
 | `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS`<br>`data/grid.RDS`<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS`<br>`data/albedo_glacier_monthly.csv`<br>`pbs_ll.RDS` | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
-| `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS`<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif`<br>`data/albedo_glacier_monthly.csv`<br>`data/grid.RDS` | `data/ALB_diffs_bluesky.RDS` |
+| `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS`<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`ice$fraction_source = "dalton_ice"`) or `data/nadi1_fractions/nadi1_{optimal,minimum,maximum}.tif`<br>`data/albedo_glacier_monthly.csv`<br>`data/grid.RDS` | `data/ALB_diffs_bluesky.RDS` |
 | `8_radiative.R` | `data/ALB_diffs_bluesky.RDS`<br>kernels | `output/forcing/RF_holocene_all_cases.RDS` |
 | `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS`<br>`data/ipcc-ar6/*.csv` | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
 | `10_forcing_breakdown.R` | `output/forcing/RF_holocene_all_cases.RDS`<br>`output/forcing/forcing_by_period.csv` | `output/forcing/forcing_by_month_latitude.csv`<br>`figures/forcing_by_month_latitude.pdf` |
@@ -132,6 +132,21 @@ the first experiment remains reproducible at the commits in its verification spe
 | `tools/compare_cv_hindcasts.R` (an output folder, the cross-validation's output folder, then the baseline run and one or more other runs) | each finished run's settings, calibration table, monthly prediction fits, prediction tables and forcing tables; the cross-validation's `by_distance.csv` and `nearby_coverage.csv` | nothing in a run folder; in its own output folder: the runs side by side as tables (albedo by month and slice; forcing by period with the vegetation part, the ice part and the total; the northeast by month; tested limits; geographic support by month), four figures and a record of inputs |
 | `tools/explore_cover_contrasts.R` (`fit`, `report`, `duveiller`) | a finished run's configuration, calibration table and script 7a's cell areas; `data/albedo_modis_cells.csv`; `docs/cc/2026-11-10_published_albedo_contrasts.csv`; for `duveiller`, the all-days cases and fits that `fit` saved (twelve months) and Duveiller et al.'s `albedo_IGBPdet.nc` (Figshare doi:10.6084/m9.figshare.5217709, version 1; kept in `data/duveiller2018/` with its provenance note, not in git) | nothing in the run: an output folder of its own (outside git) with, per albedo table and month, the six versions' fits and exchange cases (`.rds`), contrasts, fit records and a record of inputs; the report stacks them into `cover_contrasts.csv`, `fits.csv`, `published_guide.csv` and `cover_contrasts.pdf`; `duveiller` writes `cover_contrasts_duveiller.csv`, `cover_contrasts_duveiller.pdf` and `record_duveiller.txt` into a folder of its own: the six versions' all-days changes beside the change Duveiller et al. published for the matched transitions, on the cells both cover, without refitting. An exploration of the fitted cover response beside published forest albedo contrasts: no pass or fail ([design](docs/cc/2026-11-10_cover_contrast_test_design_fable.md); [comparison design](docs/cc/2026-11-16_duveiller_comparison_design_codex_gpt6astra.md)) |
 | `tools/check_cover_contrasts.R` (`inputs`, `exchanges`, `job`, `duveiller`) | the three runs the exploration reads; protocol 2's frozen exchanges; the output of a snowy July and August job; the `duveiller` output with the saved run and the published file it read | nothing: checks of the exploration's implementation for its verification specs |
+
+These tools stop on a run whose `config_used.R` lacks a setting added since; with `--fill-missing` (from R, `load_config(path,
+fill_missing = TRUE)`) they fill it with what the pipeline did before (`HISTORICAL_SETTINGS`, `R/config_schema.R`) and warn.
+
+The comparison of the old ice raster with the NADI-1 reconstruction (Dalton et al. 2023; Chris,
+16 November 2026; [design](docs/cc/2026-11-16_ice_redesign_simpler_codex_gpt6astra.md),
+[implementation note](docs/cc/2026-11-17_ice_implementation_note.md)) is made by the first two tools below, the other two check it; the forcing
+with NADI-1 ice is the pipeline's own, chosen by `ice$fraction_source` in `config.R`.
+
+| Tool | Reads | Writes |
+|---|---|---|
+| `tools/build_nadi1_fractions.R` (run once; the NADI-1 shapefile folder) | the NADI-1 shapefiles (not in git; `data/nadi1/PROVENANCE.txt` in the checkout that downloaded them); the old ice raster as the grid; `data/elev_interp_cells.RDS` for a check | `data/nadi1_fractions/nadi1_{optimal,minimum,maximum}.tif` and `nadi1_fractions_provenance.txt` (committed) |
+| `tools/compare_ice.R` (an output folder, then finished runs of scripts 7a to 10: one on the old ice, up to one per NADI-1 reconstruction) | the four ice-fraction files; each run's script 7a and 9 run records, script 7a's table, script 9's two forcing tables; the old-ice run's forcing table (its cells); `pbs_ll.RDS` | nothing in a run folder; in its own folder: `ice_by_slice.csv`, `readvance_inventory.csv` (every exact positive increase in a cell's ice fraction from one slice to the next younger, however small: not a count of established readvances), `forcing_comparison.csv`, five figures and `record.txt` |
+| `tools/check_compare_ice.R` (the comparison's folder and the old-ice run) | the comparison's tables, the old-ice run's forcing tables and the old raster | nothing: checks of the comparison for its verification specs |
+| `tools/check_ice_split.R` (a finished run of scripts 7a to 9 with the `endpoint` method) | the run's script 7a and 8 tables and script 9's variant table | nothing: checks of the second split's new columns (their values from the existing columns; both splits add up for every kernel and in every period) for the verification specs |
 
 The [CV2 run order](docs/cc/2026-11-06_cv2_run_order.md) gives the verification specs and
 dependencies for single-thread jobs. Scripts 1–10 still run unchanged for the selected model.
@@ -180,7 +195,8 @@ input is missing as of 2026-09-21.
 | `data/elev_land_mean_cells.csv` | input to 1 (current setting) | present (59 KB, committed; made by `tools/prepare_land_elevation.R`) |
 | `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 | present |
 | `data/albedo_glacier_monthly.csv` | input to 7, 7a | present |
-| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a | present |
+| `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`ice$fraction_source = "dalton_ice"`, the default) | present |
+| `data/nadi1_fractions/nadi1_{optimal,minimum,maximum}.tif`, `nadi1_fractions_provenance.txt` | input to 7a when `ice$fraction_source` names one | present (68, 55 and 68 KB, committed; made by `tools/build_nadi1_fractions.R`) |
 | `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 | present (157 MB, Git LFS) |
 | `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 | present (21 MB) |
 | `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 | present (126.5 MB, Git LFS) |
@@ -201,6 +217,7 @@ What each input is and where it came from:
 | `glacier_shapefiles_21-1k.RDS` | 21 ice-margin polygon sets, 1,000-year steps, 21 to 1 ka, lon/lat. **The project's ice chronology**: a point-in-polygon test reproduces the `ice` flag above exactly (69/69 cells at 6 ka, 213/213 at 8 ka, 596/596 at 10 ka, 780/780 at 11 ka), so the flag was derived from these | Andria, 2026-09-17; <mark>unknown</mark> original source of the margins, but pre-dates Dalton 2020 |
 | `albedo_glacier_monthly.csv` | monthly albedo assigned to ice-covered cells; three columns offering alternative conventions (`ice_albedo` seasonal 0.6-0.8, `ice_albedo_fixed` constant 0.68, `ice_albedo_sc` smoothly varying 0.56-0.80) | Andria, 2026-09-20; <mark>unknown</mark> literature source for the values and which column is preferred |
 | `dalton_interpolated_LC6k.tif` | continuous ice **fraction** per cell and slice, used to mix vegetation and ice albedo by area; needed because the polygons above are binary. 26 layers named `yr<n>bp`, 12,000 to 50 BP, 116 x 62 cells, lon/lat WGS84, values 0 to 1; every one of the 25 pipeline ages matches a layer | Dalton et al. 2020 margins interpolated to the slices; Andria, 2026-09-20; <mark>unknown</mark> who did the interpolation and by what method |
+| `nadi1_fractions/nadi1_{optimal,minimum,maximum}.tif` | the same kind of ice fraction from NADI-1, one file per reconstruction of the margin: the share of each cell's whole area under ice, on the grid and with the missing cells of the raster above; 25 layers `yr11500bp` ... `yr50bp`, the 1,000 BP fractions carried to 500, 200 and 50 BP; double precision | `tools/build_nadi1_fractions.R` on 2026-11-17 from Dalton et al. 2023 (Quaternary Science Reviews 321, 108345, doi:10.1016/j.quascirev.2023.108345), data set doi:10.5281/zenodo.8161764, CC-BY-4.0; areas in an equal-area projection on the WGS84 ellipsoid (EPSG:6931), in which the fractions conserve area, whereas script 7a weights cells by their area on a sphere (s2), with which whole-mask ice totals come out 0.5 to 0.8% smaller; the provenance note lists the sources, checks and checksums |
 | `HadGEM3-GA7.1_TOA_kernel_L19.nc` | HadGEM3 albedo kernels, clear-sky and all-sky, top of atmosphere, W/m² per 1%; the pipeline reads all-sky `albedo_sw` (the original read clear-sky `albedo_sw_cs`) | Smith (2019), Zenodo doi:10.5281/zenodo.3594673, CC-BY-4.0 |
 | `alb.kernel.nc` | CAM5 albedo kernels; the pipeline reads `FSNT` (all-sky, top of atmosphere); the original read `FSNSC`, a clear-sky **surface** flux (question C3) | Pendergrass (2017), doi:10.5065/D6F47MT6, CC-BY-4.0 |
 | `CACKv1.0.nc` | CACK all-sky TOA albedo kernel, 180 x 360 x 12 months x 16 years, W/m² per unit albedo. The pipeline reads the 2001-2016 climatological mean `CACK CM`; the original read one year, 2003 (`band=3`; the file's Year dimension starts at 2001), not a sky condition; uncertainty layers are in the same file (question C3) | Bright and O'Halloran (2019), EDI doi:10.6073/pasta/d77b84b11be99ed4d5376d77fe0043d8; downloaded by hand 2026-09-21 |
@@ -218,6 +235,10 @@ that stopped the vegetation interpolation inventing plants under ice
 a point-in-polygon test of the polygons), and it supplies the ice
 outlines that `7_plot_preds.R` draws on the maps. That part is
 self-consistent.
+
+Since 17 November 2026 the fraction can also come from the NADI-1 reconstruction of 2023 (one
+setting, `ice$fraction_source` in `config.R`; `tools/build_nadi1_fractions.R` makes the files from
+its polygons), so the two reconstructions can be compared with everything else unchanged.
 
 The Dalton raster is used by `7a_alb_diff_full.R` for one narrow reason:
 to split a cell's albedo change into a vegetation part and an ice part,

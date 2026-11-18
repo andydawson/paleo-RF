@@ -95,17 +95,17 @@ list(
 
     # The coarse time slices, years BP. Consecutive pairs bound the seven periods of
     # the forcing summary (script 9) and of script 7's coarse differences; period
-    # labels such as '0.05 - 0.5 ka' are made from these numbers. The oldest is 12000
-    # although the oldest slice in the data is 11500: script 7 relabels 11500 as 12000
-    # to match it, via slice_alias below (question C7).
+    # labels such as '0.05 - 0.5 ka' are made from these numbers. The oldest is the oldest
+    # slice in the data, 11,500 BP, so the oldest period is labelled 10 - 11.5 ka (Chris,
+    # 16 November 2026; question C7). The legacy configuration keeps the original 12,000 BP
+    # and 10 - 12 ka for the same period, through slice_alias.
     coarse = list(
-      ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 12000),
-      # c(data slice, coarse age it stands for): script 7 treats the 11,500 BP slice as
-      # 12,000 BP. This also decides its ice outline: script 7 matches each age to the
-      # nearest ice-sheet polygon (1, 2, ... 21 ka), so 12,000 gets the 12 ka polygon,
-      # whereas 11,500 would get the 11 ka one. NULL is implemented, but is not a sensible
-      # choice: no slice is then at 12,000 and the oldest period (10-12 ka) drops out.
-      slice_alias = c(11500, 12000)),
+      ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500),
+      # c(data slice, coarse age it stands for), or NULL for none. The legacy configuration
+      # has c(11500, 12000): script 7 treats the 11,500 BP slice as 12,000 BP. Either way
+      # script 7 gives the slice the 12 ka ice polygon, for its mask and outline (Chris,
+      # 18 November 2026).
+      slice_alias = NULL),
 
     # The study domain, degrees. Script 7a drops cells west of lon_min; script 8 keeps
     # cells strictly between lat_min and lat_max before computing forcing; script 7 drops
@@ -120,6 +120,13 @@ list(
     # script 7a the other two; the file's source and the meaning of the columns are
     # question C0a.
     ice = list(
+      # The ice fractions script 7a reads, one file per choice (R/paths.R; Chris, 16 November
+      # 2026: one setting, to compare the reconstructions). "dalton_ice": the raster used so
+      # far, data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif (Dalton et al. 2020's margins
+      # interpolated to the slices, by whom and how is question C0b). "nadi1_optimal",
+      # "nadi1_minimum" or "nadi1_maximum": the three reconstructions of NADI-1 (Dalton et al.
+      # 2023) on the same grid, data/nadi1_fractions/, made by tools/build_nadi1_fractions.R.
+      fraction_source = "dalton_ice",
       threshold = 0.5,
       # How script 7a turns each pair of slices into an albedo change, for the threshold
       # variants: "endpoint" takes each slice's albedo (ice or vegetation) and subtracts,
@@ -169,9 +176,15 @@ list(
       # veg_part + ice_part = veg_ice_parts, by area share). With the "endpoint"
       # difference method (ice above), script 9 sets a threshold part that does not
       # apply to 0, so cells with both kinds of step stay in (R/forcing_components.R).
+      # The last two split the partial-ice total by a second rule, so that Andria can choose
+      # (Chris, 16 November 2026): veg_part_exposed is the vegetation change only on the smaller
+      # of the two slices' ice-free shares (the land ice-free at both slices if the ice
+      # footprints within a cell are nested), ice_part_exposed the rest of the total
+      # (R/differences.R; made with the "endpoint" difference method only).
       sensitivity_variants = c("veg_thresh", "ice_thresh", "veg_ice_thresh",
                                "veg_part", "ice_part", "veg_ice_parts",
-                               "veg_icesc_thresh", "veg_icesc_parts"),
+                               "veg_icesc_thresh", "veg_icesc_parts",
+                               "veg_part_exposed", "ice_part_exposed"),
       # Script 10: the width of the latitude bands its breakdown uses, degrees (bands
       # start at multiples of it; the outer two are cut at the domain's limits). Shapes a
       # breakdown only, never a total (Chris, 2026-10-15, question B2d).
