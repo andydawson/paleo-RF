@@ -8,8 +8,9 @@
 # limits beside the numbers. A diagnostic, not a pipeline step, and beside the northeast figure tool
 # (tools/plotting/plot_northeast_cover_and_location.R), which keeps its own figure. Run it by hand
 # from the repository root, after the runs and the cross-validation have finished:
-#   Rscript tools/compare_cv_hindcasts.R <output-dir> <cv-output-dir> <baseline-run-dir> <run-dir> [<run-dir> ...]
+#   Rscript tools/compare_cv_hindcasts.R <output-dir> <cv-output-dir> <baseline-run-dir> <run-dir> [<run-dir> ...] [--fill-missing]
 # The first run is the baseline; every table gives each run and its difference from the baseline.
+# --fill-missing reads runs saved before a setting existed (load_config() in R/config.R).
 # The runs must differ in the calibration model only (config_used.R, analysis$calibration$model_id);
 # each is named by its model id.
 #
@@ -88,9 +89,10 @@ MAP_SLICES = c(50, 4500, 6000)      # with the oldest slice of the runs, added b
 FIGURE_MONTHS = c(apr = 'April', may = 'May')   # the months of the northeast cover-response figure
 CURVE_STEPS = 25                    # points along each of its lines
 
-args = commandArgs(trailingOnly = TRUE)
+command = tool_command_line()
+args = command$args
 if (length(args) < 4) {
-  cat('usage: Rscript tools/compare_cv_hindcasts.R <output-dir> <cv-output-dir> <baseline-run-dir> <run-dir> [<run-dir> ...]\n')
+  cat('usage: Rscript tools/compare_cv_hindcasts.R <output-dir> <cv-output-dir> <baseline-run-dir> <run-dir> [<run-dir> ...] [--fill-missing]\n')
   quit(status = 2)
 }
 out_dir = args[1]
@@ -108,7 +110,7 @@ read_noted = function(file, reader = readRDS) {
 }
 read_product = function(run, id, month = NULL, reader = readRDS) read_noted(path_file(run$paths, id, month = month), reader)
 open_run = function(dir) {
-  cfg = read_noted(file.path(dir, 'config_used.R'), load_config)
+  cfg = read_noted(file.path(dir, 'config_used.R'), function(file) load_config(file, command$fill_missing))
   list(dir = dir, cfg = cfg, paths = c(redirected_paths(dir), list(tag = ALBEDO_TAG)))
 }
 runs = lapply(args[-(1:2)], open_run)

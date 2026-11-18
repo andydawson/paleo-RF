@@ -118,5 +118,23 @@ holdouts$feasibility$feasible = FALSE
 saveRDS(holdouts, cv_file(run_dir, 'holdouts.rds'))
 invisible(capture.output(stage_score(run_dir, paths)))
 stopifnot(!any(out('scores.csv')$chosen), all(out('scores.csv')$missing == 1))
+# A run saved before analysis$ice$fraction_source existed (Chris, 18 November 2026): its config_used.R
+# and holdouts lack the setting. Fit and score stop on it; with fill_missing both are completed in
+# memory only (holdouts.rds keeps the bytes its predictions are tied to) and the scores are as before.
+# Against a configuration that names NADI-1 ice, such holdouts still differ.
+holdouts$feasibility$feasible = TRUE
+holdouts$analysis$ice$fraction_source = NULL
+saveRDS(holdouts, cv_file(run_dir, 'holdouts.rds'))
+unlink(Sys.glob(cv_file(run_dir, 'predictions_inrange_*.rds')))   # made for other holdouts above
+saved_md5 = holdouts_md5(run_dir)
+config_lines = readLines('config.R')
+source_line = grepl('^ *fraction_source = ', config_lines)
+writeLines(config_lines[!source_line], file.path(run_dir, 'config_used.R'))
+stopifnot(sum(source_line) == 1, grepl('--fill-missing', tryCatch({ stage_fit(run_dir, paths, 'd1', months); '' }, error = conditionMessage), fixed = TRUE))
+invisible(capture.output(suppressWarnings({ stage_fit(run_dir, paths, 'd1', months, fill_missing = TRUE); stage_score(run_dir, paths, fill_missing = TRUE) })))
+stopifnot(identical(readLines(cv_file(run_dir, 'scores.csv')), score_before), identical(holdouts_md5(run_dir), saved_md5))
+config_lines[source_line] = '      fraction_source = "nadi1_optimal",'
+writeLines(config_lines, file.path(run_dir, 'config_used.R'))
+stopifnot(grepl('analysis configuration changed since holdouts', tryCatch({ stage_score(run_dir, paths, fill_missing = TRUE); '' }, error = conditionMessage)))
 unlink(dirname(run_dir), recursive = TRUE)
 cat('test_cross_validation_stages: all tests passed\n')

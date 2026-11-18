@@ -18,7 +18,8 @@
 # configuration (config_used.R, as tools/verify_change.R writes it; else the repository's config.R),
 # calibration table (script 2), past cover (script 1) and albedo differences (script 7a, for each
 # cell's area and ice fraction). Results go to <run-dir>/output/cross_validation_v2/, with a record of
-# the code version, the inputs' MD5 sums and the seeds.
+# the code version, the inputs' MD5 sums and the seeds. Add --fill-missing to any command for a run
+# saved before a setting existed (load_config() in R/config.R).
 
 source('R/config.R')
 source('R/paths.R')                 # brings R/model_registry.R
@@ -39,9 +40,18 @@ cv_file = function(run_dir, name) {
 }
 
 # The run's configuration: the one the run was made with, if the run folder keeps it.
-run_config = function(run_dir) {
+run_config = function(run_dir, fill_missing = FALSE) {
   used = file.path(run_dir, 'config_used.R')
-  load_config(if (file.exists(used)) used else 'config.R')
+  if (file.exists(used)) load_config(used, fill_missing) else load_config('config.R')
+}
+
+# The run's analysis settings must still be those the holdouts were made with. With fill_missing,
+# holdouts saved before a setting existed are completed in memory as the run's configuration is;
+# holdouts.rds itself is never rewritten, as the predictions are tied to its MD5.
+check_holdout_settings = function(run_dir, holdouts, fill_missing = FALSE) {
+  saved = holdouts$analysis
+  if (fill_missing) saved = fill_missing_settings(saved, CONFIG_SCHEMA$analysis, HISTORICAL_SETTINGS$analysis)$settings
+  if (!identical(run_config(run_dir, fill_missing)$analysis, saved)) stop('analysis configuration changed since holdouts')
 }
 
 # The holdout membership in the calibration table's row order, matched by cell (x, y), so a
@@ -79,7 +89,6 @@ read_predictions = function(run_dir, files) {
 # One record per stage: when, the code version, the inputs' MD5 sums and the seeds.
 write_record = function(run_dir, paths, stage) {
   v = code_version('config.R')
-  if (stage == 'holdouts') saveRDS(run_config(run_dir), cv_file(run_dir, 'config_used.rds'))
   packages = c('R', 'mgcv', 'sf')
   versions = c(as.character(getRversion()), vapply(packages[-1], function(p) as.character(utils::packageVersion(p)), ''))
   writeLines(c('protocol_version: 2', paste('stage:', stage), paste('time:', format(Sys.time(), tz = 'UTC', usetz = TRUE)),
@@ -118,8 +127,8 @@ coverage_table = function(rows, target) {
   groups
 }
 
-stage_holdouts = function(run_dir, paths, previous_run = run_dir) {
-  cfg = run_config(run_dir)
+stage_holdouts = function(run_dir, paths, previous_run = run_dir, fill_missing = FALSE) {
+  cfg = run_config(run_dir, fill_missing)
   cal = readRDS(path_file(paths, 'calibration_table'))
   months = cfg$analysis$months
   if (!identical(months, MONTHS)) stop('protocol 2 requires all twelve months')
@@ -226,6 +235,7 @@ stage_holdouts = function(run_dir, paths, previous_run = run_dir) {
                coefficients = coefficients, directions = directions, membership = membership, feasibility = feasibility,
                validation = validation, target = target, inrange = inrange, inrange_cells = inrange_cells,
                months = months, analysis = cfg$analysis, md5 = unname(input_md5(paths))), cv_file(run_dir, 'holdouts.rds'))
+  saveRDS(cfg, cv_file(run_dir, 'config_used.rds'))
   write_record(run_dir, paths, 'holdouts')
   for (name in c('directions', 'feasibility', 'comparison', 'target', 'inrange', 'exclusions', 'coverage',
                  'nearby_depth', 'nearby_coverage', 'northeast_depth', 'membership_changes'))
@@ -283,12 +293,12 @@ fit_and_predict = function(id, month, train, valid) {
   out
 }
 
-stage_fit = function(run_dir, paths, holdout, months) {
+stage_fit = function(run_dir, paths, holdout, months, fill_missing = FALSE) {
   cal = readRDS(path_file(paths, 'calibration_table'))
   fitted_against = holdouts_md5(run_dir)
   holdouts = readRDS(cv_file(run_dir, 'holdouts.rds'))
   check_inputs(holdouts, paths)
-  if (!identical(run_config(run_dir)$analysis, holdouts$analysis)) stop('analysis configuration changed since holdouts')
+  check_holdout_settings(run_dir, holdouts, fill_missing)
   withheld = membership_for(holdouts, cal, holdout)
   models = CV_MODELS
   if (holdout == 'inrange') {
@@ -368,10 +378,10 @@ distance_report = function(errors, signed, target, models, monthly = FALSE) {
   rbind(all, merge(ne, shares[shares$region == 'northeast', ], sort = FALSE))
 }
 
-stage_score = function(run_dir, paths) {
+stage_score = function(run_dir, paths, fill_missing = FALSE) {
   holdouts = readRDS(cv_file(run_dir, 'holdouts.rds'))
   check_inputs(holdouts, paths)
-  if (!identical(run_config(run_dir)$analysis, holdouts$analysis)) stop('analysis configuration changed since holdouts')
+  check_holdout_settings(run_dir, holdouts, fill_missing)
   needed = holdouts$feasibility[holdouts$feasibility$feasible, c('holdout', 'month')]
   target = holdouts$target
   coefficients = holdouts$coefficients[CV_MODELS]
@@ -462,14 +472,15 @@ stage_score = function(run_dir, paths) {
 }
 
 if (sys.nframe() == 0L) {
-  args = commandArgs(trailingOnly = TRUE)
-  usage = 'usage: Rscript tools/cross_validate_albedo.R holdouts <run-dir> [<run-1-dir>] | fit <run-dir> <holdout> <month> [...] | score <run-dir>\n'
+  command = tool_command_line()
+  args = command$args
+  usage = 'usage: Rscript tools/cross_validate_albedo.R holdouts <run-dir> [<run-1-dir>] | fit <run-dir> <holdout> <month> [...] | score <run-dir> [--fill-missing]\n'
   if (length(args) < 2 || !args[1] %in% c('holdouts', 'fit', 'score') || (args[1] == 'fit' && length(args) < 4)) { cat(usage); quit(status = 2) }
   run_dir = args[2]
   paths = pipeline_paths(NULL, redirected_paths(run_dir))
   suppressPackageStartupMessages(library(mgcv))
   switch(args[1],
-         holdouts = stage_holdouts(run_dir, paths, if (length(args) >= 3) args[3] else run_dir),
-         fit      = stage_fit(run_dir, paths, args[3], check_months(args[-(1:3)])),
-         score    = stage_score(run_dir, paths))
+         holdouts = stage_holdouts(run_dir, paths, if (length(args) >= 3) args[3] else run_dir, command$fill_missing),
+         fit      = stage_fit(run_dir, paths, args[3], check_months(args[-(1:3)]), command$fill_missing),
+         score    = stage_score(run_dir, paths, command$fill_missing))
 }

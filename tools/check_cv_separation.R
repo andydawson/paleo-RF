@@ -4,6 +4,7 @@
 #   capacity <cv2-run-dir> <apr|may>               (14 new fits, one reused)
 #   recovery <cv2-run-dir> <apr|may> <darkens|null|shorter>  (after selection)
 #   summarize <cv2-run-dir>                       (no fits)
+# Add --fill-missing for runs saved before a setting existed (load_config() in R/config.R).
 source('tools/cross_validate_albedo.R')
 source('R/cv_separation.R')
 
@@ -30,12 +31,12 @@ separation_read = function(run_dir) {
   frozen
 }
 
-separation_prepare = function(run_dir, source_run) {
+separation_prepare = function(run_dir, source_run, fill_missing = FALSE) {
   destination = separation_file(run_dir, 'frozen.rds')
   if (file.exists(destination)) stop('separation inputs are already frozen; use a new run directory')
   config_files = file.path(c(run_dir, source_run), 'config_used.R')
   if (!all(file.exists(config_files))) stop('both runs need config_used.R to check reuse')
-  cfg = load_config(config_files[1]); old_cfg = load_config(config_files[2])
+  cfg = load_config(config_files[1], fill_missing); old_cfg = load_config(config_files[2], fill_missing)
   if (!identical(cfg$analysis, old_cfg$analysis) || old_cfg$analysis$calibration$model_id != 'mod8' ||
       !identical(cfg$analysis$albedo, list(source = 'modis_cells', statistic = 'all_days', version = 'full_75')))
     stop('version 2 and the reused model-8 pipeline must have identical main-refit scientific settings')
@@ -255,14 +256,15 @@ separation_summarize = function(run_dir) {
 }
 
 if (sys.nframe() == 0L) {
-  args = commandArgs(trailingOnly = TRUE)
-  usage = 'usage: check_cv_separation.R prepare <run> <source-run> | capacity <run> <month> | recovery <run> <month> <truth> | summarize <run>'
+  command = tool_command_line()
+  args = command$args
+  usage = 'usage: check_cv_separation.R prepare <run> <source-run> | capacity <run> <month> | recovery <run> <month> <truth> | summarize <run> [--fill-missing]'
   if (length(args) < 2 || !args[1] %in% c('prepare', 'capacity', 'recovery', 'summarize')) stop(usage)
   if (args[1] %in% c('capacity', 'recovery') && (length(args) < 3 || !args[3] %in% c('apr', 'may'))) stop(usage)
   if (args[1] == 'prepare' && length(args) != 3) stop(usage)
   if (args[1] == 'recovery' && (length(args) != 4 || !args[4] %in% CV_RECOVERY_TRUTHS)) stop(usage)
   suppressPackageStartupMessages(library(mgcv))
-  switch(args[1], prepare = separation_prepare(args[2], args[3]),
+  switch(args[1], prepare = separation_prepare(args[2], args[3], command$fill_missing),
     capacity = separation_capacity(args[2], args[3]),
     recovery = separation_recovery(args[2], args[3], args[4]), summarize = separation_summarize(args[2]))
 }
