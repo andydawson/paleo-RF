@@ -24,12 +24,14 @@
 #   Rscript tools/explore_cover_contrasts.R report <output-dir>
 #       stacks every table and month found in <output-dir> into cover_contrasts.csv and fits.csv,
 #       and draws cover_contrasts.pdf: a page per albedo table, then the published values.
-#   Rscript tools/explore_cover_contrasts.R duveiller <saved-contrast-dir> <netcdf-file> <output-dir>
+#   Rscript tools/explore_cover_contrasts.R duveiller <saved-contrast-dir> <netcdf-file> <output-dir> [<case-dir>]
 #       sets the all-days results that the fit command saved in <saved-contrast-dir> (all twelve
 #       months: their cases and fits, which are not refitted) beside the monthly change in albedo
 #       published by Duveiller et al. (2018; <netcdf-file> is their albedo_IGBPdet.nc), on the cells
 #       both cover, and writes cover_contrasts_duveiller.csv, cover_contrasts_duveiller.pdf and
-#       record_duveiller.txt into <output-dir>. A comparison, with no pass or fail.
+#       record_duveiller.txt into <output-dir>. With <case-dir>, the cases are those that the
+#       case-studies command saved there; the fits are still those of <saved-contrast-dir>. A
+#       comparison, with no pass or fail.
 #
 # The quantity. "A to B" is the predicted albedo with 5 points more of B and 5 fewer of A than a
 # cell's own mix, minus the predicted albedo with 5 points more of A and 5 fewer of B; the third
@@ -626,17 +628,18 @@ plot_duveiller = function(rows) {
 }
 
 # The duveiller command: the all-days cases and fits that the fit command saved in `saved_dir`
-# (all twelve months; nothing is refitted) beside the published file, on the cells both cover.
-# Writes the table, its page and a record, with the time each step took, into `out_dir`. One saved
-# fit is in memory at a time.
-compare_duveiller = function(saved_dir, source_file, out_dir) {
+# (all twelve months; nothing is refitted) beside the published file, on the cells both cover. The
+# cases can instead be those that the case-studies command saved in `cases_dir`; the fits are always
+# those of `saved_dir`. Writes the table, its page and a record, with the time each step took, into
+# `out_dir`. One saved fit is in memory at a time.
+compare_duveiller = function(saved_dir, source_file, out_dir, cases_dir = saved_dir) {
   started = Sys.time()
   seconds = function(since) as.numeric(difftime(Sys.time(), since, units = 'secs'))
   nc = ncdf4::nc_open(source_file)
   on.exit(ncdf4::nc_close(nc))
   check_duveiller_file(nc)
   status = read_fit_status(saved_dir)
-  case_files = file.path(saved_dir, sprintf('cases_all_days_%s.rds', MONTHS))
+  case_files = file.path(cases_dir, sprintf('cases_all_days_%s.rds', MONTHS))
   files = c(source_file, case_files, file.path(saved_dir, sprintf('fits_all_days_%s.csv', MONTHS)), status$file[!is.na(status$converged)])
   names(files) = c('published_change', basename(files[-1]))
   md5 = tools::md5sum(files)
@@ -737,12 +740,12 @@ if (sys.nframe() == 0L) {
     evaluate_case_studies(read_run(args[2], command$fill_missing), args[3], args[4])
   } else if (length(args) == 2 && args[1] == 'report') {
     report(args[2])
-  } else if (length(args) == 4 && args[1] == 'duveiller') {
+  } else if (length(args) %in% 4:5 && args[1] == 'duveiller') {
     suppressPackageStartupMessages(library(mgcv))   # the saved fits are mgcv models
-    compare_duveiller(args[2], args[3], args[4])
+    compare_duveiller(args[2], args[3], args[4], cases_dir = if (length(args) == 5) args[5] else args[2])
   } else {
     cat('usage: Rscript tools/explore_cover_contrasts.R fit <run-dir> <output-dir> <month> [<month> ...] [--fill-missing] | report <output-dir>',
-        '| case-studies <run-dir> <saved-contrast-dir> <output-dir> [--fill-missing] | duveiller <saved-contrast-dir> <netcdf-file> <output-dir>\n')
+        '| case-studies <run-dir> <saved-contrast-dir> <output-dir> [--fill-missing] | duveiller <saved-contrast-dir> <netcdf-file> <output-dir> [<case-dir>]\n')
     quit(status = 2)
   }
 }
