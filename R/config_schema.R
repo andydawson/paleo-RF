@@ -201,6 +201,13 @@ CONFIG_SCHEMA = list(
     allow_stale = check_flag,
     diagnostic  = check_flag))
 
+# What the pipeline did before each setting existed, for settings added since runs began saving
+# their configuration (config_used.R): load_config(path, fill_missing = TRUE) fills a saved
+# configuration's missing settings from here. Every new setting needs its line.
+HISTORICAL_SETTINGS = list(
+  analysis = list(
+    ice = list(fraction_source = 'dalton_ice')))   # script 7a read the old raster until commit b2ed943
+
 # Rules across keys. Called only once every key has passed its own check.
 config_combination_errors = function(cfg) {
   errs = character()

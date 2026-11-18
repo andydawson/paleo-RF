@@ -251,4 +251,73 @@ local({
 })
 
 for (id in CV_MODELS) stopifnot(accepts(with_setting("analysis$calibration$model_id", id)))
+
+# Configurations saved before a setting existed (Chris, 18 November 2026): refused, with a hint, by
+# default; with fill_missing = TRUE each missing setting is filled from HISTORICAL_SETTINGS at its
+# place in the schema, with one warning that lists the values filled.
+# Written so that adding a setting (with its line in HISTORICAL_SETTINGS) or changing config.R's
+# choice of ice needs no change here.
+old_file <- "results/run1-main/config_used.R"     # saved before analysis$ice$fraction_source existed
+old <- source(old_file, local = new.env(parent = baseenv()))$value
+saved_file <- function(settings) { f <- tempfile(fileext = ".R"); dput(settings, f); f }   # as a run saves them
+load_message <- function(...) tryCatch({ load_config(...); "" }, error = conditionMessage)
+# The value of an expression and the warnings it gave.
+with_warnings <- function(expr) {
+  seen <- character()
+  value <- withCallingHandlers(expr, warning = function(w) { seen <<- c(seen, conditionMessage(w)); invokeRestart("muffleWarning") })
+  list(value = value, warnings = seen)
+}
+filled <- with_warnings(load_config(old_file, fill_missing = TRUE))
+ice <- filled$value$analysis$ice
+without_source <- cfg
+without_source$analysis$ice$fraction_source <- NULL
+no_history <- old
+no_history$analysis$ice$threshold <- NULL
+nulls <- suppressWarnings(load_config(saved_file(with_setting("run$dir", NULL, with_setting("analysis$coarse$slice_alias", NULL, old))),
+                                      fill_missing = TRUE))
+kept_null <- function(group, key) key %in% names(group) && is.null(group[[key]])
+stopifnot(
+  # by default the setting is named, with the hint; filled, the saved values are kept and the filled one is in its place
+  grepl("cfg$analysis$ice is missing key(s) fraction_source", load_message(old_file), fixed = TRUE),
+  grepl("load_config(path, fill_missing = TRUE)", load_message(old_file), fixed = TRUE),
+  grepl("--fill-missing on the command line", load_message(old_file), fixed = TRUE),
+  identical(ice$fraction_source, "dalton_ice"),
+  identical(names(ice), names(CONFIG_SCHEMA$analysis$ice)),
+  identical(ice[names(old$analysis$ice)], old$analysis$ice),
+  length(filled$warnings) == 1,
+  grepl('cfg$analysis$ice$fraction_source = "dalton_ice"', filled$warnings, fixed = TRUE),
+  # filled, a configuration is identical() to the same one written out in full
+  identical(suppressWarnings(load_config(saved_file(without_source), fill_missing = TRUE)),
+            with_setting("analysis$ice$fraction_source", "dalton_ice")),
+  # a complete configuration: nothing filled, no warning; every explicit choice of ice kept
+  identical(with_warnings(load_config("config.R", fill_missing = TRUE)), list(value = cfg, warnings = character())),
+  all(vapply(ICE_FRACTION_SOURCES, function(choice) {
+    chosen <- with_setting("analysis$ice$fraction_source", choice)
+    identical(with_warnings(load_config(saved_file(chosen), fill_missing = TRUE)), list(value = chosen, warnings = character()))
+  }, TRUE)),
+  # a missing setting with no historical value is still refused
+  grepl("cfg$analysis$ice is missing key(s) threshold\n", load_message(saved_file(no_history), fill_missing = TRUE), fixed = TRUE),
+  # a setting given as NULL, or with an illegal value, is refused, not filled; the two legal NULLs are kept
+  grepl("fraction_source must be text, not empty",
+        load_message(saved_file(with_setting("analysis$ice$fraction_source", NULL, old)), fill_missing = TRUE), fixed = TRUE),
+  grepl("fraction_source has 'nadi1'",
+        load_message(saved_file(with_setting("analysis$ice$fraction_source", "nadi1", old)), fill_missing = TRUE), fixed = TRUE),
+  kept_null(nulls$run, "dir"),
+  kept_null(nulls$analysis$coarse, "slice_alias")
+)
+# The fill knows no setting by name: a made-up schema whose table adds a setting inside a group and a
+# whole group (one of its settings NULL before), each in its schema place, every value valid.
+toy_schema <- list(a = list(first = check_flag, new = check_flag, last = check_flag),
+                   b = list(alias = check_slice_alias, x = check_flag),
+                   c = check_flag)
+toy <- fill_missing_settings(list(a = list(first = TRUE, last = TRUE), c = TRUE), toy_schema,
+                             list(a = list(new = FALSE), b = list(alias = NULL, x = TRUE)))
+stopifnot(identical(toy$settings, list(a = list(first = TRUE, new = FALSE, last = TRUE), b = list(alias = NULL, x = TRUE), c = TRUE)),
+          identical(toy$filled, list(`cfg$a$new` = FALSE, `cfg$b$alias` = NULL, `cfg$b$x` = TRUE)),
+          !length(config_schema_errors(toy$settings, toy_schema)))
+# Every finished run kept in results/ loads with fill_missing: a setting added to the schema without
+# its line in HISTORICAL_SETTINGS fails here.
+saved_runs <- Sys.glob("results/*/config_used.R")
+stopifnot(length(saved_runs) > 0)
+for (f in saved_runs) suppressWarnings(load_config(f, fill_missing = TRUE))
 cat("test_config: all tests passed\n")
