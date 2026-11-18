@@ -102,10 +102,9 @@ list(
     coarse = list(
       ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500),
       # c(data slice, coarse age it stands for), or NULL for none. The legacy configuration
-      # has c(11500, 12000): script 7 treats the 11,500 BP slice as 12,000 BP, which also
-      # decides its ice outline, since script 7 matches each age to the nearest ice-sheet
-      # polygon (1, 2, ... 21 ka): 12,000 gets the 12 ka polygon, whereas 11,500, halfway,
-      # gets the 11 ka one (the first of the two).
+      # has c(11500, 12000): script 7 treats the 11,500 BP slice as 12,000 BP. Either way
+      # script 7 gives the slice the 12 ka ice polygon, for its mask and outline (Chris,
+      # 18 November 2026).
       slice_alias = NULL),
 
     # The study domain, degrees. Script 7a drops cells west of lon_min; script 8 keeps

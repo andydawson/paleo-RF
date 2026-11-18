@@ -43,12 +43,18 @@ the six verification specs below, for the main session to run.
    cell-months of the headline run, the old and new function give identical output under
    `legacy_components` and identical existing columns under `endpoint`, equal bit for bit to the
    headline's saved table; the rules differ in the 2,844 cell-month rows where ice advances.
-4. **The oldest slice labelled 11.5 ka** (config.R only; the legacy file keeps 12,000 BP and its
-   alias). The forcing groups the same rows into the same periods. One side effect: without the
-   alias, script 7 gives the 11,500 BP slice the 11 ka ice polygon instead of the 12 ka one (halfway,
-   it takes the first), so its oldest map and coarse differences flag 780 rather than 1,004 of the
-   2,659 cells as ice, and the EGU 2024 recipe's oldest bar will change in the next run of script 7.
-   The pipeline's forcing (scripts 7a to 10) does not read the polygons.
+4. **The oldest slice labelled 11.5 ka** (config.R; the legacy file keeps 12,000 BP and its alias).
+   The forcing groups the same rows into the same periods. Script 7 keeps the slice's 12 ka ice
+   polygon (a small helper, `ice_match()`, matches 11,500 BP as 12,000 BP), so its ice mask, coarse
+   differences, outlines and the EGU 2024 recipe change in their labels only (Chris, 18 November
+   2026, after Astra's review). As first built, script 7 matched 11,500 BP to the nearest polygon,
+   11 ka (halfway, it takes the first): in a one-month trial (January) the oldest slice was ice in
+   775 rather than 987 of the 2,730 cells of the coarse differences (216 cells changed), and the
+   oldest difference map lost its ice outline (`ice_fort` keeps the age 11,500 while the outline
+   lookup asked for 11,000). The same trial with the fix gives the headline's outlines and January
+   coarse differences exactly, labels aside; under the legacy configuration it gives the tail
+   anchor's three outline files byte for byte and its January coarse differences exactly. The
+   pipeline's forcing (scripts 7a to 10) does not read the polygons.
 5. **The comparison** (`tools/compare_ice.R`, checked by `tools/check_compare_ice.R`): three tables
    and five figures, no forcing arithmetic of its own. On the saved headline run it reproduces the
    established old-raster audit on the 2,655 forcing cells: 186 cell-pairs whose ice fraction
