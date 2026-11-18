@@ -61,18 +61,23 @@ the six verification specs below, for the main session to run.
    increases, 228 after script 7a's averaging (153 kept, 33 removed, 75 created). NADI-1 has 142
    (optimal), 35 (minimum) and 231 (maximum) such increases before averaging.
 6. **Six verification specs** (`docs/cc/verification/2026-11-17_ice-*.R`, commit to fill in).
+   Strengthened on 18 November (Astra's change 3): the replay now runs script 7 as well and checks
+   its four outputs against the headline's, labels aside (the oldest mask and outline included);
+   every forcing run checks the second split's new columns (`tools/check_ice_split.R`); the replay
+   rebuilds the three NADI-1 files into its own run folder and compares their checksums with the
+   committed files; and the comparison is made once, by its own spec, not in every run.
 
 ## The verification runs
 
 | Spec | Runs | Expected time |
 |---|---|---|
-| `ice-old-replay` | 7a, 8, 9, 10 from the headline's predictions; every headline column and number, labels aside; the tests; the comparison | about 80 min (7a was 76.0 min in the headline) |
+| `ice-old-replay` | 7, 7a, 8, 9, 10 from the headline's predictions; script 7's outputs and every headline column and number, labels aside; the split check; the tests; the NADI-1 files rebuilt | about 2 h 30 min (7 was 70.2 min and 7a 76.0 min in the headline) |
 | `ice-legacy` | 7, 7a, 8, 9, 10 under the legacy configuration; both anchors in full | about 2 h 10 min (7 took 70-73 min, legacy 7a 53 min) |
-| `ice-nadi1-optimal`, `-minimum`, `-maximum` | as the replay with only the ice changed; the comparison beside the headline | about 80 min each |
-| `ice-comparison` | no scripts: the meeting's tables and figures from the four runs | about 1 min, after the four runs |
+| `ice-nadi1-optimal`, `-minimum`, `-maximum` | 7a, 8, 9, 10 as in the replay with only the ice changed; the split check | about 80 min each |
+| `ice-comparison` | no scripts: the meeting's tables and figures from the four runs, made once | about 1 min, after the four runs |
 
 The first five can run side by side, each with eight threads on its own eight cores (the
-regression contract's thread count for comparison runs; scripts 7a to 10 use one core). Start one
+regression contract's thread count for comparison runs; scripts 7 to 10 use one core). Start one
 first and the others once its scripts are running: two verifications starting together on the
 same commit can collide while the first makes the shared worktree and links its inputs.
 
