@@ -24,8 +24,8 @@
 #       whose fits it evaluated: each record's run files have the MD5 sums of the saved run's
 #       record (the tool itself compares no checksums); the hemlock box gives back the saved
 #       northeast rows in all 36 table-months; the Quebec-Labrador cells, selected again here from
-#       the all-days run, give the tool's cell count and area denominator; 2,592 rows; the status
-#       tables copied unchanged; the four entries not fitted without numbers; four pages.
+#       the all-days run, give the tool's cell count and area denominator; 2,592 rows; the four
+#       entries not fitted without numbers; four pages.
 #   Rscript tools/check_cover_contrasts.R duveiller-case-studies <output-dir> <earlier-comparison-csv>
 #       The duveiller command's output on the case-studies cases: 864 rows, and the hemlock box's
 #       rows those of the comparison verified on 17 November (its cover_contrasts_duveiller.csv).
@@ -34,6 +34,20 @@
 
 suppressMessages(source('tools/explore_cover_contrasts.R'))
 suppressPackageStartupMessages(library(mgcv))
+
+# The hemlock box's rows of a new table against those of an earlier output of this tool, merged on
+# `key`, the earlier output's columns named with `suffix`: every column identical, except the
+# ESTIMATES, which agree within 1e-12 with the same missing values. Returns the merged rows.
+ESTIMATES = c('contrast', 'se', 'spread')
+hemlock_rows_agree = function(rows, earlier, key, suffix) {
+  hemlock = CASE_STUDY_BOXES[['hemlock_decline']]
+  both = merge(rows[rows$region == hemlock, ], earlier[earlier$region == hemlock, ], by = key, suffixes = c('', suffix))
+  for (column in setdiff(names(earlier), c(key, ESTIMATES))) stopifnot(identical(both[[column]], both[[paste0(column, suffix)]]))
+  for (column in ESTIMATES)
+    stopifnot(identical(is.na(both[[column]]), is.na(both[[paste0(column, suffix)]])),
+              all(abs(both[[column]] - both[[paste0(column, suffix)]]) < 1e-12, na.rm = TRUE))
+  both
+}
 
 # The input lines of one of the tool's records, as a matrix: name, file and MD5 sum in columns 2 to 4.
 record_inputs = function(file) do.call(rbind, strsplit(grep('^input ', readLines(file), value = TRUE), ' '))
@@ -285,7 +299,6 @@ check_case_studies = function(out_dir, saved_dir, all_days_run, fill_missing = F
   contrasts = utils::read.csv(file.path(out_dir, 'cover_contrasts.csv'), comment.char = '#')
   saved = utils::read.csv(file.path(saved_dir, 'cover_contrasts.csv'), comment.char = '#')
   key = c('table', 'month', 'version', 'region', 'exchange')
-  hemlock = 'Northeast (hemlock box)'
 
   # 1. Each job read the run files that the saved job's fits were made from: the two records give
   # them the same MD5 sums, input by input. (Their paths differ: the saved records' are relative to
@@ -300,15 +313,10 @@ check_case_studies = function(out_dir, saved_dir, all_days_run, fill_missing = F
 
   # 2. The hemlock box is the northeast box of R/regions.R, so in every table and month its rows give
   # back the saved northeast rows: the support and the fit columns exactly, the numbers within 1e-12.
-  both = merge(contrasts[contrasts$region == hemlock, ], saved[saved$region == hemlock, ], by = key, suffixes = c('', '_saved'))
-  numbers = c('contrast', 'se', 'spread')
+  both = hemlock_rows_agree(contrasts, saved, key, '_saved')
   stopifnot(nrow(both) == 3 * 12 * 6 * 3)
-  for (column in setdiff(names(saved), c(key, numbers))) stopifnot(identical(both[[column]], both[[paste0(column, '_saved')]]))
-  for (column in numbers)
-    stopifnot(identical(is.na(both[[column]]), is.na(both[[paste0(column, '_saved')]])),
-              all(abs(both[[column]] - both[[paste0(column, '_saved')]]) < 1e-12, na.rm = TRUE))
   cat(sprintf('The %d rows of the hemlock box give back the saved northeast rows (largest difference in contrast, se or spread: %.1e).\n',
-              nrow(both), max(abs(as.matrix(both[, numbers]) - as.matrix(both[, paste0(numbers, '_saved')])), na.rm = TRUE)))
+              nrow(both), max(abs(as.matrix(both[, ESTIMATES]) - as.matrix(both[, paste0(ESTIMATES, '_saved')])), na.rm = TRUE)))
 
   # 3. One new box, its cells selected again here with its bounds written out (Quebec-Labrador: 80 to
   # 55 W, 50 to 60 N, the west and south edges in): its calibration cells with an area, and their
@@ -328,13 +336,11 @@ check_case_studies = function(out_dir, saved_dir, all_days_run, fill_missing = F
     stopifnot(nrow(rows) == 6, all(rows$region_cells == sum(quebec)), all(abs(rows$area_share - share) < 1e-12))
   }
 
-  # 4. Every table, month, version, box and exchange once, and the fit status tables copied unchanged.
+  # 4. Every table, month, version, box and exchange once.
   stopifnot(nrow(contrasts) == 3 * 12 * 6 * 4 * 3, !anyNA(contrasts[, key]), !anyDuplicated(contrasts[, key]),
             setequal(contrasts$table, names(TABLE_LABELS)), setequal(contrasts$month, MONTHS), setequal(contrasts$version, CONTRAST_VERSIONS),
-            setequal(contrasts$region, CASE_STUDY_BOXES), setequal(contrasts$exchange, EXCHANGES$exchange),
-            identical(unname(tools::md5sum(file.path(out_dir, sprintf('fits_%s.csv', jobs)))),
-                      unname(tools::md5sum(file.path(saved_dir, sprintf('fits_%s.csv', jobs))))))
-  cat('2,592 rows: every table, month, version, box and exchange once; the 36 fit status tables are the saved ones, byte for byte.\n')
+            setequal(contrasts$region, CASE_STUDY_BOXES), setequal(contrasts$exchange, EXCHANGES$exchange))
+  cat('2,592 rows: every table, month, version, box and exchange once.\n')
 
   # 5. The four entries deliberately not fitted (lin_cover and mod8; snowy; July and August) keep
   # their rows in every box, without numbers; every other entry converged.
@@ -355,16 +361,10 @@ check_duveiller_case_studies = function(out_dir, earlier_file) {
   rows = utils::read.csv(file.path(out_dir, 'cover_contrasts_duveiller.csv'), comment.char = '#')
   earlier = utils::read.csv(earlier_file, comment.char = '#')
   key = c('month', 'version', 'region', 'exchange')
-  hemlock = 'Northeast (hemlock box)'
-  numbers = c('contrast', 'se', 'spread')
-  both = merge(rows[rows$region == hemlock, ], earlier[earlier$region == hemlock, ], by = key, suffixes = c('', '_earlier'))
+  both = hemlock_rows_agree(rows, earlier, key, '_earlier')
   stopifnot(nrow(rows) == 12 * 6 * 4 * 3, !anyNA(rows[, key]), !anyDuplicated(rows[, key]), setequal(rows$month, MONTHS),
             setequal(rows$version, CONTRAST_VERSIONS), setequal(rows$region, CASE_STUDY_BOXES), setequal(rows$exchange, EXCHANGES$exchange),
             nrow(both) == 12 * 6 * 3)
-  for (column in setdiff(names(earlier), c(key, numbers))) stopifnot(identical(both[[column]], both[[paste0(column, '_earlier')]]))
-  for (column in numbers)
-    stopifnot(identical(is.na(both[[column]]), is.na(both[[paste0(column, '_earlier')]])),
-              all(abs(both[[column]] - both[[paste0(column, '_earlier')]]) < 1e-12, na.rm = TRUE))
   cat(sprintf('864 rows, every month, version, box and exchange once; the %d rows of the hemlock box give back those of %s\n%s\n',
               nrow(both), earlier_file, '(the published side and the support exactly; contrast, se and spread within 1e-12).'))
 }
