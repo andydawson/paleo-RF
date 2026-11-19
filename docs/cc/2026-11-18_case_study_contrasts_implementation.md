@@ -76,4 +76,5 @@ are checked once, in the verification, where every new record's run files must h
   area shares, selected again independently; 2,592 rows with complete keys, the four entries not fitted
   without numbers, four report pages; the Duveiller comparison's 864 rows, its hemlock rows against the
   comparison verified on 17 November. Its report, filed beside it: PASS at 545479b (18 November), every
-  check exiting 0; the 648 hemlock rows identical to the saved ones.
+  check exiting 0; the 648 hemlock rows identical to the saved ones. After the reviews' tidy-ups, PASS
+  again at 295b312 (`2026-11-19_case-study-cover-contrasts-2`), with outputs identical to the first run's.
