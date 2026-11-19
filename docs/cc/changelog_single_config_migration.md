@@ -43,6 +43,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Cover-contrast exploration beside published contrasts | #24 | merged 2026-11-16 | c7d2aab |
 | Comparison of the cover contrasts with Duveiller et al. (2018) | #24 | merged 2026-11-17 | d7159f3 |
 | Ice: the 2023 reconstruction (NADI-1), readvances, both split rules, fill_missing | #29 | merged 2026-11-18 | ed35d77 |
+| Cover contrasts at the case-study boxes | #24 | merged 2026-11-19 | f961cd4 |
 
 ---
 
@@ -2004,3 +2005,56 @@ checks PASS. Reports in `docs/cc/verification/2026-11-18_ice-*_report.md`.
 **Left for Chris and Andria.** Whether NADI-1 becomes the default; the young slices' ice; which split rule the paper
 uses; whether to keep the readvance averaging; maps drawing ice from the forcing's fraction file (a later change).
 
+## Cover contrasts at the case-study boxes (#24), merged 2026-11-19
+
+**What it is for.** Chris asked (17 November) for the exploration's monthly cover contrasts at the exact
+case-study boxes, beside the published guide and the comparison with Duveiller et al. (2018): the hemlock
+decline in the north-east, the spruce rise in Quebec-Labrador, the prairie-forest border, and the land
+clearance on the Atlantic seaboard. They show how the fitted versions respond where the case studies are,
+which bears on the goals Chris and Andria set: the best models' cover response should come closer to the
+published contrasts, and the final model should give the right vegetation forcing for the hemlock decline.
+
+**What changed.**
+- `tools/explore_cover_contrasts.R`: a `case-studies` command evaluates the 216 saved entries of the full
+  contrast run of 16 November at the cells of the four boxes, with no refitting (the models are fitted to
+  the whole continent; a box is only a summary taken afterwards), and writes the same files, so `report`
+  stacks and draws them. The bounds come from the case-study search's table
+  (`docs/cc/2026-11-10_case_study_candidates/candidates.csv`); each box is its own mask, its west and south
+  edges in. `exchange_cases()` takes the regions as an optional argument (default unchanged),
+  `read_fit_status()` the albedo table, and `compare_duveiller()` an optional folder for the cases.
+  `R/regions.R` is unchanged: boxes added there would take cells from the regions the cross-validation and
+  the coverage figure use.
+- `tools/check_cover_contrasts.R`: two checks for the verification; `tests/test_explore_cover_contrasts.R`:
+  the box edges, the unchanged defaults, and the saved fits evaluated with every fitting function set to stop.
+- Left out by Chris's choice. On 18 November: the design's three run-time guards (comparing the inputs'
+  checksums, refusing a folder that already holds outputs, checking the source of the Duveiller step's cases);
+  the inputs are checked once, in the verification, and the usage text says the run must be the one the saved
+  fits came from. After Astra's review: a contrast worked by hand for a new box (every box goes through the
+  same prediction code, which the hemlock box reproduces exactly, and each box's cells are checked), and extra
+  details in the job records (the candidates table's checksum already fixes the bounds).
+- Precedents, as for the exploration: Lejeune et al. (2020, Earth System Dynamics 11, 1209-1232), Duveiller,
+  Forzieri et al. (2018, Earth System Science Data 10, 1265-1279), Duveiller, Hooker and Cescatti (2018,
+  Scientific Data 5, 180014) and Boisier et al. (2013, Biogeosciences 10, 1501-1516); the passages are in the
+  design (`docs/cc/2026-11-18_case_study_contrasts_design_codex_gpt6astra.md`).
+
+**Results** (an exploration, no pass or fail; albedo change for a 10-point exchange, on the cells the
+satellite data also cover). Evergreen to summergreen, the chosen model (`loc100_linear`): in July it has the
+sign of Duveiller et al.'s values in every box (north-east +0.0069 against +0.0036; prairie-forest border
++0.0069 against +0.0036; Atlantic seaboard +0.0067 against +0.0018; Quebec-Labrador +0.0053 against +0.0052,
+on 6 cells); in January the opposite sign in the three temperate boxes (north-east -0.021 against +0.006;
+prairie-forest border -0.023 against +0.004; Atlantic seaboard -0.011 against +0.0005), with the six versions
+ranging from strongly darker to strongly brighter. The satellite data hardly cover Quebec-Labrador's
+summergreen cells.
+
+**Verification.** PASS at 295b312 (`docs/cc/verification/2026-11-19_case-study-cover-contrasts-2_report.md`),
+after a first PASS at 545479b before the reviews' tidy-ups: every check exits 0; in all 36 records the run
+files have the saved run's MD5 sums; the 648 hemlock rows equal the saved north-east rows exactly; the
+Quebec-Labrador cells and area shares, selected again independently, match; 2,592 rows; the Duveiller
+comparison's 216 hemlock rows equal those verified on 17 November.
+
+**Records.** Design by Astra (`docs/cc/2026-11-18_case_study_contrasts_design_codex_gpt6astra.md`); reviews
+by Astra (`docs/cc/2026-11-18_case_study_contrasts_review_codex_gpt6astra.md`) and Fable
+(`docs/cc/2026-11-19_case_study_contrasts_review_fable.md`), both finding it mergeable; their tidy-ups, which
+Chris approved, applied (a shorter note, the check taking only the all-days run, two repeats removed, one
+comment line, one helper for a pasted block); implementation note
+`docs/cc/2026-11-18_case_study_contrasts_implementation.md`; built by an Opus agent.
