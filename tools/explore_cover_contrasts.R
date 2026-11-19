@@ -20,7 +20,8 @@
 #       the fit command saved in <saved-contrast-dir> for the run's albedo table is evaluated
 #       there. Writes the month's cases, contrasts and record, and copies its fit status table
 #       unchanged (with the original fitting times). Run it once for each of the three runs, into
-#       the same <output-dir>, then run report on <output-dir>.
+#       the same <output-dir>, then run report on <output-dir>. <run-dir> must be the run the saved
+#       fits were fitted to: the tool does not check this (the verification's checker does).
 #   Rscript tools/explore_cover_contrasts.R report <output-dir>
 #       stacks every table and month found in <output-dir> into cover_contrasts.csv and fits.csv,
 #       and draws cover_contrasts.pdf: a page per albedo table, then the published values.
@@ -699,11 +700,8 @@ case_study_members = function(cells) {
   setNames(members, CASE_STUDY_BOXES)
 }
 
-# The case-studies command, for a run as read_run() returns it. For every month: the exchanges at
-# the case-study boxes, and each version's fit that the fit command saved in `saved_dir` for the
-# run's albedo table evaluated there, one fit in memory at a time. Nothing is fitted; a version that
-# was not fitted keeps its rows, without numbers. The month's fit status table is copied unchanged,
-# so that it keeps the original fitting times.
+# The case-studies command (see the usage at the top), for a run as read_run() returns it; one saved
+# fit in memory at a time.
 evaluate_case_studies = function(run, saved_dir, out_dir) {
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   members = case_study_members(run$cal)
