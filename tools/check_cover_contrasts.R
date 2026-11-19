@@ -19,11 +19,41 @@
 #       coverage the same for every version, numbers exactly where there are common cells; the
 #       design's counts; five means recomputed from the raw file and the saved fits; one page; a
 #       complete record.
+#   Rscript tools/check_cover_contrasts.R case-studies <output-dir> <saved-contrast-dir> <all-days-run> [--fill-missing]
+#       The case-studies command's output for the three runs, with its report, beside the saved run
+#       whose fits it evaluated: each record's run files have the MD5 sums of the saved run's
+#       record (the tool itself compares no checksums); the hemlock box gives back the saved
+#       northeast rows in all 36 table-months; the Quebec-Labrador cells, selected again here from
+#       the all-days run, give the tool's cell count and area denominator; 2,592 rows; the four
+#       entries not fitted without numbers; four pages.
+#   Rscript tools/check_cover_contrasts.R duveiller-case-studies <output-dir> <earlier-comparison-csv>
+#       The duveiller command's output on the case-studies cases: 864 rows, and the hemlock box's
+#       rows those of the comparison verified on 17 November (its cover_contrasts_duveiller.csv).
 #
 # Paths are relative to the repository root or absolute. Nothing is written.
 
 suppressMessages(source('tools/explore_cover_contrasts.R'))
 suppressPackageStartupMessages(library(mgcv))
+
+# The hemlock box's rows of a new table against those of an earlier output of this tool, merged on
+# `key`, the earlier output's columns named with `suffix`: every column identical, except the
+# ESTIMATES, which agree within 1e-12 with the same missing values. Returns the merged rows.
+ESTIMATES = c('contrast', 'se', 'spread')
+hemlock_rows_agree = function(rows, earlier, key, suffix) {
+  hemlock = CASE_STUDY_BOXES[['hemlock_decline']]
+  both = merge(rows[rows$region == hemlock, ], earlier[earlier$region == hemlock, ], by = key, suffixes = c('', suffix))
+  for (column in setdiff(names(earlier), c(key, ESTIMATES))) stopifnot(identical(both[[column]], both[[paste0(column, suffix)]]))
+  for (column in ESTIMATES)
+    stopifnot(identical(is.na(both[[column]]), is.na(both[[paste0(column, suffix)]])),
+              all(abs(both[[column]] - both[[paste0(column, suffix)]]) < 1e-12, na.rm = TRUE))
+  both
+}
+
+# The input lines of one of the tool's records, as a matrix: name, file and MD5 sum in columns 2 to 4.
+record_inputs = function(file) do.call(rbind, strsplit(grep('^input ', readLines(file), value = TRUE), ' '))
+
+# The number of pages of a PDF that R drew.
+pdf_pages = function(file) length(grepRaw('/Type /Page ', readBin(file, 'raw', file.size(file)), fixed = TRUE, all = TRUE))
 
 # --- inputs ---------------------------------------------------------------------------------------
 
@@ -252,15 +282,91 @@ check_duveiller = function(out_dir, saved_dir, source_file) {
   cat('Five means recomputed from the raw file and the saved fits agree within 1e-12, and so do the saved means over all eligible cells.\n')
 
   # One page, and a complete record whose inputs still have their recorded MD5 sums.
-  pdf = file.path(out_dir, 'cover_contrasts_duveiller.pdf')
-  pages = length(grepRaw('/Type /Page ', readBin(pdf, 'raw', file.size(pdf)), fixed = TRUE, all = TRUE))
+  pages = pdf_pages(file.path(out_dir, 'cover_contrasts_duveiller.pdf'))
   record = readLines(file.path(out_dir, 'record_duveiller.txt'))
-  inputs = do.call(rbind, strsplit(grep('^input ', record, value = TRUE), ' '))
+  inputs = record_inputs(file.path(out_dir, 'record_duveiller.txt'))
   stopifnot(pages == 1, 'job: duveiller' %in% record, nrow(inputs) == 1 + 12 + 12 + 72, inputs[1, 2] == 'published_change',
             inputs[1, 4] == DUVEILLER_MD5, identical(unname(tools::md5sum(inputs[, 3])), inputs[, 4]),
             length(grep('^transition: ', record)) == 3, any(grepl('^not reported: SD_Delta_albedo', record)),
             any(grepl('^package ncdf4 ', record)), length(grep('^time .*: [0-9.]+ s$', record)) == 4)
   cat('One page; the record lists the 97 inputs with their current MD5 sums, the mapping, the settings and four timings.\n')
+}
+
+# --- case-studies ---------------------------------------------------------------------------------
+
+check_case_studies = function(out_dir, saved_dir, all_days_run, fill_missing = FALSE) {
+  jobs = paste(rep(names(TABLE_LABELS), each = length(MONTHS)), MONTHS, sep = '_')
+  contrasts = utils::read.csv(file.path(out_dir, 'cover_contrasts.csv'), comment.char = '#')
+  saved = utils::read.csv(file.path(saved_dir, 'cover_contrasts.csv'), comment.char = '#')
+  key = c('table', 'month', 'version', 'region', 'exchange')
+
+  # 1. Each job read the run files that the saved job's fits were made from: the two records give
+  # them the same MD5 sums, input by input. (Their paths differ: the saved records' are relative to
+  # the checkout they were run from.) The one comparison of checksums: the tool makes none.
+  run_inputs = c('configuration', 'calibration_table', 'albedo_differences', 'albedo_modis_cells')
+  recorded = function(dir, job) {
+    inputs = record_inputs(file.path(dir, sprintf('record_%s.txt', job)))
+    setNames(inputs[, 4], inputs[, 2])[run_inputs]
+  }
+  for (job in jobs) stopifnot(!anyNA(recorded(saved_dir, job)), identical(recorded(out_dir, job), recorded(saved_dir, job)))
+  cat('In all 36 records the four run files have the MD5 sums of the saved run\'s records.\n')
+
+  # 2. The hemlock box is the northeast box of R/regions.R, so in every table and month its rows give
+  # back the saved northeast rows: the support and the fit columns exactly, the numbers within 1e-12.
+  both = hemlock_rows_agree(contrasts, saved, key, '_saved')
+  stopifnot(nrow(both) == 3 * 12 * 6 * 3)
+  cat(sprintf('The %d rows of the hemlock box give back the saved northeast rows (largest difference in contrast, se or spread: %.1e).\n',
+              nrow(both), max(abs(as.matrix(both[, ESTIMATES]) - as.matrix(both[, paste0(ESTIMATES, '_saved')])), na.rm = TRUE)))
+
+  # 3. One new box, its cells selected again here with its bounds written out (Quebec-Labrador: 80 to
+  # 55 W, 50 to 60 N, the west and south edges in): its calibration cells with an area, and their
+  # area, give the tool's region_cells and the denominator of its area_share. All days, July.
+  run = read_run(all_days_run, fill_missing)
+  quebec = run$cal$x >= -80 & run$cal$x < -55 & run$cal$y >= 50 & run$cal$y < 60 & is.finite(run$area) & run$area > 0
+  label = 'Quebec-Labrador (spruce rise)'
+  cases = readRDS(file.path(out_dir, 'cases_all_days_jul.rds'))
+  cases = cases[vapply(cases, function(case) case$support$region == label, FALSE)]
+  stopifnot(run$table == 'all_days', length(cases) == 3)
+  for (case in cases) {
+    rows = contrasts[contrasts$table == 'all_days' & contrasts$month == 'jul' & contrasts$region == label & contrasts$exchange == case$support$exchange, ]
+    share = sum(case$exchange$area) / sum(run$area[quebec])
+    cat(sprintf('Quebec-Labrador, all days, July, %s: %d cells with an area (the tool: %s); %d eligible; area share %.6f (the tool: %s)\n',
+                case$support$exchange, sum(quebec), paste(unique(rows$region_cells), collapse = ', '), nrow(case$exchange$first), share,
+                paste(sprintf('%.6f', unique(rows$area_share)), collapse = ', ')))
+    stopifnot(nrow(rows) == 6, all(rows$region_cells == sum(quebec)), all(abs(rows$area_share - share) < 1e-12))
+  }
+
+  # 4. Every table, month, version, box and exchange once.
+  stopifnot(nrow(contrasts) == 3 * 12 * 6 * 4 * 3, !anyNA(contrasts[, key]), !anyDuplicated(contrasts[, key]),
+            setequal(contrasts$table, names(TABLE_LABELS)), setequal(contrasts$month, MONTHS), setequal(contrasts$version, CONTRAST_VERSIONS),
+            setequal(contrasts$region, CASE_STUDY_BOXES), setequal(contrasts$exchange, EXCHANGES$exchange))
+  cat('2,592 rows: every table, month, version, box and exchange once.\n')
+
+  # 5. The four entries deliberately not fitted (lin_cover and mod8; snowy; July and August) keep
+  # their rows in every box, without numbers; every other entry converged.
+  unfitted = contrasts$table == 'snowy' & contrasts$month %in% c('jul', 'aug') & contrasts$version %in% c('lin_cover', 'mod8')
+  stopifnot(sum(unfitted) == 4 * 4 * 3, identical(is.na(contrasts$converged), unfitted), all(contrasts$converged[!unfitted]),
+            all(grepl('^not fitted', contrasts$fit_status[unfitted])),
+            all(is.na(contrasts$contrast[unfitted]) & is.na(contrasts$se[unfitted]) & is.na(contrasts$spread[unfitted])))
+  cat('The four entries not fitted keep their 48 rows, without numbers; every other entry converged.\n')
+
+  # 6. The report: a page per albedo table, then the published values.
+  stopifnot(pdf_pages(file.path(out_dir, 'cover_contrasts.pdf')) == 4)
+  cat('cover_contrasts.pdf has four pages.\n')
+}
+
+# --- duveiller-case-studies -----------------------------------------------------------------------
+
+check_duveiller_case_studies = function(out_dir, earlier_file) {
+  rows = utils::read.csv(file.path(out_dir, 'cover_contrasts_duveiller.csv'), comment.char = '#')
+  earlier = utils::read.csv(earlier_file, comment.char = '#')
+  key = c('month', 'version', 'region', 'exchange')
+  both = hemlock_rows_agree(rows, earlier, key, '_earlier')
+  stopifnot(nrow(rows) == 12 * 6 * 4 * 3, !anyNA(rows[, key]), !anyDuplicated(rows[, key]), setequal(rows$month, MONTHS),
+            setequal(rows$version, CONTRAST_VERSIONS), setequal(rows$region, CASE_STUDY_BOXES), setequal(rows$exchange, EXCHANGES$exchange),
+            nrow(both) == 12 * 6 * 3)
+  cat(sprintf('864 rows, every month, version, box and exchange once; the %d rows of the hemlock box give back those of %s\n%s\n',
+              nrow(both), earlier_file, '(the published side and the support exactly; contrast, se and spread within 1e-12).'))
 }
 
 if (sys.nframe() == 0L) {
@@ -270,9 +376,13 @@ if (sys.nframe() == 0L) {
   else if (length(args) == 2 && args[1] == 'exchanges') check_exchanges(args[2])
   else if (length(args) == 2 && args[1] == 'job') check_job(args[2])
   else if (length(args) == 4 && args[1] == 'duveiller') check_duveiller(args[2], args[3], args[4])
+  else if (length(args) == 4 && args[1] == 'case-studies') check_case_studies(args[2], args[3], args[4], command$fill_missing)
+  else if (length(args) == 3 && args[1] == 'duveiller-case-studies') check_duveiller_case_studies(args[2], args[3])
   else {
     cat('usage: Rscript tools/check_cover_contrasts.R inputs <all-days-run> <snow-free-run> <snowy-run> [--fill-missing] | exchanges <protocol-2-run> | job <output-dir>',
-        '| duveiller <output-dir> <saved-contrast-dir> <netcdf-file>\n')
+        '| duveiller <output-dir> <saved-contrast-dir> <netcdf-file>',
+        '| case-studies <output-dir> <saved-contrast-dir> <all-days-run> [--fill-missing]',
+        '| duveiller-case-studies <output-dir> <earlier-comparison-csv>\n')
     quit(status = 2)
   }
 }

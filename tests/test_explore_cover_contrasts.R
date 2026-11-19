@@ -114,6 +114,8 @@ stopifnot(nrow(support) == 7 * 3, identical(ne$exchange, EXCHANGES$exchange),
   all(ne$region_cells == 5), all(ne$fitted_cells == 4), identical(ne$eligible_cells, c(3L, 2L, 3L)),
   equal(ne$area_share, c(1 + 3 + 2, 1 + 2, 1 + 2 + 5) / 15), identical(ne$cells_10pct, c(2L, 1L, 3L)),
   all(ne$snowfree_share == 0.25), all(ne$snowy_share == 0.75))
+# Without `members`, the regions are the study area and the six boxes of R/regions.R, in that order.
+stopifnot(identical(unique(support$region), c(STUDY_AREA, DIAGNOSTIC_REGIONS$region)))
 # The study area takes the latitude window, not the boxes: the southern cell is in the Southeast
 # box only. A region without cells has counts of zero and nothing else.
 study = support[support$region == STUDY_AREA, ]
@@ -329,10 +331,62 @@ stopifnot(nrow(empty) == 6, all(empty$eligible_cells == 2), all(empty$common_cel
   identical(is.finite(compared$duveiller_contrast), compared$common_cells > 0),
   identical(is.finite(compared$contrast), compared$common_cells > 0 & compared$version == 'loc30_linear'))
 record = readLines(file.path(comparison_dir, 'record_duveiller.txt'))
+jan_case_file = file.path(saved_dir, 'cases_all_days_jan.rds')
 stopifnot('job: duveiller' %in% record, length(grep('^input ', record)) == 1 + 12 + 12 + 24,   # the file, cases, status tables and the 24 fits made
+  paste('input', basename(jan_case_file), jan_case_file, tools::md5sum(jan_case_file)) %in% record,      # without a case folder, the saved job's cases
   paste('input published_change', source_file, tools::md5sum(source_file)) %in% record,
   'transition: evergreen to summergreen beside transition 23, sign -1' %in% record, length(grep('^transition: ', record)) == 3,
   any(grepl('^package ncdf4 ', record)), length(grep('^time .*: [0-9.]+ s$', record)) == 4)
+
+# --- The case-studies command: the four boxes, and the saved job above evaluated there -----------
+# The boxes as the case-study search's table gives them, written out again: each takes a cell on its
+# west and south edges (its south-west corner), not one on its east or north edge (its south-east
+# and north-west corners). No corner of one box is in another.
+west = c(-80, -80, -100, -84); east = c(-66, -55, -88, -74); south = c(40, 50, 40, 32); north = c(48, 60, 50, 40)
+inside = do.call(cbind, case_study_members(data.frame(x = c(west, east, west), y = c(south, south, north))))
+stopifnot(identical(names(CASE_STUDY_BOXES), c('hemlock_decline', 'quebec_spruce', 'prairie_advance', 'clearance_seaboard')),
+  identical(colnames(inside), unname(CASE_STUDY_BOXES)), identical(unname(inside), rbind(diag(4) == 1, matrix(FALSE, 8, 4))))
+# The saved all-days job of the hand-made run, evaluated at the boxes. Nothing may be fitted: the
+# tool's fitting step, the ordinary fitter and the registry's fitter stop the test if called. The
+# six northeast cells are the hemlock box's; the other boxes have no cells here.
+fitters = mget(c('fit_version', 'fit_calibration_retry', 'fit_calibration_model'))
+fit_version = fit_calibration_retry = fit_calibration_model = function(...) stop('the case-studies command fitted a model')
+case_dir = tempfile('case-studies-')
+invisible(capture.output(evaluate_case_studies(all_days, saved_dir, case_dir)))
+invisible(list2env(fitters, globalenv()))
+stacked = function(dir) do.call(rbind, lapply(MONTHS, function(month) read.csv(file.path(dir, sprintf('contrasts_all_days_%s.csv', month)))))
+boxes = stacked(case_dir)
+before = stacked(saved_dir)
+hemlock = 'Northeast (hemlock box)'
+status_tables = sprintf('fits_all_days_%s.csv', MONTHS)
+stopifnot(nrow(boxes) == 12 * 6 * 4 * 3, identical(unique(boxes$region), unname(CASE_STUDY_BOXES)),
+  # the hemlock box gives back the saved northeast rows, numbers and all; the other boxes have no cells
+  equal(boxes[boxes$region == hemlock, ], before[before$region == hemlock, ]),
+  all(boxes$region_cells[boxes$region != hemlock] == 0), all(is.na(boxes$contrast[boxes$region != hemlock])),
+  # the status tables copied unchanged; the cases saved, and no fit saved or copied
+  identical(unname(tools::md5sum(file.path(case_dir, status_tables))), unname(tools::md5sum(file.path(saved_dir, status_tables)))),
+  setequal(list.files(case_dir, '[.]rds$'), sprintf('cases_all_days_%s.rds', MONTHS)))
+# Each month's record: the run's file, the boxes' table, the saved status table and the two fits the
+# stand-in made (loc30_linear, and loc100_linear's failure), and where the fits came from.
+case_record = readLines(file.path(case_dir, 'record_all_days_jan.txt'))
+jan_fit = file.path(saved_dir, 'fit_all_days_jan_loc30_linear.rds')
+stopifnot(length(grep('^input ', case_record)) == 1 + 1 + 1 + 2,
+  paste('input case_study_boxes', CASE_STUDY_FILE, tools::md5sum(CASE_STUDY_FILE)) %in% case_record,
+  paste('input', basename(jan_fit), jan_fit, tools::md5sum(jan_fit)) %in% case_record,
+  paste('fits: read from', saved_dir, '(saved by the fit command), not refitted') %in% case_record)
+# The comparison with Duveiller et al. on the boxes' cases: the cases from the case-studies folder,
+# the fits from the saved job. The hemlock box gives back the northeast rows of the comparison above.
+box_comparison = tempfile('duveiller-boxes-')
+invisible(capture.output(suppressMessages(compare_duveiller(saved_dir, source_file, box_comparison, cases_dir = case_dir))))
+on_boxes = read.csv(file.path(box_comparison, 'cover_contrasts_duveiller.csv'), comment.char = '#')
+box_record = readLines(file.path(box_comparison, 'record_duveiller.txt'))
+box_case_file = file.path(case_dir, 'cases_all_days_jan.rds')
+stopifnot(nrow(on_boxes) == 12 * 6 * 4 * 3, identical(unique(on_boxes$region), unname(CASE_STUDY_BOXES)),
+  equal(on_boxes[on_boxes$region == hemlock, ], compared[compared$region == hemlock, ]),
+  paste('input', basename(box_case_file), box_case_file, tools::md5sum(box_case_file)) %in% box_record,
+  paste('input', basename(jan_fit), jan_fit, tools::md5sum(jan_fit)) %in% box_record)
+
+# --- The duveiller command: what stops it --------------------------------------------------------
 # A shifted grid, and saved fits that do not match their status tables, stop the comparison with a reason.
 tampered = file.path(saved_dir, 'fit_all_days_jun_loc30_linear.rds')
 jun_fit = readRDS(tampered); jun_fit$status = 'another fit'; saveRDS(jun_fit, tampered)
@@ -341,5 +395,5 @@ stopifnot(fails_with(compare_duveiller(saved_dir, write_source(change, samples, 
 invisible(file.remove(file.path(saved_dir, 'fit_all_days_mar_loc30_linear.rds')))
 stopifnot(fails_with(compare_duveiller(saved_dir, source_file, tempfile()), 'do not match their status tables'))
 ncdf4::nc_close(nc)
-unlink(c(saved_dir, comparison_dir), recursive = TRUE)
-cat('Cover contrasts and the comparison with Duveiller et al.: hand-worked checks passed (none of the six versions fitted).\n')
+unlink(c(saved_dir, comparison_dir, case_dir, box_comparison), recursive = TRUE)
+cat('Cover contrasts, the case-study boxes and the comparison with Duveiller et al.: hand-worked checks passed (none of the six versions fitted).\n')
