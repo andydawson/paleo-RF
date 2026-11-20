@@ -195,7 +195,7 @@ migration branch. Line numbers are for `chris-dev`. Shall we fix them?
   the CV bins are cut with `breaks_cv` but labelled with `labels_sd`, so
   the legend shows SD ranges.
 - **Script 7's difference maps miss the ice outline for the two youngest
-  ages** (`7_plot_preds.R:430-432`). The outlines are looked up by
+  ages** (`7_plot_preds.R:404-406`). The outlines are looked up by
   `ice_fort$ages == ice_years[...]`, i.e. by the requested age against the
   nearest ice year (1, 2, ... 21 ka); 50 and 500 BP have no exact match,
   so the 0.05-0.5 ka and 0.5-2 ka panels draw no young (and for 0.05-0.5 ka

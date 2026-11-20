@@ -193,10 +193,10 @@ input is missing as of 2026-09-21.
 | `data/map-data/geographic/pbs.RDS`, `pbs_ll.RDS`, `PoliticalBoundaries/` | input to 2 and 7 (`pbs_ll` only) and 3 | present |
 | `data/elev_interp_cells.RDS` | input to 1 (legacy setting) | present (16 KB, committed) |
 | `data/elev_land_mean_cells.csv` | input to 1 (current setting) | present (59 KB, committed; made by `tools/prepare_land_elevation.R`) |
-| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 | present |
+| `data/map-data/ice/glacier_shapefiles_21-1k.RDS` | input to 7 (`ice$fraction_source = "dalton_ice"`) | present |
 | `data/albedo_glacier_monthly.csv` | input to 7, 7a | present |
 | `data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` | input to 7a (`ice$fraction_source = "dalton_ice"`, the default) | present |
-| `data/nadi1_fractions/nadi1_{optimal,minimum,maximum}.tif`, `nadi1_fractions_provenance.txt` | input to 7a when `ice$fraction_source` names one | present (68, 55 and 68 KB, committed; made by `tools/build_nadi1_fractions.R`) |
+| `data/nadi1_fractions/nadi1_{optimal,minimum,maximum}.tif`, `nadi1_fractions_provenance.txt` | input to 7 and 7a when `ice$fraction_source` names one | present (68, 55 and 68 KB, committed; made by `tools/build_nadi1_fractions.R`) |
 | `data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc` | input to 8 | present (157 MB, Git LFS) |
 | `data/radiative-kernels/CAM5/alb.kernel.nc` | input to 8 | present (21 MB) |
 | `data/radiative-kernels/CACKv1.0/CACKv1.0.nc` | input to 8 | present (126.5 MB, Git LFS) |
@@ -240,7 +240,8 @@ the cells whose fraction exceeds `ice$threshold`.
 
 Since 17 November 2026 the fraction can also come from the NADI-1 reconstruction of 2023 (one
 setting, `ice$fraction_source` in `config.R`; `tools/build_nadi1_fractions.R` makes the files from
-its polygons), so the two reconstructions can be compared with everything else unchanged.
+its polygons), so the two reconstructions can be compared with everything else unchanged. The
+setting also picks the ice that script 7 draws and flags on its maps.
 
 The Dalton raster is used by `7a_alb_diff_full.R` for one narrow reason:
 to split a cell's albedo change into a vegetation part and an ice part,
