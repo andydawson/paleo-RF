@@ -57,7 +57,7 @@ PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
   c('dalton_ice',               'data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif',              'input',   NA),
   # The NADI-1 ice fractions on the same grid, one file per reconstruction, made by
   # tools/build_nadi1_fractions.R (committed); config.R's analysis$ice$fraction_source chooses
-  # which of these four ice files script 7a reads.
+  # which of these four ice files scripts 7 and 7a read.
   c('nadi1_optimal',            'data/nadi1_fractions/nadi1_optimal.tif',                             'input',   NA),
   c('nadi1_minimum',            'data/nadi1_fractions/nadi1_minimum.tif',                             'input',   NA),
   c('nadi1_maximum',            'data/nadi1_fractions/nadi1_maximum.tif',                             'input',   NA),

@@ -9,7 +9,7 @@
 # writes into data/nadi1_fractions/, committed:
 #   nadi1_optimal.tif, nadi1_minimum.tif, nadi1_maximum.tif   one file per reconstruction
 #   nadi1_fractions_provenance.txt                            sources, settings, checks, checksums
-# Script 7a reads one of the three when config.R's analysis$ice$fraction_source names it.
+# Scripts 7 and 7a read one of the three when config.R's analysis$ice$fraction_source names it.
 #
 # Why (Chris, 16 November 2026): to compare the 2023 reconstruction with the old ice raster by
 # one setting, with everything else in the pipeline unchanged (docs/cc/2026-11-17_ice_work_decisions.md;
