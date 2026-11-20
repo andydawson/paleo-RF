@@ -34,15 +34,35 @@ ylim = cfg$presentation$map_windows$tail$y
 
 proj_WGS84 <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
 
-ice = read_input(run, path_file(paths, 'glacier_shapes'))
-ice_years = seq(1, 21)*1000
-
-# CM: each age takes the nearest ice-sheet polygon (1, 2, ... 21 ka) for its ice mask and
-# outline (ice_match()). The oldest slice, 11,500 BP, lies halfway between the 11 and 12 ka
-# polygons and is matched as 12,000 BP, so it keeps the 12 ka polygon it had while it was
-# labelled 12 ka: labelling it 11.5 ka changed labels only (Chris, 18 November 2026; question
-# C7). The legacy configuration makes the slice 12,000 BP itself (slice_alias, below).
-polygon_age = function(age) ifelse(age == 11500, 12000, age)
+# CM: the map ice follows config.R's analysis$ice$fraction_source (Chris, 20 November 2026):
+# the 21 glacier outlines for "dalton_ice", otherwise the NADI-1 file it names.
+if (cfg$analysis$ice$fraction_source == 'dalton_ice') {
+  ice = read_input(run, path_file(paths, 'glacier_shapes'))
+  ice_years = seq(1, 21)*1000
+  # CM: each age takes the nearest ice-sheet polygon (1, 2, ... 21 ka) for its ice mask and
+  # outline (ice_match()). The oldest slice, 11,500 BP, lies halfway between the 11 and 12 ka
+  # polygons and is matched as 12,000 BP, so it keeps the 12 ka polygon it had while it was
+  # labelled 12 ka: labelling it 11.5 ka changed labels only (Chris, 18 November 2026; question
+  # C7). The legacy configuration makes the slice 12,000 BP itself (slice_alias, below).
+  polygon_age = function(age) ifelse(age == 11500, 12000, age)
+  ice_aes = aes(x=long, y=lat, group=group)
+} else {
+  # CM: a cell is ice when its unadjusted fraction in the file exceeds analysis$ice$threshold.
+  # That is not always script 7a's classification: its threshold variants first average
+  # readvances away, and the headline partial-ice forcing uses no threshold.
+  ice_fractions = read_input(run, path_file(paths, cfg$analysis$ice$fraction_source), terra::rast)
+  ice_years = as.numeric(sapply(names(ice_fractions), function(layer_name) strsplit(layer_name, 'yr|bp')[[1]][2]))
+  ice = lapply(1:terra::nlyr(ice_fractions), function(band) {
+    ice_cells = terra::ifel(ice_fractions[[band]] > cfg$analysis$ice$threshold, 1, NA)
+    ice_polygons = terra::as.polygons(ice_cells)   # dissolved; NA cells are left out
+    ice_polygons$SYMB = 'ICE'                      # the attribute the flag loop reads
+    as(ice_polygons, 'Spatial')                    # the sp class the loops below use
+  })
+  polygon_age = function(age) age   # every slice has its own band, 11,500 BP included
+  # CM: NADI-1's ice encloses ice-free cells. Each polygon is drawn as one shape (group = id)
+  # with its rings as subgroups, so holes stay empty; group = group would paint them as ice.
+  ice_aes = aes(x=long, y=lat, group=id, subgroup=group)
+}
 ice_match   = function(age) which.min(abs(polygon_age(age) - ice_years))
 
 ice_fort = data.frame(matrix(NA, nrow=0, ncol=9))
@@ -98,7 +118,7 @@ map_theme = function(text_size = 12) {
 alb_interp_preds = read_input(run, path_file(paths, 'prediction_summary'))
 # CM: the slice alias, analysis$coarse$slice_alias (question C7). The legacy configuration
 # treats the 11,500 BP slice as 12,000 BP. config.R has none (Chris, 16 November 2026): the
-# slice keeps its age, and ice_match() gives it the same 12 ka ice polygon.
+# slice keeps its age, and with the 21 outlines ice_match() gives it the same 12 ka polygon.
 slice_alias = cfg$analysis$coarse$slice_alias
 if (!is.null(slice_alias)) {
   alb_interp_preds$year[which(alb_interp_preds$year == slice_alias[1])] = slice_alias[2]
@@ -200,7 +220,7 @@ if ('feb' %in% months) {
   ggplot()+
     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
     geom_tile(data=subset(alb_grid_sub, month=='feb'), aes(x=long,y=lat, fill=factor(alb_bin))) +
-    geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
+    geom_polygon(data=ice_sub, ice_aes,  colour=ice_colour, fill=ice_fill) +
     scale_fill_brewer(type='seq',
                       palette='YlOrBr',
                       name = "Albedo",
@@ -217,7 +237,7 @@ if ('feb' %in% months) {
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=factor(alb_bin))) +
-  geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
+  geom_polygon(data=ice_sub, ice_aes,  colour=ice_colour, fill=ice_fill) +
   scale_fill_brewer(type='seq',
                     palette='YlOrBr',
                     name = "Albedo",
@@ -237,7 +257,7 @@ if (length(months_sub)) {
   ggplot()+
     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
     geom_tile(data=subset(alb_grid_sub, month %in% months_sub), aes(x=long,y=lat, fill=factor(alb_bin))) +
-    geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
+    geom_polygon(data=ice_sub, ice_aes,  colour=ice_colour, fill=ice_fill) +
     scale_fill_brewer(type='seq',
                       palette='YlOrBr',
                       name = "Albedo",
@@ -256,7 +276,7 @@ if ('feb' %in% months) {
   ggplot() +
     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
     geom_tile(data=subset(alb_grid_sub, month=='feb'), aes(x=long,y=lat, fill=factor(alb_bin))) +
-    geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
+    geom_polygon(data=ice_sub, ice_aes,  colour=ice_colour, fill=ice_fill) +
     scale_fill_brewer(type='seq', palette='YlOrBr',
                       na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
     facet_wrap(facets~.) +
@@ -275,7 +295,7 @@ for (year in ages_sub){
   p = ggplot()+
     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
     geom_tile(data=subset(alb_grid_sub, year==year), aes(x=long,y=lat, fill=factor(alb_bin))) +
-    geom_polygon(data=subset(ice_sub, ages == year), aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
+    geom_polygon(data=subset(ice_sub, ages == year), ice_aes,  colour=ice_colour, fill=ice_fill) +
     scale_fill_brewer(type='seq', palette='YlOrBr',
                       na.value='transparent', name = "Albedo", direction=1, labels = labels_alb) +
     facet_wrap(~month, nrow=4, ncol=4)+
@@ -289,7 +309,7 @@ dev.off()
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_sd_bin)) +
-  geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
+  geom_polygon(data=ice_sub, ice_aes,  colour=ice_colour, fill=ice_fill) +
   scale_fill_brewer(type='seq',
                     palette='YlOrBr',
                     na.value='transparent',
@@ -307,7 +327,7 @@ ggsave(path_figure(paths, paste0('alb_interp_preds_month_sd_binned_tile_grid_', 
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=alb_grid_sub, aes(x=long,y=lat, fill=alb_cv_bin)) +
-  geom_polygon(data=ice_sub, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
+  geom_polygon(data=ice_sub, ice_aes,  colour=ice_colour, fill=ice_fill) +
   scale_fill_brewer(type='seq', palette='YlOrBr',
                     na.value='transparent', name = "CV", direction=1, labels = labels_sd) +
   facet_grid(facets~month)+
@@ -376,10 +396,11 @@ for (i in 1:(length(ages_sub)-1)){
   idx_ice_match_young = ice_match(ages_sub[i])
   idx_ice_match_old = ice_match(ages_sub[i+1])
 
-  # CM: ice_fort$ages holds the requested ages (50, 500, ...) but is matched against
-  # the nearest ice year (1, 2, ... 21 ka), so 50 and 500 BP find no outline. Left as
-  # is pending Andria (questions_for_andria_general.md, section 8). polygon_age() matches
-  # the oldest slice, 11,500 BP, as 12,000 BP here too, so it keeps its outline.
+  # CM: with the 21 outlines, ice_fort$ages holds the requested ages (50, 500, ...) but is
+  # matched against the nearest ice year (1, 2, ... 21 ka), so 50 and 500 BP find no outline.
+  # Left as is pending Andria (questions_for_andria_general.md, section 8). polygon_age()
+  # matches the oldest slice, 11,500 BP, as 12,000 BP here too, so it keeps its outline. A
+  # NADI-1 file has its own band for every slice, so there every age finds its outline.
   ice_fort_age_young = ice_fort[which(polygon_age(ice_fort$ages) == ice_years[idx_ice_match_young]),]
 
   ice_fort_age_old = ice_fort[which(polygon_age(ice_fort$ages) == ice_years[idx_ice_match_old]),]
@@ -428,8 +449,8 @@ sc_fill_diverge <- scale_fill_distiller(type = "div",
 ggplot()+
   geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
   geom_tile(data=alb_diff_df, aes(x=long, y=lat, fill = alb_diff)) +
-  geom_polygon(data=ice_fort_diff_old, aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-  geom_polygon(data=ice_fort_diff_young, aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
+  geom_polygon(data=ice_fort_diff_old, ice_aes,  colour=ice_colour, fill=ice_fill) +
+  geom_polygon(data=ice_fort_diff_young, ice_aes,  colour=ice_colour_dark, fill=ice_fill_dark) +
   sc_fill_diverge +
   facet_grid(month~facets)+
   map_theme()+
@@ -449,8 +470,8 @@ for (i in 1:length(facets)){
   p<-ggplot()+
     geom_polygon(data=pbs_ll, aes(long,lat, group = group), color="grey", fill="grey") +
     geom_tile(data=diff_sub, aes(x=long, y=lat, fill = alb_diff)) +
-    geom_polygon(data=subset(ice_fort_diff_old, facets==facet), aes(x=long, y=lat, group=group),  colour=ice_colour, fill=ice_fill) +
-    geom_polygon(data=subset(ice_fort_diff_young, facets==facet), aes(x=long, y=lat, group=group),  colour=ice_colour_dark, fill=ice_fill_dark) +
+    geom_polygon(data=subset(ice_fort_diff_old, facets==facet), ice_aes,  colour=ice_colour, fill=ice_fill) +
+    geom_polygon(data=subset(ice_fort_diff_young, facets==facet), ice_aes,  colour=ice_colour_dark, fill=ice_fill_dark) +
     facet_wrap(~month, nrow=3, ncol=4) +
     sc_fill_diverge +
     map_theme() +

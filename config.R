@@ -102,9 +102,9 @@ list(
     coarse = list(
       ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500),
       # c(data slice, coarse age it stands for), or NULL for none. The legacy configuration
-      # has c(11500, 12000): script 7 treats the 11,500 BP slice as 12,000 BP. Either way
-      # script 7 gives the slice the 12 ka ice polygon, for its mask and outline (Chris,
-      # 18 November 2026).
+      # has c(11500, 12000): script 7 treats the 11,500 BP slice as 12,000 BP. Either way, with
+      # ice$fraction_source "dalton_ice", script 7 gives the slice the 12 ka ice polygon for its
+      # mask and outline (Chris, 18 November 2026); with NADI-1 it uses the 11,500 BP band.
       slice_alias = NULL),
 
     # The study domain, degrees. Script 7a drops cells west of lon_min; script 8 keeps
@@ -126,6 +126,8 @@ list(
       # interpolated to the slices, by whom and how is question C0b). "nadi1_optimal",
       # "nadi1_minimum" or "nadi1_maximum": the three reconstructions of NADI-1 (Dalton et al.
       # 2023) on the same grid, data/nadi1_fractions/, made by tools/build_nadi1_fractions.R.
+      # It also picks the ice script 7 draws and flags: the 21 glacier outlines for "dalton_ice",
+      # or the NADI-1 file's cells above `threshold` (Chris, 20 November 2026).
       fraction_source = "dalton_ice",
       threshold = 0.5,
       # How script 7a turns each pair of slices into an albedo change, for the threshold
