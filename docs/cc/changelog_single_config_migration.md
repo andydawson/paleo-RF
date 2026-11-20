@@ -44,7 +44,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Comparison of the cover contrasts with Duveiller et al. (2018) | #24 | merged 2026-11-17 | d7159f3 |
 | Ice: the 2023 reconstruction (NADI-1), readvances, both split rules, fill_missing | #29 | merged 2026-11-18 | ed35d77 |
 | Cover contrasts at the case-study boxes | #24 | merged 2026-11-19 | f961cd4 |
-| Script 7's maps draw the ice the forcing uses | #29 | verified 2026-11-20; merge pending | |
+| Script 7's maps draw the ice the forcing uses | #29 | merged 2026-11-20 | 6c86770 |
 
 ---
 
