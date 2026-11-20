@@ -195,11 +195,12 @@ migration branch. Line numbers are for `chris-dev`. Shall we fix them?
   the CV bins are cut with `breaks_cv` but labelled with `labels_sd`, so
   the legend shows SD ranges.
 - **Script 7's difference maps miss the ice outline for the two youngest
-  ages** (`7_plot_preds.R:430-432`). The outlines are looked up by
+  ages** (`7_plot_preds.R:403-405`). The outlines are looked up by
   `ice_fort$ages == ice_years[...]`, i.e. by the requested age against the
   nearest ice year (1, 2, ... 21 ka); 50 and 500 BP have no exact match,
   so the 0.05-0.5 ka and 0.5-2 ka panels draw no young (and for 0.05-0.5 ka
-  no old) outline. Probably minor at those ages, but not intended.
+  no old) outline. Probably minor at those ages, but not intended. It applies
+  to the 21 glacier outlines only: with NADI-1 every slice has its own band.
 - **Calibration coverage counts missing rows in the denominator**
   (`5_calibration_eval.R:183`, `:188`): `sum(in_credible, na.rm=TRUE)/n()`
   lowers `frac_in` in `calibration_model_stats.csv` if any cell has a

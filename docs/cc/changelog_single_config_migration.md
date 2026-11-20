@@ -44,6 +44,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Comparison of the cover contrasts with Duveiller et al. (2018) | #24 | merged 2026-11-17 | d7159f3 |
 | Ice: the 2023 reconstruction (NADI-1), readvances, both split rules, fill_missing | #29 | merged 2026-11-18 | ed35d77 |
 | Cover contrasts at the case-study boxes | #24 | merged 2026-11-19 | f961cd4 |
+| Script 7's maps draw the ice the forcing uses | #29 | verified 2026-11-20; merge pending | |
 
 ---
 
@@ -2058,3 +2059,58 @@ by Astra (`docs/cc/2026-11-18_case_study_contrasts_review_codex_gpt6astra.md`) a
 Chris approved, applied (a shorter note, the check taking only the all-days run, two repeats removed, one
 comment line, one helper for a pasted block); implementation note
 `docs/cc/2026-11-18_case_study_contrasts_implementation.md`; built by an Opus agent.
+
+## Script 7's maps draw the ice the forcing uses (#29), merged 2026-11-20
+
+**What it is for.** Since 18 November, `analysis$ice$fraction_source` can make script 7a's forcing use NADI-1's ice,
+but script 7 still drew and flagged the old 21 glacier outlines, so its albedo maps, its coarse differences and
+script 9's slide-18 recipe showed ice the forcing does not use. Chris chose this as the next task on 20 November,
+chose no new setting (the existing one decides), and, after asking why the first design needed about 80 lines,
+approved the smaller build from Astra's line-count review. If NADI-1 becomes the default (Andria to decide, #29), the
+maps will show the same ice as the forcing.
+
+**What changed.**
+- `scripts/7_plot_preds.R` (net +20 lines): with `"dalton_ice"` (the default, and the legacy configuration) script 7
+  reads the 21 outlines as before. With a NADI-1 source it builds its list of ice polygons from that file: for each
+  slice's band, the cells whose fraction exceeds `analysis$ice$threshold` (0.5), dissolved and marked `'ICE'`; the
+  flags, outlines, coarse differences and slide-18 recipe then run unchanged. Each slice has its own band, so
+  11,500 BP takes its own ice rather than the 12 ka polygon, and 50 and 500 BP get difference outlines (with the 21
+  outlines they still get none, a quirk on Andria's list). NADI-1's ice encloses areas the file leaves empty, such
+  as Hudson Bay; on that path the eleven ice layers are drawn so that these holes stay unpainted.
+- A stated difference, in the script's comments: the maps classify each cell's fraction as the file gives it, while
+  script 7a's threshold variants first average readvances away, so a few cells can differ; the headline partial-ice
+  forcing uses no threshold.
+- `config.R` (comments): `fraction_source` also picks script 7's ice; the slice-alias note says what each path does
+  with 11,500 BP. `R/paths.R` and `tools/build_nadi1_fractions.R` (comments): scripts 7 and 7a both read the NADI-1
+  files. `README.md` and `docs/cc/questions_for_andria_general.md`: script 7's inputs, and the young-outlines
+  question now concerns the 21 outlines only.
+
+**Outputs changed.** None with `"dalton_ice"`: every anchor matches byte for byte. With a NADI-1 source, script 7's
+maps and flags change, and with them `ice_fort*.RDS`, the coarse differences (`alb_interp_preds_diffs_bluesky.RDS`)
+and script 9's slide-18 recipe table (`forcing_by_period_egu2024recipe_vs_slide.csv`); the size of the change in
+that table was not measured. The headline forcing (scripts 7a, 8 and 9) is unchanged, as it already used the
+selected file. Cells flagged as ice with NADI-1's best estimate: 20 at 50 and 500 BP, 23 at 2 ka, 29 at 4 ka, 34
+at 6 ka, 261 at 8 ka, 719 at 10 ka and 832 at 11.5 ka.
+
+**Verification.** PASS at 4e8532c. The legacy configuration ran scripts 7, 7a, 8, 9 and 10, and every file in the
+tail anchors (`interp-tail-2026-09-21`) and the forcing anchors (`interp-forcing-2026-10-08`) matched byte for byte
+(script 7 72.6 min, 7a 53.4 min, scripts 8 to 10 under a minute each). `config.R` with `"nadi1_optimal"` ran script
+7 (72.0 min): at each of the eight coarse ages the ICE flags equal the cells above 0.5, the drawn outlines agree with
+the flags, every age has an outline, and all seven periods have younger and older difference outlines;
+`test_config.R` and `test_paths.R` pass. PASS at bd2ca6c, after the reviews' tidy-ups: comments only
+(`tools/check_comments_only.R` against 4e8532c, two R files changed and no code change; the NADI-1 build tool's test,
+which sources it, passes). Reports: `docs/cc/verification/2026-11-20_ice-maps-legacy_report.md`, `-nadi1_report.md`
+and `-comments_report.md`. The figures were also inspected by eye.
+
+**Records.** Design `docs/cc/2026-11-20_ice_maps_design.md` (its last section is the approved build); Fable's design
+review `docs/cc/2026-11-20_ice_maps_design_review_fable.md`; Astra's line-count review
+`docs/cc/2026-11-20_ice_maps_line_count_review_codex_gpt6astra.md` (brief `..._line_count_astra_brief.md`); Fable's
+code review `docs/cc/2026-11-20_ice_maps_review_fable.md`, which found it mergeable. Chris approved two of its
+tidy-ups (two repeated sentences deleted, two outdated comments reworded), not a third (a note that the saved outline
+tables' `hole` column, which nothing reads, is wrong on the NADI-1 path, as the implementer reported). Built by an
+Opus agent.
+
+**Slips.** Astra's first line-count review read no files: the reviewer's role, copied into its prompt, forbade
+running commands, so it searched the web instead; it was run again with read-only access stated, with no effect on
+the code. The first commit of Astra's brief included text not meant for this public repository; it was amended
+before any push.
