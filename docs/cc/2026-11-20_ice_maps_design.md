@@ -80,3 +80,26 @@ About +130 / -25, net +105.
 - Script 7a refactor: its outputs and script 8's MD5-identical to a run before the change.
 - `"fraction"` with `dalton_ice` and with `nadi1_optimal`: runs cleanly; per slice, the cells script 7
   flags `'ICE'` equal those above the threshold in script 7a.
+
+## Approved build (Chris, 20 November 2026)
+
+Chris chose alternative C (no new setting) and, after asking why it needed about 80 lines, the smaller build from
+Astra's review (`docs/cc/2026-11-20_ice_maps_line_count_review_codex_gpt6astra.md`), which supersedes the proposal
+above:
+
+- **Script 7 only.** With `fraction_source = "dalton_ice"`, script 7 reads the 21 outlines exactly as before. With a
+  NADI-1 source, it builds its existing list of ice polygons from that file instead: for each band (slice), the cells
+  whose fraction exceeds `analysis$ice$threshold`, dissolved, with `SYMB = 'ICE'`. The flags, outlines, coarse
+  differences and script 9's slide-18 recipe then run unchanged. Each slice has its own band, 11,500 BP included, so
+  `polygon_age()` is the identity on that path.
+- **Holes.** NADI-1's ice encloses ice-free cells. On the NADI-1 path the 11 ice layers are drawn with
+  `group = id, subgroup = group`, so holes stay unfilled; the outlines path keeps `group = group`.
+- **Wording.** The maps show the cells whose unadjusted fraction in the selected file exceeds the threshold. That is
+  not always script 7a's classification (its threshold variants first average readvances away), and the headline
+  partial-ice forcing uses no threshold.
+- **Not built** (Chris's choice): NADI-1 with the legacy 12 ka relabelling (`slice_alias`), and a slice with no ice
+  (every slice has ice at 0.5). The per-age pages' `year == year` bug stays, as it is already on Andria's list.
+- **Not touched:** scripts 7a, 8 and 9, `R/`, `tests/`, `configs/legacy_config.R`.
+- **Estimate:** `scripts/7_plot_preds.R` +21 / -2; `config.R` comment +2 / -1; `README.md` +5 / -4; changelog +6;
+  `docs/cc/questions_for_andria_general.md` +2 / -1. Two verification specs: the legacy configuration's anchors,
+  and NADI-1's best estimate with its flags checked against the raster and the outline.
