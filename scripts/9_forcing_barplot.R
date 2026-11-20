@@ -266,10 +266,6 @@ ipcc = modern %>%
   transmute(panel = 'IPCC', label = as.character(agent), value = erf)
 ipcc$label = factor(ipcc$label, levels = rev(as.character(modern$agent)))
 
-forcing_panels = bind_rows(holocene_panel, ipcc)
-forcing_panels$panel = factor(forcing_panels$panel, levels = c('Holocene', 'IPCC'))
-forcing_panels$sign  = ifelse(forcing_panels$value >= 0, 'pos', 'neg')
-
 # One panel per block so each can carry its own y-axis title, as on the slide.
 # Heights are set to the row counts (7 Holocene periods, 5 IPCC agents) so the
 # bars are the same thickness in both, which is what facet_grid(space='free_y')
@@ -294,7 +290,7 @@ panel_plot <- function(panel_data, ytitle, striplab, keep_x, axis_limits) {
 }
 
 # Common x range with a little margin; strip labels and sign flags on both tables.
-forcing_axis_limits = range(c(forcing_panels$value, 0)) + c(-0.12, 0.12)
+forcing_axis_limits = range(c(holocene_panel$value, ipcc$value, 0)) + c(-0.12, 0.12)
 holocene_panel$striplab  = 'Holocene'
 ipcc$striplab = 'IPCC'
 holocene_panel$sign  = ifelse(holocene_panel$value  >= 0, 'pos', 'neg')
