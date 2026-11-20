@@ -240,8 +240,7 @@ the cells whose fraction exceeds `ice$threshold`.
 
 Since 17 November 2026 the fraction can also come from the NADI-1 reconstruction of 2023 (one
 setting, `ice$fraction_source` in `config.R`; `tools/build_nadi1_fractions.R` makes the files from
-its polygons), so the two reconstructions can be compared with everything else unchanged. The
-setting also picks the ice that script 7 draws and flags on its maps.
+its polygons), so the two reconstructions can be compared with everything else unchanged.
 
 The Dalton raster is used by `7a_alb_diff_full.R` for one narrow reason:
 to split a cell's albedo change into a vegetation part and an ice part,

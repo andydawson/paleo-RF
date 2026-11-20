@@ -399,8 +399,7 @@ for (i in 1:(length(ages_sub)-1)){
   # CM: with the 21 outlines, ice_fort$ages holds the requested ages (50, 500, ...) but is
   # matched against the nearest ice year (1, 2, ... 21 ka), so 50 and 500 BP find no outline.
   # Left as is pending Andria (questions_for_andria_general.md, section 8). polygon_age()
-  # matches the oldest slice, 11,500 BP, as 12,000 BP here too, so it keeps its outline. A
-  # NADI-1 file has its own band for every slice, so there every age finds its outline.
+  # matches the oldest slice, 11,500 BP, as 12,000 BP here too, so it keeps its outline.
   ice_fort_age_young = ice_fort[which(polygon_age(ice_fort$ages) == ice_years[idx_ice_match_young]),]
 
   ice_fort_age_old = ice_fort[which(polygon_age(ice_fort$ages) == ice_years[idx_ice_match_old]),]
