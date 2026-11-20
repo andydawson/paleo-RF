@@ -23,7 +23,8 @@ dir.create('docs'); writeLines('list(name = "a spec")', 'docs/spec.R')      # an
 ok_docs = check_comments_only('HEAD')
 writeLines(c('# a clearer comment', 'x = 2'), 'R/a.R')
 ok_code = check_comments_only('HEAD')
+bad_base = tryCatch(check_comments_only('no-such-commit'), error = function(e) 'error')   # git cannot compare: fail
 setwd(old)
-stopifnot(ok_comment, ok_docs, !ok_code)
+stopifnot(ok_comment, ok_docs, !ok_code, identical(bad_base, 'error'))
 
 cat('test_check_comments_only: all tests passed\n')
