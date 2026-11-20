@@ -115,7 +115,7 @@ What each script reads and writes:
 | `4_calibration_model.R` | `data/calibration_modern_lct_interp_bluesky.RDS` | `output/calibration/calibration_mod{1..8}_interp_<month>_bluesky.RDS`<br>`AIC_table.csv`<br>spatial-experiment fits<br>`calibration_prediction_fit_<month>_bluesky.RDS` (the REML fit for prediction) |
 | `5_calibration_eval.R` | the fits above and the calibration table | `output/calibration/calibration_mod_interp_selected_<month>_bluesky.RDS` (a copy of the prediction fit)<br>`calibration_model_stats.csv`<br>figures |
 | `6_prediction_model.R` | selected models<br>`data/lct_paleo_reveals_interp.RDS` | `output/prediction/paleo_interp_predict_gam{_samps,_summary}_<month>_bluesky.RDS` and the merged `..._bluesky.RDS` files |
-| `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS`<br>`data/grid.RDS`<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS`<br>`data/albedo_glacier_monthly.csv`<br>`pbs_ll.RDS` | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
+| `7_plot_preds.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS`<br>`data/grid.RDS`<br>`data/map-data/ice/glacier_shapefiles_21-1k.RDS` (`ice$fraction_source = "dalton_ice"`) or `data/nadi1_fractions/nadi1_{optimal,minimum,maximum}.tif`<br>`data/albedo_glacier_monthly.csv`<br>`pbs_ll.RDS` | figures<br>`data/ice_fort*.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS` |
 | `7a_alb_diff_full.R` | `output/prediction/paleo_interp_predict_gam_summary_bluesky.RDS`<br>`data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif` (`ice$fraction_source = "dalton_ice"`) or `data/nadi1_fractions/nadi1_{optimal,minimum,maximum}.tif`<br>`data/albedo_glacier_monthly.csv`<br>`data/grid.RDS` | `data/ALB_diffs_bluesky.RDS` |
 | `8_radiative.R` | `data/ALB_diffs_bluesky.RDS`<br>kernels | `output/forcing/RF_holocene_all_cases.RDS` |
 | `9_forcing_barplot.R` | `output/forcing/RF_holocene_all_cases.RDS`<br>`data/alb_interp_preds_diffs_bluesky.RDS`<br>`data/ipcc-ar6/*.csv` | `output/forcing/forcing_by_period*.csv`<br>`modern_ipcc_ar6_erf.csv`<br>figures |
@@ -233,8 +233,10 @@ answers that question from two files rather than one.
 that stopped the vegetation interpolation inventing plants under ice
 (the `ice` flag inside `veg_posts_interp_ice.RDS`, verified identical to
 a point-in-polygon test of the polygons), and it supplies the ice
-outlines that `7_plot_preds.R` draws on the maps. That part is
-self-consistent.
+outlines that `7_plot_preds.R` draws on the maps when
+`ice$fraction_source = "dalton_ice"`. That part is self-consistent.
+With a NADI-1 file, script 7 takes its ice from that file instead:
+the cells whose fraction exceeds `ice$threshold`.
 
 Since 17 November 2026 the fraction can also come from the NADI-1 reconstruction of 2023 (one
 setting, `ice$fraction_source` in `config.R`; `tools/build_nadi1_fractions.R` makes the files from
