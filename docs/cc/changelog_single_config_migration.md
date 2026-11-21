@@ -46,6 +46,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Cover contrasts at the case-study boxes | #24 | merged 2026-11-19 | f961cd4 |
 | Script 7's maps draw the ice the forcing uses | #29 | merged 2026-11-20 | 6c86770 |
 | Fixes from the integration review: dead code, the comment check, the run-record note | #16 | merged 2026-11-21 | 9d3677d |
+| Final integration check: Astra's review and three full runs; chris-dev reconciled | #16 | verified 2026-11-21; merge pending | |
 
 ---
 
@@ -2175,3 +2176,77 @@ the beta family is not a stable byte copy. Model 3's January fit has the same co
 smoothing parameters and AIC in the original, gate run 1 and this code, yet three different files. The regression
 contract compares fits by their predictions and AIC, never as whole files, and the second attempt did that. The
 message of commit 9f7ddfb still names the failed comparison as its evidence; the evidence is as stated here.
+
+## Final integration check: Astra's review and three full runs (#16), merged 2026-11-21
+
+**What it is for.** The last check of the migration (issue #16): that the assembled code still reproduces the
+original analysis from start to finish, including the one full refit of script 4, and that the final configuration
+runs end to end. On 20 November Chris chose this as the next task and approved its plan: Astra's review of all the
+migration code (1b9d5a9 to 9c8dea1), and three full runs started at once, with any fix he approved checked by
+rerunning only what it touches. The fixes he chose are in the section above.
+
+**What changed.** No code. Added: Astra's review and its brief, and the three runs' specifications and reports.
+
+**Outputs changed.** None.
+
+**Verification.** The three runs used commits 9c8dea1, 6c86770 and d0ed354, which hold the same code (the trunk
+after the ice-maps merge). They ran side by side, 8 threads each, from the frozen inputs, whose 331 checksums matched
+before and after every run.
+- *The original analysis from scratch* (`configs/legacy_config.R`, 9c8dea1): scripts 1 to 10, with script 4's full
+  refit (for each of the twelve months, the eight-model ladder, the seven spatial experiments and the selected
+  model: 192 fits). Every file of the all-months reference (`interp-allmonths-2026-09-20`: both land-cover tables,
+  the calibration table, the AIC table and the point predictions) matches byte for byte. With the legacy
+  configuration's seed 1, all 26 files of scripts 5 and 6 match the seed-1 reference (`interp-seed1-2026-10-14`)
+  byte for byte. Scripts 7 to 10 ran on this run's own seed-1 summary, which has no reference. The configuration and
+  paths tests pass. Script 4 943.0 min, script 7 73.6, 7a 53.0; 18.2 hours in all.
+- *The original analysis's last stage* (6c86770): scripts 7 to 10 from the saved prediction summary. Every file of
+  the tail and forcing references (`interp-tail-2026-09-21`, `interp-forcing-2026-10-08`) matches byte for byte.
+  Script 7 77.2 min, 7a 58.9; 2.3 hours in all.
+- *The final configuration from scratch* (`config.R`, d0ed354): scripts 1 to 10, with script 4's full refit. No
+  reference exists for this configuration: the run shows that the whole pipeline runs end to end on the final code.
+  Every script finished without error, and the configuration, paths and forcing-breakdown tests pass. Script 4
+  1,384.7 min, script 7 74.7, 7a 76.5; 26.0 hours in all.
+- The review's fixes merged after these runs (9d3677d). They were checked by rerunning what they touch (section
+  above).
+- Reports: `docs/cc/verification/2026-11-21_gate-legacy-full_report.md`, `2026-11-20_gate-legacy-tail_report.md` and
+  `2026-11-21_gate-final-full_report.md`, each beside a copy of its specification (the tool names both by the day
+  the run finished).
+
+**Reconciliation with `chris-dev`.** The design merges `chris-dev` into the migration branch once more before the
+final merge, to bring in Andria's edits. There is nothing to merge: `chris-dev` has had no commit since 3 November
+(837c940), every commit on it since the migration began (1b9d5a9, 8 October) is Chris's, and all of them are already
+in `feature/single-config`. `main` and `legacy` are unchanged since 13 September (c9d525e). The reference files in
+`tests/anchors/` are unchanged since 31 October, when one seed-1 table was regenerated (section "Calibration on the
+rebuilt MODIS albedo cell table").
+
+**README.** Astra found that the README's configuration and run-order descriptions agree with the code, except the
+paragraph on run records, which is corrected (section above).
+
+**Limits.**
+- Both from-scratch runs use the old ice raster. The runs do not rebuild the NADI-1 ice files or the MODIS albedo
+  table, and do not run NADI-1 ice, the cross-validation or the exploration tools; those rest on their own
+  verification records and tests (Astra's review, its fourth limit).
+- The issue's design also listed runs with other settings: script 1 in diagnostic mode, the median land cover
+  through scripts 1 and 2, and four months through scripts 4 to 9. These ran in October, on the code of the time
+  (sections I02, I04a and I04b), and were not repeated here. The design's other checks hold on the final code: a
+  settings mismatch that stops a run, the override that lets it through, and a presentation-only change that passes
+  are tested in `tests/test_run_manifest.R`; and scripts 5 and 6 with a fixed seed reproduced, in the first run, all
+  26 seed-1 files that the October code made.
+- The design's audit that every numerical stage can be called from `R/` lapsed when the extraction issues were
+  closed on 14 October (section "Order revised and two reviews").
+- Fitted models are compared by the AIC table and the predictions, not as files: a saved fit with the beta family is
+  not a stable byte copy (section above).
+
+**Records.** Astra's review, `docs/cc/2026-11-20_integration_review_codex_gpt6astra.md` (brief
+`docs/cc/2026-11-20_integration_review_astra_brief.md`), found no new arithmetic problem that blocks the merge and no
+unrecorded numerical departure in the original analysis's path. Chris's choices on 20 November: the three fixes (section above);
+`tools/compare_tables.R` left as it is (in a comparison within tolerances it does not hold numeric cell identifiers
+such as longitude equal, but the seed-1 files are compared byte for byte, which would catch such a change); no extra
+gate checks (neither a comparison of all 192 refits with the original fits nor a spot check of the kernel
+positions); and the 0.50 and 0.80 glacier-albedo sensitivity cases, decided on 16 November, to come later and
+separately, after Andria answers.
+
+**Slips.** The plan put to Chris on 20 November listed the three runs but not the design's runs with other settings;
+this was raised with him on 21 November, after the runs. When the fixes' checks were planned, he was first told
+that the one-month refit tool would cover script 4's deletions; that tool refits from the saved model and never runs
+script 4, so a January run of script 4 itself was used instead, and he was told so on 20 November.
