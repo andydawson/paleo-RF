@@ -2,10 +2,11 @@
 #
 # Why: a number in the paper can only be trusted if we can say which code, which settings
 # and which input files made it. Each run of a script writes runs/<script>/<time>_<pid>.md
-# (inside the run directory for an alternative run) the moment it starts, and rewrites it
-# as the run reads and writes files, so a run that fails or is killed still leaves its
-# record, with status 'failed' or 'started'. The file is readable Markdown with the full
-# record as JSON at the end.
+# (inside the run directory for an alternative run) and rewrites it as the run reads and
+# writes files. A batch run (Rscript) writes it the moment it starts, so a run that fails
+# or is killed still leaves its record, with status 'failed' or 'started'; a script stepped
+# through in RStudio writes it when it first saves an output or finishes. The file is
+# readable Markdown with the full record as JSON at the end.
 #
 # Before a script reads a file made by an earlier script, read_input() checks that the file
 # is the one the earlier script's latest run wrote, and that the run used the same

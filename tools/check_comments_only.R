@@ -24,7 +24,9 @@ code_of = function(text) {
 CODE_PATHS = c('R', 'scripts', 'config.R', 'configs')
 
 changed_r_files = function(base) {
-  out = system2('git', shQuote(c('diff', '--name-only', base, '--', CODE_PATHS)), stdout = TRUE)
+  out = suppressWarnings(system2('git', shQuote(c('diff', '--name-only', base, '--', CODE_PATHS)), stdout = TRUE))
+  # A failed comparison (an unknown base, no repository) must not pass as "no files changed".
+  if (!is.null(attr(out, 'status'))) stop('git could not compare with ', base, call. = FALSE)
   out[nzchar(out) & grepl('\\.R$', out)]
 }
 
