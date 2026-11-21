@@ -45,6 +45,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Ice: the 2023 reconstruction (NADI-1), readvances, both split rules, fill_missing | #29 | merged 2026-11-18 | ed35d77 |
 | Cover contrasts at the case-study boxes | #24 | merged 2026-11-19 | f961cd4 |
 | Script 7's maps draw the ice the forcing uses | #29 | merged 2026-11-20 | 6c86770 |
+| Fixes from the integration review: dead code, the comment check, the run-record note | #16 | verified 2026-11-21; merge pending | |
 
 ---
 
@@ -2114,3 +2115,63 @@ Opus agent.
 running commands, so it searched the web instead; it was run again with read-only access stated, with no effect on
 the code. The first commit of Astra's brief included text not meant for this public repository; it was amended
 before any push.
+
+## Fixes from the integration review: dead code, the comment check, the run-record note (#16), merged 2026-11-21
+
+**What it is for.** The integration gate (#16) begins with Astra's review of all the migration code
+(`docs/cc/2026-11-20_integration_review_codex_gpt6astra.md`). It found code that computes values nothing reads, a
+check that could pass after comparing nothing, and a README sentence that holds only for batch runs. On 20
+November Chris chose to fix all three; he left the review's other findings as they are. Fable's review of the fixes
+found two leftovers of the same kinds, and on 21 November Chris chose to fix both before the merge.
+
+**What changed.**
+- Dead code deleted; each object below was computed and never read:
+  - `scripts/4_calibration_model.R`: `alb_prod`; `cal_data2` and `cal_data3`, two copies of the calibration table;
+    and `AIC_list`, each month's full AIC table, kept in a list but never saved or read. The AIC table the script
+    writes is built separately and is unchanged.
+  - `scripts/7a_alb_diff_full.R`: eight per-row albedo columns (the partial-ice parts and their sums, and the
+    vegetation columns classified by the threshold) and the row list `ice_rows`, used only to build them. The
+    comment above the two threshold columns that remain now says what they hold: the glacier albedo per slice,
+    missing at or below the threshold.
+  - `scripts/9_forcing_barplot.R`: `forcing_panels`, a combined table used only for the common axis range. The range
+    now comes from the two panels' values directly; they are the same values, so the limits are the same. With it
+    went the `panel` column of the bar tables and of the slide-18 recipe's table, which nothing read once the
+    combined table was gone (Fable's review).
+  - `R/paths.R`: the catalogue entry `boundaries` (`pbs.RDS`), which nothing reads; the maps use `boundaries_ll`.
+- `tools/check_comments_only.R`: when `git diff` failed (an unknown base commit, say), the check saw no file names,
+  reported "0 R file(s) changed" and passed. That is false evidence that a change touched only comments. A failed
+  comparison now stops with "git could not compare with <base>". Its two earlier uses compared real files (I15a on
+  15 October, 23 files; the ice-maps follow-ups on 20 November, two files), so those results stand.
+  `tests/test_check_comments_only.R` adds an unknown base, which must fail.
+- `README.md` and the header comment of `R/run_manifest.R`: both said every run writes its record as soon as it
+  starts. That holds for batch runs (`Rscript`). A script stepped through in RStudio writes it only when it first
+  saves an output or finishes, and an error there is left to the session, so the record can be missing or stay
+  `started`. Both now say so; the function comment and `tests/test_run_manifest.R` already did.
+
+**Outputs changed.** None.
+
+**Verification.** From the legacy configuration:
+- At 5cadb41, scripts 7, 7a, 8, 9 and 10 from the saved seed-1 prediction summary: every file of the tail anchors
+  (`interp-tail-2026-09-21`) and the forcing anchors (`interp-forcing-2026-10-08`) matches byte for byte; the
+  comment-check, paths and configuration tests pass (script 7 100.4 min, 7a 75.9 min).
+- At 5cadb41, scripts 1, 2 and 4 for January: the AIC table's January column equals the anchored table's for all
+  eight ladder models (script 4 122.8 min).
+- At ee42e9a, after the two leftovers: script 9 alone, seeded with the baseline per-cell forcing (script 8) and coarse
+  differences (script 7), both byte-identical to the tail anchor: its four tables match the forcing anchor byte
+  for byte, its two PNG figures keep the previous run's checksums, and `R/run_manifest.R` is comments only
+  against 65bb2a4 (script 9 0.7 min).
+- Reports `docs/cc/verification/2026-11-20_gate-fixes-tail_report.md`, `2026-11-21_gate-fixes-script4-2_report.md`
+  and `2026-11-21_gate-fixes-script9_report.md`.
+
+**Records.** Astra's review and its brief (`docs/cc/2026-11-20_integration_review_*`, on branch `integration-gate`
+until the gate's results merge); Fable's review of the fixes,
+`docs/cc/2026-11-21_gate_fixes_review_fable.md`, which found them mergeable as is and named the two leftovers, with
+Chris's choices at its end. The edits are a few lines each and were made by the main Claude session.
+
+**Slips.** The first January check (`2026-11-20_gate-fixes-script4_report.md`, FAIL) failed on the check itself,
+not the code. It assumed every January file name holds "_jan_", but the spatial experiments' names end in "jan.RDS". It
+was also going to compare the saved fits byte for byte with gate run 1's, which is the wrong test: a saved fit with
+the beta family is not a stable byte copy. Model 3's January fit has the same coefficients, fitted values,
+smoothing parameters and AIC in the original, gate run 1 and this code, yet three different files. The regression
+contract compares fits by their predictions and AIC, never as whole files, and the second attempt did that. The
+message of commit 9f7ddfb still names the failed comparison as its evidence; the evidence is as stated here.
