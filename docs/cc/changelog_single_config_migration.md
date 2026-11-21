@@ -10,8 +10,9 @@ for the coauthor change log. Living document, updated as each issue merges.
   settings it used. Design: `2026-10-08_migration_issues_single_config_v2.md`. Issues: #2 to
   #17 on GitHub, label `single-config`. Decisions: CONTRIBUTING.md, 2026-10-08.
 - **Branches.** All the work is on `feature/single-config`, made from `chris-dev` 1b9d5a9 on
-  2026-10-08. Each issue has its own branch, merged back with `--no-ff`. Nothing is
-  committed to `chris-dev`, `main` or `legacy`.
+  2026-10-08. Each issue has its own branch, merged back with `--no-ff`. Nothing was
+  committed to `chris-dev`, `main` or `legacy` during the migration. After the final integration check (#16), Chris
+  approved merging `feature/single-config` into `chris-dev` (21 November 2026; the last row of the table below).
 - **The standard.** Each issue must leave the pipeline's outputs unchanged at the default
   settings: byte-identical where the pipeline is deterministic, within measured tolerances
   where it is random (scripts 5 and 6). See `2026-10-08_single_config_regression_contract.md`.
@@ -47,6 +48,8 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Script 7's maps draw the ice the forcing uses | #29 | merged 2026-11-20 | 6c86770 |
 | Fixes from the integration review: dead code, the comment check, the run-record note | #16 | merged 2026-11-21 | 9d3677d |
 | Final integration check: Astra's review and three full runs; chris-dev reconciled | #16 | merged 2026-11-21 | a06eddf |
+| Final integration check: the runs with other settings | #16 | verified 2026-11-21; merge pending | |
+| Final merge of the migration into chris-dev | #16 | approved 2026-11-21; merge pending | |
 
 ---
 
@@ -2206,11 +2209,23 @@ before and after every run.
   reference exists for this configuration: the run shows that the whole pipeline runs end to end on the final code.
   Every script finished without error, and the configuration, paths and forcing-breakdown tests pass. Script 4
   1,384.7 min, script 7 74.7, 7a 76.5; 26.0 hours in all.
-- The review's fixes merged after these runs (9d3677d). They were checked by rerunning what they touch (section
-  above).
+- *Runs with other settings*, from the original analysis's configuration, on the final code (91735fb, a06eddf and
+  68ca9ad, which hold the same code). The issue's design lists them; they had last run in October (sections I02,
+  I04a and I04b), and on 21 November, after the three runs, Chris chose to rerun them:
+  - script 1 in diagnostic mode: both land-cover tables match the all-months reference byte for byte, and the
+    diagnostics write their 28 figures and per-cell table (0.8 min);
+  - the median land cover through scripts 1 and 2: both tables keep the mean tables' columns and keys, every row's
+    three shares add up to 1 (largest error 2.2e-16), the median differs from the mean by 0.011 (modern) and 0.012
+    (past) on average and by at most 0.09 and 0.16, and script 2 runs on them (0.5 and 2.7 min);
+  - four months (February, May, August and November) through scripts 5 to 10 with seed 1, from script 4's saved
+    fits: each month's draw and summary files match the twelve-month seed-1 reference byte for byte, and the
+    per-cell forcing holds exactly those four months (42 min in all).
+- The review's fixes merged after the three full runs (9d3677d). They were checked by rerunning what they touch
+  (section above); the runs with other settings ran on the code with them.
 - Reports: `docs/cc/verification/2026-11-21_gate-legacy-full_report.md`, `2026-11-20_gate-legacy-tail_report.md` and
   `2026-11-21_gate-final-full_report.md`, each beside a copy of its specification (the tool names both by the day
-  the run finished).
+  the run finished); for the runs with other settings, `2026-11-21_gate-other-diagnostic_report.md`,
+  `-median_report.md` and `-four-months_report.md`.
 
 **Reconciliation with `chris-dev`.** The design merges `chris-dev` into the migration branch once more before the
 final merge, to bring in Andria's edits. There is nothing to merge: `chris-dev` has had no commit since 3 November
@@ -2226,12 +2241,11 @@ paragraph on run records, which is corrected (section above).
 - Both from-scratch runs use the old ice raster. The runs do not rebuild the NADI-1 ice files or the MODIS albedo
   table, and do not run NADI-1 ice, the cross-validation or the exploration tools; those rest on their own
   verification records and tests (Astra's review, its fourth limit).
-- The issue's design also listed runs with other settings: script 1 in diagnostic mode, the median land cover
-  through scripts 1 and 2, and four months through scripts 4 to 9. These ran in October, on the code of the time
-  (sections I02, I04a and I04b), and were not repeated here. The design's other checks hold on the final code: a
-  settings mismatch that stops a run, the override that lets it through, and a presentation-only change that passes
-  are tested in `tests/test_run_manifest.R`; and scripts 5 and 6 with a fixed seed reproduced, in the first run, all
-  26 seed-1 files that the October code made.
+- The design's four-month run began at script 4; it was rerun from script 5, on script 4's saved fits, since the
+  full refit had already run script 4's code. The design's other checks hold on the final code: a settings mismatch
+  that stops a run, the override that lets it through, and a presentation-only change that passes are tested in
+  `tests/test_run_manifest.R`; and scripts 5 and 6 with a fixed seed reproduced, in the first run, all 26 seed-1
+  files that the October code made.
 - The design's audit that every numerical stage can be called from `R/` lapsed when the extraction issues were
   closed on 14 October (section "Order revised and two reviews").
 - Fitted models are compared by the AIC table and the predictions, not as files: a saved fit with the beta family is
@@ -2247,6 +2261,6 @@ positions); and the 0.50 and 0.80 glacier-albedo sensitivity cases, decided on 1
 separately, after Andria answers.
 
 **Slips.** The plan put to Chris on 20 November listed the three runs but not the design's runs with other settings;
-this was raised with him on 21 November, after the runs. When the fixes' checks were planned, he was first told
+this was raised with him on 21 November, after the runs, and he chose to rerun them (all three passed). When the fixes' checks were planned, he was first told
 that the one-month refit tool would cover script 4's deletions; that tool refits from the saved model and never runs
 script 4, so a January run of script 4 itself was used instead, and he was told so on 20 November.
