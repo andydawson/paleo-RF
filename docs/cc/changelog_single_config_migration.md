@@ -46,7 +46,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Cover contrasts at the case-study boxes | #24 | merged 2026-11-19 | f961cd4 |
 | Script 7's maps draw the ice the forcing uses | #29 | merged 2026-11-20 | 6c86770 |
 | Fixes from the integration review: dead code, the comment check, the run-record note | #16 | merged 2026-11-21 | 9d3677d |
-| Final integration check: Astra's review and three full runs; chris-dev reconciled | #16 | verified 2026-11-21; merge pending | |
+| Final integration check: Astra's review and three full runs; chris-dev reconciled | #16 | merged 2026-11-21 | a06eddf |
 
 ---
 
