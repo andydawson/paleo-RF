@@ -360,9 +360,12 @@ records them: every setting it reads is in `config.R` (issue I06). A package loc
 
 Every run of a script that uses `R/run_manifest.R` writes
 `runs/<script>/<start time>_<process id>.md` (in the run directory, for a
-run with `run$dir` set) as soon as it starts, and updates it as the run
-goes: status `started`, then `completed` or `failed` with the error (a run
-that is killed stays `started`). It records the full commit and any
+run with `run$dir` set) and updates it as the run goes: status `started`,
+then `completed` or `failed` with the error (a run that is killed stays
+`started`). That holds for a batch run (`Rscript`), which writes the file
+as soon as it starts. A script stepped through in RStudio writes it only
+when it first saves an output or finishes, and an error there is left to
+the session, so the file is missing or stays `started`. It records the full commit and any
 uncommitted changes to `config.R`, `scripts/` or `R/`, the whole
 configuration, every file read and written with its md5, the figures
 written, and R, package and thread settings. The top of the file is a
