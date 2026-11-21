@@ -144,6 +144,11 @@ feasible, checked against `tests/anchors/`; version control as above. Chris,
   `config.R` to the choice of model (`calibration$model_id`): formulas,
   basis sizes and `maxit` live in `R/model_registry.R`, changed only by a
   reviewed code change.
+- **2026-11-21.** The single-config migration is finished. After its final
+  integration check (issue #16), Chris approved merging `feature/single-config`
+  into `chris-dev`. New topic branches start from `chris-dev` again, as in the
+  working rules above; `feature/single-config` is kept as the migration's
+  record, since branches still open start from it.
 - **2026-09-23.** Branch `annotated-interp` is a teaching copy of the same
   code with a comment on every line. It is read, not merged; its code was
   kept identical to `chris-dev`'s by the comment-stripped comparison
