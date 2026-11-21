@@ -1,0 +1,5 @@
+cell table: data/albedo_modis_cells.csv written 2026-10-29 18:21:03 GMT
+land rule: land
+settings: reduction 3 (2026-10-20); versions full_75 full 75, any_75 any 75, full_70 full 70, full_nocut full Inf; full inversions 0 2 4 6; from 2000-03-05; noon zenith from the data
+cell step script sha256: 2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5
+monthly files by build script sha256: 2ee39123d879995c219b65b1749726384d2351e9b990bf05d6d7ffa6b6ba1aa5 - 4484 files (this version)

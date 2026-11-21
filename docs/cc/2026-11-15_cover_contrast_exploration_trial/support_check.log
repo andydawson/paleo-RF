@@ -1,0 +1,35 @@
+all_days: calibration table matches the repository cell table; 2812 cells, 4 without an area
+  twelve months of cases in 6.5 s
+snow_free: calibration table matches the repository cell table; 2812 cells, 4 without an area
+  twelve months of cases in 5.9 s
+snowy: calibration table matches the repository cell table; 2812 cells, 4 without an area
+  twelve months of cases in 4.8 s
+
+Northeast, eligible cells (evergreen to summergreen / evergreen to open land / summergreen to open land):
+  all_days  all months       tool 58 / 41 / 22           Astra 58 / 41 / 22           same
+  snow_free all months       tool 45-58 / 32-41 / 17-22  Astra 45-58 / 32-41 / 17-22  same
+  snowy     dec jan feb mar  tool 58 / 41 / 22           Astra 58 / 41 / 22           same
+  snowy     apr              tool 42 / 25 / 13           Astra 42 / 25 / 13           same
+  snowy     may              tool 3 / 1 / 1              Astra 3 / 1 / 1              same
+  snowy     oct              tool 2 / 0 / 0              Astra 2 / 0 / 0              same
+  snowy     nov              tool 25 / 16 / 6            Astra 25 / 16 / 6            same
+  snowy     jun sep          tool 0 / 0 / 0              Astra 0 / 0 / 0              same
+                 exchange region_cells fitted_cells eligible_cells area_share
+ evergreen to summergreen           83           83             58  0.6957271
+   evergreen to open land           83           83             41  0.4986395
+ summergreen to open land           83           83             22  0.2668503
+ cells_10pct
+          58
+          41
+          22
+Astra's area shares for all days (69.6, 49.9 and 26.7 % of the northeast) are reproduced.
+
+Study area, all days, July:
+                 exchange region_cells fitted_cells eligible_cells area_share
+ evergreen to summergreen         2623         2619           1896  0.7005172
+   evergreen to open land         2623         2619           1828  0.6797965
+ summergreen to open land         2623         2619           2124  0.7719976
+ cells_10pct snowfree_share snowy_share
+        1754              1           0
+        1670              1           0
+        2119              1           0

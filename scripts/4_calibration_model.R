@@ -1,243 +1,105 @@
 # 4_calibration_model.R: fit the models that turn land cover into albedo
-# Interp (spatially complete) path only: the point-based code and its guards are
-# removed. Every remaining line is unchanged from the original.
+# Interp (spatially complete) path only. Settings come from config.R, and every file is
+# read and written through the run manifest; comments marked '# CM:' are notes on
+# changes from the original analysis.
+# The models are defined once, by id, in R/model_registry.R and fitted here in loops.
 
 
+# Settings, file locations and this run's manifest: run_begin() reads config.R (or the file
+# given with --config), sets up the paths of R/paths.R and starts the run's
+# manifest; files are then read and written through it.
+source('R/run_manifest.R')
+run   = run_begin('4_calibration_model')
+cfg   = run$cfg
+paths = run$paths
+
+# Packages, loaded after run_begin() so that a missing one is recorded as a failed run.
 library(gam)
 library(mgcv)
+# The model formulas and fitting controls (LADDER_MODELS, SPATIAL_MODELS,
+# fit_calibration_model) come with R/paths.R from R/model_registry.R.
 
-alb_prod = "bluesky"
+cal_interp_data = read_input(run, path_file(paths, 'calibration_table'))
 
-dir.create('output/calibration', recursive = TRUE, showWarnings = FALSE)
-dir.create('figures', showWarnings = FALSE)
+# The months analysed, from config.R (analysis$months); month names and
+# numbers come from the shared calendar, R/calendar.R.
+source('R/calendar.R')
+months = cfg$analysis$months
 
-ctrl <- list(nthreads=8, maxit=500)
+# Before hours of fitting: each month needs more rows to fit (cells with its albedo and every
+# predictor) than the largest model has coefficients, or that model cannot be fitted. The
+# rows are printed, and a month with too few stops the run here, named (Chris, 2026-10-30).
+most_coefficients = max(sapply(names(CALIBRATION_MODELS), model_coefficients, month = months[1], data = cal_interp_data))
+rows_to_fit = sapply(months, complete_model_rows, data = cal_interp_data)
+print(paste0('rows to fit (largest model ', most_coefficients, ' coefficients): ', paste(months, rows_to_fit, collapse = ', ')))
+too_few = months[rows_to_fit < most_coefficients]
+if (length(too_few)) stop('fewer rows than the largest model has coefficients (', most_coefficients, ') in: ', paste(too_few, collapse = ', '))
 
-cal_interp_data =readRDS(paste0('data/calibration_modern_lct_interp_', alb_prod, '.RDS'))
-
-cal_data2 = data.frame(site=seq(1,nrow(cal_interp_data)), cal_interp_data)
-cal_data3 = cal_data2[,c('site', 'ET', 'OL', 'ST')]
-
-months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
-
-ctrl <- list(nthreads=8, maxit=500)
-
+# The eight-model ladder for every month, fitted by config.R's comparison method ("ML" or
+# the original "REML"; question B4) because the ladder is compared by AIC below
+# and in script 5. The formulas are in R/model_registry.R.
+comparison_method = cfg$analysis$calibration$comparison_method
 for (month in months) {
 
-  print('Fitting model 1: (x,y)')
-  mod1_interp = mgcv::bam(get(month) ~ s(x, y, bs="gp", k=500),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod1_interp, paste0('output/calibration/calibration_mod1_interp_', month, '_', alb_prod, '.RDS'))
-
-  print('Fitting model 2: (x,y) + elevation')
-  mod2_interp = mgcv::bam(get(month) ~ s(x, y, bs="gp", k=500) + s(elev, k=50),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod2_interp, paste0('output/calibration/calibration_mod2_interp_', month, '_', alb_prod, '.RDS'))
-
-  print('Fitting model 3: (x,y) + elevation + OL')
-  mod3_interp = mgcv::bam(get(month) ~ s(x, y, bs='gp', k=500) + s(elev, k=50) + s(OL, k=50),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod3_interp, paste0('output/calibration/calibration_mod3_interp_', month, '_', alb_prod, '.RDS'))
-
-  print('Fitting model 4: (x,y) + elevation + OL + ET')
-  mod4_interp = mgcv::bam(get(month) ~ s(x, y, bs='gp', k=500) + s(elev, k=50) + s(OL, k=50) + s(ET, k=50),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod4_interp, paste0('output/calibration/calibration_mod4_interp_', month, '_', alb_prod, '.RDS'))
-
-  print('Fitting model 5: (x,y) + elevation + OL + ET + ST')
-  mod5_interp = mgcv::bam(get(month) ~ s(x, y, bs='gp', k=500) + s(elev, k=50) + s(OL, k=50) + s(ET, k=50) + s(ST, k=50),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod5_interp, paste0('output/calibration/calibration_mod5_interp_', month, '_', alb_prod, '.RDS'))
-
-  print('Fitting model 6: (x,y) + elevation + s(OL, ET, ST)')
-  mod6_interp = mgcv::bam(get(month) ~ s(x, y, bs='gp', k=500) + s(elev, k=50) + s(OL, ET, ST, k=75),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod6_interp, paste0('output/calibration/calibration_mod6_interp_', month, '_', alb_prod, '.RDS'))
-
-  print('Fitting model 7: (x,y) + elevation + gp(OL, ET, ST)')
-  mod7_interp = mgcv::bam(get(month) ~ s(x, y, bs='gp', k=500) + s(elev, k=50) + s(OL, ET, ST, bs='gp', k=200),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod7_interp, paste0('output/calibration/calibration_mod7_interp_', month, '_', alb_prod, '.RDS'))
-
-  print('Fitting model 8: (x,y) + elevation + tp(OL, ET, ST)')
-  mod8_interp = mgcv::bam(get(month) ~ s(x, y, bs='gp', k=500) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=200),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod8_interp, paste0('output/calibration/calibration_mod8_interp_', month, '_', alb_prod, '.RDS'))
+  for (model_id in LADDER_MODELS) {
+    print(paste('Fitting', CALIBRATION_MODELS[[model_id]]$label, 'by', comparison_method))
+    fit = fit_calibration_model(model_id, month, cal_interp_data, method = comparison_method)
+    write_output(run, fit, path_calibration_model(paths, model_id, month))
+    print(fit_convergence(fit))
+  }
 
 }
 
-months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
-
-ctrl <- list(nthreads=8, maxit=500)
-
-AIC_list =  vector("list", 12)
-names(AIC_list) = months
-
-AIC_df = data.frame(matrix(NA, nrow=8, ncol=13))
+# CM: the ladder is compared by AIC only. The original also ran an analysis of deviance
+# (anova.gam, chi-square tests) on the eight models and kept it in a list nothing read; it is
+# removed because models 5 to 8 are not nested (each replaces smooths or changes a basis), so
+# those tests do not test what they appear to (Chris, 2026-10-16, question B4, for Andria's
+# review).
+AIC_df = data.frame(matrix(NA, nrow=8, ncol=1 + length(months)))
 colnames(AIC_df) = c('model', months)
 AIC_df$model = seq(1,8)
 
-ANOVA_list = vector("list", 12)
-names(ANOVA_list) = months
-
 for (month in months) {
 
-  mod1_interp = readRDS(paste0('output/calibration/calibration_mod1_interp_', month, '_', alb_prod, '.RDS'))
-  mod2_interp = readRDS(paste0('output/calibration/calibration_mod2_interp_', month, '_', alb_prod, '.RDS'))
-  mod3_interp = readRDS(paste0('output/calibration/calibration_mod3_interp_', month, '_', alb_prod, '.RDS'))
-  mod4_interp = readRDS(paste0('output/calibration/calibration_mod4_interp_', month, '_', alb_prod, '.RDS'))
-  mod5_interp = readRDS(paste0('output/calibration/calibration_mod5_interp_', month, '_', alb_prod, '.RDS'))
-  mod6_interp = readRDS(paste0('output/calibration/calibration_mod6_interp_', month, '_', alb_prod, '.RDS'))
-  mod7_interp = readRDS(paste0('output/calibration/calibration_mod7_interp_', month, '_', alb_prod, '.RDS'))
-  mod8_interp = readRDS(paste0('output/calibration/calibration_mod8_interp_', month, '_', alb_prod, '.RDS'))
+  # The ladder's fits for this month, named mod1_interp ... mod8_interp as before.
+  ladder_fits = setNames(lapply(LADDER_MODELS, function(model_id) read_input(run, path_calibration_model(paths, model_id, month))),
+                         paste0(LADDER_MODELS, '_interp'))
 
-  this_AIC = AIC(mod1_interp, mod2_interp, mod3_interp, mod4_interp, mod5_interp, mod6_interp, mod7_interp, mod8_interp)
-
-  AIC_list[[month]] = this_AIC
+  this_AIC = with(ladder_fits, AIC(mod1_interp, mod2_interp, mod3_interp, mod4_interp, mod5_interp, mod6_interp, mod7_interp, mod8_interp))
 
   AIC_df[,month] = round(this_AIC$AIC)
-
-  ANOVA_list[[month]] = anova.gam(mod1_interp, mod2_interp, mod3_interp, mod4_interp, mod5_interp, mod6_interp, mod7_interp, mod8_interp, test = "Chisq")
 }
 
-write.csv(AIC_df, 'output/calibration/AIC_table.csv', row.names = FALSE)
+write_output(run, AIC_df, path_file(paths, 'aic_table'), write.csv, row.names = FALSE)
 
-months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
-
-ctrl <- list(nthreads=8, maxit=500)
-
+# The spatial experiments (R/model_registry.R), compared by script 5.
 for (month in months) {
 
   print(paste0('Fitting calibration models for ', month, ' albedo'))
 
-  print('Fitting model: (x,y) + elev + tp(OL, ET, ST)')
-  mod_spatial_elev_cover = mgcv::bam(get(month) ~ s(x, y, bs="gp", k=500) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=200),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod_spatial_elev_cover, paste0('output/calibration/calibration_mod_spatial_elev_cover', month, '.RDS'))
-
-  print('Fitting model: (x,y)')
-  mod_spatial = mgcv::bam(get(month) ~ s(x, y, bs="gp", k=500),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod_spatial, paste0('output/calibration/calibration_mod_spatial_', month, '.RDS'))
-
-  print('Fitting model: elevation')
-  mod_elev = mgcv::bam(get(month) ~s(elev, k=50),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod_elev, paste0('output/calibration/calibration_mod_elev_', month, '.RDS'))
-
-  print('Fitting model: (x,y) + elevation')
-  mod_spatial_elev = mgcv::bam(get(month) ~ s(x, y, bs="gp", k=500) + s(elev, k=50),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod_spatial_elev, paste0('output/calibration/calibration_mod_spatial_elev_', month, '.RDS'))
-
-  print('Fitting model: (x,y) + tp(OL, ET, ST)')
-  mod_spatial_cover = mgcv::bam(get(month) ~ s(x, y, bs="gp", k=500) +  s(OL, ET, ST, bs='tp', k=200),
-                               data=cal_interp_data,
-                               family=betar(link="logit"),
-                               method="REML",
-                               na.action=na.omit,
-                               control=ctrl)
-
-  saveRDS(mod_spatial_cover, paste0('output/calibration/calibration_mod_spatial_cover_', month, '.RDS'))
-
-  print('Fitting model: tp(OL, ET, ST)')
-  mod_cover = mgcv::bam(get(month) ~ s(OL, ET, ST, bs='tp', k=200),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod_cover, paste0('output/calibration/calibration_mod_cover_', month, '.RDS'))
-
-  print('Fitting model: tp(OL, ET, ST) + elev')
-  mod_cover_elev = mgcv::bam(get(month) ~ s(elev, k=50) + s(OL, ET, ST, bs='tp', k=200),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod_cover_elev, paste0('output/calibration/calibration_mod_cover_elev_', month, '.RDS'))
+  for (model_id in SPATIAL_MODELS) {
+    print(paste('Fitting', CALIBRATION_MODELS[[model_id]]$label))
+    write_output(run, fit_calibration_model(model_id, month, cal_interp_data),
+                 path_calibration_model(paths, model_id, month))
+  }
 
 }
 
-months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
-
-ctrl <- list(nthreads=8, maxit=500)
-
+# The model used for prediction (config.R analysis$calibration$model_id), fitted by REML
+# into its own file, which script 5 saves as the selected model for script 6. The original
+# fitted model 8 a third time here and saved it over the ladder's fit; with an ML ladder the
+# two must differ, so the prediction fit now has its own file (question B4).
+# (Whether the spatial_elev_cover fit of the same formula can go is general question 7.)
+prediction_model_id = cfg$analysis$calibration$model_id
 for (month in months) {
 
   print(paste0('Fitting calibration model for: ', month))
 
-  print('Fitting model 8: (x,y) + elevation + tp(OL, ET, ST)')
-  mod8_interp = mgcv::bam(get(month) ~ s(x, y, bs='gp', k=500) + s(elev, k=50) + s(OL, ET, ST, bs='tp', k=200),
-                          data=cal_interp_data,
-                          family=betar(link="logit"),
-                          method="REML",
-                          na.action=na.omit,
-                          control=ctrl)
-
-  saveRDS(mod8_interp, paste0('output/calibration/calibration_mod8_interp_', month, '_', alb_prod, '.RDS'))
+  print(paste('Fitting', CALIBRATION_MODELS[[prediction_model_id]]$label, 'by REML, for prediction'))
+  fit = fit_calibration_model(prediction_model_id, month, cal_interp_data, method = 'REML')
+  write_output(run, fit, path_file(paths, 'calibration_prediction_fit', month = month))
+  print(fit_convergence(fit))
 
 }
+
+run_finish(run)

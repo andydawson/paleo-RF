@@ -1,0 +1,21 @@
+job: report
+time: 2026-11-16 17:08:58 UTC
+commit: b0d1db70345d861d28deddeb88b1a2d4d147c008
+branch: cover-contrasts
+uncommitted changes in R/, scripts/, config.R or this tool: FALSE
+input published_values docs/cc/2026-11-10_published_albedo_contrasts.csv 4d8b905d1c121d75a97cab3b33bb04f1
+input contrasts_all_days_jan.csv /tmp/claude-1000/-home-expert-Documents-contracting-Andria-paleo-RF/912627b7-1f54-4406-9a56-dc38e8ab3d9e/scratchpad/contrast_trial_2/output/contrasts_all_days_jan.csv b4911e45af514eda8f424df04330965c
+input contrasts_all_days_jul.csv /tmp/claude-1000/-home-expert-Documents-contracting-Andria-paleo-RF/912627b7-1f54-4406-9a56-dc38e8ab3d9e/scratchpad/contrast_trial_2/output/contrasts_all_days_jul.csv 28d405bb0dae6e79f8e0eae7fffa5a4a
+input contrasts_snow_free_jan.csv /tmp/claude-1000/-home-expert-Documents-contracting-Andria-paleo-RF/912627b7-1f54-4406-9a56-dc38e8ab3d9e/scratchpad/contrast_trial_2/output/contrasts_snow_free_jan.csv b5cdd5fd17065f4909a420d80f2702aa
+input contrasts_snow_free_jul.csv /tmp/claude-1000/-home-expert-Documents-contracting-Andria-paleo-RF/912627b7-1f54-4406-9a56-dc38e8ab3d9e/scratchpad/contrast_trial_2/output/contrasts_snow_free_jul.csv c71fa611116f85672306a2a8352a5fe0
+input contrasts_snowy_aug.csv /tmp/claude-1000/-home-expert-Documents-contracting-Andria-paleo-RF/912627b7-1f54-4406-9a56-dc38e8ab3d9e/scratchpad/contrast_trial_2/output/contrasts_snowy_aug.csv 888f56159fffec6fcd28560f00867e9f
+input contrasts_snowy_jul.csv /tmp/claude-1000/-home-expert-Documents-contracting-Andria-paleo-RF/912627b7-1f54-4406-9a56-dc38e8ab3d9e/scratchpad/contrast_trial_2/output/contrasts_snowy_jul.csv 1b7207fa78aaf115a519a3e2f7b2e309
+version loc30_linear s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + ET + ST
+version mod8_coarse_loc s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)
+version loc100_linear s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + ET + ST
+version loc100_tp200 s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)
+version lin_cover s(x, y, bs = "gp", k = 500) + s(elev, k = 50) + ET + ST
+version mod8 s(x, y, bs = "gp", k = 500) + s(elev, k = 50) + s(OL, ET, ST, bs = "tp", k = 200)
+package R 4.5.3
+package mgcv 1.9.4
+package sf 1.1.3

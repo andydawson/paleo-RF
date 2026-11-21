@@ -1,54 +1,75 @@
 # 6_prediction_model.R: hindcast albedo for every Holocene slice
-# Interp (spatially complete) path only: the point-based code and its guards are
-# removed. Every remaining line is unchanged from the original.
+# Interp (spatially complete) path only. Settings come from config.R, and every file is
+# read and written through the run manifest; comments marked '# CM:' are notes on
+# changes from the original analysis.
 
 
+# Settings, file locations and this run's manifest: run_begin() reads config.R (or the file
+# given with --config), sets up the paths of R/paths.R and starts the run's
+# manifest; files are then read and written through it.
+source('R/run_manifest.R')
+run   = run_begin('6_prediction_model')
+cfg   = run$cfg
+paths = run$paths
+
+# Packages, loaded after run_begin() so that a missing one is recorded as a failed run.
 library(dplyr)
 library(mgcv)
 library(gratia)
 library(reshape2)
 
-alb_prod = "bluesky"
+# Simulated draws per prediction (config.R analysis$draws, questions A2, A3), and the base
+# random seed of this run, recorded in its manifest (R/random.R).
+source('R/random.R')
+n_draws   = cfg$analysis$draws$prediction
+seed_base = base_seed(cfg$analysis$draws$seed)
+run_record(run, 'random_seed', list(setting = cfg$analysis$draws$seed, base = seed_base))
 
-dir.create('output/prediction', recursive = TRUE, showWarnings = FALSE)
 
-months = c('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+# The months analysed, from config.R (analysis$months); month names and
+# numbers come from the shared calendar, R/calendar.R.
+source('R/calendar.R')
+months = cfg$analysis$months
 
-lct_interp_paleo = readRDS('data/lct_paleo_reveals_interp.RDS')
-colnames(lct_interp_paleo)[1] = 'year'
+lct_interp_paleo = read_input(run, path_file(paths, 'lct_paleo'))
+# The slice column is called 'year' in the prediction tables.
+names(lct_interp_paleo)[names(lct_interp_paleo) == 'ages'] = 'year'
 
 for (month in months){
 
   print(month)
 
-  cal_interp_model = readRDS(paste0('output/calibration/calibration_mod_interp_selected_', month, '_', alb_prod, '.RDS'))
+  cal_interp_model = read_input(run, path_file(paths, 'calibration_selected', month = month))
 
   print(">>Predict")
-  paleo_interp_predict_gam_vec = predict.gam(cal_interp_model,
+  fitted_albedo = predict.gam(cal_interp_model,
                                              newdata = lct_interp_paleo ,
                                              type    = 'response')
-  paleo_interp_predict_gam = data.frame(lct_interp_paleo,
-                                        alb_mean = paleo_interp_predict_gam_vec)
+  point_predictions = data.frame(lct_interp_paleo,
+                                        alb_mean = fitted_albedo)
 
-  saveRDS(paleo_interp_predict_gam, paste0('output/prediction/paleo_interp_predict_gam_', month, '_', alb_prod, '.RDS'))
+  # One row per cell and slice (year): this month's point prediction (alb_mean).
+  write_output(run, point_predictions, path_file(paths, 'prediction_point_month', month = month))
 
   print(">>Simulate")
-  paleo_interp_sim_gam = simulate(cal_interp_model,
-                                  nsim = 100,
+  response_draws = simulate(cal_interp_model,
+                                  nsim = n_draws,
+                                  seed = derive_seed(seed_base, '6_prediction_model', month, 'prediction'),
                                   data = lct_interp_paleo)
 
-  paleo_interp_sim_gam_df = data.frame(lct_interp_paleo,
-                                       paleo_interp_sim_gam)
+  response_table = data.frame(lct_interp_paleo,
+                                       response_draws)
 
-  paleo_interp_sim_gam_melt = melt(paleo_interp_sim_gam_df, id.vars = c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
-  colnames(paleo_interp_sim_gam_melt) = c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'iter', 'value')#c('cell_idx', 'iter', 'value')
+  response_samples = melt(response_table, id.vars = c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST'))
+  colnames(response_samples) = c('year', 'x', 'y', 'elev', 'ET', 'OL', 'ST', 'iter', 'value')
 
-  paleo_interp_sim_gam_melt$iter = as.numeric(substr(paleo_interp_sim_gam_melt$iter, 2, 4))
+  response_samples$iter = draw_index(response_samples$iter)
 
-  saveRDS(paleo_interp_sim_gam_melt, paste0('output/prediction/paleo_interp_predict_gam_samps_', month, '_', alb_prod, '.RDS'))
+  # One row per cell, slice and simulated draw (iter).
+  write_output(run, response_samples, path_file(paths, 'prediction_samples_month', month = month))
 
   print(">>Summarize")
-  paleo_interp_sim_gam_sum = paleo_interp_sim_gam_melt %>%
+  response_summary = response_samples %>%
     group_by(year, x, y, elev, ET, OL, ST) %>%
     summarize(alb_mean = mean(value),
               alb_sd = sd(value),
@@ -57,7 +78,8 @@ for (month in months){
               alb_hi = quantile(value, c(0.975)),
               .groups = 'keep')
 
-  saveRDS(paleo_interp_sim_gam_sum, paste0('output/prediction/paleo_interp_predict_gam_summary_', month, '_', alb_prod, '.RDS'))
+  # One row per cell and slice: mean, sd and quantiles of the draws.
+  write_output(run, response_summary, path_file(paths, 'prediction_summary_month', month = month))
 
 }
 
@@ -73,14 +95,17 @@ for (month in months) {
 
   print(month)
 
-  alb_preds_month = readRDS(paste0('output/prediction/paleo_interp_predict_gam_', month, '_', alb_prod, '.RDS'))
+  alb_preds_month = read_input(run, path_file(paths, 'prediction_point_month', month = month))
   alb_preds_months = rbind(alb_preds_months,
                            data.frame(alb_preds_month, month = rep(month)))
 
-  alb_preds_summary_month = readRDS(paste0('output/prediction/paleo_interp_predict_gam_summary_', month, '_', alb_prod, '.RDS'))
+  alb_preds_summary_month = read_input(run, path_file(paths, 'prediction_summary_month', month = month))
   alb_preds_summary_months = rbind(alb_preds_summary_months,
                                    data.frame(alb_preds_summary_month, month = rep(month)))
 }
 
-saveRDS(alb_preds_months, paste0('output/prediction/paleo_interp_predict_gam_', alb_prod, '.RDS'))
-saveRDS(alb_preds_summary_months, paste0('output/prediction/paleo_interp_predict_gam_summary_', alb_prod, '.RDS'))
+# All months together: one row per cell, slice and month.
+write_output(run, alb_preds_months, path_file(paths, 'prediction_point'))
+write_output(run, alb_preds_summary_months, path_file(paths, 'prediction_summary'))
+
+run_finish(run)

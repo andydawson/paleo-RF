@@ -70,7 +70,7 @@ boxes = [
       ("monthly mean over 2000–09", "b"), ("→ GeoTIFF (in repo; code not)", "i")]),
     ("ext-snow", "proc", "archive", COL(7), EXT_Y, BW, BH, [],
      [("Abandoned snow branch", "h"), ("ClimateNA, Thornthwaite water", "b"),
-      ("balance, GCM snow probability", "b"), ("scripts/archive; not used", "i")]),
+      ("balance, GCM snow probability", "b"), ("archive/; not used", "i")]),
 
     # ---- lane 1: interp path -------------------------------------------------
     ("stage-1-interp", "proc", "blocked", COL(0), L1_Y, BW, BH, ["MS", "Talk"],

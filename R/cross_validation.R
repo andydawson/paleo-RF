@@ -1,0 +1,369 @@
+# Cross-validation that chooses the albedo model on its accuracy for land-cover mixes beyond the
+# modern range: protocol 2 (docs/cc/2026-11-06_cv_protocol_v2.md).
+#
+# Why: the hindcast predicts albedo for past cover mixes, some of them outside the range of the
+# modern (training) mixes, the northeast's high evergreen cover most of all. Ordinary or spatial
+# cross-validation tests predictions for mixes like the training ones; here each holdout withholds,
+# everywhere, the far end of a direction in which past mixes leave the modern range, so the model is
+# scored on mixes outside its own training range, as the hindcast is. No geographic buffer: the
+# hindcast predicts at the training cells' own locations (protocol, section 3).
+#
+# Three steps, one function each, used by tools/cross_validate_albedo.R:
+#   cv_directions() and cv_holdouts()  which cells each holdout withholds;
+#   cv_score()                         the weighted error of each model, and its uncertainty;
+#   cv_choose()                        the protocol's rule for choosing the model.
+# Distances and the training range are those of R/training_support.R (the cover triangle).
+# Needs sf (through R/training_support.R).
+
+source('R/training_support.R')
+source('R/regions.R')   # the northeast box, for the by-region report
+
+CV_CUTS           = c(0.8, 0.7, 0.9)            # percentile of the cut: the 80th, else the 70th or 90th if infeasible
+CV_DISTANCE_BANDS = c(0, 0.02, 0.05, 0.10, Inf) # distance outside the training range, cover-triangle units
+CV_BLOCK_DEGREES  = 5                           # geographic blocks for the uncertainty: 5 x 5 one-degree cells
+CV_MIN_BLOCKS     = 10                          # the scored withheld cells (positive target weight) must lie in at least this many blocks
+CV_MAX_DIRECTIONS = 3
+CV_RESAMPLES      = 1000
+CV_KM_BANDS       = c(0, 100, 250, 500, Inf)    # distance to the nearest training cell (km), for the geographic report
+CV_NEARBY_KM      = 250                         # strict: a cell at exactly 250 km is far
+CV_INRANGE_MODELS = 'mod8'                      # plus the winner, after selection
+
+# The same positive-target, nearby mask freezes feasibility and selection before any fit.
+cv_scoring_rows = function(rows, target) {
+  is.finite(rows$km) & rows$km < CV_NEARBY_KM & rows$group %in% target$group[target$weight > 0]
+}
+
+# Maxima accompany the quantiles without implying that an infeasible month was tested.
+cv_distance_maxima = function(rows, target, feasible = TRUE) {
+  selected = cv_scoring_rows(rows, target)
+  c(max_cover_distance_nearby = if (feasible && any(selected)) max(rows$distance[selected]) else NA_real_,
+    max_cover_distance_all = if (feasible && nrow(rows)) max(rows$distance) else NA_real_)
+}
+
+# Missing historical groups keep their own weight: no other direction supplies their error.
+cv_represented_weight = function(group, target) {
+  represented = sum(target$weight[target$group %in% group]) / sum(target$weight)
+  c(represented = represented, missing = 1 - represented)
+}
+
+# Training-row and nearby-block requirements are independent: far blocks cannot rescue a fold.
+cv_feasibility = function(training_rows, largest_model, valid, target) {
+  scored = cv_scoring_rows(valid, target)
+  blocks = length(unique(cv_block(valid$x[scored], valid$y[scored])))
+  data.frame(training_rows = training_rows, largest_model = largest_model,
+             withheld_cells = nrow(valid), nearby_cells = sum(valid$km < CV_NEARBY_KM),
+             nearby_scored_cells = sum(scored), far_cells = sum(valid$km >= CV_NEARBY_KM), blocks = blocks,
+             feasible = training_rows >= largest_model && blocks >= CV_MIN_BLOCKS)
+}
+
+# The target (protocol, section 2, as amended 3 November): the past cell-slices in the forcing's
+# latitude window (script 8 keeps lat_min < latitude < lat_max), each weighted so that every slice
+# and every month count equally and, within a slice, by area times the ice-free fraction. Each
+# slice's area and ice fraction come from script 7a's pairs (slice_area_ice() below).
+# Cell-slices without an ice fraction (script 7a leaves a few missing) get no weight; the caller
+# reports how many. `slices` are the run's configured ages, youngest (modern) first; the modern
+# slice is not part of the target.
+cv_target_weights = function(paleo, diffs, slices, n_months, lat_min, lat_max) {
+  slices = sort(slices)
+  ice = slice_area_ice(diffs, slices)
+  historical_slices = setdiff(slices, 50)
+  past = paleo[paleo$ages %in% historical_slices & paleo$y > lat_min & paleo$y < lat_max, ]
+  past = merge(past, ice, by = c('x', 'y', 'ages'), all.x = TRUE)
+  if (anyDuplicated(past[, c('x', 'y', 'ages')])) stop('a past cell-slice has two ice fractions')
+  missing_area = !is.finite(past$area) | past$area <= 0
+  missing_ice = !is.finite(past$ice) | past$ice < 0 | past$ice > 1
+  missing_cover = !stats::complete.cases(past[, c('OL', 'ET', 'ST')])
+  excluded = missing_area | missing_ice | missing_cover
+  exclusions = data.frame(cell_slices = nrow(past), missing_or_invalid_area = sum(missing_area),
+                          missing_or_invalid_ice = sum(missing_ice), missing_cover = sum(missing_cover),
+                          excluded = sum(excluded), retained = sum(!excluded))
+  past = past[!excluded, ]
+  ice_free_area = past$area * (1 - past$ice)
+  total = ave(ice_free_area, past$ages, FUN = sum)
+  # A wholly iced slice has no usable target; do not transfer its equal share to another slice.
+  past$weight = ifelse(total > 0, ice_free_area / total / length(historical_slices) / n_months, 0)
+  attr(past, 'exclusions') = exclusions
+  past
+}
+
+# Each cell-slice's area and ice fraction, from script 7a's pairs (one row per cell, month and pair
+# of consecutive slices): a slice is the younger end of its own pair, and the oldest slice the older
+# end of the last pair. Ice does not depend on the month, so one month's rows are read. Shared by the
+# target weights above and tools/compare_cv_hindcasts.R, so both weigh a cell-slice alike.
+slice_area_ice = function(diffs, slices) {
+  slices = sort(slices)
+  pairs = diffs[diffs$month == diffs$month[1], ]
+  if (!setequal(unique(pairs$year), head(slices, -1)))
+    stop('script 7a\'s pairs do not start at the configured slices (config.R analysis$ages) but the last')
+  oldest = pairs[pairs$year == slices[length(slices) - 1], ]
+  rbind(data.frame(x = pairs$x, y = pairs$y, ages = pairs$year, area = as.numeric(pairs$area), ice = pairs$ice_frac_young),
+        data.frame(x = oldest$x, y = oldest$y, ages = max(slices), area = as.numeric(oldest$area), ice = oldest$ice_frac_old))
+}
+
+# The direction (degrees on the cover triangle, 0 = towards more summergreen at fixed evergreen,
+# 90 = towards more evergreen) in which each mix lies outside the hull, from the nearest point of
+# the hull's edge. NA for a mix inside.
+departure_angle = function(cover, hull) {
+  angle = rep(NA_real_, nrow(cover))
+  out = training_support(cover, hull)$outside
+  if (!any(out)) return(angle)
+  points = sf::st_as_sf(cover_triangle_xy(cover[out, ]), coords = c('px', 'py'))
+  edge = sf::st_cast(sf::st_sfc(sf::st_polygon(list(as.matrix(hull[, c('px', 'py')])))), 'LINESTRING')
+  # Each nearest-point line runs from the mix to the edge, so the departure is its start minus its end.
+  ends = lapply(sf::st_nearest_points(points, edge), function(l) unclass(l)[c(1, 2), ])
+  angle[out] = sapply(ends, function(e) atan2(e[1, 2] - e[2, 2], e[1, 1] - e[2, 1]) * 180 / pi)
+  angle
+}
+
+angle_gap = function(a, b) { d = abs(a - b) %% 360; pmin(d, 360 - d) }
+
+# The broad directions in which the past leaves the modern range: the departure angles of the
+# outside hindcast mixes (any month), weighted by their target weights, grouped by hierarchical
+# clustering of whole-degree angles into at most three groups. Returns one row per direction:
+# its mean angle and its cluster's share of the outside target weight, largest first. (The
+# holdouts stage then assigns each mix to its nearest direction and reports those shares, the ones
+# the score uses; the names d1, d2, d3 keep the cluster order.)
+cv_directions = function(angle, weight, n = CV_MAX_DIRECTIONS) {
+  keep = !is.na(angle) & weight > 0
+  bins = tapply(weight[keep], round(angle[keep]) %% 360, sum)
+  degrees = as.numeric(names(bins))
+  # `members` gives each whole-degree bin its target weight, so the linkage weighs bins by it.
+  groups = if (length(bins) <= n) seq_along(bins) else
+    cutree(hclust(as.dist(outer(degrees, degrees, angle_gap)), method = 'average', members = as.numeric(bins)), k = n)
+  out = do.call(rbind, lapply(split(seq_along(bins), groups), function(i)
+    data.frame(angle = atan2(sum(bins[i] * sinpi(degrees[i] / 180)), sum(bins[i] * cospi(degrees[i] / 180))) * 180 / pi,
+               share = sum(bins[i]) / sum(bins))))
+  out = out[order(-out$share), ]
+  out$direction = paste0('d', seq_len(nrow(out)))
+  rownames(out) = NULL
+  out
+}
+
+# The nearest of the directions to each departure angle (NA stays NA).
+nearest_direction = function(angle, directions) {
+  nearest = rep(NA_character_, length(angle))
+  known = !is.na(angle)
+  nearest[known] = directions$direction[apply(outer(angle[known], directions$angle, angle_gap), 1, which.min)]
+  nearest
+}
+
+# Where each withheld cell lies outside its own fold's training range (`hull`), and the group its
+# error counts in: month, the nearest of the directions to its own departure, and its distance band;
+# the rule for the past mixes too (protocol, section 6, amended 3 November). One function, so that the
+# holdouts stage (which withheld cells the score uses) and the fit and score stages group alike.
+withheld_departure = function(valid, hull, directions, month) {
+  support = training_support(valid, hull)
+  angle = departure_angle(valid, hull)
+  own_direction = nearest_direction(angle, directions)
+  data.frame(outside = support$outside, distance = support$distance_outside, angle = angle, own_direction = own_direction,
+             group = paste(rep(month, nrow(valid)), own_direction, distance_band(support$distance_outside)))
+}
+
+# Which cells a direction's holdout withholds: those beyond the `cut` percentile of the modern
+# cells' positions along that direction on the cover triangle. Withheld from training in every
+# month, so a withheld mix can never be supplied by a training cell elsewhere.
+cv_holdouts = function(cover, angle, cut) {
+  xy = cover_triangle_xy(cover)
+  along = xy$px * cospi(angle / 180) + xy$py * sinpi(angle / 180)
+  along > stats::quantile(along, cut, names = FALSE)
+}
+
+# The geographic block of each cell (x = longitude, y = latitude of the one-degree cell centres).
+cv_block = function(x, y, size = CV_BLOCK_DEGREES) paste(floor(x / size), floor(y / size))
+
+distance_band = function(distance) cut(distance, CV_DISTANCE_BANDS, right = FALSE)
+km_band = function(km) cut(km, CV_KM_BANDS, right = FALSE)
+
+# The withheld cells' errors by diagnostic region (R/regions.R), month and own direction, for each
+# model: how many withheld cells and blocks support each (a cell withheld by two holdouts counts once
+# in the cell counts and the correlation, twice in the errors, one prediction each), how many have
+# low open land, the RMSE and mean signed error, and how closely evergreen share follows latitude
+# among them. Shows what the pooled score hides for the northeast (Astra, 3 November; protocol,
+# amendment of 3 November). Reported only, never used for the choice. `predictions`: the fit stage's
+# rows with a prediction (x, y, ET, OL, month, own_direction, model, predicted, observed). A cell with
+# no own direction (inside its training range: the in-range holdout's cells) is labelled "inside".
+cv_by_region = function(predictions, low_open_land) {
+  predictions$region = region_of(predictions$x, predictions$y)
+  predictions$own_direction[is.na(predictions$own_direction)] = 'inside'
+  if (!nrow(predictions))
+    return(data.frame(model = character(), region = character(), month = character(), own_direction = character(),
+                      cells = integer(), predictions = integer(), blocks = integer(), low_open_land_cells = integer(),
+                      rmse = numeric(), signed_error = numeric(), cor_evergreen_latitude = numeric()))
+  parts = split(predictions, predictions[, c('model', 'region', 'month', 'own_direction')], drop = TRUE)
+  out = do.call(rbind, lapply(parts, function(r) {
+    cells = r[!duplicated(r[, c('x', 'y')]), ]
+    data.frame(model = r$model[1], region = r$region[1], month = r$month[1], own_direction = r$own_direction[1],
+               cells = nrow(cells), predictions = nrow(r), blocks = length(unique(cv_block(cells$x, cells$y))),
+               low_open_land_cells = sum(cells$OL <= low_open_land),
+               rmse = sqrt(mean((r$predicted - r$observed)^2)), signed_error = mean(r$predicted - r$observed),
+               cor_evergreen_latitude = if (nrow(cells) > 2 && stats::sd(cells$ET) > 0 && stats::sd(cells$y) > 0)
+                 stats::cor(cells$ET, cells$y) else NA_real_)
+  }))
+  out = out[order(out$region, out$month, out$own_direction, out$model), ]
+  rownames(out) = NULL
+  out
+}
+
+# The score of each model: the mean squared error of predicted albedo on the withheld cells,
+# averaged within each group (month, direction, distance band) and combined across groups by the
+# hindcast's target weight in that group (protocol, section 6). Groups with no withheld cell are
+# not represented; their share is reported. Its uncertainty: the scores again on CV_RESAMPLES
+# resamples of the geographic blocks (a block keeps all its months and holdouts together).
+#   errors   one row per withheld cell, month and holdout: group, block and one column of
+#            squared error per model (named by model id);
+#   target   the target weight of each group: columns group and weight (all outside groups).
+# Returns the scores, the represented share of the target, and the resampled scores (a matrix,
+# one row per resample, one column per model).
+cv_score = function(errors, target, models, seed, resamples = CV_RESAMPLES) {
+  if (!nrow(errors)) return(list(score = setNames(rep(NA_real_, length(models)), models), represented = 0,
+    resampled = matrix(NA_real_, resamples, length(models), dimnames = list(NULL, models)), resamples_missing_a_group = resamples))
+  weight = target$weight[match(errors$group, target$group)]
+  if (anyNA(weight)) stop('cv_score: withheld cells in groups with no target weight')
+  score_of = function(multiplicity) {
+    sums = rowsum(as.matrix(errors[, models, drop = FALSE]) * multiplicity, errors$group)
+    counts = rowsum(multiplicity, errors$group)[, 1]
+    w = target$weight[match(rownames(sums), target$group)] * (counts > 0)
+    colSums(sums / pmax(counts, 1) * w) / sum(w)
+  }
+  blocks = unique(errors$block)
+  weighted_groups = intersect(errors$group, target$group[target$weight > 0])
+  draws = withr_seed(seed, replicate(resamples, {
+    picked = table(factor(sample(blocks, replace = TRUE), levels = blocks))
+    multiplicity = as.numeric(picked[errors$block])
+    c(score_of(multiplicity), missed = !all(weighted_groups %in% errors$group[multiplicity > 0]))
+  }))
+  # A resample that misses a group renormalises over the groups it has (a block resample of the
+  # whole score); how many did so is reported.
+  list(score = score_of(rep(1, nrow(errors))),
+       represented = sum(target$weight[target$group %in% errors$group]) / sum(target$weight),
+       resampled = t(matrix(draws[models, , drop = FALSE], nrow = length(models), dimnames = list(models, NULL))),
+       resamples_missing_a_group = sum(draws['missed', ]))
+}
+
+# Each model's mean squared error and its paired difference from `baseline` within each band (the
+# columns of `bands`, one row per row of `errors`), on the rows where both have a prediction, with
+# the standard error of the difference from resampling the geographic blocks (cv_score, one group).
+# A failed fit is a missing value: it drops that row for that model only. A band with no row has no
+# output row; a model with no usable row in a band has missing values there. For the geographic report
+# (protocol, amendment of 3 November): reported only, never used to choose. `errors` as for cv_score
+# (block, one squared-error column per model, one row per cell, month and holdout).
+cv_paired_by_band = function(errors, bands, models, baseline, seed, resamples = CV_RESAMPLES, signed_errors = NULL, target = NULL) {
+  # One band's rows `i` and one model: the comparison with the baseline on their common rows.
+  compare = function(i, m) {
+    pair = unique(c(m, baseline))
+    ok = i[stats::complete.cases(errors[i, pair, drop = FALSE])]
+    out = data.frame(bands[i[1], , drop = FALSE], model = m, cell_month_holdouts = length(ok),
+                     missing_prediction_pairs = length(i) - length(ok), blocks = length(unique(errors$block[ok])),
+                     mse = NA_real_, rmse = NA_real_, signed_error = NA_real_, difference = NA_real_, se_difference = NA_real_, row.names = NULL)
+    if (all(c('x', 'y') %in% names(errors))) out$cells = nrow(unique(errors[ok, c('x', 'y')]))
+    if (!is.null(target)) {
+      out$positive_target_count = sum(errors$group[ok] %in% target$group[target$weight > 0])
+      coverage = cv_represented_weight(errors$group[ok], target)
+      out$represented = coverage[['represented']]
+      out$missing = coverage[['missing']]
+    }
+    if (length(ok)) {
+      s = cv_score(transform(errors[ok, ], group = 'all'), data.frame(group = 'all', weight = 1), pair, seed, resamples)
+      out$mse = s$score[[m]]
+      out$rmse = sqrt(out$mse)
+      if (!is.null(signed_errors)) out$signed_error = mean(signed_errors[[m]][ok])
+      out$difference = s$score[[m]] - s$score[[baseline]]
+      out$se_difference = stats::sd(s$resampled[, m] - s$resampled[, baseline])
+    }
+    out
+  }
+  rows = list()
+  for (i in split(seq_len(nrow(errors)), do.call(paste, c(bands, sep = ' | ')), drop = TRUE))
+    for (m in models) rows[[length(rows) + 1]] = compare(i, m)
+  do.call(rbind, rows)
+}
+
+# Each band's share of the selection score's weight: a row's weight is its group's target weight shared
+# equally among the group's rows (as in cv_score), summed within the band and divided by the total.
+cv_weight_share = function(group, target, bands, selected = rep(TRUE, length(group))) {
+  row_weight = rep(0, length(group))
+  if (any(selected)) {
+    g = group[selected]
+    row_weight[selected] = target$weight[match(g, target$group)] / ave(rep(1, length(g)), g, FUN = sum)
+    row_weight = row_weight / sum(row_weight)
+  }
+  aggregate(list(score_weight_share = row_weight), bands, sum)
+}
+
+# Depth evidence stays separate for every direction and month; absent combinations have NA depth.
+# All rows are already on feasible holdouts. Positive-target nearby rows support selection.
+cv_nearby_depth = function(rows, target, directions, months) {
+  grid = expand.grid(month = months, own_direction = directions, stringsAsFactors = FALSE)
+  do.call(rbind, lapply(seq_len(nrow(grid)), function(i) {
+    r = rows[rows$month == grid$month[i] & rows$own_direction == grid$own_direction[i] &
+               cv_scoring_rows(rows, target), ]
+    deep = r[r$distance >= 0.10, ]
+    data.frame(grid[i, ], cell_month_holdouts = nrow(r), cells = nrow(unique(r[, c('x', 'y')])),
+               blocks = length(unique(cv_block(r$x, r$y))),
+               max_cover_distance_nearby = if (nrow(r)) max(r$distance) else NA_real_,
+               deep_cell_month_holdouts = nrow(deep), deep_cells = nrow(unique(deep[, c('x', 'y')])),
+               deep_blocks = length(unique(cv_block(deep$x, deep$y))))
+  }))
+}
+
+# Pooled nearby coverage makes the small deep-band weight and its actual block count explicit
+# before fitting. Shares use historical group weights divided among their selected observations.
+cv_nearby_coverage = function(rows, target) {
+  selected = rows[cv_scoring_rows(rows, target), ]
+  empty = data.frame(own_direction = character(), cover_band = character(), cell_month_holdouts = integer(),
+                     cells = integer(), blocks = integer(), max_cover_distance_nearby = numeric(), score_weight_share = numeric())
+  if (!nrow(selected)) return(empty)
+  bands = data.frame(own_direction = selected$own_direction, cover_band = as.character(distance_band(selected$distance)))
+  parts = split(seq_len(nrow(selected)), do.call(paste, bands), drop = TRUE)
+  counts = do.call(rbind, lapply(parts, function(i) data.frame(bands[i[1], ],
+    cell_month_holdouts = length(i), cells = nrow(unique(selected[i, c('x', 'y')])),
+    blocks = length(unique(cv_block(selected$x[i], selected$y[i]))), max_cover_distance_nearby = max(selected$distance[i]))))
+  merge(counts, cv_weight_share(selected$group, target, bands), sort = FALSE)
+}
+
+# One squared error (or other `value`) per row of `ids` and one column per model; a model with no row
+# at all gets a column of missing values, so it is reported, never dropped.
+wide_by_model = function(predictions, ids, value, models) {
+  w = stats::reshape(data.frame(predictions[, c(ids, 'model')], value = value), idvar = ids, timevar = 'model', direction = 'wide')
+  names(w) = sub('^value\\.', '', names(w))
+  for (m in setdiff(models, names(w))) w[[m]] = NA_real_
+  rownames(w) = NULL
+  w
+}
+
+# Evaluate `expr` with R's random numbers seeded, then restore the previous state, so the seed
+# acts on this call only (as gratia's simulate() does for the draws, R/random.R).
+withr_seed = function(seed, expr) {
+  old = if (exists('.Random.seed', globalenv())) get('.Random.seed', globalenv())
+  on.exit(if (is.null(old)) rm('.Random.seed', envir = globalenv()) else assign('.Random.seed', old, globalenv()))
+  set.seed(seed)
+  expr
+}
+
+# The protocol's choice: among the eligible models (every required fit
+# converged), the lowest score, unless a simpler eligible model's score is within one standard
+# error of the paired difference (the resampled scores' standard deviation of the difference);
+# simpler means fewer coefficients, then earlier in CV_MODELS. No model is chosen if none is
+# eligible or the resampled scores of an eligible model are not all finite (the uncertainty is then
+# unsupported). Returns one row per model with its score, the difference from the best and its
+# standard error, whether it is comparable, and the choice.
+cv_choose = function(scored, coefficients, eligible) {
+  models = names(scored$score)
+  eligible = eligible & is.finite(scored$score)
+  difference = se = rep(NA_real_, length(models))
+  comparable = chosen = rep(FALSE, length(models))
+  if (any(eligible)) {
+    best = models[eligible][which.min(scored$score[eligible])]
+    difference = scored$score - scored$score[best]
+    se = apply(scored$resampled, 2, function(s) stats::sd(s - scored$resampled[, best]))
+    supported = all(is.finite(scored$resampled[, eligible])) && all(is.finite(se[eligible]))
+    comparable = eligible & is.finite(se) & difference <= se
+    if (supported && any(comparable)) {
+      order_simple = order(!comparable, coefficients, match(models, CV_MODELS))
+      chosen[order_simple[1]] = TRUE
+    }
+  }
+  data.frame(model = models, score = scored$score, rmse = sqrt(scored$score), difference = difference,
+             se_difference = se, coefficients = coefficients, eligible = eligible, comparable = comparable,
+             chosen = chosen, row.names = NULL)
+}

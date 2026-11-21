@@ -1,0 +1,242 @@
+# The schema of config.R: every key the pipeline accepts and the rule its value must meet.
+#
+# A key is added here only when a script reads it. The tree mirrors the config: a list node lists its keys, and the config must
+# have exactly those keys, no more and no fewer; a function node checks one value and
+# returns NULL if it is acceptable or a sentence saying what is wrong. Rules that involve
+# more than one key are in config_combination_errors() at the end.
+#
+# Values are plain unnamed vectors throughout: names would be dropped silently by the
+# JSON written to run manifests unless config_json() keeps them, and no key so far needs
+# them. Written 2026-10-13.
+
+# The calibration model ids (LADDER_MODELS) are defined with their formulas; the month
+# names (MONTHS) in the calendar.
+source('R/model_registry.R')
+source('R/calendar.R')
+
+# The versions and statistics of the MODIS cell albedo (ALBEDO_VERSIONS, ALBEDO_STATISTICS),
+# defined beside the function that reads them.
+source('R/preparation.R')
+
+# The kernel variables that can be read (R/kernels.R).
+source('R/kernels.R')
+kernel_variable = function(kernel) function(v) check_choice(v, KERNEL_VARIABLES$variable[KERNEL_VARIABLES$kernel == kernel], single = TRUE)
+
+# The ice-albedo columns of data/albedo_glacier_monthly.csv.
+GLACIER_ALBEDO_COLUMNS = c('ice_albedo', 'ice_albedo_fixed', 'ice_albedo_sc')
+
+# The ice-fraction files script 7a can read, by their ids in R/paths.R.
+ICE_FRACTION_SOURCES = c('dalton_ice', 'nadi1_optimal', 'nadi1_minimum', 'nadi1_maximum')
+
+# Script 8 computes every forcing as rf_<kernel>_<variant>; these are the twelve variants
+# (scripts/8_radiative.R, the rf_* columns; the last two, the second split of the partial-ice
+# total, with difference_method "endpoint" only) and the three kernels.
+FORCING_VARIANTS = c('veg_thresh', 'ice_thresh', 'icesc_thresh',
+                     'veg_ice_thresh', 'veg_icesc_thresh',
+                     'veg_part', 'ice_part', 'icesc_part',
+                     'veg_ice_parts', 'veg_icesc_parts',
+                     'veg_part_exposed', 'ice_part_exposed')
+FORCING_KERNELS  = c('hadgem', 'cam5', 'cack')
+# The headline (analysis$forcing$variant) must be one of the four totals, vegetation plus
+# ice: a vegetation-only or ice-only part is not the forcing of the whole surface. (The
+# all-or-nothing parts would also lose, in script 9's headline sums, every cell whose
+# steps are of both kinds; the parts appear only in the sensitivity figure.) Chris,
+# 2026-10-19.
+FORCING_TOTALS   = c('veg_ice_thresh', 'veg_icesc_thresh', 'veg_ice_parts', 'veg_icesc_parts')
+
+# Numbers: no NA, no names, optionally a fixed length, strictly increasing, or a range.
+check_numbers = function(v, len = NULL, min_len = 1, increasing = FALSE, range = NULL) {
+  if (!is.numeric(v) || anyNA(v) || any(!is.finite(v))) return('must be finite numbers')
+  if (!is.null(names(v)))                      return('must not have names')
+  if (!is.null(len) && length(v) != len)       return(sprintf('must have exactly %d values', len))
+  if (length(v) < min_len)                     return(sprintf('must have at least %d values', min_len))
+  if (increasing && any(diff(v) <= 0))         return('must be strictly increasing')
+  if (!is.null(range) && any(v < range[1] | v > range[2]))
+    return(sprintf('must lie between %s and %s', range[1], range[2]))
+  NULL
+}
+
+# Text from a fixed list of legal values: no NA, no names, no duplicates.
+check_choice = function(v, legal, single = FALSE) {
+  if (!is.character(v) || anyNA(v) || !length(v)) return('must be text, not empty')
+  if (!is.null(names(v)))                         return('must not have names')
+  if (single && length(v) != 1)                   return('must be a single value')
+  if (anyDuplicated(v))                           return('must not repeat a value')
+  invalid_choices = setdiff(v, legal)
+  if (length(invalid_choices)) return(sprintf('has %s; legal values are %s',
+                                  paste(sQuote(invalid_choices, FALSE), collapse = ', '),
+                                  paste(legal, collapse = ', ')))
+  NULL
+}
+
+# A map window: longitude and latitude bounds in degrees, each low then high.
+MAP_WINDOW_SCHEMA = list(x = function(v) check_numbers(v, len = 2, increasing = TRUE, range = c(-180, 180)),
+                         y = function(v) check_numbers(v, len = 2, increasing = TRUE, range = c(-90, 90)))
+
+# The run directory: NULL for the repository's own locations, or one relative or absolute
+# directory path that is neither the repository nor inside one of its baseline or code
+# directories. The path is resolved first (relative to the repository, the working
+# directory every script runs from; links followed), so an absolute spelling such as
+# getwd() is refused as surely as "." or "output/alt" (review of 1 November 2026, finding 1).
+RUN_DIR_FORBIDDEN = c('data', 'output', 'figures', 'runs', 'scripts', 'R', 'tests')
+check_run_dir = function(v) {
+  if (is.null(v)) return(NULL)
+  if (!is.character(v) || length(v) != 1 || is.na(v) || !nzchar(v)) return('must be NULL or one directory path')
+  if (!is.null(names(v))) return('must not have names')
+  if ('..' %in% strsplit(gsub('\\\\', '/', v), '/', fixed = TRUE)[[1]]) return("must not contain '..'")
+  repository = normalizePath('.', winslash = '/')
+  run_dir = resolved_dir(v)
+  if (run_dir == repository) return('must not be the repository itself; use NULL for the baseline locations')
+  # The protected folders are resolved too: a linked output/ is refused at its target.
+  forbidden = vapply(file.path(repository, RUN_DIR_FORBIDDEN), resolved_dir, '')
+  inside = run_dir == forbidden | startsWith(run_dir, paste0(forbidden, '/'))
+  if (any(inside)) return(sprintf("must not be inside the repository's %s/ directory", RUN_DIR_FORBIDDEN[inside][1]))
+  NULL
+}
+
+# A directory path made absolute, with links and '.' resolved. A run directory usually does
+# not exist yet, so its deepest existing parent is resolved and the rest appended as written.
+resolved_dir = function(path) {
+  path = gsub('\\\\', '/', path.expand(path))
+  if (!grepl('^(/|[A-Za-z]:)', path)) path = file.path(getwd(), path)
+  not_yet_made = character()
+  while (!dir.exists(path) && dirname(path) != path) {
+    not_yet_made = c(basename(path), not_yet_made)
+    path = dirname(path)
+  }
+  paste(c(normalizePath(path, winslash = '/'), not_yet_made[not_yet_made != '.']), collapse = '/')
+}
+
+# A count of draws: one whole number, at least 2 (a standard deviation needs two).
+check_draws = function(v) {
+  msg = check_numbers(v, len = 1, range = c(2, 1e5))
+  if (is.null(msg) && v != round(v)) msg = 'must be a whole number'
+  msg
+}
+
+# The random seed: "random", or one whole number from 0 to 2147483647 (R's seed range).
+check_seed = function(v) {
+  if (identical(v, 'random')) return(NULL)
+  if (is.numeric(v) && length(v) == 1 && is.null(names(v)) && is.finite(v) && v == round(v) &&
+      v >= 0 && v <= 2147483647) return(NULL)
+  'must be "random" or one whole number from 0 to 2147483647'
+}
+
+# A month selection: known month names, no repeats, not empty (R/calendar.R).
+check_month_names = function(v) {
+  if (!is.character(v) || anyNA(v) || !is.null(names(v))) return('must be month names as text')
+  tryCatch({ check_months(v); NULL }, error = conditionMessage)
+}
+
+# The slice alias: NULL, or c(data slice, coarse age), two years BP.
+check_slice_alias = function(v) {
+  if (is.null(v)) return(NULL)
+  check_numbers(v, len = 2, range = c(0, 100000))
+}
+
+# One whole number from a range.
+check_whole = function(v, range) {
+  msg = check_numbers(v, len = 1, range = range)
+  if (is.null(msg) && v != round(v)) msg = 'must be a whole number'
+  msg
+}
+
+# A setting that is TRUE or FALSE.
+check_flag = function(v) if (!is.logical(v) || length(v) != 1 || is.na(v)) 'must be TRUE or FALSE'
+
+CONFIG_SCHEMA = list(
+  analysis = list(
+    months = check_month_names,
+    ages = function(v) check_numbers(v, min_len = 2, increasing = TRUE, range = c(0, 100000)),
+    land_cover = list(
+      reduction = function(v) check_choice(v, c('mean', 'median'), single = TRUE)),
+    elevation = list(
+      method = function(v) check_choice(v, c('land_mean', 'centre_point'), single = TRUE)),
+    albedo = list(
+      source    = function(v) check_choice(v, c('modis_cells', 'legacy_raster'), single = TRUE),
+      statistic = function(v) check_choice(v, names(ALBEDO_STATISTICS), single = TRUE),
+      version   = function(v) check_choice(v, ALBEDO_VERSIONS, single = TRUE)),
+    calibration = list(
+      # Keep run 1's smaller triangle smooth usable in saved configurations, although it
+      # is outside protocol 2's grid. The pipeline otherwise accepts the ladder and CV ids.
+      model_id = function(v) check_choice(v, c(union(LADDER_MODELS, CV_MODELS), 'mod8_small_cover'), single = TRUE),
+      comparison_method = function(v) check_choice(v, c('ML', 'REML'), single = TRUE),
+      ice_mask = function(v) check_choice(v, c('centre_in_1ka_polygon', 'none'), single = TRUE)),
+    draws = list(
+      evaluation = check_draws,
+      prediction = check_draws,
+      seed       = check_seed),
+    coarse = list(
+      ages = function(v) check_numbers(v, min_len = 2, increasing = TRUE, range = c(0, 100000)),
+      slice_alias = check_slice_alias),
+    domain = list(
+      lon_min        = function(v) check_numbers(v, len = 1, range = c(-180, 180)),
+      lat_min        = function(v) check_numbers(v, len = 1, range = c(-90, 90)),
+      lat_max        = function(v) check_numbers(v, len = 1, range = c(-90, 90)),
+      lon_max_coarse = function(v) check_numbers(v, len = 1, range = c(-180, 180))),
+    ice = list(
+      fraction_source = function(v) check_choice(v, ICE_FRACTION_SOURCES, single = TRUE),
+      threshold     = function(v) check_numbers(v, len = 1, range = c(0, 1)),
+      difference_method = function(v) check_choice(v, c('endpoint', 'legacy_components'), single = TRUE),
+      albedo_coarse = function(v) check_choice(v, GLACIER_ALBEDO_COLUMNS, single = TRUE),
+      albedo_fixed  = function(v) check_choice(v, GLACIER_ALBEDO_COLUMNS, single = TRUE),
+      albedo_scaled = function(v) check_choice(v, GLACIER_ALBEDO_COLUMNS, single = TRUE)),
+    kernels = list(
+      hadgem_variable = kernel_variable('hadgem'),
+      cam5_variable   = kernel_variable('cam5'),
+      cack_variable   = kernel_variable('cack'),
+      cack_year       = function(v) check_whole(v, range = c(2001, 2016))),
+    forcing = list(
+      earth_area_m2        = function(v) check_numbers(v, len = 1, range = c(1, Inf)),
+      variant              = function(v) check_choice(v, FORCING_TOTALS, single = TRUE),
+      report_kernels       = function(v) check_choice(v, FORCING_KERNELS),
+      sensitivity_variants = function(v) check_choice(v, FORCING_VARIANTS),
+      latitude_band_width  = function(v) check_whole(v, range = c(1, 90)))),
+  presentation = list(
+    map_windows = list(calibration = MAP_WINDOW_SCHEMA,
+                       tail        = MAP_WINDOW_SCHEMA,
+                       diagnostics = MAP_WINDOW_SCHEMA)),
+  run = list(
+    dir         = check_run_dir,
+    allow_stale = check_flag,
+    diagnostic  = check_flag))
+
+# What the pipeline did before each setting existed, for settings added since runs began saving
+# their configuration (config_used.R): load_config(path, fill_missing = TRUE) fills a saved
+# configuration's missing settings from here. Every new setting needs its line.
+HISTORICAL_SETTINGS = list(
+  analysis = list(
+    ice = list(fraction_source = 'dalton_ice')))   # script 7a read the old raster until commit b2ed943
+
+# Rules across keys. Called only once every key has passed its own check.
+config_combination_errors = function(cfg) {
+  errs = character()
+  # Script 9's slide-layout figure and its variant-sensitivity table use HadGEM3.
+  a = cfg$analysis
+  if (a$domain$lat_min >= a$domain$lat_max)
+    errs = c(errs, 'analysis$domain$lat_min must be below lat_max')
+  if (a$domain$lon_min >= a$domain$lon_max_coarse)
+    errs = c(errs, 'analysis$domain$lon_min must be west of lon_max_coarse')
+  # The alias maps a slice of the data onto a coarse age, so each must be what it claims.
+  if (!is.null(a$coarse$slice_alias)) {
+    if (!a$coarse$slice_alias[1] %in% a$ages)
+      errs = c(errs, 'analysis$coarse$slice_alias: its first value must be one of analysis$ages (a slice of the data)')
+    if (!a$coarse$slice_alias[2] %in% a$coarse$ages)
+      errs = c(errs, 'analysis$coarse$slice_alias: its second value must be one of analysis$coarse$ages')
+  }
+  # The raster has one albedo per month: statistic and version choose among the columns of the
+  # MODIS cell table only, so with the raster they must keep their defaults rather than be
+  # silently ignored. An implementation rule from the brief of 2026-10-29 (following Fable's
+  # review of the refit plan), not one of Chris's decisions.
+  if (a$albedo$source == 'legacy_raster' && (a$albedo$statistic != 'all_days' || a$albedo$version != 'full_75'))
+    errs = c(errs, 'analysis$albedo: with source "legacy_raster" (one albedo per month), statistic must be "all_days" and version "full_75"')
+  if (!'hadgem' %in% cfg$analysis$forcing$report_kernels)
+    errs = c(errs, 'analysis$forcing$report_kernels must include hadgem: script 9 draws its headline figure and the variant sensitivity with it')
+  # The second split of the partial-ice total is made with the "endpoint" difference method
+  # only (R/differences.R); script 9 would otherwise leave these variants out without a word.
+  exposed = intersect(a$forcing$sensitivity_variants, c('veg_part_exposed', 'ice_part_exposed'))
+  if (length(exposed) && a$ice$difference_method != 'endpoint')
+    errs = c(errs, sprintf('analysis$forcing$sensitivity_variants: %s need analysis$ice$difference_method "endpoint"',
+                           paste(exposed, collapse = ' and ')))
+  errs
+}

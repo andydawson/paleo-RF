@@ -1,0 +1,2266 @@
+# Change log: the single-config migration
+
+A record of every change made in the single-config migration, issue by issue: what changed,
+why, what it does to the outputs, and how it was verified. Written for Andria and Chris, and
+for the coauthor change log. Living document, updated as each issue merges.
+
+- **What the migration is.** Every setting of the pipeline moves into one file, `config.R`
+  at the repository root, with an `analysis` section (settings that change the numbers) and
+  a `presentation` section (settings that change only the figures). Each run records the
+  settings it used. Design: `2026-10-08_migration_issues_single_config_v2.md`. Issues: #2 to
+  #17 on GitHub, label `single-config`. Decisions: CONTRIBUTING.md, 2026-10-08.
+- **Branches.** All the work is on `feature/single-config`, made from `chris-dev` 1b9d5a9 on
+  2026-10-08. Each issue has its own branch, merged back with `--no-ff`. Nothing was
+  committed to `chris-dev`, `main` or `legacy` during the migration. After the final integration check (#16), Chris
+  approved merging `feature/single-config` into `chris-dev` (21 November 2026; the last row of the table below).
+- **The standard.** Each issue must leave the pipeline's outputs unchanged at the default
+  settings: byte-identical where the pipeline is deterministic, within measured tolerances
+  where it is random (scripts 5 and 6). See `2026-10-08_single_config_regression_contract.md`.
+- **Order.** I01, I02, I03, I07, I05, I04a, I04b, I06, I10, I11, I12, I08, I13a, I09, I13b;
+  I14 (ensemble mode) is parked. I15 (#18, readability cleanup, added 2026-10-13) runs inside
+  I13b: after its reconciliation with chris-dev, before its final verification; the extraction
+  issues rename the code they move as they go.
+
+| Issue | GitHub | Status | Merge commit |
+|---|---|---|---|
+| I01 Regression contract | #2 | merged 2026-10-09 | 85e22bd |
+| I02 Month indexing | #3 | merged 2026-10-13 | d67587d |
+| I03 Validated config; script 9; map windows | #4 | merged 2026-10-13 | 80644fc |
+| I07 Paths; run directories; R-only tools | #5 | merged 2026-10-13 | 252c6b6 |
+| I05 Run manifests; consistency check | #6 | merged 2026-10-14 | f867506 |
+| I04a Model, draw and reduction settings; seed | #7 | merged 2026-10-14 | 520b6e6 |
+| I04b Months, ages, alias, domain, ice, CACK year | #8 | merged 2026-10-14 | 9210d04 |
+| I06 Manifests in every script; plain config loader | #9 | merged 2026-10-14 | 3ea2624 |
+| I17 Path readability | #20 | merged 2026-10-14 | 7abb45c |
+| I11 (slim) Script 7a's per-pair arithmetic as a tested function | #12 | merged 2026-10-14 | d772ea3 |
+| I16a Kernel variables; ice-advance method; legacy config | #19 (first part) | merged 2026-10-14 | c1f2d73 |
+| I16b ML ladder; REML prediction fit; ice caps out of calibration; fraction check | #19 (second part) | merged 2026-10-15 | 8f6c9b9 |
+| I15a Readability: comments and indentation only | #21 | merged 2026-10-15 | f5a33e4 |
+| I15b Readability: names in the R/ helpers | #22 | merged 2026-10-15 | d8c32c0 |
+| I15c Readability: scripts, one branch per script | #18 | scripts merged 2026-10-15; last renames merged 2026-11-03; closed | |
+| I15 Readability cleanup | #18 | filed 2026-10-13; four figure slips marked in scripts 2 and 7 | df0d28f (comments only) |
+| Cross-validation protocol 2: fifteen versions, a nearby score, two separation tests; results and reviews | #24 | merged 2026-11-16 | 326ea11 |
+| Hindcast comparison tool | #24 | merged 2026-11-16 | c254734 |
+| Cover-contrast exploration beside published contrasts | #24 | merged 2026-11-16 | c7d2aab |
+| Comparison of the cover contrasts with Duveiller et al. (2018) | #24 | merged 2026-11-17 | d7159f3 |
+| Ice: the 2023 reconstruction (NADI-1), readvances, both split rules, fill_missing | #29 | merged 2026-11-18 | ed35d77 |
+| Cover contrasts at the case-study boxes | #24 | merged 2026-11-19 | f961cd4 |
+| Script 7's maps draw the ice the forcing uses | #29 | merged 2026-11-20 | 6c86770 |
+| Fixes from the integration review: dead code, the comment check, the run-record note | #16 | merged 2026-11-21 | 9d3677d |
+| Final integration check: Astra's review and three full runs; chris-dev reconciled | #16 | merged 2026-11-21 | a06eddf |
+| Final integration check: the runs with other settings | #16 | merged 2026-11-21 | 76215bc |
+| Final merge of the migration into chris-dev | #16 | approved 2026-11-21; merge pending | |
+
+---
+
+## I01: the regression contract (#2), merged 2026-10-09
+
+**Purpose.** Before changing anything, fix the standard every later change is checked
+against, and build the tools to check it without disturbing the files the checks compare
+with.
+
+**Tools added** (`tools/`):
+
+- `rscript.sh` runs R the way every reference run was made. It sets `PROJ_DATA` and
+  `GDAL_DATA`, without which script 1's elevation lookup and the map helpers fail outside
+  `micromamba activate`. It also fixes the BLAS/OpenMP threads at 8, because `predict.gam`
+  reproduces byte for byte only at the same thread count; at 4 threads the last bits
+  differ.
+- `rundir.sh` builds an isolated run directory, `.rundirs/<name>/`. Its `data/` and
+  `output/` are links to the real files, minus the outputs of the scripts to be run, so a
+  verification run writes its outputs there, never over the reference files. Since
+  2026-10-12 it copies the code rather than linking it (see I02).
+- `frozen.sh` locks every file under `data/` and `output/` read-only for the duration of
+  the migration, and records or verifies their checksums (331 files,
+  `tests/frozen_inputs.md5`). A script that tries to overwrite one fails with "Permission
+  denied" instead of silently replacing it. This replaced a snapshot-and-restore plan, at
+  Chris's request.
+- `check_anchors.sh` compares outputs with an anchor's checksums, byte for byte. Inputs
+  that are only linked into a run directory are reported as such, not as a match.
+- `compare_tables.R` compares random outputs column by column with four statistics: the
+  maximum difference, the 99.9th percentile, the mean absolute difference and the bias.
+  The maximum alone is a weak test when every cell's summary rests on 100 random draws.
+- `check_calibration_month.R` refits the selected model for one month and compares it with
+  the stored fit. Predictions must agree within 1e-6 and AIC must be equal.
+
+**Reference data added** (`tests/anchors/`):
+
+- Checksums for the all-months anchor.
+- A new anchor, `interp-forcing-2026-10-08`, for script 9's four summary tables, which had
+  none.
+- `live_paths.tsv`, mapping anchor file names to the places the pipeline writes them.
+- `tolerances.tsv`: measured, not chosen, from three reruns each of scripts 5 and 6.
+  Script 5 allows twice the largest difference seen, with a floor of 0.01. Script 6 allows
+  twice the largest seen for the maximum, the 99.9th percentile and the mean absolute
+  difference, and four standard errors for the bias. Deliberately planted errors are all
+  caught. Approved by Chris on 2026-10-09.
+
+**Documents.** `2026-10-08_single_config_regression_contract.md`. The anchor READMEs were
+corrected:
+- script 1 is reproducible given the elevation cache;
+- script 5's statistics are not reproducible;
+- script 7 is deterministic.
+
+CONTRIBUTING's list of what is at the repo root was brought up to date.
+
+**What the baseline established.** Today's code reproduces every anchor:
+- scripts 1, 2, 7, 7a, 8 and 9 byte for byte;
+- script 6's point predictions byte for byte;
+- script 6's summary and script 5's statistics within tolerance.
+
+Script 6's summary is genuinely random between runs. The one-month calibration check takes
+about 19 minutes, not the 1 to 5 the design assumed, and `bam` at 8 threads gave identical
+results for January.
+
+**Outputs changed.** None; no pipeline code was touched.
+
+---
+
+## I02: no script depends on the number or order of months (#3), merged 2026-10-13
+
+**Purpose.** Prepare for the month selection to become a setting. Before this, a run on a
+subset of months would have produced wrong numbers silently.
+
+**The bug this prevents.** Script 8 took each month's radiative-kernel band from the month's
+position in its month list. With the list `feb, may, aug, nov`, February would have read
+January's kernel and November April's, with no error. Other scripts sized tables for
+exactly 12 months, or picked particular months by position.
+
+**Changes:**
+
+- **`R/calendar.R`** (new). `MONTHS` is defined once. `check_months()` rejects unknown,
+  duplicated or empty selections. `month_to_number()` maps a month to its calendar number
+  by name. The month list had been typed out in seven scripts, four times in script 4.
+  Tests are in `tests/test_calendar.R`.
+- **Scripts 2, 4, 5, 6, 7, 7a, 8** take their months from the calendar. Script 2 was
+  included by Chris's decision, although the issue had left it out.
+- **Script 4.** The AIC table and the model lists are sized from the month list, not
+  12/13.
+- **Script 5.** The correlation vector is sized from the month list. The November-only
+  block is skipped when November is not selected.
+- **Script 7.**
+  - The two February maps run only when February is selected.
+  - The four-season panel shows whichever of its months are selected.
+  - The coverage filter is commented out, at Chris's direction, with the reason: it
+    counted rows per cell across ages and months, so its "fewer than 8" test removed no
+    cells (0 of 2,870), and under a month subset it would have started removing cells for
+    the wrong reason. The intended rule is question D4 for Andria.
+- **Script 7a.** Both coverage checks compare with the number of ages, not a typed 25.
+- **Script 8.** The kernel band is looked up by month name.
+- **Script 9.** The EGU 2024 recipe, which needs February, May, August and November, is
+  skipped with a message when any is missing, never computed on a subset.
+- **`tools/rundir.sh`** copies `scripts/` and `R/` into the run directory instead of
+  linking them. During I02's verification, a branch switch in the main checkout rewrote
+  three scripts while runs of them were in progress. Git rewrites files in place and R
+  reads a script progressively, so those runs were void and were redone. A copied run can
+  no longer be affected by anything done in the checkout while it runs.
+
+**Outputs changed.** None at twelve months.
+
+**Verification:**
+- **All twelve months:**
+  - Scripts 2, 4 (AIC), 6 (point predictions), 7, 7a, 8 and 9 are byte-identical.
+  - Script 5 and script 6's summary are within tolerance, and the twelve selected models
+    are identical.
+- **Month subsets:**
+  - Script 4 with four months gives exactly the reference's four columns.
+  - Script 8 with four months, with the months reversed and with July alone gives
+    identical kernels for the chosen months and none for the others.
+  - Script 9 without November skips the recipe and reproduces its other three tables.
+- The frozen inputs were unchanged throughout.
+
+---
+
+## I03: a validated configuration file; script 9 and the map windows migrated (#4), merged 2026-10-13
+
+**Purpose.** Create the configuration file and the machinery that reads and checks it, and
+move the first settings into it. Script 9 goes first because its assumptions were already
+explicit. The map windows go too, because they were defined in five places.
+
+**New files:**
+
+- **`config.R`** (repo root), a single R list with two sections:
+  - `analysis$coarse$ages`: the eight coarse slices, 50 to 12000 years BP.
+  - `analysis$forcing`:
+    - `earth_area_m2` (5.101e14);
+    - `variant` (`veg_ice_thresh`);
+    - `report_kernels` (`hadgem`, `cam5`, `cack`);
+    - `sensitivity_variants` (the six script 9 compares).
+  - `presentation$map_windows`: the three windows, named for what they draw.
+
+  Only keys that a script now reads are there; the rest arrive issue by issue. Each key's
+  comment says where it came from and, for an unconfirmed choice, gives its question id:
+  - the variant: C1 and C5(a);
+  - 12000 as the oldest age: C7;
+  - the three windows: general section 7.
+- **`R/config.R`**, the loader, `load_config()`. The config file is read as a syntax tree,
+  not run as R code. It may contain only `list()`, `c()`, `seq()`, arithmetic, parentheses
+  and literal values. Everything else is refused before anything is evaluated:
+  assignments, any other function, variables, `pkg::fun`, and therefore any file or
+  environment read. Because of this a config depends on nothing but its own text, and the
+  copy of it in a run manifest is a complete record of the settings.
+
+  `config_json()` writes the config as one JSON string for the manifests. jsonlite's
+  default rounds numbers to four significant digits and drops the names of a named vector
+  without warning; this function keeps full precision and writes a named vector as an
+  object.
+- **`R/config_schema.R`**, the allowed keys and a check for each value (type, length,
+  legal values, order, range, no names). Unknown, missing or duplicated keys are errors,
+  and every problem is reported at once.
+
+  One rule spans keys: `report_kernels` must include `hadgem`, because script 9's headline
+  figure and its variant sensitivity use HadGEM3. The legal forcing variants are script
+  8's ten.
+- **`tests/test_config.R`** covers each rejection, the allowed constructors, and the JSON
+  properties (precision, one-element vectors, names, stability on reading back).
+
+**Changed:**
+
+- **`R/calendar.R`.** `ages_ka()` and `period_labels()` build the slice and period labels
+  ("0.05 - 0.5 ka" ...) from the ages. The labels had been typed out seven times across
+  scripts 7, 8 and 9, and typed labels could silently disagree with configurable ages.
+  Tests check they reproduce the typed strings exactly.
+- **Script 9.**
+  - It reads Earth's area, the variant, the kernels, the sensitivity variants and the
+    coarse ages from the config. Its aggregation is unchanged.
+  - Its manifest records the whole config as JSON.
+  - The EGU 2024 recipe is now also skipped when the coarse ages are not slide 18's seven
+    periods, since its comparison with the slide's numbers only means something for those.
+  - The A2 note was wrong and is corrected. It said the six sensitivity variants were the
+    ones with complete coverage, but `_veg_thresh` is missing in 58,416 of 764,640 rows and
+    `_ice_thresh` in 706,188, while three complete variants are not among the six. The six
+    are unchanged.
+- **Map windows.** These are drawing bounds only. They were defined in five places:
+  - `R/map_helpers.R` (used by scripts 2 and 3);
+  - script 1's diagnostics, typed twice;
+  - scripts 7, 7a and 8.
+
+  There are three distinct windows, now each defined once in the config:
+  - `calibration` (-172 to -50 E, 15 to 80 N), for scripts 2 and 3;
+  - `tail` (-166 to -50 E, 12 to 82 N), for script 7;
+  - `diagnostics` (-172 to -50 E, 17 to 79 N), for script 1 in diagnostic mode.
+
+  The map helpers no longer have a window of their own. `prepare_boundaries()` and
+  `boundary_layers()` require it as an argument, so each script states which window it
+  draws with.
+- **Script 7.**
+  - It reads the coarse ages and the tail window from the config.
+  - Its two typed copies of the ages and its slice and period labels are made from them.
+  - Scripts 7 and 9 therefore use the same periods by construction.
+  - The relabelling of 11500 as 12000 (C7) and the -60 longitude cut remain in the code
+    until I06.
+- **Scripts 7a and 8.** Their copies of the coarse ages, the tail window and (in script 8)
+  the period labels were deleted, because neither script used them. A comment marks each
+  place.
+- **`tools/rundir.sh`.** It also copies `config.R`, for the same reason it copies the code.
+
+**Outputs changed.** None at the default settings. The run manifests of scripts 7 and 9
+now contain the configuration.
+
+**Verification.** Code at aef8d33, every run in its own run directory, 8 threads, frozen
+inputs locked and unchanged afterwards. Figures were compared byte for byte (PDFs with
+their creation dates removed) against the same scripts run on the pre-I03 code (d67587d)
+or, for the tail, against I02's run.
+
+| Run | Numeric outputs | Figures |
+|---|---|---|
+| script 9 from the frozen inputs | four tables byte-identical | 7 identical |
+| script 1, diagnostic mode | both land-cover tables byte-identical; diagnostic CSV identical | 28 identical |
+| scripts 2 and 3 | calibration table byte-identical; coarse table identical | 62 identical |
+| scripts 7 and 7a in parallel, then 8 and 9 | all six tail-anchor files and four forcing tables byte-identical | 23 identical |
+
+The map windows therefore changed nothing visible. The config and calendar tests pass. The
+manifests of scripts 7 and 9 record the configuration as JSON. Measured times with the
+machine otherwise fully loaded: script 7 took 114 minutes and script 7a 72.
+
+---
+
+## I07: one catalogue of file paths; run directories; tools in plain R (#5), merged 2026-10-13
+
+**Purpose.** Name every file the pipeline reads or writes once, keeping every existing file
+name. Let an alternative run write all its products into a directory of its own, so it can
+never overwrite the baseline. Fix the path disagreement that stopped script 5.
+
+**Decisions taken while planning (Chris, 2026-10-13):**
+- Run options are a third section of `config.R`, `run`, tracked in git, rather than an
+  environment variable or an untracked file. The code ships with everything needed to run
+  it.
+- A run directory reads earlier products only from itself. Baseline products it should
+  reuse are put there explicitly; nothing falls back silently to the baseline.
+- A redirected run's figures are saved in its run directory.
+- The pipeline and its checks must be plain R and work on Linux, macOS and Windows. The
+  shell tools were Linux-only and not readable by an R user, so they are ported to R or
+  retired.
+- An alternative run is described by its own config file, given to each script with
+  `--config <file>`. Several config files can be committed.
+- Script 5's newly runnable section is to be run, measured and reported, and its `rbind`
+  loop fixed if it is slow.
+
+**New:**
+- **`R/paths.R`.**
+  - `PATH_CATALOGUE` lists every file of scripts 1–9 (about 45 families). For each it gives
+    whether it is an original input or a product and, for products, the script that writes
+    it. The outputs of the out-of-scope spatial-eval script are listed too.
+  - Names are exactly today's, oddities included.
+  - Accessors: `path_file()`, `path_calibration_model()`, `path_prediction()`,
+    `path_forcing()`, `path_figure()`, `path_runs()`. `producer()` says which script wrote
+    a path, which I05's manifests will need. `seed_run_dir()` puts baseline products into
+    a run directory, linking where the system allows and copying otherwise, and lists
+    them in its `SEEDED.txt`.
+  - In a run directory, plots printed with no device open go to its own `Rplots.pdf`.
+- **`config.R`.** A `run` section with `dir` (NULL means the baseline locations), checked
+  by the schema. `--config <file>` chooses another config file.
+- **`tools/frozen.R`** and **`tools/check_anchors.R`**, R replacements of the shell tools.
+  A seeded file is never reported as a match.
+- **Tests:** `tests/test_paths.R` and `tests/test_tools.R`. The path test checks the
+  expanded catalogue against the 331-file inventory of I01 and the anchors' path map.
+
+**Changed:**
+- **Scripts 1–9.** About 140 path expressions (data reads and writes, fits, predictions,
+  tail and forcing files, original inputs, figures) now come from the catalogue, and only
+  the path argument of each call changed.
+  - At the baseline every path is the string it was. This was checked by evaluating all 63
+    distinct old path expressions next to their replacements for every month, with no
+    differences.
+  - Each script loads the config and the paths at the top. The scripts' own `dir.create()`
+    calls are gone, and `alb_prod` comes from the path layer.
+- **Script 5 (deliberate).** It read its seven spatial-experiment models from
+  `output/calibration/spatial_experiment/`, a directory script 4 never writes, so it always
+  stopped there (the known failure at line 218). It now reads them from where script 4
+  writes them. `SP_ELEV_LC` is the selected model, not script 4's separate fit of the same
+  formula. The rest of script 5 (the spatial experiment and the November block) runs for
+  the first time.
+- **`R/run_manifest.R`** writes the manifest into the run's `runs/` directory.
+- **Retired:** `tools/rundir.sh`, `tools/frozen.sh`, `tools/check_anchors.sh`.
+  `tools/rscript.sh` stays as an optional Linux helper for the byte-for-byte checks. The
+  regression contract, CONTRIBUTING and the anchor READMEs are updated to match.
+
+**Outputs changed.** None at the default settings, apart from script 5, which now produces
+the outputs of its formerly unreachable sections.
+
+**Verification.** Code at fcc6540. Every run was made in its own run directory, chosen
+with `--config`, at 8 threads, with the upstream products seeded from the baseline. The
+redirected runs are themselves the fixture the issue asks for. Figures were compared byte
+for byte with the I03 runs of the pre-I07 code.
+
+| Run | Result | Time, peak memory |
+|---|---|---|
+| script 1, diagnostic mode | both land-cover tables byte-identical; 28 figures identical | 1 min, 3.7 GB |
+| scripts 2 and 3 | calibration table byte-identical; coarse table identical; 62 figures identical | 4 + 1 min |
+| script 4, AIC section through the new paths | AIC table byte-identical | under 1 min |
+| script 6 | point predictions byte-identical; summary within tolerance | 18 min, 3.4 GB |
+| script 5, run to the end for the first time | statistics within tolerance; all 12 selected models byte-identical, including November's re-save | 10 min, 5.6 GB |
+| scripts 7 and 7a in parallel, then 8 and 9 | all six tail-anchor files and four forcing tables byte-identical; 23 figures identical | 110, 100, <1, <1 min; 22 GB (script 7) |
+
+Further checks:
+- The repository's `figures/`, `runs/` and `Rplots.pdf`, and all 331 frozen files, were
+  unchanged after every run, so a redirected run writes nothing into the baseline.
+- `producer()` resolves every product in the tail's run directory.
+- The manifests sit in the run directory and record `run$dir`.
+- Seeded inputs are reported as seeded, not as matches.
+- All four test files pass.
+- Script 4's write paths were checked statically, since it cannot be refitted.
+
+**Script 5's new sections (validation, not anchoring).**
+- *Spatial experiment.* It runs and draws its six pages into the run's `Rplots.pdf`, and
+  the plots look sane. The three models without a spatial term (ELEV, ELEV_LC, LC) show
+  much wider credible intervals around the 1:1 line than the four spatial models, which is
+  worth showing Andria.
+- *Warnings.* The run's warnings come from `xlim` dropping points outside the axes and from
+  a deprecated ggplot2 notation, not from errors.
+- *Cost.* The whole script takes 10 minutes, so the `rbind` loop was left as it is.
+- *Randomness.* Nothing here is seeded until I04a.
+
+---
+
+## I05: one manifest per run, written from the start; the consistency check (#6), merged 2026-10-14
+
+**Purpose.** Know, for every product, which code, settings and inputs made it, including
+for runs that fail or are killed; and stop a script from silently reading a product made
+under different analysis settings.
+
+**Decisions taken while planning (Chris, 2026-10-13):**
+- Scripts stay flat: one call at the top and one at the bottom, not the issue's design of
+  wrapping each script in a function, so Andria can still run a script line by line.
+- The override is one config setting, `run$allow_stale` (FALSE by default), not the
+  `RUN_ALLOW_STALE` environment variable, and there is no per-run note (`RUN_NOTE` is
+  gone): the config file and the commit say what a run was.
+
+**New:**
+- **`R/run_manifest.R`**, rewritten. `run_begin(script)` reads the config (or `--config`),
+  sets up the paths and writes `runs/<script>/<UTC time to the ms>_<pid>.md` at once, status
+  `started`. `read_input(run, path, reader = readRDS, ...)` hashes each input just before it
+  is read; `write_output(run, object, path, writer = saveRDS, ...)` hashes each output just
+  after it is written; both rewrite the manifest (temporary file, then rename).
+  `run_finish(run)` closes the plot devices, lists the figures and sets `completed`. An error
+  sets `failed` with the message; a killed run stays `started`; a config that cannot be read
+  is recorded too. The manifest is a readable summary with the full record as JSON at the
+  end: whole config, full commit, uncommitted changes to `config.R`, the config file used,
+  `scripts/` and `R/` (untracked files included; "unknown" without git), inputs, outputs and
+  figures with MD5s, R and package versions, RNG kind, thread settings.
+- **The consistency check.** Reading a product of an earlier script consults that script's
+  newest manifest only: it must have written this file with this MD5, and its `analysis`
+  section must equal the current one. Otherwise the script stops and lists each differing
+  setting (`forcing.earth_area_m2: [510100000000000] -> [520000000000000]`). Presentation
+  and run settings may differ. With `run$allow_stale = TRUE` it goes on and the manifest
+  lists the file under `stale_inputs`. Original inputs are hashed, not checked.
+- **Figures** are the paths this run asked `path_figure()` for, modified since it started,
+  plus `Rplots.pdf` only if the run plotted to the default device. (The first version took
+  every file modified since the start; the verification below showed why that is wrong.)
+- **`run$allow_stale`** in `config.R` and the schema; `root_relative()` in `R/paths.R`,
+  split out of `producer()` for reuse.
+- **`tests/test_run_manifest.R`**: 31 cases, each a real `Rscript` process in a scratch copy
+  of `R/` and `config.R`, covering every behaviour above, including two runs started
+  together, two runs writing figures side by side, `source()`, SIGKILL and a 2.1 GB file.
+
+**Changed:**
+- **Scripts 7, 7a, 8 and 9**, the four that used the old `run_start()`/`run_end()`, use the
+  new calls; every read and write of a catalogued file goes through `read_input()` /
+  `write_output()` with the same reader or writer and arguments, so the bytes are
+  unchanged. Scripts 1-6 follow in I06.
+- **Dropped:** script 8's hand-written note that CACK band 3 is the year 2003 (question C3);
+  the band becomes a config setting in I04b and is then in every manifest. The hand-kept
+  output lists, which missed script 9's EGU PNG and claimed stale files in script 7.
+- **Behaviour worth knowing:** once an error handler is installed, `Rscript` carries on
+  after an error and exits 0 (tested), so the handler ends a non-interactive run with
+  status 1 itself.
+- README (provenance section, launch example) and CONTRIBUTING (decisions on record).
+
+**Outputs changed.** None.
+
+**Verification.** Code at 4e8fef2, then the figure fix. Machine load about 48 on 48 cores
+from another project throughout; this run used 16 cores.
+
+| Run | Result | Time, peak memory |
+|---|---|---|
+| script 7 with `allow_stale = FALSE`, from the seeded baseline predictions | stopped at the predictions summary ("no run of 6_prediction_model is recorded"); manifest `failed` with the error and what it had read and written | 3 s |
+| scripts 7 and 7a in parallel, then 8 and 9 (`allow_stale = TRUE`) | all six tail-anchor files and four forcing tables byte-identical; 23 figures identical to I07's; every recorded MD5 equals the file on disk; 8's four checks against 7 and 7a and 9's two against 8 and 7 pass; stale inputs only the two seeded predictions | 121 min, 23.3 GB (7); 80 min, 2.3 GB (7a); <1 min each (8, 9) |
+| the same run's manifests | 7a had claimed 13 of script 7's figures and both claimed `Rplots.pdf`: fixed as above | - |
+| scripts 8 and 9 rerun with the fix | anchors and figures still match; 9 lists exactly its seven figures; 8 lists only `Rplots.pdf`; checks pass against the new run of 8 | <1 min each |
+
+The repository's `figures/`, `runs/` and `Rplots.pdf` were unchanged and the 331 frozen
+inputs matched before and after. The figure attribution for 7 and 7a side by side is
+covered by the new test, not by a second two-hour run.
+
+**Left as found:** scripts 7 and 7a, when run side by side in one place, both print plots
+to the same `Rplots.pdf`, so that file is unreliable then. It is not a product of the
+pipeline; noted here, not fixed.
+
+---
+
+## I04a: the model, the draws, the land-cover summary and the random seed as settings (#7), merged 2026-10-14
+
+**Purpose.** Make the analysis choices of the upper pipeline visible and checked in
+`config.R`, keep the model formulas in one reviewed place, add the median as an
+alternative land-cover summary, and make the simulated draws of scripts 5 and 6
+repeatable.
+
+**Decisions taken while planning (Chris, 2026-10-14):**
+- Only the choice of model is a calibration setting (`calibration$model_id`). The issue's
+  `maxit` and three `k` values stay in R: a single "cover" k would have covered models 7, 8
+  and the experiments but not model 6 (k = 75) or the single-class terms of models 3-5
+  (k = 50).
+- Scripts 5 and 6 get their run manifests now rather than in I06, so the seed and the
+  selected model are recorded from the start.
+
+**New:**
+- **`config.R`**, analysis section: `land_cover$reduction` ("mean" | "median", A1),
+  `calibration$model_id` (mod1 ... mod8, B4), `draws$evaluation` and `draws$prediction`
+  (whole numbers >= 2, A2/A3) and `draws$seed` ("random" or a whole number). All checked by
+  the schema; the legal model ids come from the registry.
+- **`R/model_registry.R`**: the eight ladder models and seven spatial experiments, each
+  once, by id (label and formula terms, k included), with the shared controls (8 threads,
+  maxit 500) and `fit_calibration_model()`. The fitted response is the month's column
+  (`jan ~ ...`) instead of `get(month) ~ ...`, so a fit no longer depends on a global
+  `month`. `R/paths.R` takes its model ids from it.
+- **`R/preparation.R`**: `reduce_land_cover()` (the original mean, bit for bit and not
+  rescaled; or the median, rescaled by `close_fractions()` to sum to 1, stopping on a
+  missing, negative or all-zero cell-slice).
+- **`R/random.R`**: `base_seed()` (the configured number, or for "random" one made from
+  the clock and process id), `derive_seed()` (a base-R hash of base seed, script, month and
+  call, so each `simulate()` call has its own seed and a month's draws do not depend on the
+  other months), `draw_index()` (draw numbers past 999).
+- **`run_record()`** in `R/run_manifest.R`: a named fact in the manifest (`details`).
+- **Tests:** `tests/test_preparation.R`, `tests/test_random.R`, and new cases in
+  `test_config.R` and `test_run_manifest.R`.
+- **`tests/anchors/interp-seed1-2026-10-14/`**: checksums of the 26 draw-based outputs of
+  scripts 5 and 6 with seed 1, the byte-for-byte reference the contract asked for.
+
+**Changed:**
+- **Script 1** reduces the draws with `reduce_land_cover()` and the configured method.
+- **Script 4** fits the ladder, the experiments and the third fit of model 8 in loops over
+  the registry, in the original order; the AIC section keeps its explicit `AIC(mod1_interp,
+  ..., mod8_interp)` evaluated `with()` the loaded fits. The repeated fits of model 8 stay
+  until Andria answers general question 7.
+- **Script 5**: the selected model is `model_id` (was model 8, hard-wired three times);
+  its id, terms, family, method and controls are in the manifest. All four `simulate()`
+  calls use `draws$evaluation` and their own seed. The spatial comparison's SP_ELEV_LC is
+  script 4's `spatial_elev_cover` fit (same formula as model 8) rather than the selected
+  model, which another `model_id` would have mislabelled.
+- **Script 6**: `draws$prediction` and a seed per month; draw numbers by `draw_index()`
+  (`substr(iter, 2, 4)` read draw 1000 as 100).
+- **Scripts 5 and 6** read and write through the run manifest (`run_begin`, `read_input`,
+  `write_output`, `run_finish`), with the base seed recorded.
+
+**Outputs changed.** None at the default settings beyond the run-to-run variation of
+unseeded draws, which the default `seed = "random"` keeps. Script 5's spatial-comparison
+figures use script 4's own fit of model 8's formula for SP_ELEV_LC.
+
+**Verification.** Code at e612b69. Each run in its own run directory from the frozen
+inputs, 8 threads, upstream products seeded with `allow_stale = TRUE`. Machine load 50-60
+on 48 cores from another project.
+
+| Check | Result | Time, peak memory |
+|---|---|---|
+| registry formulas vs old script 4 | all 16 calls identical (parse trees) | - |
+| script 4 AIC section through the registry code, from the frozen fits | AIC table byte-identical | under 1 min |
+| one-month refit of model 8 (January) through `fit_calibration_model()` | predictions identical to the stored fit (max difference 0); AIC -6669 equal to the anchor | 14 min, 0.9 GB |
+| script 1, mean | both land-cover tables byte-identical | under 1 min, 3.1 GB |
+| script 1, median | same columns, rows and keys as the mean tables; every row sums to 1 (max error 2.2e-16); equal to medians grouped independently and rescaled (2.2e-16); mean and median differ by 0.012 on average, at most 0.16; before rescaling the medians sum to 0.80-1.02 | under 1 min |
+| script 2 on the median tables | runs (schema smoke test) | 4 min |
+| scripts 5 then 6, default (random) and a second random run | point predictions byte-identical; statistics and summary within tolerance of the unseeded anchor; the two random runs differ in all 13 draw files and the statistics, with different base seeds recorded | 12 + 20 min; 5.7 / 3.7 GB |
+| scripts 5 then 6, seed 1, twice | all 51 data files and 9 figures identical between the two; within tolerance of the unseeded anchor; selected models byte-identical to the frozen ones | 12 + 20 min |
+| scripts 5 then 6, `model_id = "mod7"`, seed 1 | the selected model predicts exactly as the ladder's model 7; manifest records mod7 and its terms; predictions differ from model 8's by 0.005 on average | 11 + 23 min |
+| manifests of all ten runs | completed; every output MD5 equals the file; script 6's 36 checks against script 5's selected models pass; stale inputs only the seeded baseline files | - |
+| unit tests | all seven test files pass | - |
+
+The repository's `figures/`, `runs/`, `output/` and `Rplots.pdf` were unchanged, and the
+331 frozen inputs matched, before and after. The issue's four-month seeded run needs the
+month selection setting of I04b; the property it tests (a month's draws do not depend on
+the other months) is tested in `test_random.R` instead, and the 1000-draw run by
+`draw_index()`'s test.
+
+---
+
+## I04b: months, ages, slice alias, domain, ice and the CACK year as settings (#8), merged 2026-10-14
+
+**Purpose.** Make the analysis choices of the tail (scripts 7, 7a, 8) visible and checked
+in `config.R`, with the inherited oddities exposed under their question ids, and let any
+subset of months run through scripts 4 to 9.
+
+**Decisions taken while planning (Chris, 2026-10-14):**
+- The fine time slices are a config key (`analysis$ages`), with a comment that they must
+  agree with the data; script 7a stops, naming them, if a slice is not in the prediction
+  table.
+- The glacier-albedo column for each of the three ice roles is its own setting, with the
+  legal columns listed (question C0a).
+
+**New keys** (all checked by the schema):
+- `months` (written out; any subset);
+- `ages` (the reconstruction's 25 slices);
+- `coarse$slice_alias = c(11500, 12000)` or NULL (C7). The comment explains that it also
+  picks the 11.5 ka slice's ice polygon, and that NULL is implemented but drops the
+  oldest period;
+- `domain`: `lon_min`, `lat_min`, `lat_max`, `lon_max_coarse`;
+- `ice`: `threshold`, `albedo_coarse`, `albedo_fixed`, `albedo_scaled` (C0, C0a, C2);
+- `kernels$cack_year` 2001-2016 (C3; band = year - 2000, checked against the file's
+  "2001 = 1").
+
+Combination rules: `lat_min < lat_max`; `lon_min` west of `lon_max_coarse`; the alias's
+data slice is in `ages` and its coarse age is in `coarse$ages`.
+
+**Changed:**
+- **Scripts 4, 5, 6, 7, 7a, 8** use `months`; script 4's three redundant reassignments
+  are removed. Script 2 deliberately keeps all twelve months, so the calibration table
+  serves any selection.
+- **Script 7a** pairs the configured `ages` and uses the threshold and domain keys.
+- **Script 7** applies the alias and `lon_max_coarse`.
+- **Script 8** uses `lat_min`/`lat_max` and the CACK band from `cack_year`.
+- **Script 1's diagnostic** builds its zones from the domain keys, with the same text at
+  the defaults.
+- **Dead copies removed:** the fine `ages` and its relabelling in scripts 7 and 8, and
+  7a's coarse `years` and `labels_year`.
+
+**Outputs changed.** None at the default settings.
+
+**Verification.** Code at b88813b. Each run was in its own run directory, at 8 threads,
+starting from frozen inputs with `allow_stale = TRUE`. Load was 40-60 on 48 cores from
+another project; this verification used three 8-core lanes.
+
+| Check | Result | Time, peak memory |
+|---|---|---|
+| baseline tail: 7 ‖ 7a, then 8, 9 | all six tail-anchor files and four forcing tables byte-identical; 23 figures identical to I05's | 109 min, 23.3 GB (7); 77 min (7a) |
+| script 1, diagnostic mode | both land-cover tables byte-identical; 28 figures and the diagnostic CSV identical to I07's | 1 min |
+| four months (feb, may, aug, nov), seed 1: scripts 5, 6, 7a, 7, 8, 9 | the four months' draw and summary files byte-identical to the twelve-month seeded anchor (the check carried over from I04a); the forcing table has exactly those months | 2, 6, 17, 35 min |
+| `slice_alias = NULL` (script 7, four months) | the 10-12 ka differences disappear; the younger periods are identical | 34 min |
+| `ice$threshold = 0.6` (7a, four months) | the `*_part` variants are identical, the `*_thresh` variants differ (2,408 of 268,724 rows of `veg_ice_thresh`) | 17 min |
+| `ice$albedo_fixed = "ice_albedo_sc"` (7a) | the fixed-ice variants equal the default run's scaled-ice ones exactly; the vegetation-only variants are unchanged | 17 min |
+| `kernels$cack_year = 2010` (script 8) | every non-CACK column is identical to the baseline; the CACK kernel and forcings differ; `raster(band = 10)` holds the netCDF's Year 10 values (not Year 3 or 11) for two months; the Year attribute reads "2001 = 1" | under 1 min |
+| `domain$lat_max = 70` (script 8) | identical to the baseline's rows below 70 N | under 1 min |
+| literal equivalence before the runs | the config's `ages`, the diagnostic zone labels and the CACK band are `identical()` to the old literals | - |
+
+The repository's figures, runs, data and outputs were unchanged, and the 331 frozen inputs
+matched. Two first-pass failures were in my comparison harness, not the pipeline:
+- a misread netCDF attribute;
+- subsetting a table with a `units` column without loading `units`, which strips the class.
+
+---
+
+## I06: every script on the run manifest; plain config loader; session fixes (#9), merged 2026-10-14
+
+**Purpose.** Every invocation of every numbered script leaves a provenance record, and
+no environment variable steers the pipeline.
+
+**Decisions taken while planning (Chris, 2026-10-14):**
+- **The draw-identity helper (`lc_draw`) is parked**, as overcomplicated. Astra's redesign
+  was adopted instead: no ensemble work during the migration; at I14, a plain loop over
+  draws.
+- **Readability before elegance**, recorded in AGENTS.md (chris-dev 85af40a).
+- **Script 1's diagnostic switch** becomes `run$diagnostic` in the config. `RUN_CORES` is
+  dropped. No environment variable is used as a setting; the three BLAS thread variables
+  are recorded only.
+- **The config loader** becomes plain `source()` plus the same validation, replacing the
+  restricted parser.
+- **The behaviour bugs** found by Astra's readability review are fixed simply; its other
+  items go to I15.
+
+**Changed:**
+- **Scripts 1-4** now call `run_begin()`, read and write through the manifest, and end
+  with `run_finish()`, as scripts 5-9 already did.
+  - Script 4's fits and AIC table are recorded too.
+  - Script 1's elevation cache is a recorded input. When absent, the AWS lookup is
+    recorded and the new cache written through the manifest.
+- **In all ten scripts** `run_begin()` precedes the `library()` calls, so a missing
+  package is recorded as a failed run.
+- **Script 8** no longer reads script 7's three ice tables, which it never used.
+- **`config.R`** gains `run$diagnostic`, and its header explains that later issues add
+  method options rather than closing the key set.
+- **`R/run_manifest.R`:**
+  - the error handler is installed for batch runs only;
+  - the error and device options are restored at the end;
+  - only the run's own plot devices are closed;
+  - the "no run recorded" message explains that files made before run manifests existed
+    have none.
+- **`seed_run_dir()`** copies instead of linking, so a run can never write into the
+  baseline through a link.
+- **`R/config.R`** reads the config with `source()`.
+- **Tests** updated and extended: session restoration, seeding by copy, the new
+  loader's contract and `run$diagnostic`.
+- **Docs:** Astra's ensemble redesign and readability review, and the two Fable reviews
+  (extraction issues; completed work).
+
+**Outputs changed.** None.
+
+**Verification.** Code at 34365c1 (merged with feature/single-config). Each run was in its
+own run directory at 8 threads.
+
+| Check | Result | Time, peak memory |
+|---|---|---|
+| full chain at seed 1: 1, 2, 3, script 4's AIC section (from frozen fits), 5, 6, each checked against the previous script's real manifest | land-cover tables, calibration table, AIC table and point predictions byte-identical; all 26 files of the seed-1 anchor byte-identical; 62 figures of scripts 2-3 identical to I07's; manifests completed, with checks 2 vs 1, 3 vs 2, 5 vs 2 and 37 of 6 vs 1 and 5 all passing | 0, 4, 1, 0, 10, 17 min |
+| tail from frozen predictions: 7 ‖ 7a, then 8, 9 | all ten tail and forcing anchors byte-identical; 23 figures identical; 8's check against 7a and 9's two checks pass; 8 now reads only 7a's product | 103 min, 23.2 GB (7); 70 min (7a) |
+| script 1, `run$diagnostic = TRUE` | both tables byte-identical; 28 figures and the diagnostic CSV identical to I07's | 1 min |
+| a copy of script 5 with an error injected after its first output | manifest `failed` with the error, the selected-model output written before it recorded; exit status 1 (rerun by hand) | under 1 min |
+| unit tests | all seven test files pass | - |
+
+The repository was unchanged and the frozen inputs matched before and after.
+
+**A fault in my verification drivers, found here.** The I04a, I04b and I06 drivers logged
+`exit=$?` after a `$(date)` in the same line, which resets `$?`, so every `exit=` in those
+status logs is meaningless. No conclusion rested on them: every result above, and in
+I04a and I04b, comes from the outputs and the manifests' recorded status. Driver template
+fixed (capture the code first).
+
+---
+
+## Order revised and two reviews (2026-10-14)
+
+Chris asked why the extraction issue I10 was needed, then for two adversarial reviews
+(Fable, maximum effort, read-only) under the readability priority:
+- `docs/cc/2026-10-14_extraction_issues_adversarial_review_fable.md`: the extraction
+  programme was mostly net-negative for Andria. I10, I12, I13a and I09 were closed as not
+  planned, and I08 was folded into I16. I11 was slimmed to one tested function for script
+  7a's per-pair arithmetic, with the readvance adjustment inside.
+- `docs/cc/2026-10-14_completed_work_adversarial_review_fable.md`: the completed work is
+  net positive, and nothing is rolled back. The path catalogue was the one real readability
+  cost, answered by I17.
+
+Remaining order: I11 (slim), I16 (method options), I13b (with I15 inside). I14 stays parked.
+
+---
+
+## I17: path readability (#20), merged 2026-10-14
+
+**Purpose.** A reader stepping through a script sees which file each line reads or writes,
+and meets one path vocabulary.
+
+**Decisions (Chris, 2026-10-14):**
+- all three of Fable's fixes;
+- `runs/` git-ignored, except the official runs' manifests;
+- the stale check and the exact config keys stay strict;
+- `path_calibration_model()` kept as the one exception, for code that loops over model ids.
+
+**Changed:**
+- **Trace messages.** `read_input()` and `write_output()` print `reading <path>` and
+  `wrote <path>`.
+- **Deferred interactive manifests.** In an interactive session the manifest is first
+  written at the first output or at the end, so stepping through a script leaves no stray
+  `started` manifest. `run_begin()` takes `interactive_session = interactive()`, so tests
+  can stand in for RStudio.
+- **One path vocabulary.** `path_prediction()` and `path_forcing()` are retired; calls
+  name the catalogue id, e.g. `path_file(paths, 'prediction_summary_month', month =
+  month)`. Fixed calibration files are named the same way. `path_calibration_model()`
+  remains only where the model id is a variable; its comment explains the file-name
+  oddity it hides.
+- **`runs/` in `.gitignore`.**
+- **`config.R`'s header** says how to add a setting.
+
+**Outputs changed.** None.
+
+**Verification:**
+- every replaced path is `identical()` to the helper it replaced, for all models, all
+  twelve months and both layouts;
+- all seven test files pass, including new cases for the trace messages and interactive
+  timing;
+- scripts 8 and 9 from frozen inputs reproduce the forcing table and the four CSVs byte
+  for byte;
+- every script parses.
+
+---
+
+## I11 (slimmed): script 7a's per-pair arithmetic as one tested function (#12), merged 2026-10-14
+
+**Purpose.** Make the arithmetic behind every forcing variant testable on small cases, and
+give I16's ice-advance fix a home. As rescoped by Fable's review and adopted by Chris; the
+readvance adjustment goes inside the function (Chris).
+
+**Changed:**
+- **`R/differences.R`:** `pair_albedo_differences(alb_cell_filled, ice_threshold)` holds
+  script 7a's lines, moved unchanged. Its header states the input, the output, the sign
+  (younger minus older) and the inherited rules (questions C2, C0).
+- **Script 7a's loop** keeps its `subset`/`rbind` and calls the function, so the row names
+  and bytes are as before.
+- **Removed:** the three tallies, which were incremented but never read. The per-cell
+  messages stay.
+- **Removed in its own commit:** the repeated `rowSums` pair (identical expressions).
+- **`tests/test_differences.R`:** eight hand-checkable cases: vegetation only, retreat,
+  still ice, exactly at the threshold, a missing fraction, and the readvance adjustment.
+  Two of them document the known faults: an advance across the threshold reported as zero
+  change, and a first-pair readvance error.
+
+**Outputs changed.** None.
+
+**Verification.**
+- **Join check:** `identical()` on a fixture, row names included.
+- **7a from frozen predictions** (67 min, 2.4 GB): `ALB_diffs_bluesky.RDS` byte-identical
+  to the anchor.
+- **Scripts 8 and 9:** the forcing table and four CSVs byte-identical; figures identical.
+- **Manifests and inputs:** all completed; the frozen inputs matched.
+
+## I16a: kernel variables, the ice-advance method and a legacy configuration (#19, first part), merged 2026-10-14
+
+**Purpose.** Make the method choices Chris took on 2026-10-14 (to be reviewed by Andria)
+switches in `config.R`, and keep the original analysis reproducible from
+`configs/legacy_config.R`. This part covers the kernels and the ice-advance method; the
+calibration choices (i16b) and land support (i16c, waits for the MOD44W data) follow.
+
+**Changed:**
+- **`R/kernels.R` (new):** a table of the kernel variables script 8 can read, with sky
+  (clear or all), level (top of atmosphere or surface) and the label script 9 prints;
+  `kernels_read(cfg)` returns the rows for the configured variables.
+- **`config.R`:** `analysis$kernels` (`hadgem_variable = "albedo_sw"`, `cam5_variable =
+  "FSNT"`, `cack_variable = "CACK CM"`, `cack_year`) and `analysis$ice$difference_method =
+  "endpoint"`. The schema checks each name against the table and the method against its two
+  choices.
+- **`configs/legacy_config.R` (new):** a complete copy of `config.R` with the original
+  choices (`albedo_sw_cs`, `FSNSC`, `CACK` for 2003, `legacy_components`, seed 1) and its own
+  run directory; its header lists every difference.
+- **Script 8** reads the configured variable of each kernel (the CACK 2001-2016 mean is one
+  band per month; the single year is a level and a band). **Script 9** labels the kernels
+  from the table, and prints the "factor of two" sky warning only when the kernels mix clear
+  and all-sky.
+- **`R/differences.R`:** `difference_method = "endpoint"` takes each slice's albedo, ice or
+  vegetation by the threshold, and subtracts; `"legacy_components"` is the original
+  arithmetic. **`tests/test_differences.R`:** sixteen cases, including the advance, the double count
+  (below) and a misspelt method, which now stops rather than using the original arithmetic.
+
+**Outputs changed (new configuration only; the legacy configuration reproduces the old
+outputs exactly).** Global-equivalent forcing, mW/m², 8-10 ka as the example:
+
+| Kernel | Original | Clear-sky + endpoint | New (all-sky + endpoint) |
+|---|---|---|---|
+| HadGEM3 | 302.8 | 302.5 | 163.7 |
+| CAM5 | 316.9 | 294.9 (top of atmosphere) | 191.4 |
+| CACK | 155.4 | 147.0 (2001-2016 mean) | 147.0 |
+
+- The **endpoint method** alone (HadGEM3, same kernel) moves any period by at most 4.7 mW/m²
+  (10-12 ka: 270.2 to 265.5).
+- **All-sky kernels** roughly halve the HadGEM3 and CAM5 forcing at 6-12 ka, as expected
+  where clouds hide the surface; this is the largest change.
+- **CAM5 at the top of the atmosphere** instead of the surface: about 7% smaller.
+- **CACK 2001-2016 mean** instead of 2003: within about 5%.
+
+**Unexpected effect, reviewed by Fable and Astra before merging (Chris's request).** The endpoint method changed 9 pairs of
+slices (108 cell-months), not only the 3 ice advances it was meant to fix. In the other 6
+(cells 3077, 3693, 3966, 7551, 7554, 9086), the readvance adjustment lowers a slice's ice
+fraction below the threshold, but script 7a chose the glacier albedo from the *unadjusted*
+fraction. The original arithmetic therefore added a vegetation change and an ice change
+for the same pair, about -0.6 in July albedo where the vegetation change alone is about
+-0.02. The endpoint method uses the adjusted fraction throughout and keeps only the
+vegetation change. Effect on forcing: within the 4.7 mW/m² above. Added to question C2.
+Both reviewers confirmed the diagnosis and agreed the double count should go with no
+separate switch (it describes an inconsistency, not a method). Fable's full cross-tabulation
+of the two classifications over all 806,172 rows: only the 3 advances and the 6 double
+counts differ; retreats, still-ice and missing pairs agree; 24 vegetation-component values
+become NA in two cells north of 74°N, which script 8 drops. On their advice the comments
+now describe both faults, the youngest-pair readvance fault is stated precisely (an error
+with two slices, wrong averages with more), and tests cover each (reviews:
+`2026-10-14_i16a_double_count_review_{fable,codex_gpt6astra}.md`).
+
+**Verification** (runs in `.rundirs/i16a_{legacy,new,clear}`, from the frozen predictions):
+- **Legacy configuration:** script 7a (67 min, 2.4 GB) `ALB_diffs_bluesky.RDS`,
+  `RF_holocene_all_cases.RDS` and the four forcing CSVs byte-identical to the anchors;
+  figures identical to I11's (PNG byte-identical, PDF identical apart from the embedded
+  dates).
+- **New configuration:** 7a, 8 and 9 complete (exit 0); the changed rows counted and
+  explained above.
+- **Clear-sky configuration** (endpoint with clear-sky kernels): separates the effect of the
+  method from that of the sky choice.
+- **Manifests** record the kernel variables and the method each run used.
+- **A slip in the verification set-up, caught and corrected:** the clear-sky configuration
+  first wrote into the new run's directory, so its scripts 8 and 9 overwrote the new run's
+  forcing outputs (the run manifests showed it). Both were rerun in their own directories;
+  script 7a's output was not affected.
+
+## I16b: calibration choices (#19, second part), merged 2026-10-15
+
+**Purpose.** The calibration choices Chris took on 2026-10-14 (to be reviewed by Andria)
+as settings, with the original kept in `configs/legacy_config.R`.
+
+**Changed:**
+- **Comparison by ML** (question B4): `fit_calibration_model()` takes `method`;
+  `analysis$calibration$comparison_method = "ML"` (legacy `"REML"`). Script 4 fits the
+  eight-model ladder by it, prints a convergence line for each fit (until 2026-10-22 this
+  was bam's `converged` field, which bam sets to TRUE without checking; see the 2026-10-22
+  entry), and fits the model used for prediction (`model_id`) by REML into a new file, `calibration_prediction_fit_{month}_{tag}.RDS`.
+  The original refitted model 8 a third time and saved it over the ladder's fit; with an ML
+  ladder the two must differ. Script 5 reads the new file at its three selected-model sites.
+- **Present-day ice caps out of the calibration** (question B8):
+  `analysis$calibration$ice_mask = "centre_in_1ka_polygon"` (legacy `"none"`). Script 2
+  leaves out the modern cells whose centre lies under the 1 ka ice polygons, using the new
+  tested `cells_in_polygons()`, and records them in its manifest. They stay in the
+  prediction domain.
+- **Fraction check** (question B1): `check_fractions()` stops script 1 if any land-cover
+  fraction is not finite, is negative, or a row departs from one by more than 1e-9;
+  otherwise the manifest records the largest departure. A check, not a setting.
+- Tests: the path test names the new product (204 calibration fits); config tests for the
+  two keys; unit tests for both helpers, including the 48 cells found on 2026-09-25.
+
+**Outputs changed (new configuration).**
+- Calibration table: 2,812 rows instead of 2,860; the 48 left out average 0.36 July albedo
+  against 0.13 for the rest; every kept row unchanged.
+- January AIC ladder (ML, ice caps out), against the anchored REML ladder:
+
+  | Model | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+  |---|---|---|---|---|---|---|---|---|
+  | REML, all cells (anchor) | -6583 | -6606 | -6606 | -6626 | -6631 | -6641 | -6656 | **-6669** |
+  | ML, ice caps out | -6566 | -6578 | -6574 | -6574 | -6583 | -6598 | **-6615** | -6608 |
+
+  Under ML, model 7 (a Gaussian-process smooth of the three fractions) has the lower AIC in
+  January, by 7; under REML model 8 did. A January ML ladder on the full table (ice caps kept,
+  `.rundirs/i16b_mlonly`) separates the causes: model 7 -6646, model 8 -6633. So the switch
+  to ML is what makes model 7 come out ahead (by 13); leaving out the ice caps narrows the
+  gap to 7. Model 8 stays the configured model; the choice is Andria's (question B4).
+
+**Verification** (`.rundirs/i16b_{legacy,new,mlonly}`; and the verification tool's report
+`docs/cc/verification/2026-10-15_i16b-legacy-seed1_report.md`, PASS: the seed-1 check below,
+rerun from its own worktree at 5deabac):
+- **Legacy configuration:** script 1 writes both land-cover tables, and script 2 both
+  calibration tables, byte-identical to the frozen ones. Scripts 5 and 6 with seed 1, the
+  prediction fit seeded from the frozen model 8 (what script 5 read before): all 26 files
+  of the seed-1 anchor match byte for byte (script 5: 11 min; script 6: 19 min).
+- **Registry REML refit**, January, through `tools/check_calibration_month.R` with
+  `fit_calibration_model(method = "REML")`: predictions within 1e-6 of the stored model,
+  AIC -6669 as anchored (21 min).
+- **ML smoke test** (model 1, January): ML and REML both fit (AIC -6582 and -6583).
+- **January pilot of script 4, new configuration** (150 min): all 9 fits printed
+  "converged: TRUE", which is no evidence for bam fits (see the 2026-10-22 entry); AIC
+  table above.
+- **A slip, without consequence:** the main checkout was switched to another branch for a
+  few seconds while script 4 ran from it. The running R kept reading the file it had opened
+  (git replaces files rather than editing them), as `/proc` confirmed; the runs not yet
+  started used the restored branch.
+
+## I15a: readability, comments and indentation only (#21), merged 2026-10-15
+
+**Purpose.** The first of the three readability issues split from #18 (Chris adopted
+Astra's plan, `2026-10-15_i15_split_recommendation_codex_gpt6astra.md`): make the scripts
+easier for Andria to read without changing one executable expression.
+
+**Changed** (scripts, R/ helpers and the two configurations; one commit each):
+- **Issue tags removed:** about 125 '(issue I0x)' mentions; question references for Andria
+  kept; sentences mended where a tag sat inside one.
+- **Script headers corrected:** eight scripts said every remaining line was unchanged from
+  the original, no longer true; 7a's first sentence was unfinished.
+- **Out-of-date comments corrected:** settings described as fixed values that now come from
+  config.R; a CM note pointing to 'line 123'; the registry's 'each model adds to the one
+  before'.
+- **CM notes about code that no longer exists** (six) removed (Chris: list the important
+  removals in the write-up instead; done in its "Code removed from the original analysis"
+  list).
+- **Notes at the calculation sites:** script 8's kernel coordinates, t(flip()) of CACK, units,
+  factor of 100 and signs; script 2's zero albedo set to 1e-4 (the beta family).
+- **Script 3's tutorial leftovers** (euro_example, educ_rgb, two plots both called 'month 5')
+  and **script 5's 'month' column** (it holds observed albedo) explained.
+- **'One row per ...'** at every saved table, checked against the frozen outputs.
+- **Indentation** of script 5's November block, script 7's month-guarded maps and script 9's
+  EGU recipe.
+- **New tool** `tools/check_comments_only.R`: proves a change touched only comments and
+  layout of the pipeline code (scripts, R/, configurations) by comparing parsed code.
+
+**Outputs changed.** None.
+
+**Verification.** `docs/cc/verification/2026-10-15_i15a-comments-only-2_report.md`, PASS:
+all 23 changed pipeline files parse to exactly the same code as before the first edit, and
+all 12 test files pass. A first run failed on the checker itself, which counted a
+verification spec in docs/ as code; fixed and tested.
+
+## I15b: readability, names in the R/ helpers (#22), merged 2026-10-15
+
+**Purpose.** The second readability issue split from #18: short scratch names in the shared
+helpers replaced by names that say what they hold, with no change in behaviour.
+
+**Changed.** Local variables only, in `R/calendar.R`, `R/config.R`, `R/config_schema.R`,
+`R/preparation.R`, `R/map_helpers.R`, `R/paths.R` and `scripts/make_grid.R` (renamed in
+place; the move into `R/preparation.R` was dropped). Examples: `dup` to `duplicate_months`,
+`bad` to `invalid_choices`, `top` to `path_components`, `span` to `longitude_span`, `rel` to
+`relative_path`, `ms`/`ks`/`m`/`k` to `template_months`/`template_models`/`month`/`model_id`,
+`done` to `recorded_files`. Public argument names unchanged. Renamed with R's parser, so
+strings, comments and named arguments of calls were not touched.
+
+**Outputs changed.** None.
+
+**Verification.** `docs/cc/verification/2026-10-15_i15b-helper-names_report.md`, PASS: all
+12 test files. Also, before and after the renames, `prepare_boundaries()` for all three map
+windows and `make_grid()` on the calibration table gave `identical()` results.
+
+## I15c: readability, renames and dead code in the scripts (#18), one branch per script
+
+**Purpose.** The third readability issue: in each script, names that say what they hold and
+code that is never used removed, with no change to any output. One branch, verification and
+merge per script, in the order 8, 9, 3, 1, 2, 5, 6, then 7 and 7a (Astra's plan, adopted by
+Chris 2026-10-15). Each script is run under `configs/legacy_config.R` with seed 1, old code and
+new, and its outputs compared.
+
+### Script 8 (merged 2026-10-15)
+- `bar` renamed `june_ice_forcing_over_100` (the June cell-pairs whose HadGEM3 ice forcing
+  exceeds 100 W/m2, a check printed and plotted), with a comment saying what the block is.
+- Removed, none of it read or printed: the `alb_prod` line, four ice colours, the kernel map
+  built inside the month loop (never drawn) and its three helper tables, and a bare
+  calculation left from a hand check. The boundary-file reads stay.
+- Verified (`docs/cc/verification/2026-10-15_i15c-script8-{before,after}_report.md`, both
+  PASS): the forcing table byte-identical to the anchor and to the old code's; Rplots.pdf
+  identical to the old code's apart from the embedded dates.
+
+### Script 9 (merged 2026-10-15)
+- Names for what each table holds: `forcing_by_cell` (was `d`), `coarse_differences` (`d7`),
+  `FORCING_COLUMNS` (`KERNELS`), `complete_cell_month_periods` (`keep`), `forcing_by_period`
+  (`main`), `variant_sensitivity` (`sens`), `holocene_panel`, `forcing_panels`,
+  `kernel_comparison`, `forcing_axis_limits` (`hol`, `both`, `hol3`, `rng`), and the
+  function locals. The per-period pair counts: table `pairs_per_period`, column `n_pairs`.
+- `aggregate_forcing()` and `panel_plot()` take the table, Earth's area and the axis limits
+  as arguments instead of reading global variables (the limits were reassigned before the
+  EGU figure; each call passes the values it used before). Dead `alb_prod` line removed.
+- Verified (`docs/cc/verification/2026-10-15_i15c-script9-{before,after}_report.md`, PASS):
+  the four forcing CSVs byte-identical to the anchors; all seven figures identical to the
+  old code's (PNG byte for byte, PDF apart from the embedded dates).
+
+### Script 3 (merged 2026-10-15)
+- `cal_long` held two different tables (the monthly calibration table, then, after an alias
+  halfway down, the table melted by land-cover class): now `calibration_long` and
+  `cover_albedo_long` (which also replaces `cal_lct_melt`); the alias is gone. The unused
+  four-colour palette is removed.
+- Verified (`docs/cc/verification/2026-10-15_i15c-script3-{before,after}_report.md`, PASS;
+  script 3 has no anchor): all nine figure files, Rplots.pdf included, identical to the old
+  code's.
+
+### Script 1 (merged 2026-10-15)
+- In the diagnostic block: `present` to `present_cell_slice_keys`, the table `status` to
+  `ice_status_table` (its column `status` and the legend unchanged), `sums` to
+  `cover_fraction_sums`, `d` to `class_draw_stats`. The elevation-lookup rename waits for
+  I16c, which edits that block.
+- Verified in diagnostic mode (`docs/cc/verification/2026-10-15_i15c-script1-{before,after}_report.md`,
+  PASS): both land-cover tables byte-identical to the anchor; all 29 diagnostic figure files
+  identical to the old code's; the printed diagnostics differ only in the run-folder name.
+
+### Script 2 (merged 2026-10-15)
+- Removed: the coarse table's column names set to 'bs01'...'bs12' and overwritten on the next
+  line; two unused fill scales (`cols_fill`); `vname`, set twice and never read.
+- The point layer's attributes taken by name (every column but the coordinates) instead of
+  by position; same columns, same order. The albedo-table renames wait for I16c.
+- Verified (`docs/cc/verification/2026-10-15_i15c-script2-{before,after}_report.md`, PASS):
+  both calibration tables byte-identical (to the anchor and to the old code's); all 55
+  figure files identical to the old code's.
+
+### Script 5 (merged 2026-10-15)
+- The seven spatial-experiment fits, seven variables found again by
+  `eval(as.name(paste0('model_', model)))`, are one named list (`comparison_fits`), read in the
+  same order. The draws and the table built from them (`cal_interp_sim_gam`, reassigned) are
+  `response_draws`, `response_table` and `response_long`; the experiment loop's `sim`/`sim_df`/
+  `sim_melt` are `comparison_draws`/`comparison_response_table`/`comparison_response_long`;
+  `cal_diff` is `calibration_stats`. The draws' column names come from `simulate()`, checked.
+- The base seed is computed, then recorded (two statements; same value, same record).
+- Removed: `cal_sim_SPE` (an empty table never filled) and the `alb_prod` line.
+- Verified with seed 1 (`docs/cc/verification/2026-10-15_i15c-script5-{before,after}_report.md`,
+  PASS): the statistics CSV byte-identical to the seed-1 anchor; the twelve selected models and
+  all ten figure files identical to the old code's.
+
+### Script 6 (merged 2026-10-15)
+- One name per prediction table, saying what it holds: `fitted_albedo`, `point_predictions`,
+  `response_draws`, `response_table`, `response_samples`, `response_summary` (were
+  `paleo_interp_predict_gam_vec` ... `paleo_interp_sim_gam_sum`).
+- The slice column renamed `year` by name ('ages') instead of by position; same column.
+- The base seed computed, then recorded; the `alb_prod` line and a commented-out vector removed.
+- Verified with seed 1 on the code as merged (`docs/cc/verification/2026-10-15_i15c-script6_report.md`,
+  PASS): all 25 script-6 files of the seed-1 anchor and the combined point predictions of the
+  all-months anchor byte-identical.
+
+### Scripts 7 and 7a (merged 2026-10-15)
+- Script 7: removed, none of it used: the first `breaks`/`labels` (redefined identically before
+  any use), the bin-id labels and four colour scales built from them, the first `values` and
+  the first diverging fill scale (overwritten on the next lines), both diverging colour
+  scales, `ll_proj` and `lims`. `labels` (then the period labels) and the duplicate
+  `labels_period` are one name, `coarse_period_labels`; `breaks` is `albedo_bin_breaks`;
+  `thresh`/`values`, which set the diverging colour scale, are `diff_colour_limit`/
+  `diff_colour_positions`; the unused read of the point predictions is `point_predictions`
+  (the read stays). The merge that fills each cell's slices names its key, `by = 'year'`, the
+  only shared column.
+- Script 7a: renamed `x` (a layer name) to `layer_name`; `idx_ice`, used for two different
+  things, to `ice_layer_index` and `ice_rows` (and `idx_veg` to `vegetation_rows`); `spdf_2`/
+  `sf_data` to `grid_polygons_sp`/`_sf`; `foo2` to `higher_young_ice_fraction`.
+  `ice_status_veg` keeps its name: a diagnostic histogram takes its title from it. Removed,
+  52 lines whose results were never used: a coverage check that only printed counts; the
+  albedo, sd and cv bins and the facets column (the saved table takes named columns; the pair
+  arithmetic reads none of them); the label tables and bin breaks that fed only them;
+  `N_times`, `ll_proj`, the `alb_prod` line. The month factor stays.
+- Verified, old code and new code side by side under the legacy configuration
+  (`docs/cc/verification/2026-10-15_i15c-scripts7-{before,after}_report.md`, both PASS; script 7
+  73 min, 7a 53 min): all five tail-anchor tables byte-identical to the anchor and to the old
+  code's; all 17 figure files identical (PDF apart from the embedded dates).
+- **Still to do in I15c:** the renames in scripts 1 and 2 that wait for I16c (inventory rows 2
+  and 4), and the scripts outside the pipeline, which wait for Andria.
+
+**The last renames (3 November 2026, branch `i15c-script2-albedo-names`).**
+- Script 2: `bs_interp_df` becomes `albedo_by_cell` and `bs_interp_df_coarse` becomes
+  `albedo_coarse_by_cell` (inventory row 4). It had to wait for the land-only albedo work, which edits the
+  same block; that work became the rebuilt MODIS cell albedo (merged 31 October). The inventory's
+  `albedo_native_by_cell` was not used: the table now holds either the raster or the MODIS cell albedo.
+- Inventory row 2 (`ele_get_cells`, script 1) needed nothing: the code went when the elevation lookup moved
+  to a preparation tool (17bcaab).
+- Verified (`docs/cc/verification/2026-11-03_i15c-script2-names-{legacy,current,raster}_report.md`, all
+  PASS): under the legacy configuration the calibration table matches the anchor byte for byte; under the
+  current configuration the MODIS calibration table equals refit run 1's (every difference 0), and with
+  Andria's raster both the native and the coarse table are byte-identical to refit run 8's (MD5).
+- The scripts outside the pipeline move to their own issue, #26, which waits for Andria; #18 is closed
+  (Chris, 3 November).
+
+
+## Simplicity review follow-ups (Astra, 2026-10-15), tooling and documentation
+
+Chris asked Astra (maximum effort) whether the codebase was becoming over-engineered
+(`docs/cc/2026-10-15_simplicity_review_codex_gpt6astra.md`). The numbered pipeline is much
+shorter than the original; Chris approved its five "do now" items.
+
+- **Entry documentation** (merged 96e7b67): README and CONTRIBUTING now match the code
+  (layout, months setting, a portable way to run a script, run order, the superseded
+  wrapper plan marked). Documentation only.
+- **Anchor checks** (merged 8611e76): `tools/check_anchors.R` returns one table of results
+  (MATCH, DIFFER, NOT PRODUCED, SEEDED, NO MAPPING) and `anchors_ok()` is the single pass
+  rule, used by the command line (default) and by `tools/verify_change.R` (`require_all`),
+  instead of the tool parsing printed lines. Change-reviewer: approve with changes, made.
+- **Anchor guard** (branch anchor-guard): the default rule also fails when no file matched, after a
+  renaming slip made a verification check an empty run folder and pass vacuously.
+  Change-reviewer: approve with changes, made. Verified PASS (`anchor-guard-2`).
+- **Elevation lookup out of script 1** (branch centre-elevation-tool): the original network
+  lookup of the centre-point elevation (elevatr, AWS terrain tiles), which script 1 ran
+  whenever its cached file was missing, is now `tools/prepare_centre_elevation.R`, the same
+  query, run by hand only if `data/elev_interp_cells.RDS` is lost; script 1 only reads the file
+  and stops with that instruction if it is missing; `library(elevatr)` and the projection
+  string used only by the lookup left script 1. Verified under the legacy configuration
+  (both land-cover tables MATCH; path and config tests pass), which shows nothing else in
+  script 1 depended on them. Change-reviewer: approve with changes, made.
+- **Redundant reads and writes** (branch simplify-redundant-io): script 5 wrote the same
+  selected-model file in three places, now once (in the first loop, for script 6); script 7
+  read the point predictions and the projected boundaries without using them and read the
+  lon/lat boundaries twice; script 7a read both boundary files and used neither; script 8
+  read both boundary files and used neither. All removed; no value, seed or simulation call
+  changes, only the run records lose the needless entries. Verified under the legacy
+  configuration: script 5 (the stats table MATCHes and the twelve selected-model files equal
+  the frozen inventory byte for byte), scripts 7, 7a and 8 in one run (seeded without the point
+  predictions; all six files of the end-of-pipeline anchor produced and MATCH).
+  Change-reviewer: approve with changes, made. README's input tables corrected.
+
+## I16c (first part): land-mean elevation, merged 2026-10-15
+
+**Decision** (Chris, 2026-10-14; method amended twice on 2026-10-15; question B9): the elevation
+beside each cell's land-cover fractions is the mean over the cell's land and lake area rather
+than the single point at its centre, which for coastal cells could be sea floor (minimum -28 m).
+
+**Published basis.** New et al. (2002, Climate Research 21:1-25, doi:10.3354/cr021001, p. 7)
+average their elevation model's own land points per cell; ISLSCP II HYDRO1k (Verdin 2011,
+doi:10.3334/ORNLDAAC/1007) averages "the non-ocean pixels". Neither removes lakes, so lakes stay.
+Literature check: `docs/cc/2026-10-15_land_mean_elevation_precedents.md`.
+
+**What changed.**
+- `tools/prepare_land_elevation.R` (new, stand-alone, run once): GMTED2010 30-arc-second mean
+  elevation (Danielson & Gesch 2011, doi:10.3133/ofr20111073), the sea being GMTED's own 0 m
+  pixels; area-weighted mean per 1-degree cell; writes `data/elev_land_mean_cells.csv`
+  (committed). 0.2 minutes.
+- `config.R` `analysis$elevation$method`: "land_mean" (current) or "centre_point" (legacy, the
+  original cached AWS lookup, unchanged); schema, path catalogue, script 1, README, path test.
+
+**How the method got there.** A first version took the sea from the MOD44W water mask's ocean
+class. Both independent reviews (Fable, Astra) found that class starts about 1 km offshore, so
+the coastal strip of sea counted as land at 0 m, and that it labels Nettilling Lake as ocean;
+Astra also found the coverage guard could not see gaps. Chris chose the elevation model's own
+sea. In the reconciliation round Fable judged the remaining inlet error acceptable; Astra
+rejected it and proposed the GSHHG shoreline database; Chris chose to state it.
+
+**Limitations (stated in the tool).** Four cells 31-179 m low where GMTED carries land heights
+over sea inlets (eastern Baffin Island twice, Wager Bay, Prince William Sound), 14 Arctic cells
+3-13 m low; land at exactly 0 m treated as sea (at most about 7% of a cell); coastal pixels that
+are part sea hold the mean of land and 0 m.
+
+**Effect.** Against the centre point: correlation 0.96; mountain cells change most (high
+Rockies 3,492 to 3,018 m); flat country barely (Kansas 439 to 433 m); the eight sub-sea-level
+centre points become land elevations.
+
+**Verification.** Legacy configuration: script 1 matches the anchors (both land-cover tables
+MATCH), path and config tests pass. Current configuration: only the elevation column changes.
+Reports `2026-10-15_i16c-elevation-{legacy,current}-4`.
+
+## B4 follow-up: model comparison by AIC only, the ML reason corrected (2026-10-16)
+
+**Why.** On 15 October Chris chose to fit the seven spatial experiments by ML too, on my
+statement that they are compared by AIC. They are not: nothing in the original or current code
+computes an AIC for them; script 5 only simulates from them for figures, and the off-pipeline
+spatial-evaluation script compares their predictions with the REML prediction model. Fable and
+Astra reviewed it independently (one reconciliation round; reports filed under `docs/cc/`):
+both recommended keeping the seven on REML, the original, and both found that the recorded
+reason for the ML ladder misdescribed mgcv's AIC. Chris's decisions, 2026-10-16:
+
+- **The seven spatial experiments stay REML** (both configurations). The branch that changed
+  them (spatial-ml) was deleted unmerged; nothing on the trunk changes.
+- **The ladder stays ML** in the current configuration (`comparison_method`, already a setting;
+  REML in the legacy one), and the two ladders are to be compared. The reason is corrected in
+  `config.R` and `R/model_registry.R`: ML is the usual convention for comparing models that
+  differ in their terms (mgcv's `gam.selection` help), not a requirement, because the AIC mgcv
+  computes is the conditional AIC with the corrected degrees of freedom (Wood, Pya & Saefken
+  2016, JASA 111:1548, doi:10.1080/01621459.2016.1180986; `logLik.gam` help), valid on REML fits
+  as well. Checked on the original fits: all eight ladder models use identical rows (2,166 in
+  January, 2,827 in June) and carry the correction (`edf2`).
+- **Analysis of deviance removed** (scripts 4 and 5): the chi-square tests across the ladder,
+  which nothing saved or read. Models 5 to 8 are not nested (model 6 replaces three smooths by
+  one, models 7 and 8 change its basis), so those tests did not test what they appeared to; AIC
+  is the comparison kept. For Andria's review.
+- **Recorded, not changed:** the spatial experiment "elevation and cover with location" is the
+  same model as model 8, fitted a second time; on the original files the two fits are identical
+  (same formula and rows, fitted values differ by 0). It stays for now (general question 7).
+
+**Outputs.** None change: the removed tests were printed only, and no fit, table or figure is
+different. Verified with `tools/verify_change.R` (spec `2026-10-16_ladder-aic.R`).
+
+## Snow, step 1: the forcing broken down by month and latitude (script 10), 2026-10-16
+
+**Why.** Chris's decision of 15 October (question B2d): before any snow test, see where in the
+year and in latitude each period's forcing comes from, since the calibration's modern snow is
+assumed for the past.
+
+**Changed.**
+- `R/forcing_periods.R`: script 9's grouping of slice-pairs into periods and its
+  complete-cell filter, moved unchanged into one function, so scripts 9 and 10 use the same
+  pairs and cells.
+- `scripts/10_forcing_breakdown.R` and `R/forcing_breakdown.R`: script 9's arithmetic with the
+  months and latitude bands kept apart. Five columns per kernel, period, month and band (the
+  month's global-equivalent forcing; its part of script 9's annual figure; the band's mean;
+  the band's area and the part of it with a value). The script stops unless the parts add up
+  to script 9's totals (within 1e-9 W/m2). Tables and figure name the variant and kernels.
+- One setting, `analysis$forcing$latitude_band_width` (10 degrees, a whole number), in both
+  configurations; schema, tests (`tests/test_forcing_breakdown.R`: a hand-worked case with a
+  missing month and a cell with no value, and the band edges for widths 1 to 90 and a narrow
+  domain), path catalogue, README.
+
+**Reviews.** Fable and Astra, independently, then one reconciliation round. Both: the
+arithmetic is right and the parts add up to script 9 in general, not only on this data. Fixes
+made, approved by Chris: a legal band width (e.g. 90) crashed the script; the columns'
+missing-value denominators were unclear (now `valid_area_m2` and exact definitions); the
+outputs did not name the variant and kernel; no unit test. Both also found that the headline
+variant mixes vegetation change and ice-sheet retreat, so the breakdown locates the combined
+forcing and says nothing by itself about snow; the snow estimate is the next step.
+
+**Outputs.** Script 9's four tables are unchanged (anchor `interp-forcing-2026-10-08`); one new
+table and one figure.
+
+## Vegetation-only and ice-only bars add up (script 9 sensitivity figure), 2026-10-19
+
+**The error (ours, not Andria's).** Script 9, written on 2026-09-21, sums each forcing column over
+a period's slice-pairs with missing values counted as missing. The threshold components
+(`veg_thresh`, `ice_thresh`) are missing by design for the kind of step they do not describe
+(`R/differences.R`), so a cell with both kinds of step in a period dropped out of both bars: at
+8-10 ka, 343 cells carrying 99% of the total. Found by Opus on 2026-10-18 and confirmed by Astra
+(`2026-10-18_forcing_code_check_codex_gpt6astra.md`). The headline was computed separately and was
+never affected.
+
+**The fix (Chris, 2026-10-19).** With the corrected arithmetic (`difference_method = "endpoint"`),
+a step's part that does not apply counts as 0 when the step's total is known ("by kind of step":
+ice change if ice at either end, otherwise vegetation change), so the two parts add up to the
+total. `R/forcing_components.R` (new, tested in `tests/test_forcing_components.R`); script 9
+applies it to a copy used only for the sensitivity table. Andria's area-share split (`veg_part`,
+`ice_part`) is added to the figure, so it shows both splits, each with its total; which split the
+paper reports waits for her (question C1). The figure has plain labels: totals and their parts.
+
+**Legacy configuration unchanged (Chris).** With `legacy_components` the helper returns the table
+untouched: the original arithmetic breaks the one-kind-per-step rule in 108 rows of 9 cells (the 3
+ice advances recorded as no change, and the 6 double counts), and the legacy configuration exists
+to reproduce the original outputs. All four script 9 tables still match
+`tests/anchors/interp-forcing-2026-10-08` byte for byte; only the figure's labels differ.
+
+**Outputs changed (current configuration only).** `forcing_by_period_variant_sensitivity.csv` and
+its figure. Example, HadGEM3 study-area mean, 8-10 ka: vegetation -0.77 and ice +5.67 W/m² (total
+4.90) by kind of step; -0.75 and +5.30 (total 4.55) by area share. The headline table, the EGU
+recipe and the IPCC tables are byte-identical to the 18 October run.
+
+**Note for existing run folders.** `analysis$forcing$sensitivity_variants` changed, so script 9
+stops on a run folder whose script 8 manifest records the old settings: rerun script 8 there
+first (or set `run$allow_stale`).
+
+**Reviews and verification.** First version: Opus (standing in for Fable, whose usage limit was
+reached) and Astra independently found the legacy stop, plus smaller points; all applied.
+Re-reviews: both "ready to merge" (`2026-10-19_variant_components_{review,rereview}_{opus,codex_gpt6astra}.md`).
+Verification: `2026-10-19_variant-components-4` (current, PASS) and
+`2026-10-19_variant-components-legacy` (legacy anchors, PASS). Follow-up decided by Chris: the
+headline setting is to accept totals only, done with the switch to partial ice.
+
+## Headline forcing: partial ice, and only a total may be the headline, 2026-10-19
+
+**Why.** Andria's email answer (passed on by Chris, 19 October; question C1): she split each
+cell's albedo between ice and vegetation by the fraction of the cell under ice. Chris confirmed
+that this partial-ice version is the paper's headline, with the all-or-nothing version (a cell
+is all ice above the 50% threshold) kept as a sensitivity check. After both reviewers of the
+variant-components fix pointed out that a vegetation-only or ice-only part could still be set
+as the headline, Chris also chose to accept only totals there.
+
+**What changed.**
+- `config.R`: `analysis$forcing$variant` is `veg_ice_parts` (was `veg_ice_thresh`); its comment
+  names the four legal totals. `configs/legacy_config.R` keeps `veg_ice_thresh`, as in the
+  original analysis.
+- `R/config_schema.R`: the headline must be one of `veg_ice_thresh`, `veg_icesc_thresh`,
+  `veg_ice_parts`, `veg_icesc_parts`; anything else stops with the legal values listed.
+  `tests/test_config.R` covers the new default, the legacy value, another total, and the
+  refusal of a part.
+- Script 9: the slide-18, kernel-spread and domain-mean figures name the ice method they show
+  ("Ice method: total, partial ice, fixed glacier albedo"), because the current and legacy
+  configurations now report different totals under the same file names (Chris chose a
+  subtitle rather than a table column, so the tables and the legacy anchors are untouched).
+  Comments corrected from the review: the four totals named; "fixed glacier albedo".
+- Scripts 9 and 10 follow the setting without other changes.
+
+**New headline** (full run of 18 October, scripts 9 and 10 rerun; HadGEM3 all-sky, study-area
+mean in W/m², global equivalent in W/m² in brackets; all-or-nothing values in the sensitivity
+figure):
+
+| Period | Partial ice (new headline) | All-or-nothing (before) |
+|---|---|---|
+| 0.05-0.5 ka | -0.692 (-0.0261) | -0.701 (-0.0264) |
+| 0.5-2 ka | -0.668 (-0.0252) | -0.664 (-0.0250) |
+| 2-4 ka | 0.489 (0.0184) | 0.487 (0.0184) |
+| 4-6 ka | -0.575 (-0.0217) | -0.626 (-0.0236) |
+| 6-8 ka | 1.102 (0.0415) | 1.048 (0.0395) |
+| 8-10 ka | 4.547 (0.1713) | 4.903 (0.1848) |
+| 10-12 ka | 4.429 (0.1669) | 4.274 (0.1611) |
+
+At 8-10 ka CAM5 gives 5.203 (0.1961) and CACK 4.049 (0.1526).
+
+**Outputs changed (current configuration).** `forcing_by_period.csv` and the three headline
+figures; script 10's breakdown table and figure (now of `veg_ice_parts`). The sensitivity, EGU
+recipe and IPCC tables are unchanged. **Legacy configuration:** all four script 9 tables still
+match `tests/anchors/interp-forcing-2026-10-08` byte for byte.
+
+**Note for existing run folders.** `forcing.variant` is an analysis setting, so script 9 stops
+in a run folder whose script 8 manifest records the old value: rerun script 8 there first (or
+set `run$allow_stale`).
+
+**Review and verification.** One reviewer (Chris's choice: no arithmetic changed): Opus,
+standing in for Fable, `2026-10-19_headline_partial_ice_review_opus.md`; ready to merge once the
+records were added, plus comment nits, all applied. Verification: `2026-10-19_headline-partial-ice`
+and `-legacy` (first run), then `-2` and `-legacy-2` after the comment fixes and subtitles (every
+table byte-identical to the first run; legacy anchors match): all PASS.
+
+**Open.** The `output/forcing/forcing_by_period.csv` tracked in git dates from September
+(e0ad29b) and is not today's headline; whether to refresh it or stop tracking it is to be asked.
+
+## Script 4 reports real convergence; model 7 did not converge in 7 months, 2026-10-22
+
+**Why.** Script 4 printed `converged: TRUE` after every fit. Every calibration model is fitted
+with `mgcv::bam()`, which stores `converged = TRUE` (and `boundary = FALSE`) without checking
+anything (mgcv 1.9.4): its fitting loop keeps the real flag to itself and only warns
+"algorithm did not converge". The printed line was therefore no evidence (Chris, 2026-10-22).
+
+**Changed.** A helper, `fit_convergence()` in `R/model_registry.R`, gives one line per fit:
+the fitting-loop steps used against the limit of 500 (bam's own test), and what mgcv's
+`gam.check()` prints for the smoothing-parameter optimiser: full convergence or not, its
+iterations, the largest gradient, and whether the Hessian is positive definite. Every sign of
+failure says NOT, so a log can be searched for it; at the step limit the line says "probably NOT
+converged" and points to R's warning, because a fit that converged on its very last step looks
+the same. Script 4 prints the line after saving each ladder fit and the prediction fit, so a
+failing log line can never cost a saved fit. Tested on made-up fits (`tests/test_model_registry.R`).
+No fit, file or number changes.
+
+**What it found.** Applied to the saved fits, the new line shows **model 7 (the Gaussian-process
+land-cover smooth) reached the 500-step limit without converging in 7 of 12 months**, in both
+the full run of 18 October (February, March, April, June, September, October, December) and
+the headline run of 19 October with ice caps kept (January, February, March, May, June, July,
+November). R did warn each time, but the warnings come at the end of each month loop without
+naming the model, and the printed line said TRUE. Every other fit converged, including all of
+model 8, the prediction model, so the forcing is unaffected. The AIC ladder is affected: in
+the headline run model 7 has a lower AIC than model 8 in January (-6694 against -6683) and May
+(-10253 against -10241) on fits that did not converge (and ties in March); its win in December
+(-6124 against -6115) is on a converged fit. The I16b note that "ML, not the ice mask, makes
+model 7 beat model 8 in January" rests on such a fit. A diagnostic refit of model 7 for January
+and May with a step limit of 2000 was started on 22 October (scratch only).
+
+**Review and verification.** One change-reviewer (plumbing: printed text only); its
+should-fixes (this entry, the test, saving before printing, the wording at the step limit and
+NOT on any optimiser failure) were approved by Chris and applied. Verification:
+`2026-10-22_convergence-report` (no script rerun; the helper on all 204 fits of the full run of
+18 October, script 4's print lines, the new test).
+
+## Diagnostic figures for Andria in tools/plotting/, 2026-10-27
+
+**Why.** On 20 October three diagnostic figures were drawn for Andria from scratch scripts, to
+judge which regional forcing signals rest on interpolation or extrapolation (the northeast
+hemlock result in particular). Chris asked on 27 October for them to be under version control
+and runnable after any run.
+
+**Changed.** Three scripts in `tools/plotting/` (not `scripts/`, which is the numbered pipeline;
+Chris's choice), run by hand from the repository root after a run, each with its own run
+manifest; figures go to `figures/diagnostics/`:
+- `plot_pollen_site_coverage.R`: the 1-degree cells with a pollen-based cover estimate before
+  interpolation, and counts for six regions;
+- `plot_training_support.R`: the cover triangle with today's (training) mixes, their convex
+  hull and the past mixes outside it; the share outside by time slice; where those cells are;
+  and in the log, the share outside by more than 0.02, 0.05 and 0.10 (the hull is a strict test);
+- `plot_forcing_vs_training_support.R`: HadGEM3's vegetation forcing per cell and period, with
+  the cells outside the training range outlined.
+
+The "outside the training range" rule is one set of functions, `R/training_support.R`, used by
+both support figures; it stops if a cover mix does not sum to one. The forcing map groups
+slice-pairs with `assign_forcing_periods()` (`R/forcing_periods.R`), as scripts 9 and 10 do.
+`R/paths.R` gains one input row, `data/lct_paleo_reveals.RDS` (the pollen-based cover before
+interpolation), which `read_input()` needs. The comment on the `diagnostics` map window in
+`config.R` and `configs/legacy_config.R` says that it now frames these figures too. No
+pipeline output changes.
+
+**What it shows (18 October run).** 11.1% of past cell-slices lie outside the training range,
+but only 4.3%, 1.7% and 0.5% by more than 0.02, 0.05 and 0.10 in cover fraction; the eastern
+deciduous forest is outside at up to 20 of 24 slices. Pollen coverage is good in the northeast
+and Great Lakes and sparse in the southern Plains. Pointers are in item 1 of
+`questions_for_andria_scientific_from_2026-10-20.md` (chris-dev).
+
+**Review and verification.** On the 18 October products the new scripts flag the same 7,419
+cell-slices as the scratch scripts (all slices; 7,417 without 50 BP, as in the figure) (none differs) with identical distances. One
+change-reviewer (tools): no defect in the figures; its should-fixes (the sum-to-one stop,
+the 50 BP slice left out by name, a redundant folder creation removed, the map-window comment,
+these records) were approved by Chris and applied; its proposed unit test was not taken up.
+Verification: `2026-10-27_diagnostic-plots-2` (the three scripts on the 18 October products).
+
+The model 7 refit with a 2000-step limit mentioned in the previous entry was stopped unfinished
+on 26 October (Chris's decision); the check moves to the refit after the MODIS rebuild
+(item 4 of the questions file from 20 October).
+
+## Diagnostic figure: the northeast evergreen effect and the location term, 2026-10-28
+
+**Why.** The three diagnostic figures of 27 October show that the northeast's past cover mixes (the
+hemlock decline, 6 to 4.5 ka) have no modern counterpart, but nothing in them showed the evidence for
+the leading explanation of why the model darkens the surface there. Chris pointed out on 28 October
+that Andria had only the numbers in the questions file to go on, and asked for a figure.
+
+**Changed.** A fourth script, `tools/plotting/plot_northeast_cover_and_location.R`, for May in the
+northeast box (80-66 W, 40-48 N): (a) today's evergreen share against latitude; (b) today's albedo
+against evergreen share, coloured by latitude, with the evergreen slope at fixed latitude; (c) the
+model's region-mean albedo as evergreen replaces summergreen, with and without the location term,
+using two fits that script 4 already stores (the prediction fit and the cover-plus-elevation model,
+both REML on the same data), so nothing is refitted. The regions of the diagnostic figures are now
+defined once, in `R/regions.R`, used by this script and by `plot_pollen_site_coverage.R` (whose
+labels, table and figure are unchanged). No pipeline output changes.
+
+**What it shows (18 October run).** In the region, evergreen share follows latitude (correlation
+0.92; across all 2,792 fitting cells, 0.06, so the link is local). Albedo falls with both
+(-0.63, -0.72), but with latitude held fixed the evergreen slope is +0.003 per 0.1 of evergreen share
+(standard error 0.003, p = 0.40): the region's data cannot sign it. With the location term the 6 to
+4.5 ka change is -0.095 (darker; 97% of deviance explained), without it +0.043 (brighter; 67%). Most
+of the lines rest on mixes outside the training range (every cell at evergreen up to 0.27, 92% at
+0.40; 98% of cells at 6 ka, 100% at 4.5 ka), so the figure shows that the data do not fix the sign,
+not the true effect. In checking, the questions file's claim that the fitting data "point the other
+way" was found too strong and corrected (chris-dev, item 1 of the file from 20 October).
+
+**Review and verification.** One change-reviewer (tools): one blocker, the caption's first
+extrapolation sentence, which argued from the region's mean open land and used the word more loosely
+than the training-range rule; Chris chose the training-range rule, and to apply the smaller fixes
+(data-level check that the two fits share their cells, stops for missing 4.5 ka rows and for lines
+that would drop cells, the albedo-latitude correlation behind panel b's title, why May, the shared
+region table). The region table was checked against the old rule on every grid cell, every pollen
+row and a 0.5-degree lattice: identical. Verification: `2026-10-28_northeast-location-plot-3` (both
+scripts on the 18 October products; the pollen figure byte-identical to 27 October's).
+
+## Calibration on the rebuilt MODIS albedo cell table (configuration choice), 2026-10-31
+
+Branch `refit-modis`, made from `feature/single-config` at 0c65aa7. Commits 0c65aa7..3d6a05a, then the records; merged into `feature/single-config` on 31 October.
+
+**Purpose.** Let the calibration models be fitted to the albedo rebuilt from MODIS over the land pixels of each 1-degree cell (`data/albedo_modis_cells.csv`, made by `tools/prepare_bluesky_albedo.R`) instead of the original 0.25-degree raster. Nobody knows who made that raster or how. It is read at each cell's centre, and it mixes water into coastal and lake cells. The original raster stays available as a setting, and the original configuration still reproduces its outputs. The benefit to the paper, as the decisions file states it: the refit shows how the forcing, and the northeast hemlock result, depend on this input.
+
+**Decisions** (Chris, 29 October 2026, `docs/cc/2026-10-29_refit_plan_decisions.md`, items 1-9). He chose between Astra's plan and Fable's review of it:
+- **Snow, in steps.** The 19 October plan is live: calibrate on the snowy and on the snow-free albedo, then mix the two by each cell-month's snow share. This change only lets the calibration use the all-days, snow-free or snowy albedo of the cell table. The mixing is a later change with its own plan. That later step will take the snow share from NASA's monthly snow-cover product (MOD10CM), averaged over 2000-2009 (item 8). This does not affect the present change.
+- **Code shape: Fable's minimal version.** One tested function attaches the albedo by exact cell centre. Script 2 has one if/else between the raster and the cell table. The support is given as counts in the run record, with no new product. The winter check has no setting of its own: it is a November-February run with the no-sun-angle-rule version selected. Model 7 is refitted at 2,000 steps only where it hit its 500-step limit, plus one month where it converged, as a control.
+- **Script 5's interval-coverage share** is fixed everywhere, for both albedo sources. The one saved reference file it changes is updated in its own commit (item 4).
+- **The cell table is committed** (7.8 MB), as the land elevation table was (item 6).
+- **Runs and parallelism** (items 2, 5): see "The new runs" below.
+- **No runs until** Fable's and Astra's reviews of the code were back and Chris had seen the input check (item 9).
+
+Decided by Chris after the code reviews (30 and 31 October; items 10-15 of the decisions file):
+- apply every fix both reviewers agreed, then verify the original configuration;
+- stop comparing the coverage column with the unseeded anchor;
+- put the retrieval support in script 2's record;
+- choose the snowy run's months himself from script 2's counts, before any fitting;
+- a drift-and-conciseness review of the whole code after this merge;
+- script 5's new check compares the missing values value by value.
+
+The implementer's two reworded real-table tests were accepted by both reviewers, not put to Chris.
+
+The following are implementation rules, not decisions by Chris:
+- With the raster, `statistic` and `version` must keep their defaults (from the brief, following Fable's plan review).
+- The rows fitted are printed by `fit_convergence()` rather than in script 4 (the implementer's choice).
+
+**Changes:**
+- **Cell table, new and committed:** `data/albedo_modis_cells.csv` and `data/albedo_modis_cells_provenance.txt`, plain git (not LFS). Both are in the path catalogue (`R/paths.R`, `albedo_modis_cells`, `albedo_modis_provenance`), among the prepared inputs in `tests/test_paths.R`, and in README's data table.
+- **`config.R`:** a new setting, `analysis$albedo`:
+  - `source`: `"modis_cells"` (current) or `"legacy_raster"`;
+  - `statistic`: `"all_days"`, `"snow_free"` or `"snowy"`;
+  - `version`: `"full_75"` (full BRDF inversions, noon sun within 75° of overhead; the main version), `"any_75"`, `"full_70"` or `"full_nocut"`.
+
+  The defaults are `modis_cells`, `all_days`, `full_75`. The comment says that a snow-free run is a calibration on snow-free retrievals only, not a forcing without snow.
+- **`configs/legacy_config.R`:** `source = "legacy_raster"`, listed among its differences from `config.R`.
+- **`R/config_schema.R`:** checks the three keys. Their legal values are defined once, in `R/preparation.R`. It refuses a non-default statistic or version under the raster, because the raster has one albedo per month.
+- **`R/preparation.R`:**
+  - `cell_albedo_by_month()` matches the cell table to the calibration cells on the exact centre, `paste(x, y)`, as script 1 does for elevation. It keeps the calibration table's row order and fills nothing: a missing cell-month stays NA. It returns the centres unmatched in each direction. It stops, naming the cells, on any of these: a missing column, a repeated cell-month, an unknown month, or a value that is not a number in [0, 1). An exact 0 passes and is floored by script 2 as before.
+  - `retrieval_support()` gives, per month, the median and 10th percentile of the version's coverage and of its pixel-days per land pixel, over the cells with a value. These describe all qualifying retrievals, not the snow-free or snowy days alone.
+  - The file now sources `R/calendar.R` itself.
+- **Script 2:**
+  - *Raster branch:* the original statements, in their original order, with three changes. The grid is read inside the branch. Three plots are wrapped in `print()`, because inside an `if` block they are no longer drawn automatically. The record lines are added.
+  - *MODIS branch:* the function above, and two facet maps (`albedo_maps_monthly_modis_cells`, `albedo_missing_monthly_modis_cells`). It writes no coarse table and draws no native-versus-coarse figures. Nothing downstream reads those.
+  - *Shared by both branches:* the ice mask, the zero floor and the write of the calibration table. The calibration table keeps exactly its columns.
+  - *Run record (`calibration_albedo`):* the source; per month, the cells with an albedo and the cells floored from 0. For MODIS it also gives the statistic, the version, the table's path and MD5, the provenance lines, the support above, and the unmatched centres by kind (left out by the ice mask, or outside the modern cells).
+- **Script 4:** before any fitting, it prints the rows each month can be fitted on and stops, naming the months, where a month has fewer rows than the largest model has coefficients. Its convergence line now ends "fitted on N rows". Neither changes a fit.
+- **Script 5:**
+  - The share of observed albedo inside the model's 95% interval now divides by the cells with an observation, not by every cell. Before, a cell with no satellite value that month counted as a miss: polar night, and the four lake cells.
+  - A check stops the script if an observed cell has no interval.
+- **`R/model_registry.R`:**
+  - `fit_calibration_model()` takes an optional `control`, which defaults to the existing controls, so every pipeline fit is unchanged.
+  - New helpers `complete_model_rows()` and `model_coefficients()`.
+- **`tools/check_model7_convergence.R` (new, diagnostic only):** refits model 7 for named months at 2,000 steps, with the saved fit's own method and controls. It stops unless the formula, the family and link, and the model frame (same rows, same order, same values) equal those of the saved fit. It then prints steps, AIC and the largest change in a fitted value beside the saved 500-step fit.
+- **`tools/prepare_bluesky_albedo.R`:**
+  - The header no longer says the 16-day window is "centred" on the day. It is the window in which that day is the ninth (Wang et al. 2018).
+  - The two older versions of the script are added to `ACCEPTED_OLDER_SHAS`, each with an entry saying that only comments changed and how that was checked. Without them the cell step would refuse the monthly files of the 28 October build.
+- **Tests:**
+  - `tests/test_preparation_albedo.R` (new): a hand-worked toy case and every stop case. On the real table it checks four things: the snow mixing identity for all four versions (within the 2.5e-6 rounding bound); the snow-free value equals the all-days value where every day was snow-free; `full_75` and `full_nocut` are identical wherever the 75° rule cannot act; and each looser version keeps no fewer pixel-days than the stricter one.
+  - `tests/test_check_model7_convergence.R` (new): includes a dropped row, reordered rows, a changed response and changed missingness, each of which must stop.
+  - Additions to `tests/test_config.R` and `tests/test_model_registry.R`.
+- **References for the seed-1 and unseeded runs:**
+  - `tests/anchors/interp-seed1-2026-10-14/calibration_model_stats.csv` is regenerated, with its checksum and a README note (commit 3d6a05a).
+  - In `tests/anchors/tolerances.tsv` and `2026-10-08_single_config_regression_contract.md`, the coverage column is no longer compared with the unseeded anchor `interp-allmonths-2026-09-20`. That file is kept unchanged, with every other check.
+
+**Effect on the outputs.**
+- **Original configuration (`configs/legacy_config.R`).** Every output is reproduced byte for byte except one column of `calibration_model_stats.csv`, "data in credible interval". The correlation and both error quantiles are unchanged in every month.
+
+  | | jan | feb | mar | apr | may | jun | jul | aug | sep | oct | nov | dec |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | before (÷ 2,860 cells) | 0.71 | 0.90 | 0.91 | 0.92 | 0.92 | 0.92 | 0.93 | 0.93 | 0.93 | 0.92 | 0.80 | 0.56 |
+  | after (÷ observed cells) | 0.93 | 0.93 | 0.92 | 0.93 | 0.94 | 0.93 | 0.94 | 0.94 | 0.94 | 0.93 | 0.93 | 0.91 |
+  | observed cells | 2,166 | 2,765 | 2,827 | 2,827 | 2,827 | 2,827 | 2,827 | 2,827 | 2,827 | 2,826 | 2,460 | 1,751 |
+
+  The winter models were never worse. The old share counted the cells with no observation as misses. If this share is quoted anywhere, it moves as in the table; nothing else in the original analysis moves.
+- **Current configuration (`config.R`).** The albedo the models are fitted to changes, so everything from the calibration fits onward will change: the AIC ladder, the predictions, the forcing and the northeast result. None of it has been measured yet; the runs below are for that. The implementer exercised script 2's MODIS branch with stand-in file reading and writing (not a pipeline run, and not reproduced by either reviewer). It gave the following:
+  - 2,812 calibration cells;
+  - 4 calibration centres with no cell in the table;
+  - 58 table centres with no calibration cell: 48 left out by the ice mask and 10 at 17.5 N;
+  - cells with an all-days value under the main version: 1,726 in January and 1,416 in December.
+
+  Winter fits will therefore rest on fewer cells than the raster's 2,166 and 1,751. Some winter values also rest on few retrievals, for example 9% of a cell's land pixels (Fable's review, hand check 3). The new support numbers in the run record show this.
+
+**Reviews.** Independent reviews by Fable and Astra, each followed by one reconciliation round. Neither found an error in how the MODIS albedo is attached. Both found the same main gap: the model-7 tool did not check that it compared like with like. The findings applied are listed below. Chris approved applying them on 30 October (item 10).
+- the like-with-like stops in the model-7 tool;
+- the row check in script 4;
+- the interval check in script 5;
+- the support and the unmatched centres by kind in script 2's record;
+- the version-order test;
+- three attributions corrected (implementation rules no longer called Chris's decisions);
+- the calendar sourced in `R/preparation.R`;
+- two test and comment nits.
+
+Not applied: Fable's suggestion to wrap script 2's last `cor()` in `print()`. Astra showed that it still prints. Reviews: `fable_review.md`, `astra_review.md`, `fable_reconcile.md`, `astra_reconcile.md` (`docs/cc/2026-10-30_refit_code_review/`, with the implementer's brief and report).
+
+**Verification** (`tools/verify_change.R`, each from its own worktree under `paleo-RF-verify/`, original configuration; the 331 frozen inputs matched before and after every run):
+
+| Report (`docs/cc/verification/`) | Commit | What | Result | Time |
+|---|---|---|---|---|
+| `2026-10-30_refit-legacy-prep` | 527ea1c | scripts 1 and 2; `tools/check_anchors.R` against `interp-allmonths-2026-09-20`; the 13 test files that run in a fresh worktree | **PASS** | 0.4 + 2.7 min |
+| `2026-10-30_refit-legacy-seed1` | 527ea1c | scripts 5 and 6, seed 1, from the frozen fits | **FAIL** (script 5 exit status 1, run record "failed") | 1.7 min |
+| `2026-10-31_refit-legacy-seed1-2` | 83415db | the same | **FAIL**: "tests/anchors/interp-seed1-2026-10-14: NOT all MATCH"; `calibration_model_stats.csv` DIFFER, the other 25 MATCH | 6.6 + 11.7 min |
+| `2026-10-31_refit-legacy-seed1-3` | 3d6a05a | scripts 5 and 6, seed 1, against the regenerated seed-1 anchor; the 13 test files | **PASS**: every seed-1 anchor file matches; the 13 test files pass | 6.8 + 11.6 min |
+
+- **The first seed-1 run** stopped on script 5's new interval check. The log's error was `identical(is.na(...in_credible), is.na(...alb_data)) is not TRUE`, because `identical()` also compared the names that `quantile()` attaches. Commit 83415db compares value by value instead.
+- **The second run** was expected to fail on the statistics table: that is the change, and the run is the evidence for regenerating that table. Before the new file was accepted, three things were checked:
+  - the other 25 files matched;
+  - the three other columns were unchanged;
+  - each month's new coverage lay in a range computed beforehand from the old file, as old × cells / observed cells, allowing for the rounding of both values. For example, December 0.56 → 0.91, range 0.902-0.928; January 0.71 → 0.93, range 0.926-0.949.
+
+  The README of `tests/anchors/interp-seed1-2026-10-14/` records this.
+- **The coarse calibration table** of the prep run is not in that report. Its MD5 in the run record (`.../refit-legacy-prep/runs/2_calibration_lct_bluesky/20261030T171817.767Z_2993520.md`) is 3886938b…, equal to the frozen `data/calibration_modern_lct_interp_bluesky_coarse.RDS`. The main table is 289c0f8a…, equal to the anchor. The figures were not compared.
+- **Run records:**
+  - `20261030T171756.252Z_2992778.md` (script 1, prep);
+  - `20261031T182448.407Z_3466742.md` and `20261031T183126.542Z_3468486.md` (scripts 5 and 6, seed1-2).
+
+**Not yet verified by a run.** The MODIS branch of script 2, the model-7 tool on real fits, and the new runs. The reviewers list the checks for them:
+- the written MODIS table against an independent merge of the CSV, with the counts above;
+- a repeat MODIS run, byte-identical at the same seed and threads;
+- the raster control's calibration table against the 18 October script-2 manifest;
+- the model-7 control month reproducing its saved AIC.
+
+**The new runs** (Chris, items 2, 3 and 5):
+- Six satellite runs: all-days and snow-free under each of three versions. The versions are the main one (`full_75`), any processed retrieval (`any_75`), and November to February with no sun-angle rule (`full_nocut`, `months = c("jan", "feb", "nov", "dec")`).
+- One snowy run on the main version.
+- A full refit on the original raster with the current settings, as a control.
+- The model-7 check at 2,000 steps.
+- Up to four runs at once, eight cores per fitting job and one maths-library thread. Each run going at the same time gets its own code-identical commit. Script 6 runs one at a time until its memory is measured.
+
+**Open questions.**
+- Which months the snowy run fits: Chris chooses from script 2's counts before any fitting (item 13); script 4 stops before fitting if a month has too few rows.
+- The November-February run: scripts 9 and 10 average the selected months, and script 10 labels the result "annual". Both reviewers advise reporting the four months from script 10's per-month column, against the same months of the main run, and never quoting the four-month aggregate as annual. To put to Chris with the input check; no code changed.
+- For Andria:
+  - Should a cell-month supported by a few per cent of its land pixels enter the calibration at full weight, or should a minimum or weights apply? The code applies none.
+  - How should winter "snow-free" retrievals under conifer canopy be read?
+
+## Drift fixes from the whole-code review, 2026-11-01
+
+Branch `drift-fixes`, made from `feature/single-config` at 7d65bb5; merged 1 November.
+
+**Purpose.** Astra's drift and conciseness review of the whole code (`docs/cc/2026-11-01_drift_conciseness_review_codex_gpt6astra.md`)
+found 24 issues, none changing a forcing number. Chris chose to fix findings 1-8, 10, 15, 20, 21 and 23 now and to
+leave the larger restructures (11-14, 16-19, 22, 24) until after the refit runs.
+
+**Changes.**
+- Verification tools say only what they checked: a run folder may not resolve onto the repository or its baseline
+  folders, however spelled or linked (protected folders resolved too); `tools/compare_tables.R` says "NOT CHECKED
+  numerically" or "identifiers identical; no numbers to check" instead of "within tolerance" when no number had a
+  tolerance (exit status unchanged, Chris's choice); `tools/verify_change.R` refuses a spec with no scripts, checks or
+  anchors; a file copied into a run stays marked "seeded" only until the run writes it (and `verify_change`'s copy
+  list no longer carries a trailing space that made copied files invisible to the anchor check).
+- Diagnostics: one shared reader of the training-support inputs (`R/training_support.R`); the support figures say the
+  support is May's and stop when May is not run; the northeast figure requires prediction model 8, and its panel c
+  (Chris's decision) has a neutral title, leads with each model's predicted 6 to 4.5 ka change and shows separately
+  the net contrast across today's evergreen range, with no claim of one direction; the forcing periods take the
+  configured slice ages (an age list ending before 11.5 ka no longer pairs its last slice with 11.5 ka); the pollen
+  coverage median counts slices with no pollen as zero.
+- Labels and documentation: scripts 9 and 10 name the months instead of "annual" when fewer than twelve run, and state
+  each kernel's sky from the settings; script 1 no longer prints an unsupported claim; the README, AGENTS pointer and
+  source headers describe the MODIS refit; history narratives in script 9 trimmed.
+
+**Reviews.** Fable and Astra independently, one reconciliation round each (`docs/cc/2026-11-01_drift_fixes_review/`);
+no blocker; their agreed fixes applied (Chris, 1 November).
+
+**Verification** (all PASS): legacy scripts 9-10 reproduce the whole forcing anchor (`2026-11-01_drift-legacy-forcing`,
+with every test file); legacy scripts 1-2 reproduce their anchors (`drift-legacy-prep`); legacy scripts 5-6 at seed 1
+reproduce the whole seed-1 anchor (`drift-legacy-seed1`); under the current configuration, scripts 9-10 on the
+18 October forcing table write byte-identical tables before (837f2d3) and after (`drift-current-forcing-base`/`-head`);
+the four diagnostic tools on the 18 October products print the same numbers as on 27-28 October, plus the new
+net-contrast line (`drift-diagnostics`).
+
+**Effect on outputs.** None on any table; figure titles and wording only.
+
+## Simplifications from the simplicity review, 2026-11-01
+
+Branch `simplify-2026-11-01`, made from the drift-fix line at a14118f; the merged drift fixes taken in; merged 1 November.
+
+**Purpose.** Astra's simplicity review (`docs/cc/2026-11-01_simplicity_review_codex_gpt6astra.md`), asked for after Chris
+set the rule that the code be "as simple and concise as possible. No bloat and no overcomplicating." Chris chose to do
+items 1, 2, 7 and 8 now and to hand over items 3, 4, 5, 6 and 9 until the migration is finished.
+
+**Changes.** 61 lines fewer over 14 files.
+- Script 7 states its map theme once (`map_theme()`), used by all nine maps; script 5 builds its model-against-data
+  plot once and adds each figure's facet.
+- Script 1 goes from 249 to 83 lines: its optional diagnostics are one function in `R/land_cover_diagnostics.R`,
+  called after both tables are written (helper kept in `R/`, Chris's choice).
+- One expansion of the path catalogue, `catalogue_paths(paths, ids)` in `R/paths.R`, used by both the tests and
+  `tools/verify_change.R`; the unused `months` and `include_spatial_eval` arguments removed. Because the tool uses the
+  `R/paths.R` of the commit it verifies, it now seeds products only for commits from this change on; recorded in
+  `docs/cc/verification/README` (Chris's choice).
+- Tests change settings as lists (`with_setting()`, `refuses()`, `accepts()`) through the production check, now
+  `config_errors()` in `R/config.R`; one shared test cell (`tests/cell_fixture.R`); the equation-of-time test checks
+  fixed values instead of a copy of the formula.
+
+**Review.** One change review (`docs/cc/2026-11-01_simplifications_review/`): no blocker; its two questions answered
+by Chris as above.
+
+**Verification** (all PASS): legacy scripts 1-2 (`2026-11-01_simplify-legacy-prep`), 5-6 at seed 1 with 17 test files
+(`simplify-legacy-seed1`), 7, 7a and 8 (`simplify-legacy-scripts78`) and 9-10 with the path and comment-check tests
+(`simplify-legacy-forcing`) reproduce their anchors. Script 1's 29 diagnostic figures and console output, and script
+7's 17 outputs, are identical before and after (`comparisons.md` in the review folder).
+
+**Effect on outputs.** None.
+
+## Northeast figure: neutral overall title, 2026-11-02
+
+Branch `northeast-title`. The overall title of `tools/plotting/plot_northeast_cover_and_location.R` said "why the
+model's evergreen effect there is uncertain"; since panel c no longer draws that conclusion, Chris chose
+(1 November) a neutral title: "Northeast (80-66°W, 40-48°N): evergreen cover, location and May albedo".
+Verification: the figure redrawn from the 18 October products (`2026-11-02_northeast-title-2`, PASS; the first
+attempt lacked the predictions file the figure reads) prints the same numbers as `drift-diagnostics`.
+**Effect on outputs.** The title only.
+
+## The scripts outside the pipeline archived (#26), merged 2026-11-03
+
+**Purpose.** The pipeline runs none of these 18 scripts and reads none of their outputs, but in `scripts/`
+they read as part of the analysis. Chris chose to archive rather than delete them (3 November), after
+Astra's review of what they hold (`docs/cc/2026-11-03_old_scripts_review_codex_gpt6astra.md`).
+
+- **Moved, unchanged,** to one root-level `archive/` folder: the 14 scripts of `scripts/archive/`,
+  `GCM_snow_prob.R`, `thornthwaite.R`, `beta_veg_lct_modern.R` and `6_prediction_model_spatial_eval.R`.
+  `scripts/make_grid.R` stays (script 3 uses it).
+- **Nothing the pipeline needs is lost** (Astra). The question the model-structure script asked, whether
+  location changes the vegetation effect, is taken up, for May in the northeast, by
+  `tools/plotting/plot_northeast_cover_and_location.R`.
+  The old snow scripts give no usable snow-cover fraction; the planned MOD10CM mixing replaces them.
+- **`archive/README.md`** says what each script did, why it is not run and what replaces it, and records
+  what was written nowhere else: the CCSM3 climate source (Lorenz et al. 2016) and its time convention,
+  the hand-run ClimateNA step and the water-balance settings.
+- **Verified** (`docs/cc/verification/2026-11-03_old-scripts-archive_report.md`, PASS): scripts 2 and 3
+  under the legacy configuration, calibration table byte-identical to the anchor; the config and path
+  tests pass.
+- **Left as it is:** `R/paths.R` still lists the four output files of the archived model-structure script.
+
+## Small cleanups (3 November 2026, Chris)
+
+- **Path catalogue:** the four output files of the archived model-structure script left `R/paths.R`;
+  `tests/test_paths.R` tests the whole catalogue instead of filtering them out. No pipeline path changes.
+  Verified (`docs/cc/verification/2026-11-03_cleanups-paths-3_report.md`, PASS; the first two runs failed,
+  the first because the main checkout's copy of the verification tool requires a script, the second on
+  the test's old count, fixed in 200b414).
+- **verify-change skill:** the load rule of 3 November (up to six verification jobs on the 48-core machine,
+  one thread per fit) replaces "at most 24 cores".
+
+## Cross-validation that chooses the albedo model (#24), on branch cv-design (no model fitted yet)
+
+**Purpose.** Choose the calibration model by how well it predicts modern cells whose cover mixes lie outside the range
+of the cells it was fitted on, as the hindcast must (Chris, 2 November). Design, reviews, decisions and the frozen
+protocol: `docs/cc/2026-11-02_cv_*`, `2026-11-02_cv_protocol.md` (with its amendments), decisions 1-16.
+
+- **Code:** `R/cross_validation.R` (holdouts, departure and grouping, score and its block bootstrap, the choice, the
+  descriptive and geographic reports), `tools/cross_validate_albedo.R` (three stages: holdouts, fit, score),
+  four new candidates in `R/model_registry.R`, tests in `tests/test_cross_validation.R` and
+  `tests/test_cross_validation_stages.R` (the stages end to end with a stand-in for the fits).
+- **3 November:** blocks counted on the scored cells (decision 13); one tested function for a withheld cell's group;
+  the northeast limits recorded and a by-region report (decision 14); the geographic sensitivity reports, measured and
+  not corrected (decision 15: errors by distance to training, the in-range holdout for the location pairs and the
+  winner); the descriptive-table rules (decision 16). Each change verified (`docs/cc/verification/2026-11-03_cv-holdouts-*`,
+  all PASS; from run 8 the reports themselves show the older holdout tables unchanged) and reviewed by Fable and Astra
+  (`2026-11-02_cv_code_review/`, `2026-11-03_cv_geographic_code_review/`).
+- **Not yet:** the fits (after the refit queue) and the scores; nothing here has used a score. The section 7
+  comparison of the chosen model with model 8 is not written yet (the northeast location figure compares model 8's
+  location term only).
+- **Published basis** of the geographic reports (Brenning 2023; Roberts et al. 2017; Milà et al. 2022; Linnenbrink et
+  al. 2024; Yates et al. 2023, with DOIs, checked against Crossref on 4 November) and what is this project's own
+  adaptation: the protocol's section "Published basis of the geographic sensitivity reports".
+- **4 November, two guards** (whole-code review of 4 November, findings 1 and 2; reviewed by Fable and Astra): each
+  predictions file carries the MD5 of the holdouts it was fitted against, taken when the holdouts are loaded, and the
+  score stage refuses any file without a matching MD5 (so predictions for rebuilt holdouts are never scored); one fit
+  record per month; and `assign_forcing_periods()` stops on a slice pair spanning a period boundary (the configured
+  ages meet every boundary, so no output changes). Left out on purpose (Chris): the fitting code's version in each
+  predictions file, and `tools/` in the run records' uncommitted-change check (declined 3 November); scientific runs go
+  through the verification tool from clean committed worktrees.
+
+## Four fixes from the whole-code review of 4 November (Chris chose all four)
+
+- **Plots in RStudio:** the run folder's `Rplots.pdf` now replaces the default plot device in batch runs only
+  (`run_begin()`), so stepping through a script in RStudio with a run folder set keeps plots on the screen.
+- **Cross-validation reporting:** the comparison by distance band is two plain loops (identical table); the
+  complete-row rule is one function in `R/model_registry.R`, used by the tool too.
+- **Documentation drift:** comments on month selection and reruns, `model_id`, the kernels, the land-cover
+  diagnostics' ice and mean notes; the README's September line numbers removed and a pointer to the cross-validation.
+- **Cross-validation record:** the protocol's published basis of the geographic reports, with five references
+  checked against Crossref, and three corrected descriptions; the section 7 comparison marked as not yet built.
+- Reviewed by the change-reviewer (its two wording points made; the rest not worth doing). Verified:
+  `docs/cc/verification/2026-11-04_review-fixes-2_report.md` (PASS; scripts 1-3, the holdouts stage byte-identical to
+  earlier runs, all tests).
+
+## Cross-validation protocol 2: fifteen versions, a nearby score and two separation tests (#24), merged 2026-11-16
+
+Branch `cv-v2`, made from `feature/single-config` at c86e4b5 on 5 November; its code is final at 1d31cfc
+(6 November), later commits are documents; merged 16 November (326ea11).
+
+**Purpose.** The first cross-validation (the entry "Cross-validation that chooses the albedo model", above) chose
+among thirteen fixed candidates. On 6 November Chris asked for proper tuning instead: a grid of model versions, a
+direct test of whether the fitted models can tell the effect of evergreen cover from the effect of location, and
+support graded by how far outside today's range a cover mix lies. Protocol 2 (`2026-11-06_cv_protocol_v2.md`) was
+drafted by Astra, reviewed by Fable and approved by Chris on 6 November, before any fit.
+
+**Decisions** (Chris, 6 November; commit messages and the protocol):
+- Fifteen versions: the location term at five sizes (none, 12, 30, 100 or 500 basis functions) crossed with three
+  forms of the cover term (a straight line, or a thin-plate smooth with 50 or 200 basis functions). Model 8 is
+  location 500 with the 200-basis cover.
+- The choice uses only withheld cells less than 250 km from the training cells. The farther cells, and the deep
+  cover band (0.10 or more outside today's range) by direction, are reported beside the score. One level of tuning,
+  no nesting.
+- Both separation tests, with their pass rules fixed first: the northeast's response compared across location sizes
+  on the real data (April and May), and a synthetic recovery test with stated truths.
+- REML within each fit; the cross-validation chooses; conditional AIC of the April and May full-data fits is reported
+  beside it, not used to choose.
+- The chosen model's pipeline runs unchanged, with no new switch. The northeast swap is reported at both 50 BP and
+  6 ka open land.
+- Astra writes the code, Fable reviews it, Astra reviews again, then the verification tool runs it.
+- After both code reviews: concurvity of the thin-plate cover forms is left blank, with the reason. The three cover
+  fractions sum to one, so that cover basis is rank-deficient and mgcv's value is meaningless. Each fit's rank and
+  coefficient counts are kept. Predictions and standard errors are unaffected.
+
+**Changes.**
+- `R/model_registry.R`: the ten new versions; every existing formula unchanged; the cross-validation's candidates
+  are the fifteen, in the order that serves as the last tie-break. `R/config_schema.R` accepts them as
+  `calibration$model_id` and still accepts the first run's smaller-cover model in saved configurations.
+- `R/calibration_fit.R` (new): one fitter for every cross-validation and separation fit (common complete rows, REML,
+  one retry on non-convergence, term summaries). The pipeline keeps its own fitter.
+- `R/cross_validation.R`, `tools/cross_validate_albedo.R`: the nearby score; coverage and depth by direction and
+  cover band; handling of a month where no version can be chosen; the in-range diagnostic. Output in
+  `output/cross_validation_v2/` of a run folder.
+- `R/cv_separation.R`, `tools/check_cv_separation.R` (new): the frozen cover exchanges, contrasts with their
+  covariance, conditional AIC, the synthetic truths and the recovery pass rules (commands `prepare`, `capacity`,
+  `recovery`, `summarize`).
+- Tests: `tests/test_calibration_fit.R` and `tests/test_cv_separation.R` (new); additions to the registry, config,
+  cross-validation and stage tests. Hand-worked cases; stand-ins for the fits.
+- README: both tools, with what they read and write. Run order: `2026-11-06_cv2_run_order.md`. Implementation
+  record: `2026-11-06_cv2_implementation.md`. The redesign, its domain precedent and the role of AIC, the
+  protocol's draft and reviews, and both code reviews are filed under `docs/cc/2026-11-05_*` and `2026-11-06_*`.
+
+**Results** (6 and 7 November) **and their review** (Fable, 10 November,
+`2026-11-10_cv_protocol_v2_results_review_fable.md`, revised the same day after Astra's check,
+`2026-11-10_cv_protocol_v2_results_review_check_codex_gpt6astra.md`):
+- The rule chose location 100 with straight-line cover (`loc100_linear`). Its pipeline run, scripts 1 to 10, passed.
+- The review recomputed the score from the saved predictions with separate code (equal for all fourteen scored
+  versions) and found no arithmetic defect.
+- 61% of the chosen model's margin over model 8 comes from four blocks in western and interior Alaska (50 cells).
+  Without them the version with location 500 and straight-line cover ties it. With or without them, no location
+  term, location 12 or 30, and model 8's 200-basis cover score worse.
+- The total forcing for 6 to 10 ka agrees across model 8, the coarse-location model (the first run's choice) and the
+  chosen model because ice dominates it. The vegetation part differs between them in every period, and in sign from
+  4 to 12 ka.
+- Synthetic recovery: the chosen model and model 8 each pass 12 of the 12 required checks; the no-location control
+  passes 5. This holds under the stated truths; it does not establish the real response.
+- Against published forest contrasts, every version has the opposite sign in some months on all-days albedo.
+  Exploratory fits on the snow-free and snowy tables (58 small fits, outside the protocol, not saved) show a
+  pattern whose cause is not isolated.
+- From October to February the hindcast predicts north of the northernmost cell with a calibration albedo (in
+  December 1,344 of 2,659 past cells).
+
+After the review Chris chose (10 November) to explore the fitted cover response beside published contrasts, with no
+pass or fail (the cover-contrast entry below), and to build the hindcast comparison tool (next entry).
+
+**Also on the branch.** Three background reports of 10 November, filed unreviewed: eleven ranked case-study
+candidates besides the hemlock decline (`2026-11-10_case_study_candidates.md`, with its scripts and tables); how
+published studies compute the albedo change between cover classes (`2026-11-10_precedent_methods_report.md`); a table
+of 103 published albedo contrasts between cover types, with a note (`2026-11-10_published_albedo_contrasts.*`). And
+the design of the cover-contrast exploration with Astra's check of it.
+
+**Question files.** Section 8 of the scientific file now gives the results, eight questions for Andria from the
+reviews, her answers from the shared document, and Chris's direction of 15 November: handle spatial
+autocorrelation in the folds, ideally in one cross-validation method together with generalisation to unseen cover.
+Protocol 2's folds are not spatially blocked. That redesign is parked on his instruction, so protocol 2's choice of
+model is provisional. A new section 9 asks which other regions and periods Andria would accept as test cases. The
+general file records her answer on the 25 time slices.
+
+**Effect on the outputs.** None on the pipeline's own outputs. No script, `config.R` or `configs/` file changes. The
+registry keeps every existing formula (its test compares model 8's design matrices and penalties), and scripts 1 and
+2 reproduced exactly the calibration and past-cover tables of the model-8 pipeline run under the current settings
+(`run1-main`; `identical()`, holdouts job). The tools write only
+into their run folders, outside git. The first cross-validation is reproducible at the commits in its specs, not
+with this code.
+
+**Verification** (`tools/verify_change.R` at 1d31cfc; 53 jobs from 6 November 13:51 to 7 November 22:50 UTC, all
+PASS, none with a failure; reports and specs `docs/cc/verification/2026-11-06_cv2-*` and `2026-11-07_cv2-winner*`):
+
+| Jobs | What | Time each |
+|---|---|---|
+| `cv2-tests` | 12 test files | under 1 min |
+| `cv2-holdouts` | scripts 1 and 2, their two products identical to run 1's; the holdouts; separation preparation | 2 min |
+| `cv2-fit-d1`, `-d2`, `-d3` by month (36) | the fifteen versions on each direction's holdout | 10 to 408 min |
+| `cv2-fit-inrange-*` (4) | the in-range holdout, three months each | 15 to 25 min |
+| `cv2-capacity-apr`, `-may` | the northeast's response across location sizes | 7 to 8 min |
+| `cv2-recovery-*` (6) | synthetic recovery, April and May, three truths | 57 to 66 min |
+| `cv2-score`, `cv2-summary` | the score; the separation summary | 35 min |
+| `cv2-winner` | the chosen model's pipeline, scripts 1 to 10, seed 1549466984; three test files | 1,373 min (script 4: 1,229) |
+
+A PASS here means the job ran cleanly at the frozen commit with its input checks; only the tests and the holdouts
+jobs check content (the review's caution). Before the merge, on 16 November, every test file passed on the branch,
+run one at a time, with two frozen inputs linked from the main checkout as the verification tool links them.
+
+**Slips.** The 53 reports stayed uncommitted in the main checkout from 7 to 16 November, and the branch held its specs
+with `commit = 'TO_FILL'`. Both were committed on the branch before the merge (09ef17a), each spec as it ran. The review of 10 November
+corrected five statements made to Chris on 7 to 9 November; Astra's check then corrected the review itself in six
+places (listed at its head). The 58 exploratory fits were not reproduced: Astra's sandbox cannot start R.
+
+## The hindcast comparison tool (#24), merged 2026-11-16
+
+Branch `cv-compare-tool`, made from `cv-v2` at ff1614e on 10 November; its code is final at 6faebe3 (16 November),
+later commits are documents; merged 16 November (c254734).
+
+**Purpose.** Protocol 2's section 7: set finished pipeline runs side by side, so that Chris and Andria can see what
+the choice of calibration model does to the albedo, to the forcing by period and to the northeast over the hemlock
+decline, with the cross-validation's tested limits beside the numbers. Chris chose its form on 5, 6 and 10 November
+and had Fable build it and Astra review it.
+
+**Changes.**
+- `tools/compare_cv_hindcasts.R` (new). It reads each run's saved products by the names in `R/paths.R` and writes,
+  in its own output folder only: five tables (albedo by month and slice; forcing by period, with the vegetation part,
+  the ice part and the total side by side for every run, period, month and kernel; the northeast by month; the
+  cross-validation's errors and tested limits by direction, named in words; geographic support by month), four
+  figures and a record with the MD5 sum of every file read. Any number of runs; the first is the baseline.
+- It stops unless the runs differ only in the calibration model and share cells, cover, areas and ice; every run has
+  values on the same rows; each fit used exactly its month's calibration rows; each saved fit, predicting at both
+  ends of the hemlock interval (6 and 4.5 ka), gives the saved northeast albedo; and it reproduces script 9's
+  study-area totals and HadGEM3 parts and script 10's monthly means.
+- `R/hindcast_comparison.R` (new): the arithmetic as small functions, each with a hand-worked test in
+  `tests/test_hindcast_comparison.R`. They cover area-weighted means with the share resting on mixes outside the
+  training range, script 9's period sums kept per cell and month, differences from the baseline, the northeast swaps
+  at 50 BP and 6 ka open land, and geographic support.
+- Shared helpers moved, not changed: `cells_with_evergreen()` from the northeast figure tool to
+  `R/training_support.R` (the figure tool's two calls now pass its cells); `slice_area_ice()` out of
+  `cv_target_weights()` (the lines unchanged; the target weights and existing tests the same). A test for each.
+- README: a row for the tool.
+
+**Reviews.** Astra (10 November) recomputed all 1,950 albedo means, all 5,616 forcing values, the northeast changes,
+the distances and the geographic counts from the saved products, to 1e-13 or better, and found no numerical error.
+It asked for six changes:
+- name the tested directions in words, and say where the northeast goes beyond what was tested (its past mixes reach
+  0.107 outside today's range, in the direction of less open land, where nearby testing reached 0.099);
+- require every run to have values on the same rows;
+- keep each swap's two endpoint distances;
+- check both northeast endpoints against the fits, and narrow two claims;
+- report the gap between the fitted and simulated changes instead of a 0.005 gate;
+- state the kernels' smaller coverage in January and December (CACK: 2,646 and 2,439 of 2,655 study-area cells).
+
+Chris approved them on 15 November. Astra checked them on 16 November (every earlier table value identical, 110,622
+values) and asked for one title to be wrapped, which Chris approved.
+
+**Effect on the outputs.** None: no pipeline script or setting changes, and the tool writes nothing into a run
+folder. The figure tool `tools/plotting/plot_northeast_cover_and_location.R` was parsed after the move, not rerun
+(it needs a run folder with the model-8 fits).
+
+**Verification.** `docs/cc/verification/2026-11-16_cv-hindcast-comparison_report.md`, PASS at 6faebe3, 11 minutes:
+five test files; the tool on the three finished runs (model 8 as the baseline, the chosen model, the coarse-location
+model), and again with model 8 and the chosen model in reversed roles; then checks of the written tables: row
+counts, zero differences for the baseline, the vegetation and ice parts adding up to the total in every row, the
+same cells and areas for every run, the kernel coverage, the endpoint distances, the northeast reach line, the April
+and May exchange equal to the capacity table's, the geographic counts, and every difference changing sign when the
+roles are reversed. Before the merge, on 16 November, every test file passed on the branch; after both merges all
+25 test files passed on the trunk (c254734), one at a time.
+
+## Exploration of the fitted cover response beside published contrasts (#24), merged 2026-11-16
+
+Branch `cover-contrasts`, made from `cv-v2` at 88f0599 on 15 November; its code is final at 7c12534 (16 November),
+later commits are documents.
+
+**Purpose.** The three finished pipeline runs disagree about the vegetation forcing in every period. This tool shows
+the response behind that directly: how each fitted model's albedo changes for a small exchange of cover, by month and
+region, with published forest albedo contrasts beside it as a guide. It is a description only, with no pass or fail
+and no effect on the choice of model: Chris chose on 10 November to explore the contrasts first and decide from the
+results whether they go into the paper. Fable designed it and Astra checked the design. Chris chose six versions,
+asked for it to follow published practice as closely as it can, and asked that the work not centre on the northeast
+alone; the tool reports the study area and six regions.
+
+**Changes.**
+- `tools/explore_cover_contrasts.R` (new), two commands.
+  - `fit` reads a finished run's calibration table (all-days, snow-free or snowy albedo, as the run's own
+    configuration says) and fits the six versions afresh for each month (REML, the ordinary fitter with its one
+    retry). It evaluates three exchanges of 10 points of cover, centred on each cell's own mix: evergreen to
+    summergreen, evergreen to open land, summergreen to open land.
+  - For the study area and each of the six named regions it writes the area-weighted mean change with its standard
+    error and the spread across cells. Beside each number: the cells, the eligible cells and their share of the
+    area, how many have at least 10% of each of the two classes (a count adapting one element of Lejeune et al.'s
+    2020 filter, not applied), and the typical snowy share of retrievals.
+  - Each fit and the month's exchanges are saved in the tool's own output folder, outside git.
+  - `report` stacks the months and tables into one table and draws a page per albedo table and a page of the
+    published values.
+- `R/cv_separation.R`: the exchange helpers take any two cover classes, with the third held. The defaults are
+  protocol 2's exchange, so its callers are unchanged. The cell-area lookup is now a function, used by
+  `tools/check_cv_separation.R` too.
+- `tools/check_cover_contrasts.R` (new): the checks on real data that the verification runs (`inputs`, `exchanges`,
+  `job`).
+- `docs/cc/2026-11-10_published_albedo_contrasts.csv`:
+  - columns a script can read (contrast, months, snow state, band), a qualification, and whether a value is drawn
+    beside the model;
+  - Jin et al. (2002)'s two values, entered as Astra read them (the builders did not see the paper);
+  - Burakowski et al. (2015)'s two comparisons of forest with a crop and forest mosaic, kept off the guides.
+- Tests: `tests/test_explore_cover_contrasts.R` (new) and additions to `tests/test_cv_separation.R`. README rows for
+  both tools.
+
+**Reviews.** Astra (15 November) found no error in the exchange arithmetic, the area weighting, the support counts or
+the changed helpers: it recomputed all 756 support cases and audited the published rows drawn. It asked for six
+changes to what readers are shown and what is kept:
+- qualify the published references;
+- make the verification assert results, not only exit status;
+- show each month's support in the figure;
+- keep the fitted models;
+- draw annual and uncertain-period values as such;
+- describe the 10% count as part of Lejeune's filter, not their rule.
+
+Chris approved these and the Jin values on 15 November, and nothing else. Astra checked the changes on 16 November
+and asked for three small changes to the spec and the note, which were made. The five method choices that the reading
+of the published methods left open stay with Chris as questions (`2026-11-15_cover_contrast_exploration_implementation.md`,
+section 9).
+
+**Effect on the outputs.** None on the pipeline: no script or setting changes, and the tool writes only to its own
+output folder. The generalised exchange helpers reproduce protocol 2's frozen northeast exchanges bit for bit
+(checked in the verification).
+
+**Verification.** `docs/cc/verification/2026-11-16_cover-contrasts_report.md`, PASS at 7c12534, 7 minutes:
+- ten test files;
+- the inputs check: the three runs by their recorded MD5 sums, with the same cells, cover, elevation and areas;
+- protocol 2's frozen exchanges reproduced;
+- one small real job (the snowy table, July and August) and its report;
+- the job check: 12 fit records (8 converged; 4 not fitted, the two versions with location 500 having more
+  coefficients than those months have cells), 252 contrast rows, the known support counts, three numbers within
+  stated tolerances of the trial, and one saved fit giving back its contrasts and standard errors.
+
+On 16 November every test file passed on the branch, run one at a time.
+
+**Not yet.** The exploration itself (36 jobs, 212 fits), approved by Chris on 15 November, is running from the
+verified commit's worktree.
+
+**Merge held.** On 16 November, after the two entries above had merged, the merge check refused this merge. The
+trunk's code would then combine this branch's changes with the hindcast comparison tool's, and no verification report
+covers that combination: each branch's report covers its own code only. The two branches change different files; all
+26 test files passed on the combined code, but its real-data checks were not run. Branch `merge-cover-contrasts`
+therefore merged this branch on top of the two merges and verified the combined code (commit 1ae8ecc): PASS, all 19
+checks of both tools' specs (`docs/cc/verification/2026-11-16_merge-cover-contrasts_report.md`). It merged at c7d2aab.
+
+**Full run.** Completed on 16 November from the verified commit 7c12534: 36 jobs, 216 fit records, 4,536 rows, all
+212 attempted fits converged, and the 4 fits not made by design (the two versions with a location term of 500 in
+the snowy table's July and August). The longest fit took 72 minutes; the largest job peaked at 1.24 GB.
+
+## Comparison of the cover contrasts with Duveiller et al. (2018) (#24), merged 2026-11-17
+
+**What it is for.** The cover-contrast exploration sets the fitted response to a 10-point exchange of cover beside
+published forest albedo differences. This adds a satellite comparison on the same cells: Duveiller, Hooker and
+Cescatti's published one-degree monthly albedo change for complete conversion between land-cover classes (MODIS
+2008-2012, land cover of 2010; Scientific Data 5, 180014, doi:10.1038/sdata.2018.14). It is an exploration: no pass
+or fail, and no effect on the choice of model.
+
+**What changed.**
+- `tools/explore_cover_contrasts.R`: a `duveiller` command reads the saved all-days cases and fits (no refit) and the
+  file `albedo_IGBPdet.nc` (Figshare doi:10.6084/m9.figshare.5217709, CC0; kept in `data/duveiller2018/`, outside git,
+  with its provenance note). It restricts each eligible case to cells with a published estimate, renormalises the area
+  weights there, and computes both means on the same cells for all three exchanges: evergreen to summergreen
+  (needleleaf evergreen to broadleaf deciduous forest, transition 23 reversed), evergreen to open land (to grassland,
+  transition 38), summergreen to open land (broadleaf deciduous forest to grassland, transition 28). It writes a
+  1,512-row table, one figure page and a record, with the common cells and two coverage shares beside every mean.
+  Four small plotting helpers are now shared with the report command; its pages are pixel-identical after the change.
+- `tools/check_cover_contrasts.R`: a `duveiller` check of the real output; tests for reading, matching, weights, empty
+  intersections and a shifted grid, which fail on four deliberately broken copies of the code.
+
+**Decisions (Chris, 16-17 November).** Compare all three exchanges. Leave out any summary of the published cell
+uncertainties for now: the file gives no covariance between cells, so a regional interval would need an assumption;
+recorded in `docs/cc/2026-11-17_duveiller_comparison_decisions.md` to return to.
+
+**Reviews and verification.** Designed and reviewed by Astra (`2026-11-16_duveiller_comparison_design_codex_gpt6astra.md`,
+`2026-11-17_duveiller_review_codex_gpt6astra.md`); built by an Opus agent. Verified at fa9e465: PASS, 12 checks
+(`docs/cc/verification/2026-11-17_duveiller-comparison_report.md`). The full run took 2 minutes.
+
+**First look.** Coverage is partial: typically a quarter to a third of the eligible cells' area has a published
+estimate. Northeast, evergreen to summergreen, location term 100 with straight-line cover: July +0.0069 per 10 points
+beside Duveiller's +0.0036 (40 cells); January -0.021 beside +0.006 (20 cells).
+
+## Ice: the 2023 reconstruction (NADI-1), readvances and the forcing with the new ice (#29), merged 2026-11-18
+
+**What it is for.** Andria asked (call of 12 November) to compare the newer ice reconstruction of Dalton et al. (2023,
+NADI-1, doi:10.5281/zenodo.8161764) with the ice the pipeline used, to find when ice readvances, and to check whether
+readvances break the partial-ice albedo formula. Slides and an agenda for her were made from the results.
+
+**What changed.**
+- `analysis$ice$fraction_source` chooses the ice-fraction file: `"dalton_ice"` (the old raster, still the default),
+  or `"nadi1_optimal"`, `"nadi1_minimum"`, `"nadi1_maximum"`. The three NADI-1 rasters are built once by
+  `tools/build_nadi1_fractions.R` from the downloaded shapefiles (kept outside git) and tracked in
+  `data/nadi1_fractions/` with a provenance note; areas are measured in an equal-area projection (the spherical
+  method turned the 8.5 ka minimum inside out); NADI-1's snapshots match the slice names from 1,000 to 11,500 BP, and
+  the 1 ka ice is carried forward to 500, 200 and 50 BP.
+- `R/differences.R` and scripts 8 and 9 add the second split rule (`veg_part_exposed`, `ice_part_exposed`: vegetation
+  change only on land ice-free at both slices, which holds exactly when the ice footprints are nested); existing
+  columns are unchanged and the legacy configuration is untouched.
+- `config.R` labels the oldest slice 11.5 ka and its period 10 to 11.5 ka; script 7 keeps the 12 ka polygon for it, so
+  the change is label-only; `configs/legacy_config.R` keeps 12 ka.
+- `load_config(path, fill_missing = TRUE)` (or `--fill-missing` on the tools that reload finished runs) fills settings
+  missing from an old saved configuration from `HISTORICAL_SETTINGS` in `R/config_schema.R`, with a warning; strict
+  by default.
+- `tools/compare_ice.R` makes the meeting's tables and figures; `tools/check_ice_split.R` checks the new columns.
+
+**Results.** Total forcing, study-area mean, HadGEM3 (old / NADI-1 best / minimum / maximum), W/m2: 10 to 11.5 ka
+4.13 / 4.29 / 4.84 / 4.35; 8 to 10 ka 4.96 / 5.05 / 4.07 / 4.72; 6 to 8 ka 1.51 / 1.90 / 0.42 / 4.54; younger periods
+unchanged. The vegetation part hardly changes with the ice, and the two split rules' vegetation parts differ by at most
+0.0003 W/m2 in any period. Readvances (cell-pairs whose ice fraction grows): old raster 186 (228 after the averaging,
+75 of them created by it); NADI-1 best 142, minimum 35, maximum 231.
+
+**Verification.** At c0b6eda: old-ice replay (every headline number reproduced), legacy regression (all anchors
+match), NADI-1 optimal, minimum and maximum, comparison: all PASS. At 0ffa156 (with the trunk merged in): 30 of 30
+checks PASS. Reports in `docs/cc/verification/2026-11-18_ice-*_report.md`.
+
+**Left for Chris and Andria.** Whether NADI-1 becomes the default; the young slices' ice; which split rule the paper
+uses; whether to keep the readvance averaging; maps drawing ice from the forcing's fraction file (a later change).
+
+## Cover contrasts at the case-study boxes (#24), merged 2026-11-19
+
+**What it is for.** Chris asked (17 November) for the exploration's monthly cover contrasts at the exact
+case-study boxes, beside the published guide and the comparison with Duveiller et al. (2018): the hemlock
+decline in the north-east, the spruce rise in Quebec-Labrador, the prairie-forest border, and the land
+clearance on the Atlantic seaboard. They show how the fitted versions respond where the case studies are,
+which bears on the goals Chris and Andria set: the best models' cover response should come closer to the
+published contrasts, and the final model should give the right vegetation forcing for the hemlock decline.
+
+**What changed.**
+- `tools/explore_cover_contrasts.R`: a `case-studies` command evaluates the 216 saved entries of the full
+  contrast run of 16 November at the cells of the four boxes, with no refitting (the models are fitted to
+  the whole continent; a box is only a summary taken afterwards), and writes the same files, so `report`
+  stacks and draws them. The bounds come from the case-study search's table
+  (`docs/cc/2026-11-10_case_study_candidates/candidates.csv`); each box is its own mask, its west and south
+  edges in. `exchange_cases()` takes the regions as an optional argument (default unchanged),
+  `read_fit_status()` the albedo table, and `compare_duveiller()` an optional folder for the cases.
+  `R/regions.R` is unchanged: boxes added there would take cells from the regions the cross-validation and
+  the coverage figure use.
+- `tools/check_cover_contrasts.R`: two checks for the verification; `tests/test_explore_cover_contrasts.R`:
+  the box edges, the unchanged defaults, and the saved fits evaluated with every fitting function set to stop.
+- Left out by Chris's choice. On 18 November: the design's three run-time guards (comparing the inputs'
+  checksums, refusing a folder that already holds outputs, checking the source of the Duveiller step's cases);
+  the inputs are checked once, in the verification, and the usage text says the run must be the one the saved
+  fits came from. After Astra's review: a contrast worked by hand for a new box (every box goes through the
+  same prediction code, which the hemlock box reproduces exactly, and each box's cells are checked), and extra
+  details in the job records (the candidates table's checksum already fixes the bounds).
+- Precedents, as for the exploration: Lejeune et al. (2020, Earth System Dynamics 11, 1209-1232), Duveiller,
+  Forzieri et al. (2018, Earth System Science Data 10, 1265-1279), Duveiller, Hooker and Cescatti (2018,
+  Scientific Data 5, 180014) and Boisier et al. (2013, Biogeosciences 10, 1501-1516); the passages are in the
+  design (`docs/cc/2026-11-18_case_study_contrasts_design_codex_gpt6astra.md`).
+
+**Results** (an exploration, no pass or fail; albedo change for a 10-point exchange, on the cells the
+satellite data also cover). Evergreen to summergreen, the chosen model (`loc100_linear`): in July it has the
+sign of Duveiller et al.'s values in every box (north-east +0.0069 against +0.0036; prairie-forest border
++0.0069 against +0.0036; Atlantic seaboard +0.0067 against +0.0018; Quebec-Labrador +0.0053 against +0.0052,
+on 6 cells); in January the opposite sign in the three temperate boxes (north-east -0.021 against +0.006;
+prairie-forest border -0.023 against +0.004; Atlantic seaboard -0.011 against +0.0005), with the six versions
+ranging from strongly darker to strongly brighter. The satellite data hardly cover Quebec-Labrador's
+summergreen cells.
+
+**Verification.** PASS at 295b312 (`docs/cc/verification/2026-11-19_case-study-cover-contrasts-2_report.md`),
+after a first PASS at 545479b before the reviews' tidy-ups: every check exits 0; in all 36 records the run
+files have the saved run's MD5 sums; the 648 hemlock rows equal the saved north-east rows exactly; the
+Quebec-Labrador cells and area shares, selected again independently, match; 2,592 rows; the Duveiller
+comparison's 216 hemlock rows equal those verified on 17 November.
+
+**Records.** Design by Astra (`docs/cc/2026-11-18_case_study_contrasts_design_codex_gpt6astra.md`); reviews
+by Astra (`docs/cc/2026-11-18_case_study_contrasts_review_codex_gpt6astra.md`) and Fable
+(`docs/cc/2026-11-19_case_study_contrasts_review_fable.md`), both finding it mergeable; their tidy-ups, which
+Chris approved, applied (a shorter note, the check taking only the all-days run, two repeats removed, one
+comment line, one helper for a pasted block); implementation note
+`docs/cc/2026-11-18_case_study_contrasts_implementation.md`; built by an Opus agent.
+
+## Script 7's maps draw the ice the forcing uses (#29), merged 2026-11-20
+
+**What it is for.** Since 18 November, `analysis$ice$fraction_source` can make script 7a's forcing use NADI-1's ice,
+but script 7 still drew and flagged the old 21 glacier outlines, so its albedo maps, its coarse differences and
+script 9's slide-18 recipe showed ice the forcing does not use. Chris chose this as the next task on 20 November,
+chose no new setting (the existing one decides), and, after asking why the first design needed about 80 lines,
+approved the smaller build from Astra's line-count review. If NADI-1 becomes the default (Andria to decide, #29), the
+maps will show the same ice as the forcing.
+
+**What changed.**
+- `scripts/7_plot_preds.R` (net +20 lines): with `"dalton_ice"` (the default, and the legacy configuration) script 7
+  reads the 21 outlines as before. With a NADI-1 source it builds its list of ice polygons from that file: for each
+  slice's band, the cells whose fraction exceeds `analysis$ice$threshold` (0.5), dissolved and marked `'ICE'`; the
+  flags, outlines, coarse differences and slide-18 recipe then run unchanged. Each slice has its own band, so
+  11,500 BP takes its own ice rather than the 12 ka polygon, and 50 and 500 BP get difference outlines (with the 21
+  outlines they still get none, a quirk on Andria's list). NADI-1's ice encloses areas the file leaves empty, such
+  as Hudson Bay; on that path the eleven ice layers are drawn so that these holes stay unpainted.
+- A stated difference, in the script's comments: the maps classify each cell's fraction as the file gives it, while
+  script 7a's threshold variants first average readvances away, so a few cells can differ; the headline partial-ice
+  forcing uses no threshold.
+- `config.R` (comments): `fraction_source` also picks script 7's ice; the slice-alias note says what each path does
+  with 11,500 BP. `R/paths.R` and `tools/build_nadi1_fractions.R` (comments): scripts 7 and 7a both read the NADI-1
+  files. `README.md` and `docs/cc/questions_for_andria_general.md`: script 7's inputs, and the young-outlines
+  question now concerns the 21 outlines only.
+
+**Outputs changed.** None with `"dalton_ice"`: every anchor matches byte for byte. With a NADI-1 source, script 7's
+maps and flags change, and with them `ice_fort*.RDS`, the coarse differences (`alb_interp_preds_diffs_bluesky.RDS`)
+and script 9's slide-18 recipe table (`forcing_by_period_egu2024recipe_vs_slide.csv`); the size of the change in
+that table was not measured. The headline forcing (scripts 7a, 8 and 9) is unchanged, as it already used the
+selected file. Cells flagged as ice with NADI-1's best estimate: 20 at 50 and 500 BP, 23 at 2 ka, 29 at 4 ka, 34
+at 6 ka, 261 at 8 ka, 719 at 10 ka and 832 at 11.5 ka.
+
+**Verification.** PASS at 4e8532c. The legacy configuration ran scripts 7, 7a, 8, 9 and 10, and every file in the
+tail anchors (`interp-tail-2026-09-21`) and the forcing anchors (`interp-forcing-2026-10-08`) matched byte for byte
+(script 7 72.6 min, 7a 53.4 min, scripts 8 to 10 under a minute each). `config.R` with `"nadi1_optimal"` ran script
+7 (72.0 min): at each of the eight coarse ages the ICE flags equal the cells above 0.5, the drawn outlines agree with
+the flags, every age has an outline, and all seven periods have younger and older difference outlines;
+`test_config.R` and `test_paths.R` pass. PASS at bd2ca6c, after the reviews' tidy-ups: comments only
+(`tools/check_comments_only.R` against 4e8532c, two R files changed and no code change; the NADI-1 build tool's test,
+which sources it, passes). Reports: `docs/cc/verification/2026-11-20_ice-maps-legacy_report.md`, `-nadi1_report.md`
+and `-comments_report.md`. The figures were also inspected by eye.
+
+**Records.** Design `docs/cc/2026-11-20_ice_maps_design.md` (its last section is the approved build); Fable's design
+review `docs/cc/2026-11-20_ice_maps_design_review_fable.md`; Astra's line-count review
+`docs/cc/2026-11-20_ice_maps_line_count_review_codex_gpt6astra.md` (brief `..._line_count_astra_brief.md`); Fable's
+code review `docs/cc/2026-11-20_ice_maps_review_fable.md`, which found it mergeable. Chris approved two of its
+tidy-ups (two repeated sentences deleted, two outdated comments reworded), not a third (a note that the saved outline
+tables' `hole` column, which nothing reads, is wrong on the NADI-1 path, as the implementer reported). Built by an
+Opus agent.
+
+**Slips.** Astra's first line-count review read no files: the reviewer's role, copied into its prompt, forbade
+running commands, so it searched the web instead; it was run again with read-only access stated, with no effect on
+the code. The first commit of Astra's brief included text not meant for this public repository; it was amended
+before any push.
+
+## Fixes from the integration review: dead code, the comment check, the run-record note (#16), merged 2026-11-21
+
+**What it is for.** The integration gate (#16) begins with Astra's review of all the migration code
+(`docs/cc/2026-11-20_integration_review_codex_gpt6astra.md`). It found code that computes values nothing reads, a
+check that could pass after comparing nothing, and a README sentence that holds only for batch runs. On 20
+November Chris chose to fix all three; he left the review's other findings as they are. Fable's review of the fixes
+found two leftovers of the same kinds, and on 21 November Chris chose to fix both before the merge.
+
+**What changed.**
+- Dead code deleted; each object below was computed and never read:
+  - `scripts/4_calibration_model.R`: `alb_prod`; `cal_data2` and `cal_data3`, two copies of the calibration table;
+    and `AIC_list`, each month's full AIC table, kept in a list but never saved or read. The AIC table the script
+    writes is built separately and is unchanged.
+  - `scripts/7a_alb_diff_full.R`: eight per-row albedo columns (the partial-ice parts and their sums, and the
+    vegetation columns classified by the threshold) and the row list `ice_rows`, used only to build them. The
+    comment above the two threshold columns that remain now says what they hold: the glacier albedo per slice,
+    missing at or below the threshold.
+  - `scripts/9_forcing_barplot.R`: `forcing_panels`, a combined table used only for the common axis range. The range
+    now comes from the two panels' values directly; they are the same values, so the limits are the same. With it
+    went the `panel` column of the bar tables and of the slide-18 recipe's table, which nothing read once the
+    combined table was gone (Fable's review).
+  - `R/paths.R`: the catalogue entry `boundaries` (`pbs.RDS`), which nothing reads; the maps use `boundaries_ll`.
+- `tools/check_comments_only.R`: when `git diff` failed (an unknown base commit, say), the check saw no file names,
+  reported "0 R file(s) changed" and passed. That is false evidence that a change touched only comments. A failed
+  comparison now stops with "git could not compare with <base>". Its two earlier uses compared real files (I15a on
+  15 October, 23 files; the ice-maps follow-ups on 20 November, two files), so those results stand.
+  `tests/test_check_comments_only.R` adds an unknown base, which must fail.
+- `README.md` and the header comment of `R/run_manifest.R`: both said every run writes its record as soon as it
+  starts. That holds for batch runs (`Rscript`). A script stepped through in RStudio writes it only when it first
+  saves an output or finishes, and an error there is left to the session, so the record can be missing or stay
+  `started`. Both now say so; the function comment and `tests/test_run_manifest.R` already did.
+
+**Outputs changed.** None.
+
+**Verification.** From the legacy configuration:
+- At 5cadb41, scripts 7, 7a, 8, 9 and 10 from the saved seed-1 prediction summary: every file of the tail anchors
+  (`interp-tail-2026-09-21`) and the forcing anchors (`interp-forcing-2026-10-08`) matches byte for byte; the
+  comment-check, paths and configuration tests pass (script 7 100.4 min, 7a 75.9 min).
+- At 5cadb41, scripts 1, 2 and 4 for January: the AIC table's January column equals the anchored table's for all
+  eight ladder models (script 4 122.8 min).
+- At ee42e9a, after the two leftovers: script 9 alone, seeded with the baseline per-cell forcing (script 8) and coarse
+  differences (script 7), both byte-identical to the tail anchor: its four tables match the forcing anchor byte
+  for byte, its two PNG figures keep the previous run's checksums, and `R/run_manifest.R` is comments only
+  against 65bb2a4 (script 9 0.7 min).
+- Reports `docs/cc/verification/2026-11-20_gate-fixes-tail_report.md`, `2026-11-21_gate-fixes-script4-2_report.md`
+  and `2026-11-21_gate-fixes-script9_report.md`.
+
+**Records.** Astra's review and its brief (`docs/cc/2026-11-20_integration_review_*`, on branch `integration-gate`
+until the gate's results merge); Fable's review of the fixes,
+`docs/cc/2026-11-21_gate_fixes_review_fable.md`, which found them mergeable as is and named the two leftovers, with
+Chris's choices at its end. The edits are a few lines each and were made by the main Claude session.
+
+**Slips.** The first January check (`2026-11-20_gate-fixes-script4_report.md`, FAIL) failed on the check itself,
+not the code. It assumed every January file name holds "_jan_", but the spatial experiments' names end in "jan.RDS". It
+was also going to compare the saved fits byte for byte with gate run 1's, which is the wrong test: a saved fit with
+the beta family is not a stable byte copy. Model 3's January fit has the same coefficients, fitted values,
+smoothing parameters and AIC in the original, gate run 1 and this code, yet three different files. The regression
+contract compares fits by their predictions and AIC, never as whole files, and the second attempt did that. The
+message of commit 9f7ddfb still names the failed comparison as its evidence; the evidence is as stated here.
+
+## Final integration check: Astra's review and three full runs (#16), merged 2026-11-21
+
+**What it is for.** The last check of the migration (issue #16): that the assembled code still reproduces the
+original analysis from start to finish, including the one full refit of script 4, and that the final configuration
+runs end to end. On 20 November Chris chose this as the next task and approved its plan: Astra's review of all the
+migration code (1b9d5a9 to 9c8dea1), and three full runs started at once, with any fix he approved checked by
+rerunning only what it touches. The fixes he chose are in the section above.
+
+**What changed.** No code. Added: Astra's review and its brief, and the three runs' specifications and reports.
+
+**Outputs changed.** None.
+
+**Verification.** The three runs used commits 9c8dea1, 6c86770 and d0ed354, which hold the same code (the trunk
+after the ice-maps merge). They ran side by side, 8 threads each, from the frozen inputs, whose 331 checksums matched
+before and after every run.
+- *The original analysis from scratch* (`configs/legacy_config.R`, 9c8dea1): scripts 1 to 10, with script 4's full
+  refit (for each of the twelve months, the eight-model ladder, the seven spatial experiments and the selected
+  model: 192 fits). Every file of the all-months reference (`interp-allmonths-2026-09-20`: both land-cover tables,
+  the calibration table, the AIC table and the point predictions) matches byte for byte. With the legacy
+  configuration's seed 1, all 26 files of scripts 5 and 6 match the seed-1 reference (`interp-seed1-2026-10-14`)
+  byte for byte. Scripts 7 to 10 ran on this run's own seed-1 summary, which has no reference. The configuration and
+  paths tests pass. Script 4 943.0 min, script 7 73.6, 7a 53.0; 18.2 hours in all.
+- *The original analysis's last stage* (6c86770): scripts 7 to 10 from the saved prediction summary. Every file of
+  the tail and forcing references (`interp-tail-2026-09-21`, `interp-forcing-2026-10-08`) matches byte for byte.
+  Script 7 77.2 min, 7a 58.9; 2.3 hours in all.
+- *The final configuration from scratch* (`config.R`, d0ed354): scripts 1 to 10, with script 4's full refit. No
+  reference exists for this configuration: the run shows that the whole pipeline runs end to end on the final code.
+  Every script finished without error, and the configuration, paths and forcing-breakdown tests pass. Script 4
+  1,384.7 min, script 7 74.7, 7a 76.5; 26.0 hours in all.
+- *Runs with other settings*, from the original analysis's configuration, on the final code (91735fb, a06eddf and
+  68ca9ad, which hold the same code). The issue's design lists them; they had last run in October (sections I02,
+  I04a and I04b), and on 21 November, after the three runs, Chris chose to rerun them:
+  - script 1 in diagnostic mode: both land-cover tables match the all-months reference byte for byte, and the
+    diagnostics write their 28 figures and per-cell table (0.8 min);
+  - the median land cover through scripts 1 and 2: both tables keep the mean tables' columns and keys, every row's
+    three shares add up to 1 (largest error 2.2e-16), the median differs from the mean by 0.011 (modern) and 0.012
+    (past) on average and by at most 0.09 and 0.16, and script 2 runs on them (0.5 and 2.7 min);
+  - four months (February, May, August and November) through scripts 5 to 10 with seed 1, from script 4's saved
+    fits: each month's draw and summary files match the twelve-month seed-1 reference byte for byte, and the
+    per-cell forcing holds exactly those four months (42 min in all).
+- The review's fixes merged after the three full runs (9d3677d). They were checked by rerunning what they touch
+  (section above); the runs with other settings ran on the code with them.
+- Reports: `docs/cc/verification/2026-11-21_gate-legacy-full_report.md`, `2026-11-20_gate-legacy-tail_report.md` and
+  `2026-11-21_gate-final-full_report.md`, each beside a copy of its specification (the tool names both by the day
+  the run finished); for the runs with other settings, `2026-11-21_gate-other-diagnostic_report.md`,
+  `-median_report.md` and `-four-months_report.md`.
+
+**Reconciliation with `chris-dev`.** The design merges `chris-dev` into the migration branch once more before the
+final merge, to bring in Andria's edits. There is nothing to merge: `chris-dev` has had no commit since 3 November
+(837c940), every commit on it since the migration began (1b9d5a9, 8 October) is Chris's, and all of them are already
+in `feature/single-config`. `main` and `legacy` are unchanged since 13 September (c9d525e). The reference files in
+`tests/anchors/` are unchanged since 31 October, when one seed-1 table was regenerated (section "Calibration on the
+rebuilt MODIS albedo cell table").
+
+**README.** Astra found that the README's configuration and run-order descriptions agree with the code, except the
+paragraph on run records, which is corrected (section above).
+
+**Limits.**
+- Both from-scratch runs use the old ice raster. The runs do not rebuild the NADI-1 ice files or the MODIS albedo
+  table, and do not run NADI-1 ice, the cross-validation or the exploration tools; those rest on their own
+  verification records and tests (Astra's review, its fourth limit).
+- The design's four-month run began at script 4; it was rerun from script 5, on script 4's saved fits, since the
+  full refit had already run script 4's code. The design's other checks hold on the final code: a settings mismatch
+  that stops a run, the override that lets it through, and a presentation-only change that passes are tested in
+  `tests/test_run_manifest.R`; and scripts 5 and 6 with a fixed seed reproduced, in the first run, all 26 seed-1
+  files that the October code made.
+- The design's audit that every numerical stage can be called from `R/` lapsed when the extraction issues were
+  closed on 14 October (section "Order revised and two reviews").
+- Fitted models are compared by the AIC table and the predictions, not as files: a saved fit with the beta family is
+  not a stable byte copy (section above).
+
+**Records.** Astra's review, `docs/cc/2026-11-20_integration_review_codex_gpt6astra.md` (brief
+`docs/cc/2026-11-20_integration_review_astra_brief.md`), found no new arithmetic problem that blocks the merge and no
+unrecorded numerical departure in the original analysis's path. Chris's choices on 20 November: the three fixes (section above);
+`tools/compare_tables.R` left as it is (in a comparison within tolerances it does not hold numeric cell identifiers
+such as longitude equal, but the seed-1 files are compared byte for byte, which would catch such a change); no extra
+gate checks (neither a comparison of all 192 refits with the original fits nor a spot check of the kernel
+positions); and the 0.50 and 0.80 glacier-albedo sensitivity cases, decided on 16 November, to come later and
+separately, after Andria answers.
+
+**Slips.** The plan put to Chris on 20 November listed the three runs but not the design's runs with other settings;
+this was raised with him on 21 November, after the runs, and he chose to rerun them (all three passed). When the fixes' checks were planned, he was first told
+that the one-month refit tool would cover script 4's deletions; that tool refits from the saved model and never runs
+script 4, so a January run of script 4 itself was used instead, and he was told so on 20 November.

@@ -1,0 +1,14 @@
+job: snow_free_jul
+time: 2026-11-16 17:04:11 UTC
+commit: b0d1db70345d861d28deddeb88b1a2d4d147c008
+branch: cover-contrasts
+uncommitted changes in R/, scripts/, config.R or this tool: FALSE
+input configuration /home/expert/Documents/contracting/Andria/paleo-RF-verify/8e3f3a4/.rundirs/run2-snowfree-2/config_used.R 5e07cee49897eac1a83a477a09fdcc3e
+input calibration_table /home/expert/Documents/contracting/Andria/paleo-RF-verify/8e3f3a4/.rundirs/run2-snowfree-2/data/calibration_modern_lct_interp_bluesky.RDS 0e67a3d38ee2af12c08ab1b2e78d5928
+input albedo_differences /home/expert/Documents/contracting/Andria/paleo-RF-verify/8e3f3a4/.rundirs/run2-snowfree-2/data/ALB_diffs_bluesky.RDS 9c23799b08379eae7b5f5d080f3b5836
+input albedo_modis_cells data/albedo_modis_cells.csv d73c54cca47b864284e430f87ef9ce3f
+version loc30_linear s(x, y, bs = "gp", k = 30) + s(elev, k = 50) + ET + ST
+version loc100_linear s(x, y, bs = "gp", k = 100) + s(elev, k = 50) + ET + ST
+package R 4.5.3
+package mgcv 1.9.4
+package sf 1.1.3

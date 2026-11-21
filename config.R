@@ -1,0 +1,235 @@
+# Project configuration: every setting the pipeline scripts read, in one place.
+#
+# This file is ordinary R whose value is one list of settings. load_config() in R/config.R
+# runs it and checks every key against the schema in R/config_schema.R. Each run manifest
+# records the settings it ran with.
+#
+# To add a setting, add it here and in R/config_schema.R: a key the schema does not know
+# stops every script, so that a misspelt setting can never be silently ignored.
+#
+# Three sections:
+#   analysis      settings that change the numbers the pipeline produces
+#   presentation  settings that change only how figures look
+#   run           where this run writes its files, and whether stale inputs are allowed
+#
+# A key appears here only once a script reads it. The method options decided on 2026-10-14
+# and the albedo choice of 2026-10-29 are here. Where a value is a choice nobody has yet
+# confirmed, the comment gives its question id in docs/cc/questions_for_andria_scientific.md (C*) or
+# questions_for_andria_general.md (section number). Created 2026-10-13.
+
+list(
+  analysis = list(
+
+    # The months analysed, by their three-letter names. Any subset, e.g.
+    # c("feb", "may", "aug", "nov"), runs scripts 4 to 8 on those months only (script 2
+    # always builds the calibration table for all twelve). A changed selection is still a
+    # new run from script 1: each script reads only products made with the same settings.
+    months = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"),
+
+    # The time slices of the land-cover reconstruction, years BP, used by script 7a to
+    # pair consecutive slices. They MUST be slices present in the prediction table (the
+    # reconstruction has these 25); script 7a stops if one is not. A subset makes 7a
+    # difference across wider gaps. The oldest slice is 11,500 BP (question C7).
+    ages = c(50, 200, seq(500, 11500, by = 500)),
+
+    # Script 1: how the 200 posterior draws of land cover per cell, slice and class are
+    # summarised into one value. "mean" (the original choice) or "median"; the median is
+    # rescaled so that ET + OL + ST = 1 in every cell and slice. Andria's note in script 1
+    # ("not sure if should use median") is question A1.
+    land_cover = list(reduction = "mean"),
+
+    # Script 1: the elevation beside each cell's land-cover fractions (question B9).
+    # "land_mean" (decided by Chris on 2026-10-14 and 2026-10-15): the mean of the GMTED2010
+    # 30-arc-second DEM over the cell's non-ocean area, lakes kept, as in New et al. (2002)
+    # and ISLSCP II HYDRO1k; read from data/elev_land_mean_cells.csv, which
+    # tools/prepare_land_elevation.R makes. "centre_point" (the original): the AWS terrain
+    # tiles at the cell's centre point, data/elev_interp_cells.RDS.
+    elevation = list(method = "land_mean"),
+
+    # Script 2: the satellite albedo that the calibration models are fitted to (decided by
+    # Chris on 2026-10-29, docs/cc/2026-10-29_refit_plan_decisions.md).
+    # source: "modis_cells", the monthly blue-sky albedo of 2000-2009 rebuilt from MODIS over
+    #   the land pixels of each 1-degree cell, data/albedo_modis_cells.csv (made by
+    #   tools/prepare_bluesky_albedo.R, whose header gives every choice and its source); or
+    #   "legacy_raster", the original 0.25-degree raster data/blue_sky_monthly_2000-2009.tif
+    #   read at each cell centre (who made it, and how, is unknown; it mixes water into
+    #   coastal and lake cells).
+    # statistic: "all_days", the albedo over all days; "snow_free", over the days the MODIS
+    #   snow flag calls snow-free (a calibration on snow-free retrievals only, not a forcing
+    #   without snow); "snowy", over the snow-flagged days.
+    # version: which retrievals count. "full_75", full BRDF inversions with the noon sun
+    #   within 75 degrees of overhead (the main version); "any_75", any processed retrieval,
+    #   75 degrees; "full_70", full inversions, 70 degrees; "full_nocut", full inversions with
+    #   no sun-angle rule. The winter check is a run with months = c("jan", "feb", "nov",
+    #   "dec") and version = "full_nocut".
+    # statistic and version choose among the cell table's columns, so with "legacy_raster"
+    # they must stay "all_days" and "full_75" (an implementation rule, R/config_schema.R).
+    albedo = list(source = "modis_cells", statistic = "all_days", version = "full_75"),
+
+    # Script 4 fits model_id by REML for prediction (the file script 5 saves as the selected
+    # model and script 6 uses). One of the models in R/model_registry.R: the ladder mod1 ...
+    # mod8 or a cross-validation candidate. Model 8 was chosen by hand (question B4); the
+    # cross-validation (tools/cross_validate_albedo.R) is to choose it.
+    # comparison_method: how script 4 fits the ladder that scripts 4 and 5 compare by AIC.
+    # "ML" (decided by Chris on 2026-10-14, kept on 2026-10-16, question B4) or "REML" (the
+    # original); both are to be compared. ML is the standard convention for comparing models
+    # that differ in their terms (mgcv's gam.selection help), not a requirement: the AIC that
+    # mgcv computes (the conditional AIC with the corrected degrees of freedom of Wood, Pya and
+    # Saefken 2016) is also valid on REML fits, and Wood's own help examples use it so.
+    # ice_mask: script 2 leaves out of the calibration table the modern cells whose centre
+    # lies under the 1 ka ice polygons, present-day ice caps that the interpolation gave
+    # vegetation fractions (48 cells; question B8). "centre_in_1ka_polygon" (decided by Chris
+    # on 2026-10-14) or "none" (the original). The cells stay in the prediction domain.
+    calibration = list(model_id = "mod8",
+                       comparison_method = "ML",
+                       ice_mask = "centre_in_1ka_polygon"),
+
+    # Draws of simulated albedo from the calibration model (gratia's simulate()): per
+    # evaluation in script 5, and per prediction in script 6, where they become the
+    # posterior samples and the summaries' mean and intervals (questions A2, A3: 100 or
+    # 1,000). Whole numbers, at least 2. `seed` is "random" (a new base seed each run,
+    # recorded in the run manifest; copy it here to repeat a run exactly) or a whole
+    # number, which makes the draws of scripts 5 and 6 repeatable; each month and each
+    # simulate() call gets its own seed derived from it (R/random.R).
+    draws = list(evaluation = 100, prediction = 100, seed = "random"),
+
+    # The coarse time slices, years BP. Consecutive pairs bound the seven periods of
+    # the forcing summary (script 9) and of script 7's coarse differences; period
+    # labels such as '0.05 - 0.5 ka' are made from these numbers. The oldest is the oldest
+    # slice in the data, 11,500 BP, so the oldest period is labelled 10 - 11.5 ka (Chris,
+    # 16 November 2026; question C7). The legacy configuration keeps the original 12,000 BP
+    # and 10 - 12 ka for the same period, through slice_alias.
+    coarse = list(
+      ages = c(50, 500, 2000, 4000, 6000, 8000, 10000, 11500),
+      # c(data slice, coarse age it stands for), or NULL for none. The legacy configuration
+      # has c(11500, 12000): script 7 treats the 11,500 BP slice as 12,000 BP. Either way, with
+      # ice$fraction_source "dalton_ice", script 7 gives the slice the 12 ka ice polygon for its
+      # mask and outline (Chris, 18 November 2026); with NADI-1 it uses the 11,500 BP band.
+      slice_alias = NULL),
+
+    # The study domain, degrees. Script 7a drops cells west of lon_min; script 8 keeps
+    # cells strictly between lat_min and lat_max before computing forcing; script 7 drops
+    # cells east of lon_max_coarse before its coarse differences (which script 9 uses for
+    # the EGU 2024 recipe). Inherited, not chosen (questions D3, C5).
+    domain = list(lon_min = -170, lat_min = 27, lat_max = 74, lon_max_coarse = -60),
+
+    # Ice. A cell counts as ice when its ice fraction exceeds `threshold` (script 7a, the
+    # *_thresh forcing variants; questions C0, C2). The ice albedo per month comes from
+    # data/albedo_glacier_monthly.csv; each role names the column it uses, one of
+    # "ice_albedo", "ice_albedo_fixed" or "ice_albedo_sc". Script 7 uses `ice_albedo` and
+    # script 7a the other two; the file's source and the meaning of the columns are
+    # question C0a.
+    ice = list(
+      # The ice fractions script 7a reads, one file per choice (R/paths.R; Chris, 16 November
+      # 2026: one setting, to compare the reconstructions). "dalton_ice": the raster used so
+      # far, data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif (Dalton et al. 2020's margins
+      # interpolated to the slices, by whom and how is question C0b). "nadi1_optimal",
+      # "nadi1_minimum" or "nadi1_maximum": the three reconstructions of NADI-1 (Dalton et al.
+      # 2023) on the same grid, data/nadi1_fractions/, made by tools/build_nadi1_fractions.R.
+      # It also picks the ice script 7 draws and flags: the 21 glacier outlines for "dalton_ice",
+      # or the NADI-1 file's cells above `threshold` (Chris, 20 November 2026).
+      fraction_source = "dalton_ice",
+      threshold = 0.5,
+      # How script 7a turns each pair of slices into an albedo change, for the threshold
+      # variants: "endpoint" takes each slice's albedo (ice or vegetation) and subtracts,
+      # so an ice advance is counted (decided by Chris on 2026-10-14, question C2); the
+      # original "legacy_components" reported an advance across the threshold as zero,
+      # and counted a pair twice where the readvance smoothing moved the older slice across it.
+      # The readvance smoothing is the same in both (Andria's call, C2).
+      difference_method = "endpoint",
+      albedo_coarse = "ice_albedo",          # script 7: the coarse ice-albedo maps
+      albedo_fixed  = "ice_albedo_fixed",    # script 7a: the *_ice_* forcing variants
+      albedo_scaled = "ice_albedo_sc"),      # script 7a: the *_icesc_* forcing variants
+
+    # Radiative kernels (script 8): the variable read from each kernel file, which decides
+    # clear-sky or all-sky and top of atmosphere (TOA) or surface. The legal names and what
+    # each is are in R/kernels.R. Decided by Chris on 2026-10-14, to be reviewed by Andria:
+    # all-sky kernels at the TOA for the headline (C3a, C4) and CACK's 2001-2016
+    # climatological mean (C3b). The original analysis read HadGEM3 "albedo_sw_cs"
+    # (clear, TOA), CAM5 "FSNSC" (clear, surface) and CACK "CACK" for one year
+    # (configs/legacy_config.R). cack_year is used only with cack_variable = "CACK"; the
+    # file's Year dimension is "2001 = 1".
+    kernels = list(hadgem_variable = "albedo_sw",
+                   cam5_variable   = "FSNT",
+                   cack_variable   = "CACK CM",
+                   cack_year       = 2003),
+
+    # Script 9: continental forcing by period, beside the modern IPCC agents.
+    forcing = list(
+      # Earth's surface area, for the global-equivalent forcing (script 9, A8). The headline
+      # figure plots the global-equivalent forcing for comparison with the IPCC's global
+      # means (decision C5, 2026-10-14); the domain mean stays as a separate figure.
+      earth_area_m2 = 5.101e14,
+      # The forcing variant reported (script 9, A1): vegetation plus ice albedo change,
+      # partial ice, i.e. each cell's albedo is its ice fraction times the fixed glacier
+      # albedo plus the rest times its vegetation albedo. Andria's intended headline (her
+      # answer to question C1, 2026-10-19); the all-or-nothing version (a cell is all ice
+      # above the threshold) stays in the sensitivity figure. Legal: one of the four
+      # totals, veg_ice_parts, veg_ice_thresh, veg_icesc_parts or veg_icesc_thresh
+      # (icesc: the month-by-month glacier albedo); a vegetation-only or ice-only part
+      # is refused (R/config_schema.R).
+      variant = "veg_ice_parts",
+      # The kernels carried through, HadGEM3 first as the headline (A3; C3, C4).
+      # Must include hadgem.
+      report_kernels = c("hadgem", "cam5", "cack"),
+      # The variants compared in the sensitivity table and figure, HadGEM3 only (A2):
+      # the totals, and both of Andria's vegetation/ice splits, each adding up to its
+      # total (veg_thresh + ice_thresh = veg_ice_thresh, by kind of step;
+      # veg_part + ice_part = veg_ice_parts, by area share). With the "endpoint"
+      # difference method (ice above), script 9 sets a threshold part that does not
+      # apply to 0, so cells with both kinds of step stay in (R/forcing_components.R).
+      # The last two split the partial-ice total by a second rule, so that Andria can choose
+      # (Chris, 16 November 2026): veg_part_exposed is the vegetation change only on the smaller
+      # of the two slices' ice-free shares (the land ice-free at both slices if the ice
+      # footprints within a cell are nested), ice_part_exposed the rest of the total
+      # (R/differences.R; made with the "endpoint" difference method only).
+      sensitivity_variants = c("veg_thresh", "ice_thresh", "veg_ice_thresh",
+                               "veg_part", "ice_part", "veg_ice_parts",
+                               "veg_icesc_thresh", "veg_icesc_parts",
+                               "veg_part_exposed", "ice_part_exposed"),
+      # Script 10: the width of the latitude bands its breakdown uses, degrees (bands
+      # start at multiples of it; the outer two are cut at the domain's limits). Shapes a
+      # breakdown only, never a total (Chris, 2026-10-15, question B2d).
+      latitude_band_width = 10
+    )
+  ),
+
+  presentation = list(
+    # Map windows, longitude (x) and latitude (y) in degrees. Three because three
+    # were inherited (questions_for_andria_general.md, section 7):
+    #   calibration  maps of the modern calibration data (scripts 2 and 3)
+    #   tail         maps of the hindcast and its differences (script 7)
+    #   diagnostics  script 1's ice-extent diagnostics (DIAGNOSTIC=TRUE) and the diagnostic
+    #                figures of tools/plotting/
+    map_windows = list(calibration = list(x = c(-172, -50), y = c(15, 80)),
+                       tail        = list(x = c(-166, -50), y = c(12, 82)),
+                       diagnostics = list(x = c(-172, -50), y = c(17, 79)))
+  ),
+
+  run = list(
+    # Where a run writes everything it produces: derived data, outputs, figures and its
+    # run manifest. NULL means the usual places in the repository (data/, output/,
+    # figures/, runs/). A directory, e.g. ".rundirs/median_test", keeps an alternative
+    # run's products apart from the baseline, which it can then never overwrite; the
+    # original inputs (albedo raster, kernels, boundaries ...) are still read from the
+    # repository. A run in its own directory reads the products of earlier steps only
+    # from that directory: put there first the ones it should reuse, with
+    # seed_run_dir() in R/paths.R. Recorded in each run manifest; changing it does not
+    # count as a change of analysis. An alternative run is best described by its own
+    # copy of this file (e.g. configs/median.R, with its own dir), given to each script
+    # as `Rscript scripts/<script>.R --config configs/median.R`.
+    dir = NULL,
+
+    # Before a script reads a file made by an earlier script, it checks (R/run_manifest.R)
+    # that the file is the one that script's latest run wrote and that the run used the
+    # same analysis settings as this one; if not, it stops and says what differs. TRUE
+    # lets the run go on regardless, and every such file is listed in its run manifest.
+    # Meant for checks against products made before run manifests existed.
+    allow_stale = FALSE,
+
+    # Script 1's diagnostic mode: TRUE adds checks and plots of the land-cover input (the
+    # discarded ice flag, absent cell-slices, mean versus median) into figures/diagnostics/.
+    # Changes no output.
+    diagnostic = FALSE
+  )
+)

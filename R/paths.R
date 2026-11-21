@@ -1,0 +1,272 @@
+# Every file the pipeline reads or writes, and where it is.
+#
+# Usage, at the top of a script:
+#   source('R/config.R'); source('R/paths.R')
+#   cfg   = load_config()
+#   paths = pipeline_paths(cfg)
+#   readRDS(path_file(paths, 'lct_paleo'))
+#   saveRDS(x, path_file(paths, 'prediction_summary_month', month = month))
+#   ggsave(path_figure(paths, 'forcing_barplot_slide18.pdf'))
+#
+# Why: the scripts built their file names by pasting strings, separately in the script that
+# writes a file and in each script that reads it, and the two could disagree: script 5 read
+# its spatial-experiment models from output/calibration/spatial_experiment/, a directory
+# script 4 never writes to, so script 5 could not run past that point. Here each file is
+# named once, in PATH_CATALOGUE, with the script that produces it, so a reader and its
+# writer cannot drift apart, and I05's run manifests can ask which script made a file.
+#
+# Where files go is set by config.R, run$dir:
+#   NULL         the baseline locations, exactly today's file names under data/, output/,
+#                figures/ and runs/ in the repository.
+#   a directory  everything a run produces (products, figures, run manifests) goes under
+#                that directory with the same relative names, so an alternative run can
+#                never overwrite the baseline. Original inputs are still read from the
+#                repository. Products of earlier steps are read only from that directory;
+#                seed_run_dir() puts there the baseline products a run should reuse.
+# Plain R, no external tools, so it works the same on Linux, macOS and Windows.
+
+source('R/calendar.R')
+
+# The albedo product in the file names. Only the blue-sky product exists, so it is fixed
+# here rather than offered as a setting.
+ALBEDO_TAG = 'bluesky'
+
+# The fits of script 4, by model id (LADDER_MODELS, SPATIAL_MODELS): defined with their
+# formulas in R/model_registry.R.
+source('R/model_registry.R')
+
+# One row per file or family of files. `template` is the path relative to the repository
+# (input) or to the run directory (product); {month} is a month name, {model} a model id,
+# {tag} the albedo tag. Names are today's names exactly, oddities included
+# (calibration_mod_spatial_elev_cover{month}.RDS has no underscore before the month).
+PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
+  # id                          template                                                              kind       producer
+  c('veg_posts',                'data/veg_posts_interp_ice.RDS',                                      'input',   NA),
+  c('elevation_cache',          'data/elev_interp_cells.RDS',                                         'input',   NA),
+  c('elevation_land_mean',      'data/elev_land_mean_cells.csv',                                      'input',   NA),
+  c('grid',                     'data/grid.RDS',                                                      'input',   NA),
+  c('bluesky_raster',           'data/blue_sky_monthly_2000-2009.tif',                                'input',   NA),
+  # The rebuilt MODIS albedo per cell and month, and the note of how it was made, both from
+  # tools/prepare_bluesky_albedo.R (committed); read by script 2 when config.R chooses it.
+  c('albedo_modis_cells',       'data/albedo_modis_cells.csv',                                        'input',   NA),
+  c('albedo_modis_provenance',  'data/albedo_modis_cells_provenance.txt',                             'input',   NA),
+  c('boundaries_ll',            'data/map-data/geographic/pbs_ll.RDS',                                'input',   NA),
+  c('glacier_shapes',           'data/map-data/ice/glacier_shapefiles_21-1k.RDS',                     'input',   NA),
+  c('glacier_albedo',           'data/albedo_glacier_monthly.csv',                                    'input',   NA),
+  c('dalton_ice',               'data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif',              'input',   NA),
+  # The NADI-1 ice fractions on the same grid, one file per reconstruction, made by
+  # tools/build_nadi1_fractions.R (committed); config.R's analysis$ice$fraction_source chooses
+  # which of these four ice files scripts 7 and 7a read.
+  c('nadi1_optimal',            'data/nadi1_fractions/nadi1_optimal.tif',                             'input',   NA),
+  c('nadi1_minimum',            'data/nadi1_fractions/nadi1_minimum.tif',                             'input',   NA),
+  c('nadi1_maximum',            'data/nadi1_fractions/nadi1_maximum.tif',                             'input',   NA),
+  c('kernel_hadgem',            'data/radiative-kernels/HadGEM3-GA7.1_TOA_kernel_L19.nc',             'input',   NA),
+  c('kernel_cam5',              'data/radiative-kernels/CAM5/alb.kernel.nc',                          'input',   NA),
+  c('kernel_cack',              'data/radiative-kernels/CACKv1.0/CACKv1.0.nc',                        'input',   NA),
+  c('ipcc_erf',                 'data/ipcc-ar6/AR6_ERF_1750-2019.csv',                                'input',   NA),
+  c('ipcc_erf_pc05',            'data/ipcc-ar6/AR6_ERF_1750-2019_pc05.csv',                           'input',   NA),
+  c('ipcc_erf_pc95',            'data/ipcc-ar6/AR6_ERF_1750-2019_pc95.csv',                           'input',   NA),
+  # The pollen-based (REVEALS) cover before interpolation; read by tools/plotting/plot_pollen_site_coverage.R.
+  c('lct_paleo_reveals',        'data/lct_paleo_reveals.RDS',                                         'input',   NA),
+  c('lct_modern',               'data/lct_modern_reveals_interp.RDS',                                 'product', '1_veg_lct_prep'),
+  c('lct_paleo',                'data/lct_paleo_reveals_interp.RDS',                                  'product', '1_veg_lct_prep'),
+  c('calibration_table',        'data/calibration_modern_lct_interp_{tag}.RDS',                       'product', '2_calibration_lct_bluesky'),
+  c('calibration_table_coarse', 'data/calibration_modern_lct_interp_{tag}_coarse.RDS',                'product', '2_calibration_lct_bluesky'),
+  c('calibration_ladder',       'output/calibration/calibration_{model}_interp_{month}_{tag}.RDS',    'product', '4_calibration_model'),
+  c('calibration_spatial',      'output/calibration/calibration_mod_{model}_{month}.RDS',             'product', '4_calibration_model'),
+  c('calibration_spatial_elev_cover', 'output/calibration/calibration_mod_spatial_elev_cover{month}.RDS', 'product', '4_calibration_model'),
+  c('aic_table',                'output/calibration/AIC_table.csv',                                   'product', '4_calibration_model'),
+  c('calibration_prediction_fit', 'output/calibration/calibration_prediction_fit_{month}_{tag}.RDS',  'product', '4_calibration_model'),
+  c('calibration_selected',     'output/calibration/calibration_mod_interp_selected_{month}_{tag}.RDS', 'product', '5_calibration_eval'),
+  c('calibration_stats',        'output/calibration/calibration_model_stats.csv',                     'product', '5_calibration_eval'),
+  c('prediction_point_month',   'output/prediction/paleo_interp_predict_gam_{month}_{tag}.RDS',       'product', '6_prediction_model'),
+  c('prediction_samples_month', 'output/prediction/paleo_interp_predict_gam_samps_{month}_{tag}.RDS', 'product', '6_prediction_model'),
+  c('prediction_summary_month', 'output/prediction/paleo_interp_predict_gam_summary_{month}_{tag}.RDS', 'product', '6_prediction_model'),
+  c('prediction_point',         'output/prediction/paleo_interp_predict_gam_{tag}.RDS',               'product', '6_prediction_model'),
+  c('prediction_summary',       'output/prediction/paleo_interp_predict_gam_summary_{tag}.RDS',       'product', '6_prediction_model'),
+  c('ice_fort',                 'data/ice_fort.RDS',                                                  'product', '7_plot_preds'),
+  c('ice_fort_diff_young',      'data/ice_fort_diff_young.RDS',                                       'product', '7_plot_preds'),
+  c('ice_fort_diff_old',        'data/ice_fort_diff_old.RDS',                                         'product', '7_plot_preds'),
+  c('coarse_differences',       'data/alb_interp_preds_diffs_{tag}.RDS',                              'product', '7_plot_preds'),
+  c('albedo_differences',       'data/ALB_diffs_{tag}.RDS',                                           'product', '7a_alb_diff_full'),
+  c('forcing',                  'output/forcing/RF_holocene_all_cases.RDS',                           'product', '8_radiative'),
+  c('forcing_by_period',        'output/forcing/forcing_by_period.csv',                               'product', '9_forcing_barplot'),
+  c('forcing_variant_sensitivity', 'output/forcing/forcing_by_period_variant_sensitivity.csv',        'product', '9_forcing_barplot'),
+  c('forcing_egu2024_recipe',   'output/forcing/forcing_by_period_egu2024recipe_vs_slide.csv',        'product', '9_forcing_barplot'),
+  c('modern_erf',               'output/forcing/modern_ipcc_ar6_erf.csv',                             'product', '9_forcing_barplot'),
+  c('forcing_breakdown',        'output/forcing/forcing_by_month_latitude.csv',                       'product', '10_forcing_breakdown')
+))
+names(PATH_CATALOGUE) = c('id', 'template', 'kind', 'producer')
+rownames(PATH_CATALOGUE) = PATH_CATALOGUE$id
+
+# The model ids each model-family template accepts.
+TEMPLATE_MODELS = list(calibration_ladder = LADDER_MODELS,
+                       calibration_spatial = setdiff(SPATIAL_MODELS, 'spatial_elev_cover'))
+
+# The directories a run writes into, created at the start of every run.
+PRODUCT_DIRS = c('data', 'output/calibration', 'output/prediction', 'output/forcing',
+                 'figures', 'figures/diagnostics', 'runs')
+
+# The two path layouts. A profile says where products go; inputs always come from the
+# repository (the working directory, from which every script is run).
+baseline_paths   = function() list(profile = 'baseline', root = NULL)
+redirected_paths = function(dir) list(profile = 'redirected', root = dir)
+
+# The paths for this run: the profile the config asks for unless one is given. Creates the
+# product directories and says where the run writes.
+pipeline_paths = function(cfg, profile = if (is.null(cfg$run$dir)) baseline_paths() else redirected_paths(cfg$run$dir)) {
+  paths = c(profile, list(tag = ALBEDO_TAG))
+  for (product_dir in PRODUCT_DIRS) dir.create(under_root(paths, product_dir), recursive = TRUE, showWarnings = FALSE)
+  message(if (is.null(paths$root)) 'paths: baseline; products are written to data/, output/, figures/ and runs/ in the repository'
+          else sprintf('paths: run directory %s; every product of this run is written there', paths$root))
+  paths
+}
+
+# A relative product path under the run's root ('data/x.RDS' itself for the baseline).
+under_root = function(paths, rel) if (is.null(paths$root)) rel else file.path(paths$root, rel)
+
+# The path of one catalogued file. `month` and `model` fill the template's placeholders and
+# are checked against the calendar and the model ids the template accepts.
+path_file = function(paths, id, month = NULL, model = NULL) {
+  if (!id %in% PATH_CATALOGUE$id) stop('path_file: no catalogued file with id ', sQuote(id, FALSE))
+  entry = PATH_CATALOGUE[id, ]
+  relative_path = entry$template
+  needs = function(key) grepl(sprintf('{%s}', key), relative_path, fixed = TRUE)
+  if (needs('month') != !is.null(month))
+    stop(sprintf('path_file: %s %s a month', id, if (needs('month')) 'needs' else 'takes no'))
+  if (needs('model') != !is.null(model))
+    stop(sprintf('path_file: %s %s a model id', id, if (needs('model')) 'needs' else 'takes no'))
+  if (!is.null(month)) {
+    if (length(month) != 1) stop('path_file: one month at a time')
+    relative_path = sub('{month}', check_months(month), relative_path, fixed = TRUE)
+  }
+  if (!is.null(model)) {
+    if (length(model) != 1 || !model %in% TEMPLATE_MODELS[[id]])
+      stop(sprintf('path_file: %s takes model ids %s', id, paste(TEMPLATE_MODELS[[id]], collapse = ', ')))
+    relative_path = sub('{model}', model, relative_path, fixed = TRUE)
+  }
+  relative_path = gsub('{tag}', paths$tag, relative_path, fixed = TRUE)
+  if (entry$kind == 'input') relative_path else under_root(paths, relative_path)
+}
+
+# A calibration fit of script 4, by model id: one of the ladder (mod1 ... mod8), a spatial
+# experiment, or 'selected', the model script 5 saves for prediction. For code that loops
+# over model ids; a fixed file is named with path_file() directly. It exists because the
+# fits are kept under three file-name patterns, one of them with an oddity
+# (calibration_mod_spatial_elev_cover{month}.RDS has no underscore before the month).
+path_calibration_model = function(paths, model_id, month) {
+  if (identical(model_id, 'selected')) return(path_file(paths, 'calibration_selected', month = month))
+  if (identical(model_id, 'spatial_elev_cover')) return(path_file(paths, 'calibration_spatial_elev_cover', month = month))
+  if (model_id %in% LADDER_MODELS) return(path_file(paths, 'calibration_ladder', month = month, model = model_id))
+  if (model_id %in% SPATIAL_MODELS) return(path_file(paths, 'calibration_spatial', month = month, model = model_id))
+  stop('path_calibration_model: unknown model id ', sQuote(model_id, FALSE),
+       '; known: ', paste(c(LADDER_MODELS, SPATIAL_MODELS, 'selected'), collapse = ', '))
+}
+
+
+# A figure file, under figures/ in the run's root. Every figure path handed out is noted, so
+# a run manifest lists the figures this run wrote and not those another run (scripts 7 and
+# 7a run side by side) wrote into the same figures/ meanwhile.
+FIGURES_REQUESTED = new.env(parent = emptyenv())
+FIGURES_REQUESTED$paths = character()
+path_figure = function(paths, ...) {
+  path = under_root(paths, file.path('figures', ...))
+  FIGURES_REQUESTED$paths = union(FIGURES_REQUESTED$paths, path)
+  path
+}
+
+# Where run manifests are written.
+path_runs = function(paths) under_root(paths, 'runs')
+
+# A path as it is written in the catalogue ('data/x.RDS'): relative to the run's root,
+# with / separators. Lets paths given under a run directory, or with \ separators, be
+# matched to the catalogue and compared between runs (the run manifests).
+root_relative = function(paths, path) {
+  relative_path = gsub('\\\\', '/', path)
+  if (!is.null(paths$root)) {
+    root = sub('/$', '', gsub('\\\\', '/', paths$root))
+    if (startsWith(relative_path, paste0(root, '/'))) relative_path = substring(relative_path, nchar(root) + 2)
+  }
+  sub('^\\./', '', relative_path)
+}
+
+# The script that writes `path` (NA for an original input). Stops if the path is not in
+# the catalogue. Accepts a path under any run root, with / or \ separators.
+producer = function(paths, path) {
+  relative_path = root_relative(paths, path)
+  for (catalogue_row in seq_len(nrow(PATH_CATALOGUE))) {
+    if (grepl(template_regex(PATH_CATALOGUE$id[catalogue_row], paths$tag), relative_path))
+      return(PATH_CATALOGUE$producer[catalogue_row])
+  }
+  stop('producer: ', path, ' is not a catalogued file (R/paths.R, PATH_CATALOGUE)')
+}
+
+# A catalogue template as a regular expression matching the whole relative path.
+template_regex = function(id, tag) {
+  pattern = PATH_CATALOGUE[id, 'template']
+  pattern = gsub('([.+()^$|\\[\\]\\\\])', '\\\\\\1', pattern)
+  pattern = gsub('{tag}', tag, pattern, fixed = TRUE)
+  pattern = gsub('{month}', paste0('(', paste(MONTHS, collapse = '|'), ')'), pattern, fixed = TRUE)
+  if (!is.null(TEMPLATE_MODELS[[id]]))
+    pattern = gsub('{model}', paste0('(', paste(TEMPLATE_MODELS[[id]], collapse = '|'), ')'), pattern, fixed = TRUE)
+  paste0('^', pattern, '$')
+}
+
+# The paths of the given catalogue ids (all by default), each expanded over every month and
+# model id its template takes. Used by the tests to compare the catalogue with the files on
+# disk, and by tools/verify_change.R to name the baseline products it copies into a run.
+catalogue_paths = function(paths, ids = PATH_CATALOGUE$id) {
+  unknown = setdiff(ids, PATH_CATALOGUE$id)
+  if (length(unknown)) stop('catalogue_paths: no catalogued file with id ', paste(sQuote(unknown, FALSE), collapse = ', '))
+  expanded_paths = character()
+  for (id in ids) {
+    path_template = PATH_CATALOGUE[id, 'template']
+    template_months = if (grepl('{month}', path_template, fixed = TRUE)) MONTHS else list(NULL)
+    template_models = if (grepl('{model}', path_template, fixed = TRUE)) TEMPLATE_MODELS[[id]] else list(NULL)
+    if (!length(template_models)) stop('catalogue_paths: ', id, ' takes model ids but TEMPLATE_MODELS lists none')
+    for (month in template_months) for (model_id in template_models) expanded_paths = c(expanded_paths, path_file(paths, id, month = month, model = model_id))
+  }
+  expanded_paths
+}
+
+# Make baseline products available in a run directory, for a run that reuses them (for
+# example script 6 reading the selected models of the baseline run of script 5). `files`
+# are baseline paths, e.g. path_file(baseline, 'calibration_selected', month = 'jan'). Each is
+# copied (never linked: a run writing to a linked file would write into the baseline), and
+# the copy is writable, as the run's own file; a file already in the run directory is
+# left alone and not marked as copied. Returns the run-directory paths.
+seed_run_dir = function(paths, files) {
+  if (is.null(paths$root)) stop('seed_run_dir: the baseline profile has no run directory to seed')
+  copied = character()
+  targets = vapply(files, function(source_file) {
+    if (!file.exists(source_file)) stop('seed_run_dir: no baseline file ', source_file)
+    target = file.path(paths$root, source_file)
+    if (!file.exists(target)) {
+      dir.create(dirname(target), recursive = TRUE, showWarnings = FALSE)
+      if (!file.copy(source_file, target, copy.mode = FALSE)) stop('seed_run_dir: could not copy ', source_file)
+      copied <<- c(copied, source_file)
+    }
+    target
+  }, character(1), USE.NAMES = FALSE)
+  mark_seeded(paths$root, copied)
+  targets
+}
+
+# SEEDED.txt in a run directory lists, relative to the run directory, the files copied in
+# from the baseline that the run has not (yet) written itself, so checks can tell a reused
+# file from one the run produced (tools/check_anchors.R). A file is listed only when it is
+# actually copied in, and taken off the list when the run writes it (write_output()), so a
+# regenerated file is checked as the run's own (review of 1 November 2026, finding 4).
+seeded_files = function(root) {
+  record = file.path(root, 'SEEDED.txt')
+  if (file.exists(record)) readLines(record) else character()
+}
+mark_seeded = function(root, files) {
+  if (length(files)) writeLines(sort(unique(c(seeded_files(root), files))), file.path(root, 'SEEDED.txt'))
+}
+unmark_seeded = function(paths, path) {
+  if (is.null(paths$root)) return(invisible())
+  listed = seeded_files(paths$root)
+  written = root_relative(paths, path)
+  if (written %in% listed) writeLines(setdiff(listed, written), file.path(paths$root, 'SEEDED.txt'))
+}

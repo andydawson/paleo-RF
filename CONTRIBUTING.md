@@ -41,12 +41,30 @@ repository is branched, committed, merged and backed up. Agent sessions read
   `git add <path>` to `git add -A`.
 - Frozen outputs used to prove a refactor changed nothing live in
   `tests/anchors/`; see the README there for what is anchored and why.
+- Verification (Chris, 2026-10-15): every code change is verified with
+  `tools/verify_change.R` before it is merged, from a separate worktree at the
+  exact commit, never in a checkout a run is reading; the PASS/FAIL report and
+  its spec are committed under `docs/cc/verification/` (README there). Git
+  refuses a merge into a trunk, or a commit on one, that changes code without a
+  PASS report for that code (the pre-merge-commit and pre-commit hooks; install
+  once per clone with `Rscript tools/check_merge_evidence.R install`; a clone
+  made before 4 November 2026 runs it again, to add the pre-commit hook). It does
+  not see fast-forward merges, so never fast-forward a trunk. `git merge
+  --no-verify` is a recorded exception, with the reason in the merge message.
 - Everything Claude Code generates that is not a script, a result or a data
   file with its own home (code maps, issue lists, schematics, reports,
   generators) lives under `docs/cc/`, with dated, descriptive file names
   (`YYYY-MM-DD_what_and_why.ext`); living documents carry no date. The
-  repo root holds only README, CONTRIBUTING, AGENTS, .gitignore,
-  `scripts/`, `data/`, `docs/` and `tools/`.
+  repo root holds only README, CONTRIBUTING, AGENTS, the git and LFS
+  settings (`.gitignore`, `.gitattributes`, `.lfsconfig`), `config.R` (once
+  the single-config migration adds it), `scripts/` (the pipeline), `R/`
+  (shared functions), `data/` (inputs and intermediates), `docs/`, `tools/`
+  (helpers that are not pipeline), `tests/` (anchors and checks) and `runs/`
+  (run manifests), `output/` (results; a few small tables are tracked,
+  the bulk is ignored) and `results/<run>/` (the small tables, manifests and
+  configuration of each kept run, copied in and tracked). Not tracked, but present on a working machine:
+  `figures/`, `writing/` and `.rundirs/` (run directories of alternative
+  and verification runs, set by `run$dir` in `config.R`).
 - `scripts/` is the R analysis pipeline and nothing else. Helper code that
   is not part of the pipeline (data download, diagram generators) lives in
   `tools/`.
@@ -55,7 +73,7 @@ repository is branched, committed, merged and backed up. Agent sessions read
   `docs/cc/questions_for_andria_scientific_from_2026-10-20.md`; add to them
   as questions arise, remove them when answered. The earlier
   `docs/cc/questions_for_andria_scientific.md` is frozen: it went to Andria
-  in a Word document on 20 October 2026.
+  in a Word document on 20 October 2026 (with one addition of 22 October).
 
 ## Coding practice
 
@@ -101,9 +119,13 @@ feasible, checked against `tests/anchors/`; version control as above. Chris,
   open questions flagged by their id; one plain-text manifest per script
   invocation; a simple consistency check (whole `analysis` section of each
   input's manifest compared with the current config, stop on any difference,
-  `RUN_ALLOW_STALE=1` override recorded); output paths unchanged so the
+  `RUN_ALLOW_STALE=1` override recorded; on 2026-10-13 Chris made the
+  override the config setting `run$allow_stale`, with no run note); output
+  paths unchanged so the
   anchors keep working; stages become functions in `R/` with the numbered
-  scripts as wrappers; the ensemble driver is parked. The work happens on
+  scripts as wrappers (superseded 2026-10-13/14: the scripts stay flat so Andria can run
+  them line by line, and the extraction issues were closed; see the migration changelog);
+  the ensemble driver is parked. The work happens on
   one long-lived feature branch off `chris-dev`, topic branches per issue,
   because Andria's review continues on `chris-dev`. Issues designed in
   `docs/cc/2026-10-08_migration_issues_single_config_codex_gpt6astra.md`,
@@ -118,7 +140,15 @@ feasible, checked against `tests/anchors/`; version control as above. Chris,
   answer (general question 7). The random seed for the simulations in
   scripts 5 and 6 is a config option, `"random"` by default with the drawn
   seed recorded in every manifest (Chris, 2026-10-08; issues #7, #6, #11,
-  #15, #16).
+  #15, #16). On 2026-10-14 Chris kept the calibration settings in
+  `config.R` to the choice of model (`calibration$model_id`): formulas,
+  basis sizes and `maxit` live in `R/model_registry.R`, changed only by a
+  reviewed code change.
+- **2026-11-21.** The single-config migration is finished. After its final
+  integration check (issue #16), Chris approved merging `feature/single-config`
+  into `chris-dev`. New topic branches start from `chris-dev` again, as in the
+  working rules above; `feature/single-config` is kept as the migration's
+  record, since branches still open start from it.
 - **2026-09-23.** Branch `annotated-interp` is a teaching copy of the same
   code with a comment on every line. It is read, not merged; its code was
   kept identical to `chris-dev`'s by the comment-stripped comparison

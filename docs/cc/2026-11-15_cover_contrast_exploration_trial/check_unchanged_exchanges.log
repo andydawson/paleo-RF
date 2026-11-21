@@ -1,0 +1,5 @@
+apr fixed      identical to the frozen exchange: TRUE  (cells 83, inside the range 58)
+apr historical identical to the frozen exchange: TRUE  (cells 83, inside the range 0)
+may fixed      identical to the frozen exchange: TRUE  (cells 83, inside the range 58)
+may historical identical to the frozen exchange: TRUE  (cells 83, inside the range 0)
+All four exchanges of protocol 2 are reproduced bit for bit.

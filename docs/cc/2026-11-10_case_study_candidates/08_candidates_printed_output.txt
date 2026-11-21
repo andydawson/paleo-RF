@@ -1,0 +1,475 @@
+
+================ Hemlock decline, north-east (the existing test case) [hemlock_decline]
+box -80..-66 E, 40..48 N; 6000 BP -> 4500 BP; 83 cells (7.30e+11 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 59 near the older end (6000 BP table), 61 near the younger end (4000 BP table)
+cover   open land 0.060 -> 0.053   evergreen 0.399 -> 0.220   summergreen 0.540 -> 0.727
+change  open land -0.007 (sd 0.011; 95% -0.028 to +0.013)   evergreen -0.180 (sd 0.026; -0.229 to -0.132)   summergreen +0.187 (sd 0.028; +0.128 to +0.244)
+        evergreen to summergreen, purity 0.93; step-to-step sd outside the window: open land 0.016 evergreen 0.022 summergreen 0.022
+outside the range of modern mixes (share of area): older end 0.98 (farthest 0.062), younger end 1.00 (farthest 0.107); by the January range: 0.98 and 1.00
+expected albedo change by straight mixing of published class albedos:
+   +0.0129  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0105  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0036  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   +0.0070  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   +0.0047  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.298   0.319   0.247   0.135   0.124   0.142   0.144   0.140   0.137   0.128   0.124   0.224 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      49      78     107     155     202     258     243     228     151      75      52      32 
+albedo change mod8       0.0449  0.0052 -0.0623 -0.0433 -0.0754 -0.0500 -0.0075 -0.0058 -0.0083 -0.0152  0.0198  0.0527  -0.0121 
+albedo change loc100_li -0.0388 -0.0066  0.0309 -0.0026  0.0026  0.0094  0.0128  0.0123  0.0107  0.0099 -0.0119 -0.0406  -0.0010 
+albedo change mod8_coar -0.0032  0.0782 -0.0140  0.0560  0.0426 -0.0158  0.0168  0.0215  0.0143  0.0227  0.0227  0.0124   0.0212 
+forcing W/m2  mod8        -2.23   -0.38    6.66    6.71   15.36   12.79    1.82    1.31    1.23    1.15   -1.04   -1.67     3.48 
+forcing W/m2  loc100_li    1.90    0.60   -3.44    0.29   -0.65   -2.41   -3.13   -2.78   -1.58   -0.76    0.67    1.31    -0.83 
+forcing W/m2  mod8_coar    0.16   -6.23    1.46   -8.82   -7.98    4.59   -3.99   -4.97   -2.26   -1.49   -1.19   -0.43    -2.60 
+vegetation forcing, HadGEM3 (CACK): model 8 +3.48 (+2.66), chosen -0.83 (-0.62), coarse-location -2.60 (-2.16) W/m2 over the box; global equivalent +4.97, -1.19, -3.71 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0012
+
+================ Hemlock recovery, north-east [hemlock_recovery]
+box -80..-66 E, 40..48 N; 4500 BP -> 2000 BP; 83 cells (7.30e+11 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 61 near the older end (4000 BP table), 61 near the younger end (2000 BP table)
+cover   open land 0.053 -> 0.062   evergreen 0.220 -> 0.331   summergreen 0.727 -> 0.607
+change  open land +0.009 (sd 0.010; 95% -0.011 to +0.028)   evergreen +0.111 (sd 0.028; +0.053 to +0.158)   summergreen -0.120 (sd 0.029; -0.173 to -0.068)
+        summergreen to evergreen, purity 0.86; step-to-step sd outside the window: open land 0.017 evergreen 0.031 summergreen 0.030
+outside the range of modern mixes (share of area): older end 1.00 (farthest 0.107), younger end 1.00 (farthest 0.082); by the January range: 1.00 and 1.00
+expected albedo change by straight mixing of published class albedos:
+   -0.0079  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   -0.0062  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   -0.0012  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   -0.0042  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   -0.0015  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.298   0.319   0.247   0.135   0.124   0.142   0.144   0.140   0.137   0.128   0.124   0.224 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      49      78     107     155     202     258     243     228     151      75      52      32 
+albedo change mod8      -0.0313 -0.0022  0.0451  0.0245  0.0400  0.0301  0.0058  0.0046  0.0061  0.0079 -0.0158 -0.0372   0.0065 
+albedo change loc100_li  0.0251  0.0047 -0.0201  0.0019 -0.0014 -0.0058 -0.0080 -0.0077 -0.0066 -0.0061  0.0077  0.0256   0.0008 
+albedo change mod8_coar  0.0300 -0.0317  0.0266 -0.0420 -0.0201  0.0172 -0.0102 -0.0134 -0.0076 -0.0088 -0.0150 -0.0018  -0.0064 
+forcing W/m2  mod8         1.56    0.20   -4.74   -3.88   -8.13   -7.70   -1.38   -1.08   -0.93   -0.62    0.86    1.20    -2.05 
+forcing W/m2  loc100_li   -1.28   -0.39    2.43   -0.24    0.38    1.35    1.99    1.76    0.93    0.44   -0.41   -0.83     0.51 
+forcing W/m2  mod8_coar   -1.46    2.46   -2.88    6.72    3.42   -4.43    2.49    3.03    1.23    0.47    0.78    0.11     1.00 
+vegetation forcing, HadGEM3 (CACK): model 8 -2.05 (-1.58), chosen +0.51 (+0.39), coarse-location +1.00 (+0.83) W/m2 over the box; global equivalent -2.94, +0.73, +1.43 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0025
+
+================ Land clearance at European settlement, eastern United States [clearance_east]
+box -92..-70 E, 33..46 N; 500 BP -> 50 BP; 215 cells (2.04e+12 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 96 near the older end (500 BP table), 86 near the younger end (50 BP table)
+cover   open land 0.215 -> 0.333   evergreen 0.155 -> 0.119   summergreen 0.630 -> 0.548
+change  open land +0.118 (sd 0.031; 95% +0.056 to +0.175)   evergreen -0.035 (sd 0.017; -0.070 to -0.003)   summergreen -0.083 (sd 0.032; -0.143 to -0.020)
+        summergreen to open land, purity 0.40; step-to-step sd outside the window: open land 0.014 evergreen 0.016 summergreen 0.021
+outside the range of modern mixes (share of area): older end 0.53 (farthest 0.100), younger end 0.00 (farthest 0.000); by the January range: 0.53 and 0.00
+expected albedo change by straight mixing of published class albedos:
+   +0.0060  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0097  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0305  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   +0.0050  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   +0.0396  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.232   0.243   0.173   0.138   0.147   0.153   0.153   0.151   0.145   0.142   0.136   0.188 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      60      95     125     183     230     268     249     230     181     108      75      50 
+albedo change mod8       0.0491  0.0353  0.0386  0.0200  0.0147  0.0103  0.0098  0.0112  0.0125  0.0128  0.0159  0.0280   0.0215 
+albedo change loc100_li  0.0275  0.0119 -0.0046  0.0087  0.0060  0.0027  0.0015  0.0026  0.0030  0.0057  0.0120  0.0213   0.0082 
+albedo change mod8_coar  0.0479  0.0162  0.0181  0.0058  0.0072 -0.0051  0.0020  0.0043  0.0050  0.0107  0.0090  0.0187   0.0116 
+forcing W/m2  mod8        -2.76   -3.16   -4.68   -3.62   -3.63   -2.82   -2.49   -2.57   -2.35   -1.38   -1.18   -1.29    -2.66 
+forcing W/m2  loc100_li   -1.65   -1.08    0.63   -1.67   -1.33   -0.84   -0.31   -0.54   -0.54   -0.54   -0.93   -1.03    -0.82 
+forcing W/m2  mod8_coar   -2.54   -1.34   -2.30   -1.10   -1.55    1.13   -0.55   -0.97   -1.00   -1.38   -0.58   -0.88    -1.09 
+vegetation forcing, HadGEM3 (CACK): model 8 -2.66 (-2.16), chosen -0.82 (-0.68), coarse-location -1.09 (-0.92) W/m2 over the box; global equivalent -10.65, -3.28, -4.36 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0007
+
+================ Land clearance, Atlantic seaboard (early phase) [clearance_seaboard]
+box -84..-74 E, 32..40 N; 500 BP -> 200 BP; 58 cells (5.75e+11 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 16 near the older end (500 BP table), 15 near the younger end (50 BP table)
+cover   open land 0.242 -> 0.378   evergreen 0.131 -> 0.113   summergreen 0.627 -> 0.509
+change  open land +0.137 (sd 0.053; 95% +0.042 to +0.243)   evergreen -0.019 (sd 0.035; -0.091 to +0.041)   summergreen -0.118 (sd 0.058; -0.230 to -0.020)
+        summergreen to open land, purity 0.73; step-to-step sd outside the window: open land 0.026 evergreen 0.025 summergreen 0.036
+outside the range of modern mixes (share of area): older end 0.25 (farthest 0.073), younger end 0.05 (farthest 0.008); by the January range: 0.25 and 0.05
+expected albedo change by straight mixing of published class albedos:
+   +0.0053  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0099  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0347  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   +0.0048  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   +0.0450  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.133   0.139   0.128   0.132   0.144   0.146   0.144   0.141   0.137   0.134   0.130   0.127 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      60     102     133     194     237     246     224     223     188     132      90      60 
+albedo change mod8       0.0268  0.0243  0.0321  0.0249  0.0294  0.0195  0.0112  0.0125  0.0151  0.0176  0.0157  0.0193   0.0207 
+albedo change loc100_li  0.0245  0.0101 -0.0073  0.0102  0.0065  0.0018  0.0001  0.0013  0.0019  0.0050  0.0150  0.0222   0.0076 
+albedo change mod8_coar  0.0186  0.0136  0.0310  0.0123  0.0164  0.0030  0.0045  0.0056  0.0081  0.0193  0.0097  0.0100   0.0127 
+forcing W/m2  mod8        -1.59   -2.43   -4.23   -4.85   -6.82   -4.75   -2.65   -2.81   -2.84   -2.60   -1.50   -1.27    -3.19 
+forcing W/m2  loc100_li   -1.44   -0.98    1.03   -2.19   -1.74   -0.43    0.07   -0.18   -0.45   -0.79   -1.33   -1.34    -0.81 
+forcing W/m2  mod8_coar   -1.09   -1.36   -4.18   -2.44   -4.15   -0.98   -0.91   -1.30   -1.57   -2.77   -0.87   -0.83    -1.87 
+vegetation forcing, HadGEM3 (CACK): model 8 -3.19 (-2.71), chosen -0.81 (-0.76), coarse-location -1.87 (-1.62) W/m2 over the box; global equivalent -3.60, -0.92, -2.11 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0010
+
+================ Land clearance, Ohio valley and lower Great Lakes [clearance_interior]
+box -92..-79 E, 37..45 N; 500 BP -> 50 BP; 91 cells (8.53e+11 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 35 near the older end (500 BP table), 30 near the younger end (50 BP table)
+cover   open land 0.229 -> 0.383   evergreen 0.090 -> 0.073   summergreen 0.680 -> 0.543
+change  open land +0.154 (sd 0.044; 95% +0.069 to +0.235)   evergreen -0.017 (sd 0.015; -0.049 to +0.011)   summergreen -0.137 (sd 0.044; -0.212 to -0.054)
+        summergreen to open land, purity 0.78; step-to-step sd outside the window: open land 0.018 evergreen 0.017 summergreen 0.020
+outside the range of modern mixes (share of area): older end 0.69 (farthest 0.100), younger end 0.00 (farthest 0.000); by the January range: 0.69 and 0.00
+expected albedo change by straight mixing of published class albedos:
+   +0.0057  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0109  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0390  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   +0.0053  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   +0.0505  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.270   0.287   0.175   0.145   0.155   0.160   0.161   0.160   0.153   0.151   0.145   0.219 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      60      88     128     188     232     277     259     232     187      98      70      44 
+albedo change mod8       0.0553  0.0482  0.0574  0.0314  0.0333  0.0213  0.0148  0.0159  0.0179  0.0155  0.0174  0.0333   0.0301 
+albedo change loc100_li  0.0469  0.0187 -0.0108  0.0121  0.0076  0.0021 -0.0001  0.0014  0.0022  0.0059  0.0183  0.0376   0.0118 
+albedo change mod8_coar  0.0637  0.0234  0.0312  0.0038  0.0106  0.0059  0.0007  0.0024  0.0060  0.0177  0.0093  0.0197   0.0162 
+forcing W/m2  mod8        -3.30   -4.19   -7.08   -5.67   -7.70   -6.02   -3.81   -3.69   -3.38   -1.45   -1.25   -1.48    -4.09 
+forcing W/m2  loc100_li   -2.78   -1.62    1.31   -2.42   -1.73   -0.79    0.11   -0.34   -0.34   -0.58   -1.28   -1.57    -1.00 
+forcing W/m2  mod8_coar   -3.51   -1.95   -3.83   -0.69   -2.41   -1.88   -0.21   -0.55   -1.20   -1.87   -0.56   -0.94    -1.63 
+vegetation forcing, HadGEM3 (CACK): model 8 -4.09 (-3.13), chosen -1.00 (-0.81), coarse-location -1.63 (-1.29) W/m2 over the box; global equivalent -6.83, -1.68, -2.73 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0009
+
+================ Prairie advance at the prairie-forest border, Midwest [prairie_advance]
+box -100..-88 E, 40..50 N; 10500 BP -> 8000 BP; 117 cells (1.02e+12 m2); ice at either end in 6 cells (mean ice fraction 0.01 -> 0.00)
+cells with a pollen-based estimate: 44 near the older end (10000 BP table), 45 near the younger end (8000 BP table)
+cover   open land 0.355 -> 0.551   evergreen 0.255 -> 0.117   summergreen 0.391 -> 0.332
+change  open land +0.196 (sd 0.034; 95% +0.130 to +0.264)   evergreen -0.137 (sd 0.028; -0.190 to -0.086)   summergreen -0.059 (sd 0.035; -0.126 to +0.010)
+        evergreen to open land, purity 0.40; step-to-step sd outside the window: open land 0.023 evergreen 0.010 summergreen 0.020
+outside the range of modern mixes (share of area): older end 0.00 (farthest 0.000), younger end 0.05 (farthest 0.021); by the January range: 0.00 and 0.05
+expected albedo change by straight mixing of published class albedos:
+   +0.0157  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0209  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0531  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   +0.0114  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   +0.0688  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.396   0.420   0.260   0.147   0.144   0.150   0.159   0.161   0.156   0.154   0.182   0.345 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      68      95     144     194     234     269     268     231     154     103      58      44 
+albedo change mod8       0.0724  0.0486 -0.0002  0.0167  0.0030 -0.0147  0.0028  0.0026  0.0049  0.0071  0.0346  0.0765   0.0212 
+albedo change loc100_li  0.0483  0.0246  0.0025  0.0149  0.0118  0.0088  0.0086  0.0106  0.0105  0.0154  0.0209  0.0353   0.0177 
+albedo change mod8_coar  0.0591  0.0457  0.0185  0.0359  0.0340  0.0074  0.0067  0.0085  0.0125  0.0345  0.0297  0.0251   0.0265 
+forcing W/m2  mod8        -4.91   -4.60   -0.13   -3.41   -1.68    3.81   -0.75   -0.61   -0.78   -1.13   -2.02   -3.17    -1.62 
+forcing W/m2  loc100_li   -3.39   -2.34   -0.33   -2.79   -2.99   -2.39   -2.29   -2.37   -1.54   -1.55   -1.22   -1.76    -2.08 
+forcing W/m2  mod8_coar   -3.71   -3.44   -2.41   -6.83   -7.73   -1.96   -1.65   -1.81   -1.83   -3.54   -1.67   -0.61    -3.10 
+vegetation forcing, HadGEM3 (CACK): model 8 -1.62 (-1.36), chosen -2.08 (-1.66), coarse-location -3.10 (-2.40) W/m2 over the box; global equivalent -3.24, -4.17, -6.21 mW/m2; ice part of the forcing in the box +0.76 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0017
+
+================ Prairie retreat (forest return) at the prairie-forest border, Midwest [prairie_retreat]
+box -100..-88 E, 40..50 N; 4500 BP -> 500 BP; 117 cells (1.02e+12 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 48 near the older end (4000 BP table), 52 near the younger end (500 BP table)
+cover   open land 0.578 -> 0.481   evergreen 0.109 -> 0.145   summergreen 0.313 -> 0.374
+change  open land -0.097 (sd 0.033; 95% -0.159 to -0.031)   evergreen +0.036 (sd 0.016; +0.003 to +0.065)   summergreen +0.061 (sd 0.035; -0.007 to +0.123)
+        open land to summergreen, purity 0.26; step-to-step sd outside the window: open land 0.022 evergreen 0.016 summergreen 0.020
+outside the range of modern mixes (share of area): older end 0.16 (farthest 0.061), younger end 0.03 (farthest 0.013); by the January range: 0.19 and 0.03
+expected albedo change by straight mixing of published class albedos:
+   -0.0054  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   -0.0084  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   -0.0252  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   -0.0043  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   -0.0327  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.396   0.420   0.260   0.147   0.144   0.150   0.159   0.161   0.156   0.154   0.182   0.345 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      68      95     144     194     234     269     268     231     154     103      58      44 
+albedo change mod8      -0.0288 -0.0252 -0.0095 -0.0206 -0.0306 -0.0067 -0.0021 -0.0043 -0.0037 -0.0204 -0.0124 -0.0258  -0.0158 
+albedo change loc100_li -0.0321 -0.0134  0.0038 -0.0079 -0.0053 -0.0026 -0.0017 -0.0027 -0.0030 -0.0055 -0.0128 -0.0278  -0.0092 
+albedo change mod8_coar  0.0065 -0.0074 -0.0042 -0.0128 -0.0109  0.0020 -0.0004 -0.0013 -0.0033 -0.0131 -0.0080 -0.0032  -0.0047 
+forcing W/m2  mod8         1.98    2.35    1.47    4.15    7.47    1.72    0.49    0.96    0.56    2.21    0.74    1.02     2.09 
+forcing W/m2  loc100_li    2.30    1.17   -0.59    1.63    1.15    0.93    0.41    0.59    0.39    0.57    0.81    1.32     0.89 
+forcing W/m2  mod8_coar   -0.64    0.65    0.39    2.57    2.49   -0.52    0.11    0.33    0.49    1.25    0.46   -0.03     0.63 
+vegetation forcing, HadGEM3 (CACK): model 8 +2.09 (+1.60), chosen +0.89 (+0.71), coarse-location +0.63 (+0.45) W/m2 over the box; global equivalent +4.20, +1.78, +1.26 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0013
+
+================ Spruce replaces deciduous woodland and shrubs, north-west Canada [nw_canada_spruce]
+box -140..-115 E, 57..70 N; 10000 BP -> 8000 BP; 307 cells (1.70e+12 m2); ice at either end in 21 cells (mean ice fraction 0.02 -> 0.02)
+cells with a pollen-based estimate: 29 near the older end (10000 BP table), 30 near the younger end (8000 BP table)
+cover   open land 0.254 -> 0.215   evergreen 0.175 -> 0.411   summergreen 0.570 -> 0.375
+change  open land -0.040 (sd 0.040; 95% -0.115 to +0.036)   evergreen +0.235 (sd 0.039; +0.162 to +0.304)   summergreen -0.196 (sd 0.043; -0.273 to -0.125)
+        summergreen to evergreen, purity 0.66; step-to-step sd outside the window: open land 0.040 evergreen 0.025 summergreen 0.027
+outside the range of modern mixes (share of area): older end 0.20 (farthest 0.118), younger end 0.01 (farthest 0.006); by the January range: 0.20 and 0.01
+expected albedo change by straight mixing of published class albedos:
+   -0.0177  snow-free summer  [Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)]
+   -0.0402  snow-covered winter  [Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy]
+   -0.0177  snow-free (after melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0404  snow-covered (six weeks before melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0353  snow-free (after melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+   -0.0385  snow-covered (before melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.273   0.357   0.431   0.425   0.284   0.129   0.116   0.115   0.115   0.204   0.209      NA 
+cells observed (share):    0.13    0.85    0.97    0.97    0.97    0.97    0.97    0.97    0.97    0.97    0.28    0.00 
+kernel (W/m2 per unit):      11      29      87     138     157     165     166     130      70      34      12       6 
+albedo change mod8      -0.0580 -0.0025  0.0621  0.0724  0.1078  0.0348 -0.0024  0.0024 -0.0012  0.0393 -0.0248 -0.0060   0.0187 
+albedo change loc100_li  0.0384  0.0025 -0.0446  0.0003 -0.0070 -0.0114 -0.0142 -0.0143 -0.0127 -0.0189  0.0181  0.0113  -0.0044 
+albedo change mod8_coar -0.1701 -0.1378 -0.0441 -0.0695 -0.0674 -0.0094 -0.0171 -0.0203 -0.0154 -0.0498 -0.0340 -0.0561  -0.0576 
+forcing W/m2  mod8         0.53    0.26   -5.40   -9.78  -16.35   -5.37    0.63   -0.01    0.23   -1.19    0.22    0.01    -3.02 
+forcing W/m2  loc100_li   -0.34    0.01    3.87   -0.03    0.97    1.86    2.33    1.88    0.90    0.66   -0.17   -0.09     0.99 
+forcing W/m2  mod8_coar    1.75    4.23    3.76    9.67    9.69    1.64    2.85    2.66    1.07    1.78    0.25    0.20     3.29 
+vegetation forcing, HadGEM3 (CACK): model 8 -3.02 (-3.35), chosen +0.99 (+0.96), coarse-location +3.29 (+3.52) W/m2 over the box; global equivalent -10.03, +3.28, +10.95 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0036
+
+================ Tundra to shrubs and deciduous woodland, north-west Canada [nw_canada_greening]
+box -140..-115 E, 57..70 N; 11500 BP -> 10000 BP; 307 cells (1.70e+12 m2); ice at either end in 33 cells (mean ice fraction 0.04 -> 0.02)
+cells with a pollen-based estimate: 21 near the older end (12000 BP table), 29 near the younger end (10000 BP table)
+cover   open land 0.500 -> 0.250   evergreen 0.056 -> 0.177   summergreen 0.444 -> 0.573
+change  open land -0.250 (sd 0.049; 95% -0.351 to -0.162)   evergreen +0.121 (sd 0.025; +0.065 to +0.164)   summergreen +0.129 (sd 0.052; +0.044 to +0.243)
+        open land to summergreen, purity 0.03; step-to-step sd outside the window: open land 0.024 evergreen 0.031 summergreen 0.026
+outside the range of modern mixes (share of area): older end 0.35 (farthest 0.011), younger end 0.20 (farthest 0.118); by the January range: 0.36 and 0.20
+expected albedo change by straight mixing of published class albedos:
+   -0.0206  snow-free summer  [Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)]
+   -0.1445  snow-covered winter  [Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy]
+   -0.0297  snow-free (after melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0506  snow-covered (six weeks before melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0181  snow-free (after melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+   -0.0519  snow-covered (before melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.273   0.357   0.431   0.425   0.284   0.129   0.116   0.115   0.115   0.204   0.209      NA 
+cells observed (share):    0.13    0.85    0.97    0.97    0.97    0.97    0.97    0.97    0.97    0.97    0.28    0.00 
+kernel (W/m2 per unit):      11      29      87     138     157     165     166     130      70      34      12       6 
+albedo change mod8      -0.1176 -0.0908 -0.0787 -0.0612 -0.0213  0.0006 -0.0154 -0.0142 -0.0222 -0.0206 -0.0764 -0.0294  -0.0456 
+albedo change loc100_li -0.0731 -0.0324  0.0088 -0.0355 -0.0208 -0.0079 -0.0060 -0.0081 -0.0084 -0.0195 -0.0376 -0.0081  -0.0207 
+albedo change mod8_coar -0.1161 -0.0755 -0.0670 -0.0849 -0.0811 -0.0121 -0.0168 -0.0202 -0.0246 -0.0839 -0.0464 -0.0717  -0.0584 
+forcing W/m2  mod8         1.43    2.39    6.82    8.46    3.11   -0.32    2.38    1.66    1.42    0.52    0.96    0.28     2.43 
+forcing W/m2  loc100_li    0.55    0.83   -0.88    4.72    3.12    1.30    1.06    1.10    0.64    0.64    0.33    0.03     1.12 
+forcing W/m2  mod8_coar    1.75    2.52    5.52   11.10   12.61    1.93    2.78    2.68    1.72    2.77    0.62    0.59     3.88 
+vegetation forcing, HadGEM3 (CACK): model 8 +2.43 (+2.53), chosen +1.12 (+1.15), coarse-location +3.88 (+3.92) W/m2 over the box; global equivalent +8.06, +3.72, +12.91 mW/m2; ice part of the forcing in the box +0.35 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0047
+
+================ Spruce replaces alder and birch, Quebec-Labrador [quebec_spruce]
+box -80..-55 E, 50..60 N; 6000 BP -> 2500 BP; 186 cells (1.34e+12 m2); ice at either end in 21 cells (mean ice fraction 0.02 -> 0.00)
+cells with a pollen-based estimate: 38 near the older end (6000 BP table), 36 near the younger end (2000 BP table)
+cover   open land 0.152 -> 0.147   evergreen 0.362 -> 0.543   summergreen 0.485 -> 0.310
+change  open land -0.005 (sd 0.027; 95% -0.056 to +0.050)   evergreen +0.180 (sd 0.038; +0.112 to +0.253)   summergreen -0.175 (sd 0.038; -0.245 to -0.104)
+        summergreen to evergreen, purity 0.95; step-to-step sd outside the window: open land 0.021 evergreen 0.014 summergreen 0.016
+outside the range of modern mixes (share of area): older end 0.21 (farthest 0.019), younger end 0.19 (farthest 0.022); by the January range: 0.21 and 0.19
+expected albedo change by straight mixing of published class albedos:
+   -0.0123  snow-free summer  [Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)]
+   -0.0171  snow-covered winter  [Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy]
+   -0.0113  snow-free (after melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0277  snow-covered (six weeks before melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0270  snow-free (after melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+   -0.0259  snow-covered (before melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.326   0.416   0.457   0.449   0.275   0.120   0.110   0.112   0.111   0.145   0.298   0.261 
+cells observed (share):    0.87    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    0.98    0.48 
+kernel (W/m2 per unit):      31      71     112     147     157     159     169     144      94      34      32      20 
+albedo change mod8       0.0006  0.0158  0.0632  0.0911  0.1097  0.0266 -0.0029  0.0015 -0.0008  0.0339  0.0077 -0.0089   0.0281 
+albedo change loc100_li  0.0373  0.0055 -0.0381  0.0034 -0.0056 -0.0088 -0.0106 -0.0106 -0.0094 -0.0121  0.0208  0.0488   0.0017 
+albedo change mod8_coar -0.1249 -0.1344 -0.0739 -0.0124 -0.0652 -0.0349 -0.0153 -0.0147 -0.0151 -0.0466  0.0044 -0.0401  -0.0478 
+forcing W/m2  mod8        -0.15   -1.12   -7.03  -13.91  -17.40   -4.08    0.48   -0.19    0.10   -0.93   -0.32    0.13    -3.70 
+forcing W/m2  loc100_li   -1.11   -0.38    4.35   -0.64    0.98    1.28    1.78    1.44    0.84    0.38   -0.65   -0.95     0.61 
+forcing W/m2  mod8_coar    3.70    9.71    8.50    2.47   10.43    5.19    2.57    2.08    1.41    1.49   -0.19    0.79     4.01 
+vegetation forcing, HadGEM3 (CACK): model 8 -3.70 (-3.90), chosen +0.61 (+0.63), coarse-location +4.01 (+4.00) W/m2 over the box; global equivalent -9.71, +1.60, +10.53 mW/m2; ice part of the forcing in the box +0.79 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0028
+
+================ Late-Holocene opening of the forest, Quebec-Labrador [quebec_opening]
+box -80..-55 E, 50..60 N; 2500 BP -> 50 BP; 186 cells (1.34e+12 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 36 near the older end (2000 BP table), 35 near the younger end (50 BP table)
+cover   open land 0.149 -> 0.227   evergreen 0.540 -> 0.474   summergreen 0.311 -> 0.300
+change  open land +0.077 (sd 0.027; 95% +0.025 to +0.134)   evergreen -0.066 (sd 0.038; -0.137 to +0.005)   summergreen -0.011 (sd 0.034; -0.080 to +0.056)
+        evergreen to open land, purity 0.72; step-to-step sd outside the window: open land 0.013 evergreen 0.022 summergreen 0.023
+outside the range of modern mixes (share of area): older end 0.19 (farthest 0.022), younger end 0.00 (farthest 0.000); by the January range: 0.19 and 0.00
+expected albedo change by straight mixing of published class albedos:
+   +0.0083  snow-free summer  [Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)]
+   +0.0470  snow-covered winter  [Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy]
+   +0.0109  snow-free (after melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   +0.0200  snow-covered (six weeks before melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   +0.0099  snow-free (after melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+   +0.0201  snow-covered (before melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.326   0.416   0.457   0.449   0.275   0.120   0.110   0.112   0.111   0.145   0.298   0.261 
+cells observed (share):    0.87    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    0.98    0.48 
+kernel (W/m2 per unit):      31      71     112     147     157     159     169     144      94      34      32      20 
+albedo change mod8       0.0459  0.0261  0.0133 -0.0126 -0.0304 -0.0040  0.0031  0.0048  0.0047  0.0076  0.0154  0.0335   0.0089 
+albedo change loc100_li  0.0156  0.0091  0.0037  0.0104  0.0082  0.0039  0.0033  0.0039  0.0039  0.0074  0.0092  0.0091   0.0073 
+albedo change mod8_coar  0.0384  0.0258  0.0224  0.0258  0.0404  0.0039  0.0070  0.0090  0.0086  0.0197  0.0178  0.0191   0.0198 
+forcing W/m2  mod8        -1.27   -1.79   -1.48    1.52    4.72    0.64   -0.47   -0.64   -0.33   -0.28   -0.35   -0.59    -0.03 
+forcing W/m2  loc100_li   -0.37   -0.66   -0.44   -1.47   -1.32   -0.55   -0.53   -0.47   -0.30   -0.21   -0.26   -0.16    -0.56 
+forcing W/m2  mod8_coar   -0.90   -1.54   -2.36   -4.08   -6.39   -0.40   -1.05   -1.12   -0.68   -0.52   -0.49   -0.20    -1.65 
+vegetation forcing, HadGEM3 (CACK): model 8 -0.03 (+0.02), chosen -0.56 (-0.55), coarse-location -1.65 (-1.67) W/m2 over the box; global equivalent -0.07, -1.47, -4.32 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0010
+
+================ Treeline retreat, central Canada (Keewatin-Mackenzie) [treeline_retreat]
+box -118..-94 E, 60..68 N; 5000 BP -> 500 BP; 189 cells (1.02e+12 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 8 near the older end (4000 BP table), 9 near the younger end (500 BP table)
+cover   open land 0.305 -> 0.489   evergreen 0.326 -> 0.235   summergreen 0.369 -> 0.276
+change  open land +0.184 (sd 0.077; 95% +0.037 to +0.341)   evergreen -0.091 (sd 0.063; -0.202 to +0.058)   summergreen -0.093 (sd 0.060; -0.221 to +0.004)
+        summergreen to open land, purity 0.01; step-to-step sd outside the window: open land 0.026 evergreen 0.010 summergreen 0.026
+outside the range of modern mixes (share of area): older end 0.00 (farthest 0.000), younger end 0.00 (farthest 0.000); by the January range: 0.00 and 0.00
+expected albedo change by straight mixing of published class albedos:
+   +0.0152  snow-free summer  [Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)]
+   +0.1064  snow-covered winter  [Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy]
+   +0.0220  snow-free (after melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   +0.0375  snow-covered (six weeks before melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   +0.0136  snow-free (after melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+   +0.0384  snow-covered (before melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:       NA   0.617   0.666   0.652   0.522   0.171   0.128   0.131   0.142   0.358   0.306      NA 
+cells observed (share):    0.00    0.81    0.98    0.98    0.98    0.98    0.98    0.98    0.98    0.98    0.11    0.00 
+kernel (W/m2 per unit):       9      37      93     166     155     159     143     138      64      33      12       4 
+albedo change mod8       0.0723  0.0409  0.0144  0.0159  0.0069 -0.0001  0.0039  0.0074  0.0062  0.0252  0.0376  0.0077   0.0199 
+albedo change loc100_li  0.0431  0.0220 -0.0046  0.0225  0.0174  0.0071  0.0044  0.0060  0.0068  0.0202  0.0307  0.0038   0.0150 
+albedo change mod8_coar  0.0540  0.0462  0.0238  0.0363  0.0484  0.0033  0.0078  0.0102  0.0121  0.0553  0.0435  0.0401   0.0317 
+forcing W/m2  mod8        -0.65   -1.52   -1.24   -2.71   -1.11    0.06   -0.60   -1.07   -0.41   -0.78   -0.46   -0.04    -0.88 
+forcing W/m2  loc100_li   -0.37   -0.83    0.41   -3.80   -2.48   -1.11   -0.60   -0.77   -0.41   -0.64   -0.36   -0.02    -0.91 
+forcing W/m2  mod8_coar   -0.60   -1.95   -2.31   -6.06   -6.46   -0.24   -0.99   -1.41   -0.72   -1.72   -0.54   -0.20    -1.93 
+vegetation forcing, HadGEM3 (CACK): model 8 -0.88 (-0.90), chosen -0.91 (-0.98), coarse-location -1.93 (-2.16) W/m2 over the box; global equivalent -1.76, -1.84, -3.88 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0008
+
+================ Tundra to shrubs and deciduous woodland, Alaska [alaska_greening]
+box -165..-141 E, 60..70 N; 11500 BP -> 9000 BP; 223 cells (1.16e+12 m2); ice at either end in 31 cells (mean ice fraction 0.03 -> 0.03)
+cells with a pollen-based estimate: 33 near the older end (12000 BP table), 43 near the younger end (8000 BP table)
+cover   open land 0.545 -> 0.359   evergreen 0.028 -> 0.069   summergreen 0.427 -> 0.572
+change  open land -0.186 (sd 0.048; 95% -0.270 to -0.095)   evergreen +0.041 (sd 0.013; +0.020 to +0.070)   summergreen +0.146 (sd 0.048; +0.066 to +0.229)
+        open land to summergreen, purity 0.56; step-to-step sd outside the window: open land 0.019 evergreen 0.011 summergreen 0.019
+outside the range of modern mixes (share of area): older end 0.87 (farthest 0.028), younger end 0.53 (farthest 0.067); by the January range: 0.92 and 0.54
+expected albedo change by straight mixing of published class albedos:
+   -0.0120  snow-free summer  [Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)]
+   -0.1039  snow-covered winter  [Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy]
+   -0.0192  snow-free (after melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0303  snow-covered (six weeks before melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0061  snow-free (after melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+   -0.0318  snow-covered (before melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:       NA   0.389   0.493   0.488   0.306   0.150   0.140   0.139   0.143   0.240   0.338      NA 
+cells observed (share):    0.00    0.75    0.96    0.96    0.96    0.96    0.96    0.96    0.96    0.96    0.08    0.00 
+kernel (W/m2 per unit):       6      25      87     124     139     146     133      97      36      28       7       2 
+albedo change mod8      -0.0625 -0.0608 -0.0680 -0.0785 -0.0606 -0.0106 -0.0097 -0.0094 -0.0143 -0.0343 -0.0425 -0.0084  -0.0383 
+albedo change loc100_li -0.0682 -0.0262  0.0172 -0.0283 -0.0139 -0.0035 -0.0013 -0.0030 -0.0038 -0.0117 -0.0406 -0.0014  -0.0154 
+albedo change mod8_coar -0.0501 -0.0480 -0.0471 -0.0390 -0.0349 -0.0075 -0.0056 -0.0080 -0.0164 -0.0494 -0.0258 -0.0035  -0.0280 
+forcing W/m2  mod8         0.37    1.46    5.80    9.41    7.98    1.49    1.30    0.89    0.49    0.87    0.32    0.02     2.53 
+forcing W/m2  loc100_li    0.41    0.64   -1.43    3.27    1.92    0.44    0.19    0.31    0.14    0.32    0.30    0.00     0.54 
+forcing W/m2  mod8_coar    0.36    1.21    4.00    4.56    4.65    1.20    0.78    0.81    0.55    1.32    0.18    0.00     1.64 
+vegetation forcing, HadGEM3 (CACK): model 8 +2.53 (+2.87), chosen +0.54 (+0.64), coarse-location +1.64 (+1.84) W/m2 over the box; global equivalent +5.78, +1.24, +3.73 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0027
+
+================ Spruce expansion, Alaska [alaska_spruce]
+box -165..-141 E, 60..70 N; 9000 BP -> 4000 BP; 223 cells (1.16e+12 m2); ice at either end in 31 cells (mean ice fraction 0.03 -> 0.03)
+cells with a pollen-based estimate: 43 near the older end (8000 BP table), 47 near the younger end (4000 BP table)
+cover   open land 0.359 -> 0.373   evergreen 0.069 -> 0.194   summergreen 0.572 -> 0.433
+change  open land +0.015 (sd 0.056; 95% -0.100 to +0.132)   evergreen +0.125 (sd 0.022; +0.085 to +0.180)   summergreen -0.139 (sd 0.052; -0.246 to -0.049)
+        summergreen to evergreen, purity 0.79; step-to-step sd outside the window: open land 0.034 evergreen 0.009 summergreen 0.031
+outside the range of modern mixes (share of area): older end 0.53 (farthest 0.067), younger end 0.01 (farthest 0.008); by the January range: 0.54 and 0.01
+expected albedo change by straight mixing of published class albedos:
+   -0.0076  snow-free summer  [Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)]
+   -0.0021  snow-covered winter  [Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy]
+   -0.0062  snow-free (after melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0168  snow-covered (six weeks before melt)  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest]
+   -0.0187  snow-free (after melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+   -0.0154  snow-covered (before melt); shrubs for summergreen  [Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:       NA   0.389   0.493   0.488   0.306   0.150   0.140   0.139   0.143   0.240   0.338      NA 
+cells observed (share):    0.00    0.75    0.96    0.96    0.96    0.96    0.96    0.96    0.96    0.96    0.08    0.00 
+kernel (W/m2 per unit):       6      25      87     124     139     146     133      97      36      28       7       2 
+albedo change mod8      -0.0281  0.0018  0.0572  0.0332  0.0812  0.0386  0.0033  0.0088  0.0029  0.0281 -0.0397 -0.0043   0.0152 
+albedo change loc100_li  0.0347  0.0065 -0.0292  0.0052 -0.0022 -0.0067 -0.0087 -0.0084 -0.0074 -0.0098  0.0205  0.0012  -0.0004 
+albedo change mod8_coar -0.0841 -0.0161  0.0565 -0.0700 -0.0263  0.0105 -0.0111 -0.0133 -0.0114 -0.0222 -0.0351 -0.0062  -0.0191 
+forcing W/m2  mod8         0.14   -0.02   -4.82   -3.99  -10.80   -5.69   -0.43   -0.80   -0.12   -0.76    0.31    0.01    -2.25 
+forcing W/m2  loc100_li   -0.23   -0.15    2.49   -0.57    0.35    1.01    1.14    0.76    0.26    0.29   -0.15   -0.00     0.43 
+forcing W/m2  mod8_coar    0.55    0.36   -4.73    7.98    3.60   -1.59    1.43    1.27    0.38    0.61    0.28    0.02     0.85 
+vegetation forcing, HadGEM3 (CACK): model 8 -2.25 (-2.52), chosen +0.43 (+0.46), coarse-location +0.85 (+1.09) W/m2 over the box; global equivalent -5.12, +0.99, +1.93 mW/m2; ice part of the forcing in the box -0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0029
+
+================ Open forest and savanna to closed conifer forest, Pacific Northwest [pacific_nw_closing]
+box -125..-118 E, 40..50 N; 8000 BP -> 5500 BP; 58 cells (5.07e+11 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 23 near the older end (8000 BP table), 25 near the younger end (6000 BP table)
+cover   open land 0.280 -> 0.144   evergreen 0.482 -> 0.641   summergreen 0.238 -> 0.215
+change  open land -0.137 (sd 0.041; 95% -0.226 to -0.063)   evergreen +0.159 (sd 0.055; +0.056 to +0.248)   summergreen -0.022 (sd 0.034; -0.081 to +0.042)
+        open land to evergreen, purity 0.72; step-to-step sd outside the window: open land 0.031 evergreen 0.032 summergreen 0.024
+outside the range of modern mixes (share of area): older end 0.00 (farthest 0.000), younger end 0.04 (farthest 0.011); by the January range: 0.00 and 0.04
+expected albedo change by straight mixing of published class albedos:
+   -0.0156  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   -0.0184  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   -0.0389  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   -0.0105  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   -0.0505  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.221   0.185   0.141   0.128   0.121   0.120   0.121   0.125   0.126   0.127   0.135   0.190 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      37      93      99     119     205     267     284     247     184     114      55      24 
+albedo change mod8      -0.0475 -0.0223  0.0043  0.0183  0.0220 -0.0007 -0.0123 -0.0127 -0.0131 -0.0062 -0.0083 -0.0294  -0.0090 
+albedo change loc100_li -0.0167 -0.0103 -0.0086 -0.0092 -0.0089 -0.0084 -0.0088 -0.0102 -0.0100 -0.0136 -0.0065 -0.0039  -0.0096 
+albedo change mod8_coar -0.0493 -0.0390 -0.0180 -0.0056  0.0000 -0.0158 -0.0155 -0.0168 -0.0177 -0.0290 -0.0034 -0.0069  -0.0181 
+forcing W/m2  mod8         1.88    2.09   -0.47   -2.27   -4.44    0.18    3.51    3.16    2.36    0.67    0.46    0.75     0.66 
+forcing W/m2  loc100_li    0.81    1.07    0.88    1.10    2.06    2.46    2.46    2.56    1.87    1.68    0.45    0.19     1.47 
+forcing W/m2  mod8_coar    1.88    3.63    1.68    0.63   -0.42    3.59    4.32    4.11    3.19    3.28    0.17    0.21     2.19 
+vegetation forcing, HadGEM3 (CACK): model 8 +0.66 (+0.56), chosen +1.47 (+1.45), coarse-location +2.19 (+2.03) W/m2 over the box; global equivalent +0.65, +1.46, +2.18 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0012
+
+================ Spruce and pine give way to hardwoods, Ohio valley and lower Great Lakes [great_lakes_spruce_decline]
+box -92..-79 E, 37..45 N; 11500 BP -> 9000 BP; 91 cells (8.53e+11 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 29 near the older end (12000 BP table), 29 near the younger end (8000 BP table)
+cover   open land 0.218 -> 0.215   evergreen 0.275 -> 0.121   summergreen 0.507 -> 0.664
+change  open land -0.003 (sd 0.039; 95% -0.082 to +0.065)   evergreen -0.154 (sd 0.028; -0.209 to -0.095)   summergreen +0.157 (sd 0.042; +0.081 to +0.227)
+        evergreen to summergreen, purity 0.96; step-to-step sd outside the window: open land 0.029 evergreen 0.012 summergreen 0.027
+outside the range of modern mixes (share of area): older end 0.00 (farthest 0.000), younger end 0.67 (farthest 0.073); by the January range: 0.00 and 0.67
+expected albedo change by straight mixing of published class albedos:
+   +0.0112  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0092  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0038  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   +0.0061  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   +0.0050  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.270   0.287   0.175   0.145   0.155   0.160   0.161   0.160   0.153   0.151   0.145   0.219 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):      60      88     128     188     232     277     259     232     187      98      70      44 
+albedo change mod8       0.0249 -0.0083 -0.0524 -0.0336 -0.0967 -0.0579 -0.0058 -0.0110 -0.0057 -0.0332  0.0236  0.0346  -0.0185 
+albedo change loc100_li -0.0322 -0.0057  0.0208 -0.0018  0.0028  0.0087  0.0116  0.0113  0.0098  0.0095 -0.0110 -0.0361  -0.0010 
+albedo change mod8_coar  0.0707  0.0496 -0.0050  0.0366  0.0344  0.0035  0.0173  0.0199  0.0145  0.0215  0.0291  0.0519   0.0287 
+forcing W/m2  mod8        -1.64    0.53    6.53    5.79   22.01   16.05    1.50    2.50    0.96    2.92   -1.71   -1.41     4.50 
+forcing W/m2  loc100_li    1.90    0.38   -2.66    0.21   -0.53   -2.51   -2.93   -2.60   -1.78   -0.99    0.76    1.37    -0.78 
+forcing W/m2  mod8_coar   -4.39   -4.17    0.62   -7.14   -8.11   -1.32   -4.48   -4.48   -2.64   -2.03   -1.97   -2.03    -3.51 
+vegetation forcing, HadGEM3 (CACK): model 8 +4.50 (+3.26), chosen -0.78 (-0.55), coarse-location -3.51 (-2.72) W/m2 over the box; global equivalent +7.52, -1.31, -5.87 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0014
+
+================ Woodland gain on the Southern Plains (weak: few pollen sites) [southern_plains]
+box -103..-94 E, 26..40 N; 4000 BP -> 2000 BP; 111 cells (1.14e+12 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 8 near the older end (4000 BP table), 9 near the younger end (2000 BP table)
+cover   open land 0.818 -> 0.703   evergreen 0.045 -> 0.091   summergreen 0.138 -> 0.207
+change  open land -0.115 (sd 0.085; 95% -0.267 to +0.044)   evergreen +0.046 (sd 0.037; -0.011 to +0.127)   summergreen +0.069 (sd 0.062; -0.044 to +0.182)
+        open land to summergreen, purity 0.20; step-to-step sd outside the window: open land 0.051 evergreen 0.016 summergreen 0.039
+outside the range of modern mixes (share of area): older end 0.09 (farthest 0.013), younger end 0.00 (farthest 0.000); by the January range: 0.09 and 0.00
+expected albedo change by straight mixing of published class albedos:
+   -0.0067  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   -0.0102  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   -0.0301  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   -0.0053  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   -0.0391  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.171   0.170   0.161   0.161   0.159   0.159   0.159   0.161   0.160   0.161   0.162   0.169 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):     102     137     152     197     242     276     261     231     211     171     116      91 
+albedo change mod8      -0.0211 -0.0264 -0.0320 -0.0649 -0.0832 -0.0134 -0.0022 -0.0037 -0.0055 -0.0426 -0.0191 -0.0171  -0.0276 
+albedo change loc100_li -0.0241 -0.0099  0.0031 -0.0099 -0.0067 -0.0036 -0.0027 -0.0038 -0.0041 -0.0072 -0.0133 -0.0203  -0.0085 
+albedo change mod8_coar  0.0117  0.0106  0.0057 -0.0249 -0.0162  0.0162  0.0098  0.0078  0.0044 -0.0089 -0.0026  0.0049   0.0015 
+forcing W/m2  mod8         2.02    3.69    5.13   13.11   19.71    3.70    0.56    0.89    1.05    7.14    2.23    1.54     5.06 
+forcing W/m2  loc100_li    2.05    1.31   -0.50    1.71    1.60    0.98    0.64    0.92    0.88    1.14    1.38    1.43     1.13 
+forcing W/m2  mod8_coar   -0.26   -1.32   -0.73    4.96    3.98   -4.63   -2.73   -1.88   -0.85    1.60    0.34    0.28    -0.10 
+vegetation forcing, HadGEM3 (CACK): model 8 +5.06 (+4.32), chosen +1.13 (+0.98), coarse-location -0.10 (+0.02) W/m2 over the box; global equivalent +11.30, +2.52, -0.23 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0013
+
+================ Mid-Holocene opening, South-west (weak: few pollen sites) [southwest_opening]
+box -115..-103 E, 28..38 N; 7000 BP -> 5000 BP; 114 cells (1.18e+12 m2); ice at either end in 0 cells (mean ice fraction 0.00 -> 0.00)
+cells with a pollen-based estimate: 14 near the older end (6000 BP table), 14 near the younger end (4000 BP table)
+cover   open land 0.541 -> 0.777   evergreen 0.323 -> 0.148   summergreen 0.136 -> 0.075
+change  open land +0.236 (sd 0.111; 95% +0.014 to +0.452)   evergreen -0.175 (sd 0.093; -0.363 to -0.016)   summergreen -0.061 (sd 0.049; -0.165 to +0.031)
+        evergreen to open land, purity 0.48; step-to-step sd outside the window: open land 0.110 evergreen 0.096 summergreen 0.038
+outside the range of modern mixes (share of area): older end 0.00 (farthest 0.000), younger end 0.11 (farthest 0.013); by the January range: 0.00 and 0.11
+expected albedo change by straight mixing of published class albedos:
+   +0.0196  snow-free summer (Jun-Aug)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0257  snow-free spring (Apr-May)  [Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf]
+   +0.0642  snow-covered winter (Dec-Mar)  [Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)]
+   +0.0141  snow-free dormant season (Dec-Mar)  [Burakowski 2016, Fig. 5b: the same classes without snow]
+   +0.0832  snow-covered winter (Dec-Feb)  [Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)]
+month:                      jan     feb     mar     apr     may     jun     jul     aug     sep     oct     nov     dec    mean
+observed albedo today:    0.193   0.185   0.176   0.174   0.174   0.174   0.173   0.172   0.171   0.173   0.176   0.185 
+cells observed (share):    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00    1.00 
+kernel (W/m2 per unit):     123     138     172     219     263     286     245     224     195     196     138     123 
+albedo change mod8       0.0190  0.0221  0.0108  0.0252  0.0326  0.0090  0.0071  0.0055  0.0059  0.0116  0.0115  0.0081   0.0140 
+albedo change loc100_li  0.0334  0.0171  0.0029  0.0186  0.0150  0.0121  0.0114  0.0135  0.0135  0.0197  0.0202  0.0232   0.0167 
+albedo change mod8_coar -0.0211 -0.0031 -0.0074  0.0113  0.0110  0.0080 -0.0059 -0.0069 -0.0078  0.0130 -0.0034 -0.0116  -0.0020 
+forcing W/m2  mod8        -2.43   -3.04   -1.96   -5.93   -8.83   -2.65   -1.72   -1.13   -1.12   -2.37   -1.69   -1.05    -2.83 
+forcing W/m2  loc100_li   -4.29   -2.34   -0.43   -4.32   -4.12   -3.45   -2.77   -2.93   -2.65   -4.13   -2.85   -2.95    -3.10 
+forcing W/m2  mod8_coar    2.65    0.47    1.35   -2.58   -2.90   -2.11    1.46    1.55    1.68   -2.73    0.50    1.42     0.06 
+vegetation forcing, HadGEM3 (CACK): model 8 -2.83 (-2.85), chosen -3.10 (-3.02), coarse-location +0.06 (+0.07) W/m2 over the box; global equivalent -6.53, -7.17, +0.14 mW/m2; ice part of the forcing in the box +0.00 W/m2
+largest difference between the fitted and the simulated albedo change (any month, any run): 0.0010

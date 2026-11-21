@@ -1,0 +1,5 @@
+992a9ebbfa8b32b5dd63e4cecae7ce30  tests/anchors/interp-allmonths-2026-09-20/lct_modern_reveals_interp.RDS
+4c9bf6123dbedb5d545c80c3dd762660  tests/anchors/interp-allmonths-2026-09-20/lct_paleo_reveals_interp.RDS
+289c0f8a14ab1515c415a5e07b58c858  tests/anchors/interp-allmonths-2026-09-20/calibration_modern_lct_interp_bluesky.RDS
+165b128e3875a961de721063558ef76d  tests/anchors/interp-allmonths-2026-09-20/AIC_table.csv
+647fbccfa38b6ac0aedfd3bb9bb7dd04  tests/anchors/interp-allmonths-2026-09-20/paleo_interp_predict_gam_bluesky.RDS

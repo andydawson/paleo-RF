@@ -1,0 +1,98 @@
+"key","set","state","source","OL","ET","ST","expected_change"
+"hemlock_decline","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,0.012910042363956
+"hemlock_decline","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,0.0105107201156245
+"hemlock_decline","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,0.00364638336135756
+"hemlock_decline","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,0.00697567090760632
+"hemlock_decline","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,0.00474726702831144
+"hemlock_recovery","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,-0.00785359199336433
+"hemlock_recovery","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,-0.00621859187126719
+"hemlock_recovery","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,-0.00116801427870387
+"hemlock_recovery","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,-0.00418128549175376
+"hemlock_recovery","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,-0.00152706889128256
+"clearance_east","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,0.00600208741202683
+"clearance_east","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,0.00970588055634142
+"clearance_east","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,0.0305478397750245
+"clearance_east","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,0.0049530075038964
+"clearance_east","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,0.0395942440849073
+"clearance_seaboard","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,0.005314085597042
+"clearance_seaboard","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,0.00987537196353779
+"clearance_seaboard","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,0.0347217374156793
+"clearance_seaboard","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,0.00484013627567502
+"clearance_seaboard","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,0.0450015921119922
+"clearance_interior","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,0.00569893872559253
+"clearance_interior","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,0.010883818168256
+"clearance_interior","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,0.0389920449714572
+"clearance_interior","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,0.00529471511642652
+"clearance_interior","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,0.0505357199634037
+"prairie_advance","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,0.0156941559322661
+"prairie_advance","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,0.0209070183296568
+"prairie_advance","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,0.0531039889742779
+"prairie_advance","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,0.0113644377230798
+"prairie_advance","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,0.0688392267185087
+"prairie_retreat","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,-0.00542948478291221
+"prairie_retreat","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,-0.00837999426660136
+"prairie_retreat","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,-0.025239155424496
+"prairie_retreat","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,-0.00433858697420782
+"prairie_retreat","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,-0.0327142637433005
+"nw_canada_spruce","boreal","snow-free summer","Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)",0.2,0.083,0.15,-0.0177385844644125
+"nw_canada_spruce","boreal","snow-covered winter","Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy",0.75,0.13,0.21,-0.0401875380393841
+"nw_canada_spruce","boreal","snow-free (after melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.24,0.09,0.15,-0.0176749710616075
+"nw_canada_spruce","boreal","snow-covered (six weeks before melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.68,0.4,0.55,-0.0404279361160713
+"nw_canada_spruce","boreal","snow-free (after melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.24,0.09,0.24,-0.0352833687483539
+"nw_canada_spruce","boreal","snow-covered (before melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.68,0.4,0.54,-0.0384714474842106
+"nw_canada_greening","boreal","snow-free summer","Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)",0.2,0.083,0.15,-0.020571992801753
+"nw_canada_greening","boreal","snow-covered winter","Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy",0.75,0.13,0.21,-0.144495658967619
+"nw_canada_greening","boreal","snow-free (after melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.24,0.09,0.15,-0.0297152288774413
+"nw_canada_greening","boreal","snow-covered (six weeks before melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.68,0.4,0.55,-0.0505662659774574
+"nw_canada_greening","boreal","snow-free (after melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.24,0.09,0.24,-0.0181048469448367
+"nw_canada_greening","boreal","snow-covered (before melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.68,0.4,0.54,-0.0518563084144134
+"quebec_spruce","boreal","snow-free summer","Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)",0.2,0.083,0.15,-0.012329079365249
+"quebec_spruce","boreal","snow-covered winter","Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy",0.75,0.13,0.21,-0.0171018415331396
+"quebec_spruce","boreal","snow-free (after melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.24,0.09,0.15,-0.0112651143520723
+"quebec_spruce","boreal","snow-covered (six weeks before melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.68,0.4,0.55,-0.0276919276395798
+"quebec_spruce","boreal","snow-free (after melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.24,0.09,0.24,-0.0270475953103363
+"quebec_spruce","boreal","snow-covered (before melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.68,0.4,0.54,-0.0259383186442172
+"quebec_opening","boreal","snow-free summer","Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)",0.2,0.083,0.15,0.00830059616772728
+"quebec_opening","boreal","snow-covered winter","Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy",0.75,0.13,0.21,0.046971118337948
+"quebec_opening","boreal","snow-free (after melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.24,0.09,0.15,0.0109228561836765
+"quebec_opening","boreal","snow-covered (six weeks before melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.68,0.4,0.55,0.0199769155571928
+"quebec_opening","boreal","snow-free (after melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.24,0.09,0.24,0.00994608148077377
+"quebec_opening","boreal","snow-covered (before melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.68,0.4,0.54,0.0200854460797375
+"treeline_retreat","boreal","snow-free summer","Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)",0.2,0.083,0.15,0.0152470113917861
+"treeline_retreat","boreal","snow-covered winter","Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy",0.75,0.13,0.21,0.106372693910001
+"treeline_retreat","boreal","snow-free (after melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.24,0.09,0.15,0.0219556851964049
+"treeline_retreat","boreal","snow-covered (six weeks before melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.68,0.4,0.55,0.0374502785547296
+"treeline_retreat","boreal","snow-free (after melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.24,0.09,0.24,0.0135864735366584
+"treeline_retreat","boreal","snow-covered (before melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.68,0.4,0.54,0.0383801909613681
+"alaska_greening","boreal","snow-free summer","Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)",0.2,0.083,0.15,-0.0120474270968371
+"alaska_greening","boreal","snow-covered winter","Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy",0.75,0.13,0.21,-0.10386672631749
+"alaska_greening","boreal","snow-free (after melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.24,0.09,0.15,-0.0192141498937939
+"alaska_greening","boreal","snow-covered (six weeks before melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.68,0.4,0.55,-0.0303364540671493
+"alaska_greening","boreal","snow-free (after melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.24,0.09,0.24,-0.00611687841711103
+"alaska_greening","boreal","snow-covered (before melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.68,0.4,0.54,-0.0317917064534474
+"alaska_spruce","boreal","snow-free summer","Betts and Ball 1997, abstract: grass, conifer, aspen (BOREAS, central Canada)",0.2,0.083,0.15,-0.0076277363173688
+"alaska_spruce","boreal","snow-covered winter","Betts and Ball 1997, abstract: grass, conifer, aspen with snow under the canopy",0.75,0.13,0.21,-0.00211281145890196
+"alaska_spruce","boreal","snow-free (after melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.24,0.09,0.15,-0.00617218066868138
+"alaska_spruce","boreal","snow-covered (six weeks before melt)","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, boreal deciduous forest",0.68,0.4,0.55,-0.0168140051544906
+"alaska_spruce","boreal","snow-free (after melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.24,0.09,0.24,-0.0187072888677784
+"alaska_spruce","boreal","snow-covered (before melt); shrubs for summergreen","Euskirchen 2016, Table 1: graminoid tundra, boreal evergreen forest, shrub tundra",0.68,0.4,0.54,-0.015421215354591
+"pacific_nw_closing","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,-0.0155665019655482
+"pacific_nw_closing","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,-0.0184400180853371
+"pacific_nw_closing","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,-0.0389204419987606
+"pacific_nw_closing","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,-0.0104570324019109
+"pacific_nw_closing","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,-0.0504599694656533
+"great_lakes_spruce_decline","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,0.0111519681112196
+"great_lakes_spruce_decline","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,0.00919604195041752
+"great_lakes_spruce_decline","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,0.00384825152452615
+"great_lakes_spruce_decline","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,0.00606712364110243
+"great_lakes_spruce_decline","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,0.00500581309707652
+"southern_plains","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,-0.00669931352809908
+"southern_plains","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,-0.0101722392920435
+"southern_plains","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,-0.030138363612179
+"southern_plains","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,-0.00529380135939275
+"southern_plains","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,-0.0390648484646563
+"southwest_opening","temperate","snow-free summer (Jun-Aug)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.181,0.079,0.152,0.0195972711832089
+"southwest_opening","temperate","snow-free spring (Apr-May)","Hollinger 2010, Table 2: grassland, northerly evergreen needleleaf, deciduous broadleaf",0.209,0.084,0.145,0.0257483156505766
+"southwest_opening","temperate","snow-covered winter (Dec-Mar)","Burakowski 2016, Fig. 5a: cropland and grassland, evergreen needleleaf, deciduous broadleaf (New England)",0.55,0.27,0.3,0.0641660699741119
+"southwest_opening","temperate","snow-free dormant season (Dec-Mar)","Burakowski 2016, Fig. 5b: the same classes without snow",0.15,0.08,0.12,0.0140636490126891
+"southwest_opening","temperate","snow-covered winter (Dec-Feb)","Boisier 2013, Table 2: grasses, evergreen trees, deciduous trees (northern extratropics)",0.568,0.205,0.244,0.0831802059851824

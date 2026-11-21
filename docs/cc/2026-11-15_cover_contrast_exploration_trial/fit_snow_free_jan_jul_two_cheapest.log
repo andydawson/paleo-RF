@@ -1,0 +1,27 @@
+snow_free jan loc30_linear: 0.1 min; fitting loop: 16 of 500 steps; smoothing parameters: full convergence after 5 iterations; largest gradient 1.8e-04; Hessian positive definite (smallest eigenvalue 0.085); fitted on 1227 rows
+snow_free jan loc100_linear: 0.1 min; fitting loop: 19 of 500 steps; smoothing parameters: full convergence after 4 iterations; largest gradient 1.9e-04; Hessian positive definite (smallest eigenvalue 1); fitted on 1227 rows
+snow_free jul loc30_linear: 0.2 min; fitting loop: 15 of 500 steps; smoothing parameters: full convergence after 5 iterations; largest gradient 5.1e-04; Hessian positive definite (smallest eigenvalue 1.5); fitted on 2808 rows
+snow_free jul loc100_linear: 0.2 min; fitting loop: 15 of 500 steps; smoothing parameters: full convergence after 3 iterations; largest gradient 1.0e-03; Hessian positive definite (smallest eigenvalue 1.6); fitted on 2808 rows
+	Command being timed: "tools/rscript.sh docs/cc/2026-11-15_cover_contrast_exploration_trial/fit_two_cheapest.R /home/expert/Documents/contracting/Andria/paleo-RF-verify/8e3f3a4/.rundirs/run2-snowfree-2 /tmp/claude-1000/-home-expert-Documents-contracting-Andria-paleo-RF/912627b7-1f54-4406-9a56-dc38e8ab3d9e/scratchpad/contrast_trial_2/output jan jul"
+	User time (seconds): 41.32
+	System time (seconds): 8.49
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:49.83
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 990972
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 4698564
+	Voluntary context switches: 114
+	Involuntary context switches: 1283
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 18200
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

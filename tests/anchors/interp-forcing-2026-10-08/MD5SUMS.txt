@@ -1,0 +1,4 @@
+fd3034b2ed999acdc531812fcbd1107d  tests/anchors/interp-forcing-2026-10-08/forcing_by_period.csv
+34837eca981b80878644802bc8dca7f5  tests/anchors/interp-forcing-2026-10-08/forcing_by_period_egu2024recipe_vs_slide.csv
+4dcd9130838ea13ed9db5aeaf31411a4  tests/anchors/interp-forcing-2026-10-08/forcing_by_period_variant_sensitivity.csv
+6c680292008a739f5f1a5128431d8986  tests/anchors/interp-forcing-2026-10-08/modern_ipcc_ar6_erf.csv

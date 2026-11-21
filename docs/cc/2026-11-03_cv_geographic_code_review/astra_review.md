@@ -1,0 +1,32 @@
+*Astra (gpt-6-astra, ultra effort), first review of b7a5772, 3 November 2026.*
+
+**Verdict: changes needed before relying on the reports.** The main arithmetic, distance calculation and separation from model selection are sound. Missing and failed fits are not reported reliably, and the tests miss those cases.
+
+This is Astra’s independent review of `b7a5772`, including the verification record in `28f0dad`. No R was run and no files were changed. Reconciliation with Fable remains pending.
+
+| File:line | Issue | Consequence | Evidence | Proposed check |
+|---|---|---|---|---|
+| [tools/cross_validate_albedo.R:281](/home/expert/Documents/contracting/Andria/paleo-RF-wt/cv/tools/cross_validate_albedo.R:281) | Required months are inferred from surviving predictions. | A missing feasible month—or one where every candidate failed—produces a finite partial score, contrary to the incomplete-score rule. | `months = unique(errors$month)` follows filtering; the caller reads whichever in-range files exist. | Declare January and February feasible. Supply January alone, then repeat with all February fits unconverged. Both should report incomplete aggregates against the frozen month list. |
+| [tools/cross_validate_albedo.R:275](/home/expert/Documents/contracting/Andria/paleo-RF-wt/cv/tools/cross_validate_albedo.R:275) | Entirely failed models disappear; model 8 is nevertheless assumed present. | Other failed candidates vanish from the report. If model 8 has no surviving fit, the report crashes. | Models are collected after filtering. Line 284 indexes the absent matrix column `s$resampled[, 'mod8']`. | Test outright failure and non-convergence of model 8 alongside a successful candidate, plus an entirely failed alternative. Retain incomplete model rows and unavailable comparisons without crashing. |
+| [tools/cross_validate_albedo.R:341](/home/expert/Documents/contracting/Andria/paleo-RF-wt/cv/tools/cross_validate_albedo.R:341) | Failed tail model 8 suppresses writing `by_distance.csv` without replacing an existing file. | On a rerun, an old comparison can look current. | The conditional has no handling for an unavailable comparator. | Generate a successful report, then score with model 8 unconverged. Require an explicit current incomplete result, with no stale table left as the apparent output. |
+| [tests/test_cross_validation.R:134](/home/expert/Documents/contracting/Andria/paleo-RF-wt/cv/tests/test_cross_validation.R:134) | The new tests do not establish non-zero paired uncertainty or incomplete-report behaviour. | The defects above pass; returning zero for every SE would also pass. | Only zero SE is asserted. Model 8 is constant within each test band. The in-range example has one model with both months present. | Add the failure cases above, a varying baseline with constant paired differences, and a known non-zero paired SE. Check the saved distance and regional tables directly. |
+
+The following parts are right:
+
+- **Selection remains unchanged.** `cv_choose()` and the primary scoring calculation are unchanged. No geographic report feeds back into the folds, weights or choice. Reading `scores.csv` only adds the already chosen model to the approved in-range candidates.
+- **Distances use the correct training rows.** Kilometres are calculated once per withheld cell against that month’s complete, non-withheld training rows. The bands put 100, 250 and 500 km into the next interval.
+- **Band arithmetic is correct.** Each occupied band becomes one `cv_score()` group. The difference is candidate MSE minus model-8 MSE; negative means better than model 8. Its SE is the standard deviation of the paired resampled score differences. Blocks keep their rows together.
+- **Equal-month arithmetic is correct when the expected data survive.** The overall in-range score groups by month with equal weights: the test correctly gives `(0.02 + 0.09) / 2 = 0.055`. When one candidate misses a month that another retains, reshaping creates missing values, its aggregate becomes missing, and its complete-month count decreases correctly.
+- **Filtering is appropriate.** In-range scoring keeps converged fits with `distance == 0`, including hull boundaries. Tail distance reports exclude candidates with any unconverged fit. Labelling missing directions `"inside"` preserves the in-range regional rows.
+- **Seeds are isolated.** Every resampling call sets its seed inside `withr_seed()`, which restores the previous random state, including on error. Reusing `SEEDS$resample` cannot consume or shift the tail score’s draws. The reports also run after selection.
+- **Support and feasibility match the protocol.** The supplied `inrange.csv` has all 12 months feasible: 1,067–2,237 training rows against 748 coefficients, 325–545 inside cells in 17–34 blocks, and a rounded maximum distance of 353 km. Feasibility counts blocks among inside cells.
+- **Empty bands receive no invented errors.** They are omitted. The empty ≥500 km in-range band therefore has no output row; that convention should be clear to readers.
+
+The implementation is reasonably small and reuses `cv_score()` well. Explicit incomplete status, expected months and expected models would make the reports substantially clearer for Andria without requiring a larger framework.
+
+The three new tests are correct for their examples, but insufficient for approval. The [verification PASS](/home/expert/Documents/contracting/Andria/paleo-RF-wt/cv/docs/cc/verification/2026-11-03_cv-holdouts-9_report.md:19) establishes the listed tests, holdout generation and byte identity of four existing holdout tables. It does not establish fit/score-stage behaviour end to end or compare tail bootstrap draws.
+
+For Chris, two wording questions remain; the failure fixes require no new scientific decision:
+
+1. Should the protocol explicitly say that **distance-band tables pool cell-months**, while the overall in-range score weights months equally? That matches this review brief and the implementation, but “the same by distance band” is ambiguous.
+2. Can the statement that the hole “raises” errors and “widens” uncertainty be qualified as **can raise / can widen**? The simplicity preference is established by the rule; the actual effect of the geographic hole has not yet been measured.
