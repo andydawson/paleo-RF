@@ -254,16 +254,15 @@ headline_line = paste0('Ice method: ', variant_labels[[cfg$analysis$forcing$vari
 POS = '#F8766D'; NEG = '#00BFC4'   # ggplot default hue palette for two levels
 
 # Holocene panel data (HadGEM3, global-equivalent), and IPCC panel data, in one shape:
-# a label, a value, and which panel. Labels are reversed so the first appears at the top.
+# a label and a value. Labels are reversed so the first appears at the top.
 holocene_panel = forcing_by_period %>%
   filter(kernel == 'hadgem') %>%
-  transmute(panel = 'Holocene',
-            label = sub(' ka$', '', as.character(period)),
+  transmute(label = sub(' ka$', '', as.character(period)),
             value = global_equiv)
 holocene_panel$label = factor(holocene_panel$label, levels = rev(sub(' ka$', '', labels_period)))
 
 ipcc = modern %>%
-  transmute(panel = 'IPCC', label = as.character(agent), value = erf)
+  transmute(label = as.character(agent), value = erf)
 ipcc$label = factor(ipcc$label, levels = rev(as.character(modern$agent)))
 
 # One panel per block so each can carry its own y-axis title, as on the slide.
@@ -391,7 +390,7 @@ if (!all(egu_months %in% unique(coarse_differences$month))) {
               mean_weighted = sum(rf * area, na.rm = TRUE) / sum(area[!is.na(rf)]),
               n_rows = sum(!is.na(rf)), .groups = 'drop')
   egu$slide18 = c(-0.38, -0.17, 0.22, 0.00, 0.36, 0.37, 0.72)[match(egu$facets, sub(' ka$','',labels_period))]
-  hol_egu = egu %>% transmute(panel = 'Holocene', label = facets, value = mean_forcing,
+  hol_egu = egu %>% transmute(label = facets, value = mean_forcing,
                               striplab = 'Holocene', sign = ifelse(mean_forcing >= 0, 'pos', 'neg'))
   hol_egu$label = factor(hol_egu$label, levels = rev(sub(' ka$', '', labels_period)))
   forcing_axis_limits = range(c(hol_egu$value, ipcc$value, 0)) + c(-0.3, 0.3)
