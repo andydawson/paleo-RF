@@ -138,7 +138,7 @@ fill_missing = TRUE)`) they fill it with what the pipeline did before (`HISTORIC
 
 The comparison of the old ice raster with the NADI-1 reconstruction (Dalton et al. 2023; Chris,
 16 November 2026; [design](docs/cc/2026-11-16_ice_redesign_simpler_codex_gpt6astra.md),
-[implementation note](docs/cc/2026-11-17_ice_implementation_note.md)) is made by the first two tools below, the other two check it; the forcing
+[implementation note](docs/cc/2026-11-17_ice_implementation_note.md)) is made by the first two tools below, the next two check it, and the last two animate the NADI-1 ice with a run's vegetation and April albedo; the forcing
 with NADI-1 ice is the pipeline's own, chosen by `ice$fraction_source` in `config.R`.
 
 | Tool | Reads | Writes |
@@ -147,6 +147,8 @@ with NADI-1 ice is the pipeline's own, chosen by `ice$fraction_source` in `confi
 | `tools/compare_ice.R` (an output folder, then finished runs of scripts 7a to 10: one on the old ice, up to one per NADI-1 reconstruction) | the four ice-fraction files; each run's script 7a and 9 run records, script 7a's table, script 9's two forcing tables; the old-ice run's forcing table (its cells); `pbs_ll.RDS` | nothing in a run folder; in its own folder: `ice_by_slice.csv`, `readvance_inventory.csv` (every exact positive increase in a cell's ice fraction from one slice to the next younger, however small: not a count of established readvances), `forcing_comparison.csv`, five figures and `record.txt` |
 | `tools/check_compare_ice.R` (the comparison's folder and the old-ice run) | the comparison's tables, the old-ice run's forcing tables and the old raster | nothing: checks of the comparison for its verification specs |
 | `tools/check_ice_split.R` (a finished run of scripts 7a to 9 with the `endpoint` method) | the run's script 7a and 8 tables and script 9's variant table | nothing: checks of the second split's new columns (their values from the existing columns; both splits add up for every kernel and in every period) for the verification specs |
+| `tools/animate_holocene.R` (a finished run of scripts 1 to 6) | the run's `config_used.R`, cover table and April prediction summary; `nadi1_optimal.tif`; `data/albedo_glacier_monthly.csv`; `pbs_ll.RDS` | nothing in the run folder; `figures/animations/`: one PNG per source slice and per illustrative midpoint blend, `frames.csv` (order, file, display time) and `caption.txt` |
+| `tools/make_holocene_gif.py` (the animation folder; Python 3 with Pillow) | its `frames.csv` and PNG frames | `holocene_nadi_april.gif` in that folder, with one shared 256-colour palette |
 
 The [CV2 run order](docs/cc/2026-11-06_cv2_run_order.md) gives the verification specs and
 dependencies for single-thread jobs. Scripts 1–10 still run unchanged for the selected model.
