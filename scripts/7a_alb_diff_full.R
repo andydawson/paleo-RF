@@ -123,36 +123,21 @@ alb_grid_full$ice_albedo_sc = alb_glacier[match(alb_grid_full$month, alb_glacier
 
 alb_grid_full$alb_veg = alb_grid_full$alb_mean
 
-alb_grid_full$alb_ice_part = alb_grid_full$ice_albedo_fixed * alb_grid_full$ice_frac
-alb_grid_full$alb_icesc_part = alb_grid_full$ice_albedo_sc * alb_grid_full$ice_frac
-
-alb_grid_full$alb_veg_part = alb_grid_full$alb_veg * (1 - alb_grid_full$ice_frac)
-
-alb_grid_full$alb_veg_ice_parts = alb_grid_full$alb_ice_part + alb_grid_full$alb_veg_part
-alb_grid_full$alb_veg_icesc_parts = alb_grid_full$alb_icesc_part + alb_grid_full$alb_veg_part
-
 # A cell is ice when its ice fraction exceeds config.R analysis$ice$threshold (questions
 # C0, C2).
 ice_threshold = cfg$analysis$ice$threshold
 source('R/differences.R')   # pair_albedo_differences(), the per-pair arithmetic
-# Per-slice ice/vegetation albedo by the UNADJUSTED ice fraction. Only the
+# Per-slice glacier albedo by the UNADJUSTED ice fraction (NA at or below the threshold). Only the
 # "legacy_components" method in pair_albedo_differences() reads alb_ice_thresh and
 # alb_icesc_thresh; its readvance adjustment can disagree with this classification
 # (see R/differences.R).
-ice_rows = which(alb_grid_full$ice_frac > ice_threshold)
 vegetation_rows = which(alb_grid_full$ice_frac <= ice_threshold)
-
-alb_grid_full$alb_veg_thresh = alb_grid_full$alb_veg
-alb_grid_full$alb_veg_thresh[ice_rows] = NA
 
 alb_grid_full$alb_ice_thresh = alb_grid_full$ice_albedo_fixed
 alb_grid_full$alb_ice_thresh[vegetation_rows] = NA
 
 alb_grid_full$alb_icesc_thresh = alb_grid_full$ice_albedo_sc
 alb_grid_full$alb_icesc_thresh[vegetation_rows] = NA
-
-alb_grid_full$alb_veg_ice_thresh = rowSums(cbind(alb_grid_full$alb_veg_thresh, alb_grid_full$alb_ice_thresh), na.rm=TRUE)
-alb_grid_full$alb_veg_icesc_thresh = rowSums(cbind(alb_grid_full$alb_veg_thresh, alb_grid_full$alb_icesc_thresh), na.rm=TRUE)
 
 alb_grid_full$month = factor(alb_grid_full$month, levels = months)
 

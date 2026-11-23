@@ -12,7 +12,6 @@ source('R/run_manifest.R')
 run   = run_begin('4_calibration_model')
 cfg   = run$cfg
 paths = run$paths
-alb_prod = paths$tag   # the albedo product in file names
 
 # Packages, loaded after run_begin() so that a missing one is recorded as a failed run.
 library(gam)
@@ -21,9 +20,6 @@ library(mgcv)
 # fit_calibration_model) come with R/paths.R from R/model_registry.R.
 
 cal_interp_data = read_input(run, path_file(paths, 'calibration_table'))
-
-cal_data2 = data.frame(site=seq(1,nrow(cal_interp_data)), cal_interp_data)
-cal_data3 = cal_data2[,c('site', 'ET', 'OL', 'ST')]
 
 # The months analysed, from config.R (analysis$months); month names and
 # numbers come from the shared calendar, R/calendar.R.
@@ -54,9 +50,6 @@ for (month in months) {
 
 }
 
-AIC_list =  vector("list", length(months))
-names(AIC_list) = months
-
 # CM: the ladder is compared by AIC only. The original also ran an analysis of deviance
 # (anova.gam, chi-square tests) on the eight models and kept it in a list nothing read; it is
 # removed because models 5 to 8 are not nested (each replaces smooths or changes a basis), so
@@ -73,8 +66,6 @@ for (month in months) {
                          paste0(LADDER_MODELS, '_interp'))
 
   this_AIC = with(ladder_fits, AIC(mod1_interp, mod2_interp, mod3_interp, mod4_interp, mod5_interp, mod6_interp, mod7_interp, mod8_interp))
-
-  AIC_list[[month]] = this_AIC
 
   AIC_df[,month] = round(this_AIC$AIC)
 }

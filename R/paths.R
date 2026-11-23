@@ -51,7 +51,6 @@ PATH_CATALOGUE = data.frame(stringsAsFactors = FALSE, rbind(
   c('albedo_modis_cells',       'data/albedo_modis_cells.csv',                                        'input',   NA),
   c('albedo_modis_provenance',  'data/albedo_modis_cells_provenance.txt',                             'input',   NA),
   c('boundaries_ll',            'data/map-data/geographic/pbs_ll.RDS',                                'input',   NA),
-  c('boundaries',               'data/map-data/geographic/pbs.RDS',                                   'input',   NA),
   c('glacier_shapes',           'data/map-data/ice/glacier_shapefiles_21-1k.RDS',                     'input',   NA),
   c('glacier_albedo',           'data/albedo_glacier_monthly.csv',                                    'input',   NA),
   c('dalton_ice',               'data/Dalton_QSR_2020_Ice/dalton_interpolated_LC6k.tif',              'input',   NA),
