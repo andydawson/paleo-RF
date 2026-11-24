@@ -50,7 +50,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Final integration check: Astra's review and three full runs; chris-dev reconciled | #16 | merged 2026-11-21 | a06eddf |
 | Final integration check: the runs with other settings | #16 | merged 2026-11-21 | 76215bc |
 | Final merge of the migration into chris-dev | #16 | merged 2026-11-21 | b8cfe6f |
-| Holocene animation tool (ice, vegetation, April albedo) | none | verified 2026-11-23; merge pending | |
+| Holocene animation tool (ice, vegetation, April albedo) | none | merged 2026-11-24 | 0e02b13 |
 
 ---
 
