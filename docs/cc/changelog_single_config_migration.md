@@ -50,6 +50,7 @@ for the coauthor change log. Living document, updated as each issue merges.
 | Final integration check: Astra's review and three full runs; chris-dev reconciled | #16 | merged 2026-11-21 | a06eddf |
 | Final integration check: the runs with other settings | #16 | merged 2026-11-21 | 76215bc |
 | Final merge of the migration into chris-dev | #16 | merged 2026-11-21 | b8cfe6f |
+| Holocene animation tool (ice, vegetation, April albedo) | none | verified 2026-11-23; merge pending | |
 
 ---
 
@@ -2264,3 +2265,33 @@ separately, after Andria answers.
 this was raised with him on 21 November, after the runs, and he chose to rerun them (all three passed). When the fixes' checks were planned, he was first told
 that the one-month refit tool would cover script 4's deletions; that tool refits from the saved model and never runs
 script 4, so a January run of script 4 itself was used instead, and he was told so on 20 November.
+
+## Holocene animation tool (after the migration), merged 2026-11-24
+
+**Purpose.** Chris asked for animations of the ice, the vegetation mix and the surface albedo through the Holocene,
+with blended frames between the time slices (20 November). Astra wrote a prototype; Chris chose its layout and
+colours (shared clock; ice | vegetation mix | April surface albedo; NADI-1 best-estimate ice; natural vegetation
+colours; a cool blue-grey albedo scale; rose for missing cells). The blends are illustrative and labelled as such.
+
+**Changed.**
+- `tools/animate_holocene.R` (new): reads a finished run folder (its one argument) and writes 49 PNG frames
+  (25 slices and 24 midpoint blends), `frames.csv` and `caption.txt` to `figures/animations/`. The surface albedo
+  of a cell is f x glacier albedo + (1 - f) x vegetation albedo, the mixture whose differences are
+  `partial_ice_differences()` in `R/differences.R`, with the glacier albedo read from
+  `data/albedo_glacier_monthly.csv`.
+- `tools/make_holocene_gif.py` (new): joins the frames into one GIF (Python 3 with Pillow; no GIF writer is
+  installed for R), timed at 2 ms per nominal year.
+- `README.md`: a row for each tool.
+
+**Outputs changed.** None: no pipeline script or configuration changes.
+
+**Review.** Fable's change review of the prototype (`docs/cc/2026-11-23_animations_review_fable.md`) found two
+blockers (paths into the home folder and a verification run folder; no verification) and about 45 lines that could
+go. Chris chose (23 November) to make all the fixes and deletions, to move the Python into its own file, to write
+under `figures/`, and to keep the midpoint label on blend frames ("8,250 BP | blend").
+
+**Verification.** `docs/cc/verification/2026-11-23_animations.R`: PASS at 574ba6a; the tool ran from the main run of
+1 November (`run1-main`) in 3 min 53 s and wrote 49 frames. The GIF step is not an R check; it was run by hand on
+those frames and wrote the 49-frame, 25.0-second GIF.
+
+**Limits.** A thin white vertical line crosses the ice panel near 95 W in some frames; its cause is not known.
