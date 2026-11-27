@@ -50,6 +50,29 @@ Its first, unverified results:
 
 The far check needs protocol 2's run folder (see "Results folders" below).
 
+## Meeting with Andria, 27 November: what was agreed
+
+These are Chris's notes from the meeting. He is open to pushback on any of these decisions later.
+
+- **Glacier albedo.** Andria will ask a colleague who works on Earth system modelling, copying Chris in. The aim is a
+  better basis than 0.68 with 0.50 and 0.80 as sensitivity cases. Wait for that before running the sensitivity cases.
+- **Snow.** Snow is not to be a covariate in the albedo model, because the data are not good enough to support it.
+  Both agreed this. Chris will:
+  - make maps of snow extent;
+  - briefly review Andria's original snow code for ideas worth reviving;
+  - work out how to weight the snowy and snow-free prediction models;
+  - write up that method.
+- **Manuscript.** Andria has made a new clean draft and started a new introduction. Chris will draft the methods
+  section with the core of the method, drawing on the original document but updated to the new method.
+- **Cross-validation.** Chris will:
+  - finish the cross-validation approach, now on branch `cv-spatial-folds`;
+  - write down in the methods how the sampling works: it is designed for predictions that generalise to unseen
+    land-cover mixtures while handling spatial autocorrelation;
+  - explain it to Andria.
+- **Full run.** Then run the whole pipeline with all the new methods in place and look at the results.
+- **Goal.** Results that pass sanity checks. For example, the hemlock decline should give answers in line with what
+  is expected for that change in land cover.
+
 ## Other open items
 
 - Before Chris meets Andria: talk through the location terms in the models (how `s(x, y, bs = "gp", k)` is built,
