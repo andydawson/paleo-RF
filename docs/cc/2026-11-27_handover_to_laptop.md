@@ -118,6 +118,46 @@ Copy from the workstation's main checkout,
     `docs/cc/roles_draft/`).
 - Zotero library and its local helpers, if literature work continues there.
 
+## The transfer zip, and how to unpack it (instructions for the Claude Code agent on the laptop)
+
+On 27 November everything above was packed into one file:
+`/home/expert/Documents/contracting/Andria/paleo-RF-transfer-2026-11-27.zip`, about 35 GB. Chris carries it across.
+
+**Not in the zip:**
+- the credentials (`~/.netrc`, `~/.cdsapirc`, the GitHub key, `~/.codex/`): Chris sets these up himself;
+- `data/modis_albedo/` (236 GB);
+- Zotero;
+- the other 62 results folders.
+
+It has three top-level folders, named as on the workstation:
+
+| In the zip | What it holds | Where it goes on the laptop |
+|---|---|---|
+| `paleo-RF/` | the 261 frozen inputs (`output/`, `data/`); `data/nadi1/`, `duveiller2018/`, `mcd12q1/`, `mod44w/`, `gmted2010/`, `era5/`; the project's `.claude/` folder | the root of the laptop's clone of the repository, merged into it |
+| `paleo-RF-verify/` | `1d31cfc/.rundirs/` and `d5d5df5/.rundirs/run1-main` | a folder `paleo-RF-verify/` next to the clone. `tools/verify_change.R` makes its worktrees at `../paleo-RF-verify/<sha>`. |
+| `.claude/` | Chris's global instructions `CLAUDE.md`, and this project's memory folder under `projects/` | Chris's own `~/.claude/` (see steps 5 and 6) |
+
+Steps for the agent:
+1. Ask Chris where the zip is and where the clone is. Clone `andydawson/paleo-RF` and check out `chris-dev` first if
+   that has not been done (section "Setting up the laptop").
+2. Unzip into a new, empty folder outside the clone, for example `~/paleo-RF-transfer/`. Check it first with
+   `unzip -t`.
+3. Copy `paleo-RF/` into the clone's root, adding files only. Never overwrite a tracked file. All of these paths
+   are git-ignored or untracked, so `git status` must stay clean apart from `data/` folders git does not track.
+   Then run `md5sum -c tests/frozen_inputs.md5` in the clone. Every line must say OK. Stop and tell Chris if any
+   does not.
+4. Move `paleo-RF-verify/` so that it sits next to the clone (the clone's parent folder).
+5. `.claude/CLAUDE.md`: if the laptop has no `~/.claude/CLAUDE.md`, copy it there. If one exists, show Chris the
+   difference and let him choose.
+6. The memory folder: Claude Code keeps a project's memory under `~/.claude/projects/<folder>/memory/`, where
+   `<folder>` is the clone's absolute path with each `/` replaced by `-`. Start Claude Code once in the clone so the
+   folder exists, then copy the memory files into it. Several memories name workstation paths
+   (`/home/expert/...`, `paleo-RF-wt/`); those paths may not exist on the laptop.
+7. Run paths: the far check and the animation tool take the run folder as an argument. Give them the new
+   locations under `paleo-RF-verify/`.
+8. Delete the unpacked copy only after Chris confirms the checks passed. Keep the zip until the laptop has run one
+   verification successfully.
+
 ## How the work is run (unchanged)
 
 The rules are in `CONTRIBUTING.md` and `AGENTS.md`. In short:
